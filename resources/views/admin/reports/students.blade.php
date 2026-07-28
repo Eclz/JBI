@@ -78,9 +78,7 @@
                         <select name="status" class="form-select">
                             <option value="">All Status</option>
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="graduated" {{ request('status') == 'graduated' ? 'selected' : '' }}>Graduated</option>
-                            <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
-                            <option value="withdrawn" {{ request('status') == 'withdrawn' ? 'selected' : '' }}>Withdrawn</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -89,15 +87,6 @@
                             <option value="">All Gender</option>
                             <option value="male" {{ request('gender') == 'male' ? 'selected' : '' }}>Male</option>
                             <option value="female" {{ request('gender') == 'female' ? 'selected' : '' }}>Female</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Program</label>
-                        <select name="program" class="form-select">
-                            <option value="">All Programs</option>
-                            <option value="undergraduate" {{ request('program') == 'undergraduate' ? 'selected' : '' }}>Undergraduate</option>
-                            <option value="postgraduate" {{ request('program') == 'postgraduate' ? 'selected' : '' }}>Postgraduate</option>
-                            <option value="diploma" {{ request('program') == 'diploma' ? 'selected' : '' }}>Diploma</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -136,13 +125,13 @@
                             <tbody>
                                 @foreach($studentsByDepartment as $dept)
                                     <tr>
-                                        <td>{{ $dept->name }}</td>
-                                        <td class="text-end">{{ number_format($dept->student_count) }}</td>
+                                        <td>{{ $dept->department->name ?? 'N/A' }}</td>
+                                        <td class="text-end">{{ number_format($dept->count) }}</td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar" role="progressbar"
-                                                     style="width: {{ ($dept->student_count / $stats['total_students']) * 100 }}%">
-                                                    {{ number_format(($dept->student_count / $stats['total_students']) * 100, 1) }}%
+                                                     style="width: {{ $stats['total_students'] > 0 ? ($dept->count / $stats['total_students']) * 100 : 0 }}%">
+                                                    {{ $stats['total_students'] > 0 ? number_format(($dept->count / $stats['total_students']) * 100, 1) : 0 }}%
                                                 </div>
                                             </div>
                                         </td>
@@ -257,20 +246,16 @@
                     <tbody>
                         @forelse($students as $student)
                             <tr>
-                                <td>{{ $student->admission_number }}</td>
-                                <td>{{ $student->user->name }}</td>
-                                <td>{{ $student->user->email }}</td>
-                                <td>{{ $student->department->name ?? 'N/A' }}</td>
-                                <td>{{ ucfirst($student->program ?? 'N/A') }}</td>
+                                <td>{{ $student->studentProfile->admission_number ?? 'N/A' }}</td>
+                                <td>{{ $student->full_name ?: trim(($student->first_name ?? '') . ' ' . ($student->last_name ?? '')) }}</td>
+                                <td>{{ $student->email }}</td>
+                                <td>{{ $student->studentProfile->department->name ?? 'N/A' }}</td>
+                                <td>{{ $student->studentProfile->program ?? 'N/A' }}</td>
                                 <td>{{ ucfirst($student->gender ?? 'N/A') }}</td>
                                 <td>{{ $student->date_of_birth ? $student->date_of_birth->format('M d, Y') : 'N/A' }}</td>
                                 <td>
-                                    <span class="badge bg-{{
-                                        $student->status === 'active' ? 'success' :
-                                        ($student->status === 'graduated' ? 'info' :
-                                        ($student->status === 'suspended' ? 'warning' : 'danger'))
-                                    }}">
-                                        {{ ucfirst($student->status) }}
+                                    <span class="badge bg-{{ $student->is_active ? 'success' : 'danger' }}">
+                                        {{ $student->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
                             </tr>

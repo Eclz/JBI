@@ -60,6 +60,7 @@
                                             <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
                                                 <option value="">Select Fee Type</option>
                                                 <option value="tuition" {{ old('type', $feeStructure->type) == 'tuition' ? 'selected' : '' }}>Tuition</option>
+                                                <option value="registration" {{ old('type', $feeStructure->type) == 'registration' ? 'selected' : '' }}>Registration</option>
                                                 <option value="library" {{ old('type', $feeStructure->type) == 'library' ? 'selected' : '' }}>Library</option>
                                                 <option value="laboratory" {{ old('type', $feeStructure->type) == 'laboratory' ? 'selected' : '' }}>Laboratory</option>
                                                 <option value="technology" {{ old('type', $feeStructure->type) == 'technology' ? 'selected' : '' }}>Technology</option>
@@ -233,11 +234,11 @@
                             </div>
                             <div class="mb-3">
                                 <strong>Total Collected:</strong>
-                                <span class="text-success">${{ number_format($feeStructure->feeRecords()->sum('paid_amount'), 2) }}</span>
+                                <span class="text-success">{{ $currencyCode }} {{ number_format($feeStructure->feeRecords()->sum('paid_amount'), 2) }}</span>
                             </div>
                             <div class="mb-3">
                                 <strong>Outstanding:</strong>
-                                <span class="text-warning">${{ number_format($feeStructure->feeRecords()->sum('balance_amount'), 2) }}</span>
+                                <span class="text-warning">{{ $currencyCode }} {{ number_format($feeStructure->feeRecords()->sum('balance_amount'), 2) }}</span>
                             </div>
 
                             @if($feeStructure->feeRecords()->count() > 0)

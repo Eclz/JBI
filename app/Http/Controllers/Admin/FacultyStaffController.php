@@ -248,9 +248,14 @@ class FacultyStaffController extends Controller
      */
     public function show(User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty') {
+        if ($facultyStaff->role !== 'faculty' && !$facultyStaff->facultyProfile) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
+        }
+
+        // If user has faculty profile but role is not set correctly, fix it
+        if ($facultyStaff->facultyProfile && $facultyStaff->role !== 'faculty') {
+            $facultyStaff->update(['role' => 'faculty']);
         }
 
         $facultyStaff->load([
@@ -286,9 +291,14 @@ class FacultyStaffController extends Controller
      */
     public function edit(User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty') {
+        if ($facultyStaff->role !== 'faculty' && !$facultyStaff->facultyProfile) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
+        }
+
+        // If user has faculty profile but role is not set correctly, fix it
+        if ($facultyStaff->facultyProfile && $facultyStaff->role !== 'faculty') {
+            $facultyStaff->update(['role' => 'faculty']);
         }
 
         $facultyStaff->load('facultyProfile.department.faculty');
@@ -310,9 +320,14 @@ class FacultyStaffController extends Controller
      */
     public function update(Request $request, User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty') {
+        if ($facultyStaff->role !== 'faculty' && !$facultyStaff->facultyProfile) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
+        }
+
+        // If user has faculty profile but role is not set correctly, fix it
+        if ($facultyStaff->facultyProfile && $facultyStaff->role !== 'faculty') {
+            $facultyStaff->update(['role' => 'faculty']);
         }
 
         // Validate the request
@@ -558,6 +573,10 @@ class FacultyStaffController extends Controller
      */
     private function createDefaultFacultyProfile(User $user): void
     {
+        if (!$user || !$user->id) {
+            throw new \Exception('Invalid user provided for faculty profile creation.');
+        }
+
         $defaultDepartmentId = Department::where('is_active', true)->first()?->id;
 
         if (!$defaultDepartmentId) {

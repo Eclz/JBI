@@ -23,6 +23,7 @@ class Grade extends Model
         'is_published',
         'graded_at',
         'graded_by',
+        'total_marks'
     ];
 
     protected $casts = [

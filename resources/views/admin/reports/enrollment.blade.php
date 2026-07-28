@@ -18,7 +18,6 @@
         </div>
     </div>
 
-     Statistics Cards
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white shadow-sm">
@@ -54,10 +53,9 @@
         </div>
     </div>
 
-     Filters
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-light">
-            <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+            <h5 class="card-title mb-0"><i class="fa fa-filter me-2"></i>Filters</h5>
         </div>
         <div class="card-body">
             <form method="GET" action="{{ route('admin.reports.enrollment') }}">
@@ -65,10 +63,10 @@
                     <div class="col-md-3">
                         <label class="form-label">Academic Year</label>
                         <select name="academic_year_id" class="form-select">
-                            <option value="">All Years</option>
+                            <option value="">All Academic Years</option>
                             @foreach($academicYears as $year)
                                 <option value="{{ $year->id }}" {{ request('academic_year_id') == $year->id ? 'selected' : '' }}>
-                                    {{ $year->year_name }}
+                                    {{ $year->name ?? $year->year }}
                                 </option>
                             @endforeach
                         </select>
@@ -79,7 +77,7 @@
                             <option value="">All Semesters</option>
                             @foreach($semesters as $semester)
                                 <option value="{{ $semester->id }}" {{ request('semester_id') == $semester->id ? 'selected' : '' }}>
-                                    {{ $semester->semester_name }}
+                                    {{ $semester->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -99,10 +97,10 @@
                         <label class="form-label">&nbsp;</label>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary flex-grow-1">
-                                <i class="fas fa-search me-1"></i> Filter
+                                <i class="fa fa-search me-1"></i> Filter
                             </button>
                             <a href="{{ route('admin.reports.enrollment') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i>
+                                <i class="fa fa-times"></i>
                             </a>
                         </div>
                     </div>
@@ -110,13 +108,11 @@
             </form>
         </div>
     </div>
-
-     Enrollment by Department Chart
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Enrollments by Department</h5>
+                    <h5 class="card-title mb-0"><i class="fa fa-bar-chart me-2"></i>Enrollments by Department</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -131,16 +127,16 @@
                             <tbody>
                                 @foreach($enrollmentsByDepartment as $dept)
                                     <tr>
-                                        <td>{{ $dept->name }}</td>
-                                        <td class="text-end">{{ number_format($dept->total) }}</td>
+                                        <td>{{ $dept->department_name ?? 'N/A' }}</td>
+                                        <td class="text-end">{{ number_format($dept->count) }}</td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar" role="progressbar"
-                                                     style="width: {{ ($dept->total / $stats['total_enrollments']) * 100 }}%"
-                                                     aria-valuenow="{{ $dept->total }}"
+                                                     style="width: {{ $stats['total_enrollments'] > 0 ? ($dept->count / $stats['total_enrollments']) * 100 : 0 }}%"
+                                                     aria-valuenow="{{ $dept->count }}"
                                                      aria-valuemin="0"
                                                      aria-valuemax="{{ $stats['total_enrollments'] }}">
-                                                    {{ number_format(($dept->total / $stats['total_enrollments']) * 100, 1) }}%
+                                                    {{ $stats['total_enrollments'] > 0 ? number_format(($dept->count / $stats['total_enrollments']) * 100, 1) : 0 }}%
                                                 </div>
                                             </div>
                                         </td>
@@ -153,14 +149,12 @@
             </div>
         </div>
     </div>
-
-     Enrollment Details
     <div class="card shadow-sm">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Enrollment Details</h5>
-            <a href="{{ route('admin.reports.enrollment', array_merge(request()->all(), ['format' => 'pdf'])) }}"
-               class="btn btn-danger btn-sm">
-                <i class="fas fa-file-pdf me-1"></i> Export PDF
+            <h5 class="card-title mb-0"><i class="fa fa-list me-2"></i>Enrollment Details</h5>
+            <a href="{{ route('admin.reports.enrollment.export', request()->all()) }}"
+               class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel me-1"></i> Export CSV
             </a>
         </div>
         <div class="card-body">
@@ -180,11 +174,11 @@
                     <tbody>
                         @forelse($enrollments as $enrollment)
                             <tr>
-                                <td>{{ $enrollment->student->user->name }}</td>
-                                <td>{{ $enrollment->student->admission_number }}</td>
-                                <td>{{ $enrollment->course->course_code }} - {{ $enrollment->course->course_name }}</td>
-                                <td>{{ $enrollment->semester->semester_name }}</td>
-                                <td>{{ $enrollment->enrolled_at->format('M d, Y') }}</td>
+                                <td>{{ $enrollment?->student?->full_name ?: ($enrollment?->student?->name ?? 'N/A') }}</td>
+                                <td>{{ $enrollment->student->studentProfile->admission_number ?? 'N/A' }}</td>
+                                <td>{{ $enrollment->course->code ?? $enrollment->course->course_code }} - {{ $enrollment->course->name }}</td>
+                                <td>{{ $enrollment?->semester?->name ?? 'N/A' }}</td>
+                                <td>{{ $enrollment->enrollment_date?->format('M d, Y') ?? 'N/A' }}</td>
                                 <td>
                                     <span class="badge bg-{{
                                         $enrollment->status === 'enrolled' ? 'success' :
@@ -193,7 +187,7 @@
                                         {{ ucfirst($enrollment->status) }}
                                     </span>
                                 </td>
-                                <td>{{ $enrollment->grade ?? 'N/A' }}</td>
+                                <td>{{ $enrollment->letter_grade ?? ($enrollment->final_grade ?? 'N/A') }}</td>
                             </tr>
                         @empty
                             <tr>

@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -20,28 +22,27 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
+        'first_name',
+        'last_name',
         'name',
         'email',
         'password',
-        'role',
-        'student_id',
-        'employee_id',
         'phone',
-        'address',
         'date_of_birth',
         'gender',
-        'emergency_contact',
-        'emergency_phone',
-        'profile_picture',
+        'address',
+        'role',
+        'role_id',
         'is_active',
-        'preferences',
-        'last_login_at',
-        'first_name',
-        'last_name',
         'email_verified_at',
         'must_change_password',
-        'password_changed_at',
-        'default_password', // Store the raw default password for email
+        'last_login_at',
+        'profile_picture',
+        'emergency_contact',
+        'emergency_phone',
+        'student_id',
+        'employee_id',
+        'preferences',
     ];
 
     /**
@@ -52,7 +53,6 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
-        'default_password',
     ];
 
     /**
@@ -62,14 +62,197 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'date_of_birth' => 'date',
-        'is_active' => 'boolean',
-        'preferences' => 'array',
-        'last_login_at' => 'datetime',
         'password' => 'hashed',
+        'date_of_birth' => 'date',
+        'last_login_at' => 'datetime',
+        'is_active' => 'boolean',
         'must_change_password' => 'boolean',
-        'password_changed_at' => 'datetime',
+        'preferences' => 'array',
     ];
+
+    /**
+     * Get the student profile associated with the user.
+     */
+    public function studentProfile(): HasOne
+    {
+        return $this->hasOne(StudentProfile::class);
+    }
+
+    /**
+     * Get the faculty profile associated with the user.
+     */
+    public function facultyProfile(): HasOne
+    {
+        return $this->hasOne(FacultyProfile::class);
+    }
+
+    /**
+     * Get the courses that the user is enrolled in (for students).
+     */
+    public function enrolledCourses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'course_enrollments')
+                    ->withPivot(['enrollment_date', 'status', 'notes', 'final_grade', 'letter_grade', 'grade_points', 'completion_date'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the course enrollments for the user (for students).
+     */
+    public function courseEnrollments(): HasMany
+    {
+        return $this->hasMany(CourseEnrollment::class, 'user_id');
+    }
+
+    /**
+     * Get the courses that the user teaches (for faculty).
+     */
+    public function taughtCourses(): HasMany
+    {
+        return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    /**
+     * Get the courses that the user teaches (for faculty).
+     * Alias for taughtCourses to match old model
+     */
+    public function teachingCourses(): HasMany
+    {
+        return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    /**
+     * Get the assignments submitted by the user.
+     */
+    public function assignmentSubmissions(): HasMany
+    {
+        return $this->hasMany(AssignmentSubmission::class);
+    }
+
+    /**
+     * Get the grades for the user.
+     */
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
+
+    /**
+     * Get the attendance records for the user.
+     */
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    /**
+     * Get the fee records for the user.
+     */
+    public function feeRecords(): HasMany
+    {
+        return $this->hasMany(FeeRecord::class);
+    }
+
+    /**
+     * Get the notifications for the user.
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Get announcements created by user
+     */
+    public function createdAnnouncements(): HasMany
+    {
+        return $this->hasMany(Announcement::class, 'created_by');
+    }
+
+    /**
+     * Get the forum topics created by the user.
+     */
+    public function forumTopics(): HasMany
+    {
+        return $this->hasMany(ForumTopic::class, 'created_by');
+    }
+
+    /**
+     * Get the forum replies created by the user.
+     */
+    public function forumReplies(): HasMany
+    {
+        return $this->hasMany(ForumReply::class, 'created_by');
+    }
+
+    /**
+     * Get course materials uploaded by user
+     */
+    public function uploadedMaterials(): HasMany
+    {
+        return $this->hasMany(CourseMaterial::class, 'uploaded_by');
+    }
+
+    /**
+     * Get assignments graded by user (for faculty)
+     */
+    public function gradedAssignments(): HasMany
+    {
+        return $this->hasMany(AssignmentSubmission::class, 'graded_by');
+    }
+
+    /**
+     * Get grades given by user (for faculty)
+     */
+    public function givenGrades(): HasMany
+    {
+        return $this->hasMany(Grade::class, 'graded_by');
+    }
+
+    /**
+     * Get attendance records marked by user (for faculty)
+     */
+    public function markedAttendance(): HasMany
+    {
+        return $this->hasMany(Attendance::class, 'marked_by');
+    }
+
+    /**
+     * Get departments headed by user (for faculty/admin)
+     */
+    public function headedDepartments(): HasMany
+    {
+        return $this->hasMany(Department::class, 'head_of_department_id');
+    }
+
+    /**
+     * Get fee records processed by user (for admin/finance)
+     */
+    public function processedFeeRecords(): HasMany
+    {
+        return $this->hasMany(FeeRecord::class, 'processed_by');
+    }
+
+    /**
+     * Get the student notes for this user (if they are a student).
+     */
+    public function studentNotes(): HasMany
+    {
+        return $this->hasMany(StudentNote::class, 'student_id');
+    }
+
+    public function roleCatalog(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    /**
+     * Get the notes created by this user.
+     */
+    public function createdNotes(): HasMany
+    {
+        return $this->hasMany(StudentNote::class, 'created_by');
+    }
 
     /**
      * User roles
@@ -80,30 +263,33 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_PARENT = 'parent';
 
     /**
-     * Get all available roles
+     * Check if user has a specific role.
      */
-    public static function getRoles()
+    public function hasRole(string $role): bool
     {
-        return [
-            self::ROLE_ADMIN => 'Administrator',
-            self::ROLE_FACULTY => 'Faculty',
-            self::ROLE_STUDENT => 'Student',
-            self::ROLE_PARENT => 'Parent',
-        ];
+        return $this->role === $role
+            || $this->roleCatalog?->guard_role === $role
+            || $this->roleCatalog?->slug === $role;
     }
 
-    /**
-     * Check if user has a specific role
-     */
-    public function hasRole($role)
+    public function hasPermission(string $module, string $action): bool
     {
-        return $this->role === $role;
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->roleCatalog?->hasPermission($module, $action) ?? false;
+    }
+
+    public function getRoleNameAttribute(): string
+    {
+        return $this->roleCatalog?->name ?? ucfirst($this->role);
     }
 
     /**
      * Check if user is admin
      */
-    public function isAdmin()
+    public function isAdmin(): bool
     {
         return $this->hasRole(self::ROLE_ADMIN);
     }
@@ -111,7 +297,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user is faculty
      */
-    public function isFaculty()
+    public function isFaculty(): bool
     {
         return $this->hasRole(self::ROLE_FACULTY);
     }
@@ -119,7 +305,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user is student
      */
-    public function isStudent()
+    public function isStudent(): bool
     {
         return $this->hasRole(self::ROLE_STUDENT);
     }
@@ -127,245 +313,51 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user is parent
      */
-    public function isParent()
+    public function isParent(): bool
     {
         return $this->hasRole(self::ROLE_PARENT);
     }
 
     /**
-     * Check if user must change password
+     * Check if user is active.
      */
-    public function mustChangePassword()
+    public function isActive(): bool
     {
-        return $this->must_change_password;
+        return $this->is_active;
     }
 
     /**
-     * Generate a secure default password
+     * Get full name attribute.
      */
-    public static function generateDefaultPassword()
-    {
-        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-        $password = '';
-        for ($i = 0; $i < 12; $i++) {
-            $password .= $characters[rand(0, strlen($characters) - 1)];
-        }
-        return $password;
-    }
-
-    /**
-     * Generate a JBI-formatted default password
-     */
-    public static function generateJBIDefaultPassword()
-    {
-        return 'JBI' . date('Y') . Str::random(6) . '!';
-    }
-
-    /**
-     * Set password and mark for change if needed
-     */
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = Hash::make($value);
-        $this->attributes['password_changed_at'] = now();
-    }
-
-    /**
-     * Create user with default password for admission
-     */
-    public static function createWithDefaultPassword($userData)
-    {
-        $defaultPassword = self::generateJBIDefaultPassword();
-
-        $userData['password'] = $defaultPassword;
-        $userData['default_password'] = $defaultPassword; // Store for email
-        $userData['must_change_password'] = true;
-        $userData['is_active'] = true; // Activated upon admission approval
-
-        return self::create($userData);
-    }
-
-    /**
-     * Mark password as changed by user
-     */
-    public function markPasswordAsChanged()
-    {
-        $this->update([
-            'must_change_password' => false,
-            'default_password' => null, // Clear the stored default password
-            'password_changed_at' => now(),
-        ]);
-    }
-
-    /**
-     * Get the student profile (for students)
-     */
-    public function studentProfile()
-    {
-        return $this->hasOne(StudentProfile::class);
-    }
-
-    /**
-     * Get the faculty profile (for faculty)
-     */
-    public function facultyProfile()
-    {
-        return $this->hasOne(FacultyProfile::class);
-    }
-
-    /**
-     * Get the courses that the user is enrolled in (for students)
-     */
-    public function enrolledCourses()
-    {
-        return $this->belongsToMany(Course::class, 'course_enrollments')
-                    ->withPivot('enrollment_date', 'status', 'final_grade', 'letter_grade', 'grade_points', 'completion_date')
-                    ->withTimestamps();
-    }
-
-    /**
-     * Get the courses that the user teaches (for faculty)
-     */
-    public function teachingCourses()
-    {
-        return $this->hasMany(Course::class, 'instructor_id');
-    }
-
-    /**
-     * Get user's assignment submissions (for students)
-     */
-    public function assignmentSubmissions()
-    {
-        return $this->hasMany(AssignmentSubmission::class);
-    }
-
-    /**
-     * Get user's grades (for students)
-     */
-    public function grades()
-    {
-        return $this->hasMany(Grade::class);
-    }
-
-    /**
-     * Get user's attendance records
-     */
-    public function attendanceRecords()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    /**
-     * Get user's fee records (for students)
-     */
-    public function feeRecords()
-    {
-        return $this->hasMany(FeeRecord::class);
-    }
-
-    /**
-     * Get user's notifications
-     */
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
-
-    /**
-     * Get announcements created by user
-     */
-    public function createdAnnouncements()
-    {
-        return $this->hasMany(Announcement::class, 'created_by');
-    }
-
-    /**
-     * Get forum topics created by user
-     */
-    public function forumTopics()
-    {
-        return $this->hasMany(ForumTopic::class);
-    }
-
-    /**
-     * Get forum replies by user
-     */
-    public function forumReplies()
-    {
-        return $this->hasMany(ForumReply::class);
-    }
-
-    /**
-     * Get course materials uploaded by user
-     */
-    public function uploadedMaterials()
-    {
-        return $this->hasMany(CourseMaterial::class, 'uploaded_by');
-    }
-
-    /**
-     * Get assignments graded by user (for faculty)
-     */
-    public function gradedAssignments()
-    {
-        return $this->hasMany(AssignmentSubmission::class, 'graded_by');
-    }
-
-    /**
-     * Get grades given by user (for faculty)
-     */
-    public function givenGrades()
-    {
-        return $this->hasMany(Grade::class, 'graded_by');
-    }
-
-    /**
-     * Get attendance records marked by user (for faculty)
-     */
-    public function markedAttendance()
-    {
-        return $this->hasMany(Attendance::class, 'marked_by');
-    }
-
-    /**
-     * Get audit logs for user actions
-     */
-    public function auditLogs()
-    {
-        return $this->hasMany(AuditLog::class);
-    }
-
-    /**
-     * Get departments headed by user (for faculty/admin)
-     */
-    public function headedDepartments()
-    {
-        return $this->hasMany(Department::class, 'head_of_department_id');
-    }
-
-    /**
-     * Get fee records processed by user (for admin/finance)
-     */
-    public function processedFeeRecords()
-    {
-        return $this->hasMany(FeeRecord::class, 'processed_by');
-    }
-
-    /**
-     * Get full name attribute
-     */
-    public function getFullNameAttribute()
+    public function getFullNameAttribute(): string
     {
         if ($this->first_name && $this->last_name) {
             return $this->first_name . ' ' . $this->last_name;
         }
-        return $this->name ?? $this->email;
+        return $this->name ?? '';
+    }
+
+    /**
+     * Get initials attribute.
+     */
+    public function getInitialsAttribute(): string
+    {
+        if ($this->first_name && $this->last_name) {
+            return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
+        }
+
+        $nameParts = explode(' ', $this->name ?? '');
+        if (count($nameParts) >= 2) {
+            return strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
+        }
+
+        return strtoupper(substr($this->name ?? 'U', 0, 2));
     }
 
     /**
      * Get profile picture URL
      */
-    public function getProfilePictureUrlAttribute()
+    public function getProfilePictureUrlAttribute(): string
     {
         if ($this->profile_picture) {
             return asset('storage/' . $this->profile_picture);
@@ -376,39 +368,15 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get application status for display
+     * Scope for filtering by role.
      */
-    public function getApplicationStatusAttribute()
+    public function scopeRole($query, $role)
     {
-        if ($this->isStudent() && $this->studentProfile) {
-            return $this->studentProfile->application_status ?? 'pending';
-        }
-
-        if ($this->isFaculty() && $this->facultyProfile) {
-            return $this->facultyProfile->employment_status ?? 'pending';
-        }
-
-        return $this->is_active ? 'active' : 'pending';
+        return $query->where('role', $role);
     }
 
     /**
-     * Check if user's application is pending
-     */
-    public function isApplicationPending()
-    {
-        return !$this->is_active && !$this->hasVerifiedEmail();
-    }
-
-    /**
-     * Check if user's application is approved
-     */
-    public function isApplicationApproved()
-    {
-        return $this->is_active && $this->hasVerifiedEmail();
-    }
-
-    /**
-     * Scope for active users
+     * Scope for active users.
      */
     public function scopeActive($query)
     {
@@ -416,11 +384,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Scope for users by role
+     * Scope for inactive users.
      */
-    public function scopeByRole($query, $role)
+    public function scopeInactive($query)
     {
-        return $query->where('role', $role);
+        return $query->where('is_active', false);
     }
 
     /**
@@ -440,39 +408,10 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Scope for pending applications
+     * Scope for users by role
      */
-    public function scopePendingApplications($query)
+    public function scopeByRole($query, $role)
     {
-        return $query->where('is_active', false);
-    }
-
-    /**
-     * Scope for users who must change password
-     */
-    public function scopeMustChangePassword($query)
-    {
-        return $query->where('must_change_password', true);
-    }
-
-      /**
-     * Get the student notes for this user (if they are a student).
-     */
-    public function studentNotes()
-    {
-        return $this->hasMany(StudentNote::class, 'student_id');
-    }
-
-    /**
-     * Get the notes created by this user.
-     */
-    public function createdNotes()
-    {
-        return $this->hasMany(StudentNote::class, 'created_by');
-    }
-
-     public function taughtCourses()
-    {
-        return $this->hasMany(Course::class, 'instructor_id');
+        return $query->where('role', $role);
     }
 }

@@ -66,7 +66,8 @@ class AssignmentSubmission extends Model
      */
     public function grade()
     {
-        return $this->hasOne(Grade::class);
+        return $this->hasOne(Grade::class, 'assignment_id', 'assignment_id')
+            ->whereColumn('grades.user_id', 'assignment_submissions.user_id');
     }
 
     /**

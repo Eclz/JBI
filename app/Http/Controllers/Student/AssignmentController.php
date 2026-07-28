@@ -14,11 +14,11 @@ class AssignmentController extends Controller
     public function index()
     {
         $assignments = Assignment::whereHas('course.enrollments', function ($query) {
-                $query->where('student_id', Auth::id())
+                $query->where('user_id', Auth::id())
                       ->where('status', 'enrolled');
             })
             ->with(['course', 'submissions' => function ($query) {
-                $query->where('student_id', Auth::id());
+                $query->where('user_id', Auth::id());
             }])
             ->orderBy('due_date', 'asc')
             ->paginate(20);
@@ -28,14 +28,13 @@ class AssignmentController extends Controller
 
     public function show(Assignment $assignment)
     {
-        // Check if student is enrolled in the course
         $enrollment = $assignment->course->enrollments()
-            ->where('student_id', Auth::id())
+            ->where('user_id', Auth::id())
             ->where('status', 'enrolled')
             ->firstOrFail();
 
         $submission = $assignment->submissions()
-            ->where('student_id', Auth::id())
+            ->where('user_id', Auth::id())
             ->first();
 
         return view('student.assignments.show', compact('assignment', 'submission'));
@@ -43,9 +42,8 @@ class AssignmentController extends Controller
 
     public function submit(Request $request, Assignment $assignment)
     {
-        // Check if student is enrolled
         $assignment->course->enrollments()
-            ->where('student_id', Auth::id())
+            ->where('user_id', Auth::id())
             ->where('status', 'enrolled')
             ->firstOrFail();
 
@@ -56,7 +54,7 @@ class AssignmentController extends Controller
 
         $existingSubmission = AssignmentSubmission::where([
             'assignment_id' => $assignment->id,
-            'student_id' => Auth::id(),
+            'user_id' => Auth::id(),
         ])->first();
 
         if ($existingSubmission) {
@@ -74,7 +72,7 @@ class AssignmentController extends Controller
 
         AssignmentSubmission::create([
             'assignment_id' => $assignment->id,
-            'student_id' => Auth::id(),
+            'user_id' => Auth::id(),
             'content' => $request->content,
             'attachment_path' => $attachmentPath,
             'submitted_at' => now(),
@@ -87,7 +85,7 @@ class AssignmentController extends Controller
     public function download(Assignment $assignment)
     {
         $submission = $assignment->submissions()
-            ->where('student_id', Auth::id())
+            ->where('user_id', Auth::id())
             ->firstOrFail();
 
         if (!$submission->attachment_path) {

@@ -50,21 +50,24 @@ class UpdateUserRequest extends FormRequest
                 'confirmed',
             ],
             'role' => [
-                'sometimes',
-                'required',
+                'nullable',
                 'string',
                 Rule::in(['admin', 'faculty', 'student', 'parent']),
             ],
+            'role_id' => [
+                'required',
+                'exists:roles,id',
+            ],
             'student_id' => [
                 'nullable',
-                'required_if:role,student',
+                'nullable',
                 'string',
                 'regex:/^JBI\d{4,6}$/',
                 Rule::unique('users', 'student_id')->ignore($user->id),
             ],
             'employee_id' => [
                 'nullable',
-                'required_if:role,faculty,admin',
+                'nullable',
                 'string',
                 'regex:/^JBI\d{3,5}$/',
                 Rule::unique('users', 'employee_id')->ignore($user->id),

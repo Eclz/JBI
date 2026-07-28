@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Department;
 use App\Models\StudentProfile;
 use App\Models\FacultyProfile;
@@ -19,7 +20,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::with(['studentProfile.department', 'facultyProfile.department'])
+        $users = User::with(['roleCatalog', 'studentProfile.department', 'facultyProfile.department'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
@@ -28,7 +29,9 @@ class UserController extends Controller
                 });
             })
             ->when(request('role'), function ($query, $role) {
-                $query->where('role', $role);
+                $query->where(function ($q) use ($role) {
+                    $q->where('role', $role)->orWhereHas('roleCatalog', fn ($roleQuery) => $roleQuery->where('slug', $role));
+                });
             })
             ->when(request('status'), function ($query, $status) {
                 $query->where('is_active', $status === 'active');
@@ -36,7 +39,9 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return view('admin.users.index', compact('users'));
+        $roles = Role::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.users.index', compact('users', 'roles'));
     }
 
     public function show(User $user)
@@ -53,8 +58,9 @@ class UserController extends Controller
         $this->authorize('create', User::class);
 
         $departments = Department::where('is_active', true)->get();
+        $roles = Role::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.users.create', compact('departments'));
+        return view('admin.users.create', compact('departments', 'roles'));
     }
 
     public function store(StoreUserRequest $request)
@@ -64,23 +70,28 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
+            $role = Role::findOrFail($request->role_id);
+            $nameParts = preg_split('/\s+/', trim($request->name), 2);
+
             $user = User::create([
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
+                'name' => $request->name,
+                'first_name' => $nameParts[0] ?? $request->name,
+                'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
+                'role' => $role->guard_role,
+                'role_id' => $role->id,
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,
                 'address' => $request->address,
                 'emergency_contact_name' => $request->emergency_contact_name,
                 'emergency_contact_phone' => $request->emergency_contact_phone,
-                'is_active' => $request->boolean('is_active', true),
+                'is_active' => $request->input('status', 'active') === 'active',
             ]);
 
             // Create role-specific profile
-            if ($request->role === 'student') {
+            if ($role->guard_role === 'student') {
                 StudentProfile::create([
                     'user_id' => $user->id,
                     'student_id' => $request->student_id,
@@ -89,7 +100,7 @@ class UserController extends Controller
                     'admission_date' => $request->admission_date,
                     'academic_status' => 'active',
                 ]);
-            } elseif ($request->role === 'faculty') {
+            } elseif ($role->guard_role === 'faculty') {
                 FacultyProfile::create([
                     'user_id' => $user->id,
                     'employee_id' => $request->employee_id,
@@ -116,8 +127,9 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $departments = Department::where('is_active', true)->get();
+        $roles = Role::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.users.edit', compact('user', 'departments'));
+        return view('admin.users.edit', compact('user', 'departments', 'roles'));
     }
 
     public function update(UpdateUserRequest $request, User $user)
@@ -127,18 +139,23 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
+            $role = Role::findOrFail($request->role_id);
+            $nameParts = preg_split('/\s+/', trim($request->name), 2);
+
             $userData = [
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
+                'name' => $request->name,
+                'first_name' => $nameParts[0] ?? $request->name,
+                'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'role' => $request->role,
+                'role' => $role->guard_role,
+                'role_id' => $role->id,
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,
                 'address' => $request->address,
                 'emergency_contact_name' => $request->emergency_contact_name,
                 'emergency_contact_phone' => $request->emergency_contact_phone,
-                'is_active' => $request->boolean('is_active'),
+                'is_active' => $request->input('status', 'active') === 'active',
             ];
 
             if ($request->filled('password')) {

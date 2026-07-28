@@ -9,7 +9,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Process Payment</h4>
-                    <a href="{{ route('admin.fees.show', $fee) }}" class="btn btn-secondary">
+                    <a href="{{ route('admin.fees.records.show', $fee) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Fee Details
                     </a>
                 </div>
@@ -30,10 +30,10 @@
                                 </div>
                                 <div class="col-md-4 text-end">
                                     <h6 class="text-muted">Outstanding Balance</h6>
-                                    <h3 class="text-danger">${{ number_format($fee->balance_amount, 2) }}</h3>
+                                    <h3 class="text-danger">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</h3>
                                     <small class="text-muted">
-                                        Total: ${{ number_format($fee->total_amount, 2) }} |
-                                        Paid: ${{ number_format($fee->paid_amount, 2) }}
+                                        Total: {{ $currencyCode }} {{ number_format($fee->total_amount, 2) }} |
+                                        Paid: {{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}
                                     </small>
                                 </div>
                             </div>
@@ -41,7 +41,7 @@
                     </div>
 
                     <!-- Payment Form -->
-                    <form method="POST" action="{{ route('admin.fees.payment.process', $fee) }}" id="paymentForm">
+                    <form method="POST" action="{{ route('admin.fees.records.process-payment', $fee) }}" id="paymentForm" enctype="multipart/form-data">
                         @csrf
 
                         <div class="row">
@@ -60,7 +60,7 @@
                                         </button>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Maximum: ${{ number_format($fee->balance_amount, 2) }}
+                                        Maximum: {{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}
                                     </small>
                                     @error('payment_amount')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -120,6 +120,16 @@
                             </div>
                         </div>
 
+                        <div class="mb-3" id="paymentProofWrapper" style="display: none;">
+                            <label for="payment_proof" class="form-label">Cash Payment Proof <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control @error('payment_proof') is-invalid @enderror"
+                                   name="payment_proof" id="payment_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">Upload a receipt or proof of cash payment (PDF, JPG, PNG).</div>
+                            @error('payment_proof')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <!-- Payment Notes -->
                         <div class="mb-3">
                             <label for="payment_notes" class="form-label">Payment Notes</label>
@@ -138,7 +148,7 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <strong>Current Balance:</strong>
-                                        <div class="text-danger h5">${{ number_format($fee->balance_amount, 2) }}</div>
+                                        <div class="text-danger h5">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</div>
                                     </div>
                                     <div class="col-md-3">
                                         <strong>Payment Amount:</strong>
@@ -146,7 +156,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <strong>New Balance:</strong>
-                                        <div class="h5" id="summary_new_balance">${{ number_format($fee->balance_amount, 2) }}</div>
+                                        <div class="h5" id="summary_new_balance">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</div>
                                     </div>
                                     <div class="col-md-3">
                                         <strong>Status After Payment:</strong>
@@ -160,7 +170,7 @@
 
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between">
-                            <a href="{{ route('admin.fees.show', $fee) }}" class="btn btn-secondary">
+                            <a href="{{ route('admin.fees.records.show', $fee) }}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                             <button type="submit" class="btn btn-success" id="processPaymentBtn">
@@ -182,6 +192,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const payFullAmountBtn = document.getElementById('payFullAmount');
     const processPaymentBtn = document.getElementById('processPaymentBtn');
     const currentBalance = {{ $fee->balance_amount }};
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const paymentProofWrapper = document.getElementById('paymentProofWrapper');
+    const paymentProofInput = document.getElementById('payment_proof');
 
     // Pay full amount button
     payFullAmountBtn.addEventListener('click', function() {
@@ -191,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update summary when payment amount changes
     paymentAmountInput.addEventListener('input', updateSummary);
+    paymentMethodSelect.addEventListener('change', togglePaymentProof);
 
     function updateSummary() {
         const paymentAmount = parseFloat(paymentAmountInput.value) || 0;
@@ -254,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSummary();
 
     // Show/hide transaction ID field based on payment method
-    document.getElementById('payment_method').addEventListener('change', function() {
+    paymentMethodSelect.addEventListener('change', function() {
         const transactionIdField = document.getElementById('transaction_id');
         const transactionIdLabel = transactionIdField.previousElementSibling;
 
@@ -266,6 +280,19 @@ document.addEventListener('DOMContentLoaded', function() {
             transactionIdField.required = false;
         }
     });
+
+    function togglePaymentProof() {
+        const isCash = paymentMethodSelect.value === 'cash';
+        paymentProofWrapper.style.display = isCash ? 'block' : 'none';
+        if (isCash) {
+            paymentProofInput.setAttribute('required', 'required');
+        } else {
+            paymentProofInput.removeAttribute('required');
+            paymentProofInput.value = '';
+        }
+    }
+
+    togglePaymentProof();
 });
 </script>
 @endpush

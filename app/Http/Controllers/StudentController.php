@@ -91,7 +91,7 @@ class StudentController extends Controller
 
     public function create()
     {
-        $this->authorize('create', StudentProfile::class);
+        // $this->authorize('create', StudentProfile::class);
 
         $departments = Department::where('is_active', true)->get();
         return view('students.create', compact('departments'));
@@ -99,7 +99,7 @@ class StudentController extends Controller
 
     public function store(StoreStudentProfileRequest $request)
     {
-        $this->authorize('create', StudentProfile::class);
+        // $this->authorize('create', StudentProfile::class);
 
         DB::beginTransaction();
 

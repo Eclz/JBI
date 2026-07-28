@@ -14,7 +14,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.fees.store') }}" id="feeRecordForm">
+                    <form method="POST" action="{{ route('admin.fees.records.store') }}" id="feeRecordForm">
                         @csrf
 
                         <div class="row">
@@ -49,7 +49,7 @@
                                             <option value="{{ $structure->id }}"
                                                     data-amount="{{ $structure->amount }}"
                                                     {{ old('fee_structure_id') == $structure->id ? 'selected' : '' }}>
-                                                {{ $structure->name }} - ${{ number_format($structure->amount, 2) }}
+                                                {{ $structure->name }} - {{ $currencyCode }} {{ number_format($structure->amount, 2) }}
                                                 ({{ $structure->academicYear->name ?? 'All Years' }})
                                             </option>
                                         @endforeach

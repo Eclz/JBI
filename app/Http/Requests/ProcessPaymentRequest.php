@@ -42,6 +42,7 @@ class ProcessPaymentRequest extends FormRequest
                 Rule::unique('fee_records', 'transaction_id')->whereNotNull('transaction_id'),
             ],
             'payment_notes' => 'nullable|string|max:1000',
+            'payment_proof' => 'required_if:payment_method,cash|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'send_receipt' => 'nullable|boolean',
         ];
     }
@@ -64,6 +65,9 @@ class ProcessPaymentRequest extends FormRequest
             'transaction_id.unique' => 'This transaction ID has already been used.',
             'transaction_id.max' => 'Transaction ID cannot exceed 255 characters.',
             'payment_notes.max' => 'Payment notes cannot exceed 1000 characters.',
+            'payment_proof.required_if' => 'Please upload proof of payment for cash payments.',
+            'payment_proof.mimes' => 'Payment proof must be a PDF or image file (JPG, JPEG, PNG).',
+            'payment_proof.max' => 'Payment proof cannot exceed 5MB.',
         ];
     }
 
@@ -78,6 +82,7 @@ class ProcessPaymentRequest extends FormRequest
             'payment_method' => 'payment method',
             'transaction_id' => 'transaction ID',
             'payment_notes' => 'payment notes',
+            'payment_proof' => 'payment proof',
         ];
     }
 

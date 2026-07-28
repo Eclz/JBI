@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use Carbon\Carbon;
 
-
 class ReportController extends Controller
 {
     /**
@@ -34,9 +33,9 @@ class ReportController extends Controller
             'total_faculty' => User::where('role', 'faculty')->count(),
             'active_faculty' => User::where('role', 'faculty')->where('is_active', true)->count(),
             'total_courses' => Course::count(),
-            'active_courses' => Course::where('is_active', true)->count(),
+            'active_courses' => Course::where('status', 'active')->count(),
             'total_enrollments' => CourseEnrollment::where('status', 'enrolled')->count(),
-            'total_revenue' => FeeRecord::sum('amount_paid'),
+            'total_revenue' => FeeRecord::sum('paid_amount'),
             'pending_fees' => FeeRecord::whereIn('status', ['pending', 'partial'])->sum('balance_amount'),
             'average_attendance' => $this->calculateAverageAttendance(),
         ];
@@ -49,7 +48,7 @@ class ReportController extends Controller
 
         // Recent payments
         $recentPayments = FeeRecord::with(['student', 'feeStructure'])
-            ->where('amount_paid', '>', 0)
+            ->where('paid_amount', '>', 0)
             ->latest('updated_at')
             ->take(5)
             ->get();
@@ -62,9 +61,9 @@ class ReportController extends Controller
             ->get();
 
         // Revenue trend (last 30 days)
-        $revenueTrend = FeeRecord::selectRaw('DATE(updated_at) as date, SUM(amount_paid) as revenue')
+        $revenueTrend = FeeRecord::selectRaw('DATE(updated_at) as date, SUM(paid_amount) as revenue')
             ->where('updated_at', '>=', now()->subDays(30))
-            ->where('amount_paid', '>', 0)
+            ->where('paid_amount', '>', 0)
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -84,7 +83,7 @@ class ReportController extends Controller
     public function students(Request $request)
     {
         $query = User::where('role', 'student')
-            ->with(['studentProfile']);
+            ->with(['studentProfile.department']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -99,14 +98,20 @@ class ReportController extends Controller
 
         if ($request->filled('admission_year')) {
             $query->whereHas('studentProfile', function ($q) use ($request) {
-                $q->whereYear('date_of_admission', $request->admission_year);
+                $q->whereYear('admission_date', $request->admission_year);
             });
+        }
+
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('studentProfile', function ($q) use ($search) {
                         $q->where('admission_number', 'like', "%{$search}%");
@@ -121,7 +126,21 @@ class ReportController extends Controller
             'total_students' => User::where('role', 'student')->count(),
             'active_students' => User::where('role', 'student')->where('is_active', true)->count(),
             'inactive_students' => User::where('role', 'student')->where('is_active', false)->count(),
+            'male_students' => User::where('role', 'student')->where('gender', 'male')->count(),
+            'female_students' => User::where('role', 'student')->where('gender', 'female')->count(),
         ];
+
+        $studentsByStatus = User::where('role', 'student')
+            ->selectRaw("CASE WHEN is_active = 1 THEN 'active' ELSE 'inactive' END as status, COUNT(*) as count")
+            ->groupBy('status')
+            ->get();
+
+        $recentAdmissions = User::where('role', 'student')
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
 
         // Students by department
         $studentsByDepartment = StudentProfile::select('department_id', DB::raw('COUNT(*) as count'))
@@ -131,26 +150,25 @@ class ReportController extends Controller
             ->get();
 
         // Students by admission year
-        $studentsByYear = StudentProfile::selectRaw('YEAR(date_of_admission) as year, COUNT(*) as count')
-            ->whereNotNull('date_of_admission')
+        $studentsByYear = StudentProfile::selectRaw('YEAR(admission_date) as year, COUNT(*) as count')
+            ->whereNotNull('admission_date')
             ->groupBy('year')
             ->orderBy('year', 'desc')
             ->get();
 
         // Get filter options
         $departments = Department::orderBy('name')->get();
-        $admissionYears = StudentProfile::selectRaw('DISTINCT YEAR(date_of_admission) as year')
-            ->whereNotNull('date_of_admission')
-            ->orderBy('year', 'desc')
-            ->pluck('year');
+        $years = range(date('Y'), date('Y') - 10);
 
         return view('admin.reports.students', compact(
             'students',
             'stats',
+            'studentsByStatus',
+            'recentAdmissions',
             'studentsByDepartment',
             'studentsByYear',
             'departments',
-            'admissionYears'
+            'years'
         ));
     }
 
@@ -160,7 +178,7 @@ class ReportController extends Controller
     public function faculty(Request $request)
     {
         $query = User::where('role', 'faculty')
-            ->with(['facultyProfile']);
+            ->with(['facultyProfile.department']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -183,6 +201,8 @@ class ReportController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('facultyProfile', function ($q) use ($search) {
                         $q->where('employee_id', 'like', "%{$search}%");
@@ -215,8 +235,9 @@ class ReportController extends Controller
         // Course load per faculty
         $facultyLoad = User::where('role', 'faculty')
             ->withCount(['taughtCourses as active_courses' => function ($query) {
-                $query->where('is_active', true);
+                $query->where('status', 'active');
             }])
+            ->with('facultyProfile.department')
             ->orderBy('active_courses', 'desc')
             ->take(10)
             ->get();
@@ -245,7 +266,7 @@ class ReportController extends Controller
 
         // Apply filters
         if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
+            $query->where('status', $request->status === 'active' ? 'active' : 'inactive');
         }
 
         if ($request->filled('department_id')) {
@@ -278,8 +299,8 @@ class ReportController extends Controller
         // Statistics
         $stats = [
             'total_courses' => Course::count(),
-            'active_courses' => Course::where('is_active', true)->count(),
-            'inactive_courses' => Course::where('is_active', false)->count(),
+            'active_courses' => Course::where('status', 'active')->count(),
+            'inactive_courses' => Course::where('status', 'inactive')->count(),
             'total_enrollments' => CourseEnrollment::where('status', 'enrolled')->count(),
         ];
 
@@ -303,7 +324,10 @@ class ReportController extends Controller
         // Get filter options
         $departments = Department::orderBy('name')->get();
         $semesters = Semester::orderBy('start_date', 'desc')->get();
-        $instructors = User::where('role', 'faculty')->orderBy('name')->get();
+        $instructors = User::where('role', 'faculty')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
 
         return view('admin.reports.courses', compact(
             'courses',
@@ -321,30 +345,29 @@ class ReportController extends Controller
      */
     public function fees(Request $request)
     {
-        $query = FeeRecord::with(['student', 'feeStructure', 'processor']);
+        $query = FeeRecord::with(['student', 'feeStructure.academicYear', 'processor']);
 
         // Apply filters
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('academic_year')) {
-            $query->where('academic_year', $request->academic_year);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', $request->date_to);
+        if ($request->filled('academic_year_id')) {
+            $query->whereHas('feeStructure', function ($q) use ($request) {
+                $q->where('academic_year_id', $request->academic_year_id);
+            });
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('student', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                    ->orWhereHas('student', function ($studentQuery) use ($search) {
+                        $studentQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -353,7 +376,7 @@ class ReportController extends Controller
         // Financial summary
         $summary = [
             'total_billed' => FeeRecord::sum('total_amount'),
-            'total_paid' => FeeRecord::sum('amount_paid'),
+            'total_paid' => FeeRecord::sum('paid_amount'),
             'total_balance' => FeeRecord::sum('balance_amount'),
             'total_discounts' => FeeRecord::sum('discount_amount'),
             'total_late_fees' => FeeRecord::sum('late_fee'),
@@ -365,26 +388,24 @@ class ReportController extends Controller
             ->get();
 
         // Payment trends (last 12 months)
-        $paymentTrends = FeeRecord::selectRaw('DATE_FORMAT(updated_at, "%Y-%m") as month, SUM(amount_paid) as total')
+        $paymentTrends = FeeRecord::selectRaw('DATE_FORMAT(updated_at, "%Y-%m") as month, SUM(paid_amount) as total')
             ->where('updated_at', '>=', now()->subMonths(12))
-            ->where('amount_paid', '>', 0)
+            ->where('paid_amount', '>', 0)
             ->groupBy('month')
             ->orderBy('month')
             ->get();
 
         // Top paying students
-        $topPayers = FeeRecord::select('user_id', DB::raw('SUM(amount_paid) as total_paid'))
+        $topPayers = FeeRecord::select('user_id', DB::raw('SUM(paid_amount) as total_paid'))
             ->with('student')
             ->groupBy('user_id')
             ->orderBy('total_paid', 'desc')
             ->take(10)
             ->get();
 
-        // Get filter options
-        $academicYears = FeeRecord::selectRaw('DISTINCT academic_year')
-            ->whereNotNull('academic_year')
-            ->orderBy('academic_year', 'desc')
-            ->pluck('academic_year');
+        $academicYears = AcademicYear::whereHas('feeStructures')
+            ->orderBy('year', 'desc')
+            ->get();
 
         return view('admin.reports.fees', compact(
             'feeRecords',
@@ -416,6 +437,13 @@ class ReportController extends Controller
             });
         }
 
+        if ($request->filled('academic_year_id')) {
+            $academicYearId = $request->get('academic_year_id');
+            $query->whereHas('course.semester', function ($q) use ($academicYearId) {
+                $q->where('academic_year_id', $academicYearId);
+            });
+        }
+
         $enrollments = $query->latest()->paginate(50);
 
         // Statistics
@@ -436,9 +464,10 @@ class ReportController extends Controller
         // Enrollments by department
         $enrollmentsByDepartment = CourseEnrollment::select('courses.department_id', DB::raw('COUNT(*) as count'))
             ->join('courses', 'course_enrollments.course_id', '=', 'courses.id')
-            ->with('course.department')
+            ->leftJoin('departments', 'courses.department_id', '=', 'departments.id')
+            ->selectRaw('departments.name as department_name')
             ->where('course_enrollments.status', 'enrolled')
-            ->groupBy('courses.department_id')
+            ->groupBy('courses.department_id', 'departments.name')
             ->orderBy('count', 'desc')
             ->get();
 
@@ -452,6 +481,7 @@ class ReportController extends Controller
         // Get filter options
         $semesters = Semester::orderBy('start_date', 'desc')->get();
         $departments = Department::orderBy('name')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return view('admin.reports.enrollment', compact(
             'enrollments',
@@ -460,7 +490,8 @@ class ReportController extends Controller
             'enrollmentsByDepartment',
             'enrollmentsBySemester',
             'semesters',
-            'departments'
+            'departments',
+            'academicYears'
         ));
     }
 
@@ -471,11 +502,14 @@ class ReportController extends Controller
     {
         $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->input('date_to', now()->format('Y-m-d'));
+        $status = $request->input('status');
+        $semesterId = $request->input('semester_id');
+        $academicYearId = $request->input('academic_year_id');
 
         // Revenue summary
         $revenue = [
             'total_billed' => FeeRecord::whereBetween('created_at', [$dateFrom, $dateTo])->sum('total_amount'),
-            'total_collected' => FeeRecord::whereBetween('updated_at', [$dateFrom, $dateTo])->sum('amount_paid'),
+            'total_collected' => FeeRecord::whereBetween('updated_at', [$dateFrom, $dateTo])->sum('paid_amount'),
             'total_pending' => FeeRecord::whereBetween('created_at', [$dateFrom, $dateTo])->where('status', '!=', 'paid')->sum('balance_amount'),
             'collection_rate' => 0,
         ];
@@ -485,22 +519,26 @@ class ReportController extends Controller
         }
 
         // Daily collection trends
-        $collectionTrends = FeeRecord::selectRaw('DATE(updated_at) as date, SUM(amount_paid) as total')
+        $collectionTrends = FeeRecord::selectRaw('DATE(updated_at) as date, SUM(paid_amount) as total')
             ->whereBetween('updated_at', [$dateFrom, $dateTo])
-            ->where('amount_paid', '>', 0)
+            ->where('paid_amount', '>', 0)
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
         // Payment method breakdown
-        $paymentMethods = FeeRecord::select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount_paid) as total'))
+        $paymentMethods = FeeRecord::select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(paid_amount) as total'))
             ->whereBetween('updated_at', [$dateFrom, $dateTo])
             ->whereNotNull('payment_method')
             ->groupBy('payment_method')
             ->get();
 
+        $paymentBreakdown = FeeRecord::select('status', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_amount) as total'))
+            ->groupBy('status')
+            ->get();
+
         // Fee structure breakdown
-        $feeStructureRevenue = FeeRecord::select('fee_structure_id', DB::raw('COUNT(*) as records'), DB::raw('SUM(amount_paid) as collected'), DB::raw('SUM(total_amount) as total'))
+        $feeStructureRevenue = FeeRecord::select('fee_structure_id', DB::raw('COUNT(*) as records'), DB::raw('SUM(paid_amount) as collected'), DB::raw('SUM(total_amount) as total'))
             ->with('feeStructure')
             ->whereBetween('updated_at', [$dateFrom, $dateTo])
             ->groupBy('fee_structure_id')
@@ -514,12 +552,38 @@ class ReportController extends Controller
             ->take(20)
             ->get();
 
+        $feeRecords = FeeRecord::with(['student', 'feeStructure.academicYear', 'feeStructure.semester'])
+            ->when($status, function ($query, $statusValue) {
+                $query->where('status', $statusValue);
+            })
+            ->when($semesterId, function ($query, $semesterValue) {
+                $query->whereHas('feeStructure', function ($feeQuery) use ($semesterValue) {
+                    $feeQuery->where('semester_id', $semesterValue);
+                });
+            })
+            ->when($academicYearId, function ($query, $academicYearValue) {
+                $query->whereHas('feeStructure', function ($feeQuery) use ($academicYearValue) {
+                    $feeQuery->where('academic_year_id', $academicYearValue);
+                });
+            })
+            ->whereBetween('created_at', [$dateFrom, $dateTo])
+            ->latest()
+            ->paginate(50)
+            ->appends($request->query());
+
+        $semesters = Semester::orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
+
         return view('admin.reports.financial', compact(
             'revenue',
+            'paymentBreakdown',
             'collectionTrends',
             'paymentMethods',
             'feeStructureRevenue',
             'outstandingPayments',
+            'feeRecords',
+            'semesters',
+            'academicYears',
             'dateFrom',
             'dateTo'
         ));
@@ -532,11 +596,14 @@ class ReportController extends Controller
     {
         $semesterId = $request->get('semester_id');
         $departmentId = $request->get('department_id');
+        $academicYearId = $request->get('academic_year_id');
 
         $query = Grade::with(['student', 'course', 'assignment']);
 
         if ($semesterId) {
-            $query->where('semester_id', $semesterId);
+            $query->whereHas('course', function ($q) use ($semesterId) {
+                $q->where('semester_id', $semesterId);
+            });
         }
 
         if ($departmentId) {
@@ -545,63 +612,89 @@ class ReportController extends Controller
             });
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($academicYearId) {
+            $query->whereHas('course.semester', function ($q) use ($academicYearId) {
+                $q->where('academic_year_id', $academicYearId);
+            });
+        }
+
         $grades = $query->latest()->paginate(50);
 
-        // Calculate average GPA
-        $averageGPA = $this->calculateAverageGPA($query);
+        $allGrades = (clone $query)->get();
+        $totalGrades = $allGrades->count();
+        $averageGPA = $totalGrades > 0 ? round($allGrades->avg('percentage'), 2) : 0;
+
+        // Calculate pass/fail rates from filtered grades
+        $passCount = $allGrades->where('percentage', '>=', 50)->count();
+        $failCount = $allGrades->where('percentage', '<', 50)->count();
+        $passRate = $totalGrades > 0 ? ($passCount / $totalGrades) * 100 : 0;
+        $failRate = $totalGrades > 0 ? ($failCount / $totalGrades) * 100 : 0;
+
+        $stats = [
+            'total_grades' => $totalGrades,
+            'average_gpa' => $averageGPA,
+            'pass_rate' => round($passRate, 1),
+            'fail_rate' => round($failRate, 1),
+        ];
 
         // Grade distribution
         $gradeDistribution = DB::table('grades')
             ->selectRaw('
                 CASE
-                    WHEN total_marks >= 90 THEN "A"
-                    WHEN total_marks >= 80 THEN "B"
-                    WHEN total_marks >= 70 THEN "C"
-                    WHEN total_marks >= 60 THEN "D"
+                    WHEN percentage >= 90 THEN "A"
+                    WHEN percentage >= 80 THEN "B"
+                    WHEN percentage >= 70 THEN "C"
+                    WHEN percentage >= 50 THEN "D"
                     ELSE "F"
-                END as grade_letter,
+                END as grade,
                 COUNT(*) as count
             ')
-            ->groupBy('grade_letter')
-            ->orderBy('grade_letter')
+            ->groupBy('grade')
+            ->orderBy('grade')
             ->get();
 
         // Top performers
-        $topPerformers = Grade::select('user_id', DB::raw('AVG(total_marks) as avg_grade'), DB::raw('COUNT(*) as course_count'))
-            ->with('student')
-            ->groupBy('user_id')
-            ->having('course_count', '>=', 3)
-            ->orderBy('avg_grade', 'desc')
+        $topPerformers = User::where('role', 'student')
+            ->with('studentProfile.department')
+            ->withAvg('grades as avg_gpa', 'percentage')
+            ->orderBy('avg_gpa', 'desc')
             ->take(10)
             ->get();
 
         // Course performance
-        $coursePerformance = Grade::select('course_id', DB::raw('AVG(total_marks) as avg_grade'), DB::raw('COUNT(*) as student_count'))
-            ->with('course')
-            ->groupBy('course_id')
-            ->orderBy('avg_grade', 'desc')
-            ->take(10)
-            ->get();
-
-        // Department performance
-        $departmentPerformance = Grade::select('courses.department_id', DB::raw('AVG(grades.total_marks) as avg_grade'), DB::raw('COUNT(*) as student_count'))
-            ->join('courses', 'grades.course_id', '=', 'courses.id')
-            ->with('course.department')
-            ->groupBy('courses.department_id')
-            ->orderBy('avg_grade', 'desc')
+        $coursePerformance = DB::table('courses')
+            ->select(
+                'courses.code as course_code',
+                'courses.name as course_name',
+                DB::raw('COUNT(DISTINCT course_enrollments.id) as enrolled_count'),
+                DB::raw('COUNT(grades.id) as graded_count'),
+                DB::raw('AVG(grades.percentage) as avg_grade'),
+                DB::raw('ROUND((SUM(CASE WHEN grades.percentage >= 50 THEN 1 ELSE 0 END) / NULLIF(COUNT(grades.id), 0)) * 100, 2) as pass_rate')
+            )
+            ->leftJoin('course_enrollments', 'courses.id', '=', 'course_enrollments.course_id')
+            ->leftJoin('grades', function($join) {
+                $join->on('course_enrollments.user_id', '=', 'grades.user_id')
+                     ->on('course_enrollments.course_id', '=', 'grades.course_id');
+            })
+            ->groupBy('courses.id', 'courses.code', 'courses.name')
             ->get();
 
         // Get filter options
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
         $semesters = Semester::orderBy('start_date', 'desc')->get();
         $departments = Department::orderBy('name')->get();
 
         return view('admin.reports.academic', compact(
             'grades',
-            'averageGPA',
+            'stats',
             'gradeDistribution',
             'topPerformers',
             'coursePerformance',
-            'departmentPerformance',
+            'academicYears',
             'semesters',
             'departments'
         ));
@@ -620,7 +713,7 @@ class ReportController extends Controller
         $query = Attendance::with(['student', 'course']);
 
         if ($dateFrom && $dateTo) {
-            $query->whereBetween('date', [$dateFrom, $dateTo]);
+            $query->whereBetween('attendance_date', [$dateFrom, $dateTo]);
         }
 
         if ($courseId) {
@@ -633,7 +726,7 @@ class ReportController extends Controller
             });
         }
 
-        $attendanceRecords = $query->latest('date')->paginate(50);
+        $attendanceRecords = $query->latest('attendance_date')->paginate(50);
 
         // Overall statistics
         $totalRecords = $query->count();
@@ -647,10 +740,10 @@ class ReportController extends Controller
         ];
 
         // Daily attendance trends
-        $attendanceTrends = Attendance::selectRaw('DATE(date) as date, COUNT(*) as total, SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present')
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->groupBy('date')
-            ->orderBy('date')
+        $attendanceTrends = Attendance::selectRaw('DATE(attendance_date) as date, COUNT(*) as total, SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present')
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
+            ->groupBy('attendance_date')
+            ->orderBy('attendance_date')
             ->get()
             ->map(function ($item) {
                 $item->rate = $item->total > 0 ? round(($item->present / $item->total) * 100, 2) : 0;
@@ -660,7 +753,7 @@ class ReportController extends Controller
         // Course-wise attendance
         $courseAttendance = Attendance::select('course_id', DB::raw('COUNT(*) as total'), DB::raw('SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present'))
             ->with('course')
-            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
             ->groupBy('course_id')
             ->get()
             ->map(function ($item) {
@@ -672,7 +765,7 @@ class ReportController extends Controller
         // Students with low attendance
         $lowAttendanceStudents = Attendance::select('user_id', DB::raw('COUNT(*) as total'), DB::raw('SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present'))
             ->with('student')
-            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
             ->groupBy('user_id')
             ->get()
             ->map(function ($item) {
@@ -686,7 +779,7 @@ class ReportController extends Controller
             ->take(20);
 
         // Get filter options
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
+        $courses = Course::where('status', true)->orderBy('name')->get();
         $departments = Department::orderBy('name')->get();
 
         return view('admin.reports.attendance', compact(
@@ -707,19 +800,19 @@ class ReportController extends Controller
      */
     public function exportStudents(Request $request)
     {
-        $students = User::where('role', 'student')->with('studentProfile')->get();
+        $students = User::where('role', 'student')->with('studentProfile.department')->get();
 
         $csv = "Name,Email,Admission Number,Department,Status,Date of Admission\n";
 
         foreach ($students as $student) {
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s"' . "\n",
-                $student->name,
+                $student->full_name ?: trim(($student->first_name ?? '') . ' ' . ($student->last_name ?? '')),
                 $student->email,
                 $student->studentProfile->admission_number ?? 'N/A',
                 $student->studentProfile->department->name ?? 'N/A',
                 $student->is_active ? 'Active' : 'Inactive',
-                $student->studentProfile->date_of_admission ?? 'N/A'
+                $student->studentProfile->admission_date ?? 'N/A'
             );
         }
 
@@ -741,7 +834,7 @@ class ReportController extends Controller
         foreach ($faculty as $member) {
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s"' . "\n",
-                $member->name,
+                $member->full_name ?: trim(($member->first_name ?? '') . ' ' . ($member->last_name ?? '')),
                 $member->email,
                 $member->facultyProfile->employee_id ?? 'N/A',
                 $member->facultyProfile->department->name ?? 'N/A',
@@ -791,16 +884,16 @@ class ReportController extends Controller
     {
         $feeRecords = FeeRecord::with(['student', 'feeStructure'])->get();
 
-        $csv = "Student Name,Admission Number,Fee Structure,Total Amount,Amount Paid,Balance,Status,Due Date\n";
+        $csv = "Date,Student Name,Fee Structure,Total Amount,Amount Paid,Balance,Status,Due Date\n";
 
         foreach ($feeRecords as $record) {
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s","%s","%s"' . "\n",
-                $record->student->name,
-                $record->student->studentProfile->admission_number ?? 'N/A',
+                $record->created_at->format('Y-m-d'),
+                $record->student?->full_name ?: trim(($record->student?->first_name ?? '') . ' ' . ($record->student?->last_name ?? '')),
                 $record->feeStructure->name ?? 'N/A',
                 $record->total_amount,
-                $record->amount_paid,
+                $record->paid_amount,
                 $record->balance_amount,
                 $record->status,
                 $record->due_date
@@ -825,8 +918,8 @@ class ReportController extends Controller
         foreach ($enrollments as $enrollment) {
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s","%s"' . "\n",
-                $enrollment->student->name,
-                $enrollment->course->code,
+                $enrollment->student?->full_name ?: trim(($enrollment->student?->first_name ?? '') . ' ' . ($enrollment->student?->last_name ?? '')),
+                $enrollment->course->code ?? $enrollment->course->course_code,
                 $enrollment->course->name,
                 $enrollment->semester->name ?? 'N/A',
                 $enrollment->enrollment_date,
@@ -859,10 +952,10 @@ class ReportController extends Controller
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s","%s","%s"' . "\n",
                 $record->created_at->format('Y-m-d'),
-                $record->student->name,
+                $record->student?->full_name ?: trim(($record->student?->first_name ?? '') . ' ' . ($record->student?->last_name ?? '')),
                 $record->feeStructure->name ?? 'N/A',
                 $record->total_amount,
-                $record->amount_paid,
+                $record->paid_amount,
                 $record->payment_method ?? 'N/A',
                 $record->transaction_id ?? 'N/A',
                 $record->status
@@ -882,19 +975,19 @@ class ReportController extends Controller
     {
         $grades = Grade::with(['student', 'course', 'assignment'])->get();
 
-        $csv = "Student Name,Course Code,Course Name,Assignment,Total Marks,Obtained Marks,Grade,Semester\n";
+        $csv = "Student Name,Course Code,Course Name,Assignment,Points Earned,Points Possible,Percentage,Letter Grade\n";
 
         foreach ($grades as $grade) {
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s","%s","%s"' . "\n",
-                $grade->student->name,
-                $grade->course->code ?? 'N/A',
+                $grade->student?->full_name ?: trim(($grade->student?->first_name ?? '') . ' ' . ($grade->student?->last_name ?? '')),
+                $grade->course->code ?? $grade->course->course_code ?? 'N/A',
                 $grade->course->name ?? 'N/A',
                 $grade->assignment->title ?? 'N/A',
-                $grade->total_marks,
-                $grade->obtained_marks,
-                $grade->grade,
-                $grade->semester->name ?? 'N/A'
+                $grade->points_earned,
+                $grade->points_possible,
+                $grade->percentage,
+                $grade->letter_grade ?? 'N/A'
             );
         }
 
@@ -913,7 +1006,7 @@ class ReportController extends Controller
         $dateTo = $request->input('date_to', now()->format('Y-m-d'));
 
         $attendanceRecords = Attendance::with(['student', 'course'])
-            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
             ->get();
 
         $csv = "Date,Student Name,Course Code,Course Name,Status,Remarks\n";
@@ -921,12 +1014,12 @@ class ReportController extends Controller
         foreach ($attendanceRecords as $record) {
             $csv .= sprintf(
                 '"%s","%s","%s","%s","%s","%s"' . "\n",
-                $record->date,
-                $record->student->name,
-                $record->course->code,
+                $record->attendance_date,
+                $record->student?->full_name ?: trim(($record->student?->first_name ?? '') . ' ' . ($record->student?->last_name ?? '')),
+                $record->course->code ?? $record->course->course_code,
                 $record->course->name,
                 $record->status,
-                $record->remarks ?? ''
+                $record->notes ?? ''
             );
         }
 

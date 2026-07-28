@@ -84,29 +84,30 @@
         <div class="applicant-details">
             <h3>Applicant Information:</h3>
             <ul>
-                <li><strong>Name:</strong> {{ $applicant->first_name }} {{ $applicant->last_name }}</li>
-                <li><strong>Email:</strong> {{ $applicant->email }}</li>
-                <li><strong>Role:</strong> {{ ucfirst($applicant->role) }}</li>
-                <li><strong>Phone:</strong> {{ $applicant->phone }}</li>
-                @if($applicant->studentProfile)
-                <li><strong>Program:</strong> {{ $applicant->studentProfile->program }}</li>
-                <li><strong>Department:</strong> {{ $applicant->studentProfile->department->name ?? 'N/A' }}</li>
-                <li><strong>Admission Number:</strong> {{ $applicant->studentProfile->admission_number }}</li>
+                <li><strong>Application Number:</strong> {{ $application->application_number }}</li>
+                <li><strong>Name:</strong> {{ $application->full_name }}</li>
+                <li><strong>Email:</strong> {{ $application->email }}</li>
+                <li><strong>Phone:</strong> {{ $application->phone }}</li>
+                <li><strong>Application Type:</strong> {{ $application->type_label }}</li>
+                @if($application->type === 'student')
+                <li><strong>Program:</strong> {{ $application->program }}</li>
+                <li><strong>Previous School:</strong> {{ $application->previous_school ?? 'N/A' }}</li>
+                <li><strong>Previous GPA:</strong> {{ $application->previous_gpa ?? 'N/A' }}</li>
                 @endif
-                @if($applicant->facultyProfile)
-                <li><strong>Position:</strong> {{ $applicant->facultyProfile->position }}</li>
-                <li><strong>Department:</strong> {{ $applicant->facultyProfile->department->name ?? 'N/A' }}</li>
-                <li><strong>Employee ID:</strong> {{ $applicant->facultyProfile->employee_id }}</li>
+                @if($application->type === 'faculty')
+                <li><strong>Position:</strong> {{ $application->position }}</li>
+                <li><strong>Department:</strong> {{ $application->department }}</li>
+                <li><strong>Highest Degree:</strong> {{ $application->highest_degree ?? 'N/A' }}</li>
+                <li><strong>Experience:</strong> {{ $application->years_of_experience ?? 0 }} years</li>
                 @endif
-                <li><strong>Application Date:</strong> {{ $applicant->created_at->format('F j, Y \a\t g:i A') }}</li>
-                <li><strong>Email Verified:</strong> {{ $applicant->hasVerifiedEmail() ? 'Yes' : 'No' }}</li>
+                <li><strong>Application Date:</strong> {{ $application->created_at->format('F j, Y \a\t g:i A') }}</li>
             </ul>
         </div>
 
         <p><strong>Action Required:</strong> Please review this application and either approve or reject it through the admin dashboard.</p>
 
         <div style="text-align: center;">
-            <a href="{{ $adminDashboardUrl }}" class="review-button">Review Application</a>
+            <a href="{{ route('admin.applications.show', $application) }}" class="review-button">Review Application</a>
         </div>
 
         <p>You can access the full application details, documents, and make approval decisions through the admin panel.</p>

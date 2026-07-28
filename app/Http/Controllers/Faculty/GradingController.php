@@ -13,14 +13,60 @@ use Illuminate\Support\Facades\DB;
 
 class GradingController extends Controller
 {
-    public function index()
+    public function overview()
     {
         $courses = Course::where('instructor_id', Auth::id())
+            ->withCount('enrollments as enrolled_students_count')
             ->with(['semester', 'department'])
             ->orderBy('name')
             ->get();
 
-        return view('faculty.grading.index', compact('courses'));
+        // Calculate grading statistics per course
+        $gradingStats = [];
+        $pendingGrades = 0;
+
+        foreach ($courses as $course) {
+            $totalStudents = $course->enrollments()->where('status', 'enrolled')->count();
+            $gradedCount = Grade::where('course_id', $course->id)
+                ->where('is_published', true)
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $averageGrade = Grade::where('course_id', $course->id)
+                ->where('is_published', true)
+                ->avg('percentage');
+
+            $gradingStats[$course->id] = [
+                'total_students' => $totalStudents,
+                'graded' => $gradedCount,
+                'pending' => $totalStudents - $gradedCount,
+                'average' => $averageGrade ?? 0
+            ];
+
+            $pendingGrades += ($totalStudents - $gradedCount);
+        }
+
+        return view('faculty.grading.index', compact('courses', 'gradingStats', 'pendingGrades'));
+    }
+
+    public function index(Course $course)
+    {
+        // Verify faculty teaches this course
+        if ($course->instructor_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to course grading.');
+        }
+
+        $assignments = $course->assignments()
+            ->orderBy('due_date', 'desc')
+            ->get();
+
+        $students = $course->enrollments()
+            ->with('student')
+            ->where('status', 'enrolled')
+            ->get()
+            ->pluck('student');
+
+        return view('faculty.grading.course', compact('course', 'assignments', 'students'));
     }
 
     public function course(Course $course)

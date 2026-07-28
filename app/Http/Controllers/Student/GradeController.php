@@ -18,7 +18,17 @@ class GradeController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return view('student.grades.index', compact('grades'));
+        $allGrades = Grade::where('user_id', Auth::id())
+            ->with(['course'])
+            ->published()
+            ->get();
+
+        $gpa = $this->calculateGPAFromGrades($allGrades);
+        $totalCredits = $allGrades->pluck('course')->unique('id')->sum('credits');
+        $completedCourses = $allGrades->pluck('course_id')->unique()->count();
+        $averageScore = $allGrades->avg('final_grade') ?? 0;
+
+        return view('student.grades.index', compact('grades', 'gpa', 'totalCredits', 'completedCourses', 'averageScore'));
     }
 
     public function show(Course $course)
@@ -54,6 +64,27 @@ class GradeController extends Controller
         $gpa = $this->calculateGPA($grades);
 
         return view('student.grades.transcript', compact('grades', 'gpa'));
+    }
+
+    private function calculateGPAFromGrades($grades)
+    {
+        $courseGrades = $grades->groupBy('course_id');
+
+        $totalGradePoints = 0;
+        $totalCredits = 0;
+
+        foreach ($courseGrades as $courseGrades) {
+            $course = $courseGrades->first()->course;
+            $courseAverage = $courseGrades->avg('final_grade') ?? $courseGrades->avg('percentage') ?? 0;
+
+            // Convert percentage to grade points (4.0 scale)
+            $gradePoints = $this->percentageToGradePoints($courseAverage);
+
+            $totalGradePoints += $gradePoints * $course->credits;
+            $totalCredits += $course->credits;
+        }
+
+        return $totalCredits > 0 ? $totalGradePoints / $totalCredits : 0;
     }
 
     private function calculateGPA($grades)

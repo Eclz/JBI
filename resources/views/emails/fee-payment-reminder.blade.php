@@ -140,7 +140,7 @@
             <div class="alert alert-danger">
                 <strong>URGENT:</strong> Your fee payment is now overdue!
                 @if($feeRecord->late_fee > 0)
-                    A late fee of ${{ number_format($feeRecord->late_fee, 2) }} has been applied.
+                    A late fee of {{ $currencyCode }} {{ number_format($feeRecord->late_fee, 2) }} has been applied.
                 @endif
             </div>
             <p>This is an urgent reminder that your fee payment was due on <strong>{{ $feeRecord->due_date->format('F d, Y') }}</strong> and is now <strong>{{ abs($feeRecord->due_date->diffInDays(now())) }} days overdue</strong>.</p>
@@ -190,32 +190,32 @@
 
             <div class="detail-row">
                 <span class="detail-label">Original Amount:</span>
-                <span class="detail-value">${{ number_format($feeRecord->amount, 2) }}</span>
+                <span class="detail-value">{{ $currencyCode }} {{ number_format($feeRecord->amount, 2) }}</span>
             </div>
 
             @if($feeRecord->discount_amount > 0)
             <div class="detail-row">
                 <span class="detail-label">Discount:</span>
-                <span class="detail-value" style="color: #28a745;">-${{ number_format($feeRecord->discount_amount, 2) }}</span>
+                <span class="detail-value" style="color: #28a745;">-{{ $currencyCode }} {{ number_format($feeRecord->discount_amount, 2) }}</span>
             </div>
             @endif
 
             @if($feeRecord->late_fee > 0)
             <div class="detail-row">
                 <span class="detail-label">Late Fee:</span>
-                <span class="detail-value" style="color: #dc3545;">+${{ number_format($feeRecord->late_fee, 2) }}</span>
+                <span class="detail-value" style="color: #dc3545;">+{{ $currencyCode }} {{ number_format($feeRecord->late_fee, 2) }}</span>
             </div>
             @endif
 
             <div class="detail-row">
                 <span class="detail-label">Total Amount:</span>
-                <span class="detail-value"><strong>${{ number_format($feeRecord->total_amount, 2) }}</strong></span>
+                <span class="detail-value"><strong>{{ $currencyCode }} {{ number_format($feeRecord->total_amount, 2) }}</strong></span>
             </div>
 
             @if($feeRecord->paid_amount > 0)
             <div class="detail-row">
                 <span class="detail-label">Paid Amount:</span>
-                <span class="detail-value" style="color: #28a745;">${{ number_format($feeRecord->paid_amount, 2) }}</span>
+                <span class="detail-value" style="color: #28a745;">{{ $currencyCode }} {{ number_format($feeRecord->paid_amount, 2) }}</span>
             </div>
             @endif
 
@@ -228,12 +228,12 @@
         </div>
 
         <div class="amount-highlight">
-            Amount Due: ${{ number_format($feeRecord->balance_amount, 2) }}
+            Amount Due: {{ $currencyCode }} {{ number_format($feeRecord->balance_amount, 2) }}
         </div>
 
         @if($feeRecord->paid_amount > 0)
             <p style="color: #28a745; text-align: center;">
-                ✓ You have paid ${{ number_format($feeRecord->paid_amount, 2) }} ({{ number_format(($feeRecord->paid_amount / $feeRecord->total_amount) * 100, 1) }}% of total)
+                ✓ You have paid {{ $currencyCode }} {{ number_format($feeRecord->paid_amount, 2) }} ({{ number_format(($feeRecord->paid_amount / $feeRecord->total_amount) * 100, 1) }}% of total)
             </p>
         @endif
 

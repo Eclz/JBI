@@ -206,6 +206,43 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="program_id" class="form-label">Program</label>
+                                    <select class="form-select @error('program_id') is-invalid @enderror"
+                                            id="program_id"
+                                            name="program_id">
+                                        <option value="">Select Program</option>
+                                        @foreach($programs as $program)
+                                            <option value="{{ $program->id }}"
+                                                {{ old('program_id', $course->program_id) == $program->id ? 'selected' : '' }}>
+                                                {{ $program->name }} @if($program->level) ({{ $program->level->name }}) @endif - {{ $program->department->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('program_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="year_of_study" class="form-label">Year of Study</label>
+                                    <input type="number"
+                                           class="form-control @error('year_of_study') is-invalid @enderror"
+                                           id="year_of_study"
+                                           name="year_of_study"
+                                           value="{{ old('year_of_study', $course->year_of_study) }}"
+                                           min="1"
+                                           max="12"
+                                           placeholder="e.g., 1">
+                                    @error('year_of_study')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Course Settings -->

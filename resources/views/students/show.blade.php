@@ -197,20 +197,20 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <div class="text-center">
-                                    <div class="h4 text-primary mb-1">${{ number_format($financialSummary['total_fees'], 2) }}</div>
+                                    <div class="h4 text-primary mb-1">{{ $currencyCode }} {{ number_format($financialSummary['total_fees'], 2) }}</div>
                                     <div class="text-muted">Total Fees</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="text-center">
-                                    <div class="h4 text-success mb-1">${{ number_format($financialSummary['paid_amount'], 2) }}</div>
+                                    <div class="h4 text-success mb-1">{{ $currencyCode }} {{ number_format($financialSummary['paid_amount'], 2) }}</div>
                                     <div class="text-muted">Paid Amount</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="text-center">
                                     <div class="h4 {{ $financialSummary['outstanding'] > 0 ? 'text-danger' : 'text-success' }} mb-1">
-                                        ${{ number_format($financialSummary['outstanding'], 2) }}
+                                        {{ $currencyCode }} {{ number_format($financialSummary['outstanding'], 2) }}
                                     </div>
                                     <div class="text-muted">Outstanding Balance</div>
                                 </div>

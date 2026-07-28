@@ -58,6 +58,16 @@ class UpdateCourseRequest extends FormRequest
                 'integer',
                 Rule::exists('departments', 'id')->where('is_active', true),
             ],
+            'program' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'program_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('programs', 'id')->where('is_active', true),
+            ],
             'instructor_id' => [
                 'nullable',
                 'integer',
@@ -68,6 +78,12 @@ class UpdateCourseRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('semesters', 'id')->where('is_active', true),
+            ],
+            'year_of_study' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:12',
             ],
             'schedule' => [
                 'nullable',

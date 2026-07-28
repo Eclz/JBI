@@ -48,20 +48,24 @@ class StoreUserRequest extends FormRequest
                 'confirmed',
             ],
             'role' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::in(['admin', 'faculty', 'student', 'parent']),
             ],
+            'role_id' => [
+                'required',
+                'exists:roles,id',
+            ],
             'student_id' => [
                 'nullable',
-                'required_if:role,student',
+                'nullable',
                 'string',
                 'regex:/^JBI\d{4,6}$/',
                 'unique:users,student_id',
             ],
             'employee_id' => [
                 'nullable',
-                'required_if:role,faculty,admin',
+                'nullable',
                 'string',
                 'regex:/^JBI\d{3,5}$/',
                 'unique:users,employee_id',

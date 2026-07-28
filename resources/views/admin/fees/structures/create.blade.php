@@ -56,6 +56,7 @@
                                             <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
                                                 <option value="">Select Fee Type</option>
                                                 <option value="tuition" {{ old('type') == 'tuition' ? 'selected' : '' }}>Tuition</option>
+                                                <option value="registration" {{ old('type') == 'registration' ? 'selected' : '' }}>Registration</option>
                                                 <option value="library" {{ old('type') == 'library' ? 'selected' : '' }}>Library</option>
                                                 <option value="laboratory" {{ old('type') == 'laboratory' ? 'selected' : '' }}>Laboratory</option>
                                                 <option value="technology" {{ old('type') == 'technology' ? 'selected' : '' }}>Technology</option>

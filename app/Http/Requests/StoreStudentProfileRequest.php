@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\StudentProfile;
+use App\Models\Program;
 
 class StoreStudentProfileRequest extends FormRequest
 {
@@ -21,18 +22,32 @@ class StoreStudentProfileRequest extends FormRequest
      */
     public function rules(): array
     {
+        $student = $this->route('student');
+        $studentProfileId = $student?->studentProfile?->id;
+
         return [
-            'user_id' => [
+            'first_name' => [
                 'required',
+                'string',
+                'max:255',
+            ],
+            'last_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'user_id' => [
+                'sometimes',
+                'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where('role', 'student'),
-                'unique:student_profiles,user_id',
+                Rule::unique('student_profiles', 'user_id')->ignore($studentProfileId),
             ],
             'admission_number' => [
                 'required',
                 'string',
-                'regex:/^ADM\d{6}$/',
-                'unique:student_profiles,admission_number',
+                'regex:/^JBI\d{8}$/',
+                Rule::unique('student_profiles', 'admission_number')->ignore($studentProfileId),
             ],
             'admission_date' => [
                 'required',
@@ -46,22 +61,14 @@ class StoreStudentProfileRequest extends FormRequest
                 Rule::exists('departments', 'id')->where('is_active', true),
             ],
             'program' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
-                Rule::in([
-                    'Bachelor of Arts in Biblical Studies',
-                    'Bachelor of Arts in Theology',
-                    'Bachelor of Arts in Christian Ministry',
-                    'Bachelor of Science in Christian Education',
-                    'Master of Divinity',
-                    'Master of Arts in Biblical Studies',
-                    'Master of Arts in Theology',
-                    'Master of Arts in Christian Ministry',
-                    'Doctor of Ministry',
-                    'Certificate in Biblical Studies',
-                    'Certificate in Christian Ministry',
-                ]),
+            ],
+            'program_id' => [
+                'required',
+                'integer',
+                Rule::exists('programs', 'id')->where('is_active', true),
             ],
             'specialization' => [
                 'nullable',
@@ -83,7 +90,13 @@ class StoreStudentProfileRequest extends FormRequest
                 ]),
             ],
             'current_semester' => [
-                'required',
+                'nullable',
+                'integer',
+                'min:1',
+                'max:12',
+            ],
+            'year_of_study' => [
+                'nullable',
                 'integer',
                 'min:1',
                 'max:12',
@@ -108,13 +121,13 @@ class StoreStudentProfileRequest extends FormRequest
                 'decimal:0,2',
             ],
             'total_credits_earned' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:0',
                 'max:200',
             ],
             'total_credits_required' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:30',
                 'max:200',
@@ -201,7 +214,7 @@ class StoreStudentProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'admission_number.regex' => 'Admission number must be in format ADM followed by 6 digits (e.g., ADM202401).',
+            'admission_number.regex' => 'Admission number must be in format JBI followed by 8 digits (e.g., JBI20240001).',
             'guardian_name.regex' => 'Guardian name may only contain letters, spaces, dots, hyphens, and apostrophes.',
             'guardian_phone.regex' => 'Please provide a valid guardian phone number.',
             'actual_graduation_date.required_if' => 'Graduation date is required for graduated students.',
@@ -265,8 +278,13 @@ class StoreStudentProfileRequest extends FormRequest
             'Certificate in Christian Ministry' => 30,
         ];
 
-        if (isset($programCredits[$this->program])) {
-            $expectedCredits = $programCredits[$this->program];
+        $programName = $this->program;
+        if (!$programName && $this->program_id) {
+            $programName = Program::find($this->program_id)?->name;
+        }
+
+        if ($programName && isset($programCredits[$programName])) {
+            $expectedCredits = $programCredits[$programName];
             if ($this->total_credits_required !== $expectedCredits) {
                 $validator->errors()->add(
                     'total_credits_required',

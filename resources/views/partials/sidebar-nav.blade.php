@@ -37,12 +37,36 @@
     <ul class="sidebar-menu">
         <li class="menu-header">Main Navigation</li>
 
+        {{-- Show role-specific dashboard links --}}
+        @if(auth()->user()->isAdmin())
+        <li class="menu-item {{ request()->routeIs('dashboard') || request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}" class="menu-link">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        @elseif(auth()->user()->role === 'student')
+        <li class="menu-item {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('student.dashboard') }}" class="menu-link">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        @elseif(auth()->user()->role === 'faculty')
+        <li class="menu-item {{ request()->routeIs('faculty.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('faculty.dashboard') }}" class="menu-link">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        @else
         <li class="menu-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
         </li>
+        @endif
 
         @if(auth()->user()->isAdmin())
         <li class="menu-header">Administration</li>
@@ -54,43 +78,28 @@
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.roles.index') }}" class="menu-link">
+                <i class="bi bi-shield-lock"></i>
+                <span>Roles & Permissions</span>
+            </a>
+        </li>
+
         <li class="menu-item {{ request()->routeIs('admin.applications.*') ? 'active' : '' }}">
             <a href="{{ route('admin.applications.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-check"></i>
                 <span>Applications</span>
                 @php
                     try {
-                        // Count pending student applications
-                        $pendingStudentCount = \App\Models\User::whereHas('studentProfile', function($q) {
-                            $q->where('application_status', 'submitted');
-                        })->where('is_active', false)->count();
+                        $pendingApplicationsCount = \App\Models\Application::where('status', 'pending')->count();
 
-                        // Count pending faculty applications - use safer approach
-                        $pendingFacultyCount = 0;
-                        try {
-                            $pendingFacultyCount = \App\Models\User::whereHas('facultyProfile', function($q) {
-                                if (Schema::hasColumn('faculty_profiles', 'employment_status')) {
-                                    $q->where('employment_status', 'pending');
-                                } else {
-                                    // Fallback: count faculty users who are not active
-                                    $q->where('status', 'pending');
-                                }
-                            })->where('is_active', false)->count();
-                        } catch (\Exception $e) {
-                            // If faculty_profiles query fails, just count inactive faculty users
-                            $pendingFacultyCount = \App\Models\User::where('role', 'faculty')
-                                                                  ->where('is_active', false)
-                                                                  ->count();
+                        if ($pendingApplicationsCount > 0) {
+                            echo '<span class="badge bg-danger rounded-pill ms-auto">' . $pendingApplicationsCount . '</span>';
                         }
-
-                        $totalPending = $pendingStudentCount + $pendingFacultyCount;
                     } catch (\Exception $e) {
-                        $totalPending = 0;
+                        // Silently fail if there's a database error
                     }
                 @endphp
-                @if($totalPending > 0)
-                    <span class="badge bg-warning rounded-pill ms-auto">{{ $totalPending }}</span>
-                @endif
             </a>
         </li>
 
@@ -101,8 +110,8 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.faculty.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.faculties.index') }}" class="menu-link">
+        <li class="menu-item {{ request()->routeIs('admin.faculty-staff.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.faculty-staff.index') }}" class="menu-link">
                 <i class="bi bi-person-badge"></i>
                 <span>Faculty Management</span>
             </a>
@@ -122,6 +131,41 @@
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.programs.index') }}" class="menu-link">
+                <i class="bi bi-journal-bookmark"></i>
+                <span>Program Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.program-levels.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.program-levels.index') }}" class="menu-link">
+                <i class="bi bi-layers"></i>
+                <span>Program Levels</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.program-changes.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.program-changes.index') }}" class="menu-link">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Program Change Requests</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.academic-years.index') }}" class="menu-link">
+                <i class="bi bi-calendar3"></i>
+                <span>Academic Years</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.semesters.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.semesters.index') }}" class="menu-link">
+                <i class="bi bi-calendar2"></i>
+                <span>Semesters</span>
+            </a>
+        </li>
+
         <li class="menu-item {{ request()->routeIs('admin.fees.*') ? 'active' : '' }}">
             <a href="{{ route('admin.fees.index') }}" class="menu-link">
                 <i class="bi bi-cash-coin"></i>
@@ -130,14 +174,14 @@
         </li>
 
         <li class="menu-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('admin.reports.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span>Reports</span>
             </a>
         </li>
 
         <li class="menu-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('admin.settings') }}" class="menu-link">
                 <i class="bi bi-gear"></i>
                 <span>System Settings</span>
             </a>
@@ -145,7 +189,7 @@
         @endif
 
         @if(auth()->user()->isFaculty())
-        <li class="menu-header">Faculty</li>
+        <li class="menu-header">FACULTY</li>
 
         <li class="menu-item {{ request()->routeIs('faculty.courses.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.courses.index') }}" class="menu-link">
@@ -154,22 +198,53 @@
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('faculty.lms.*') ? 'active' : '' }}">
+            <a href="{{ route('faculty.lms.index') }}" class="menu-link">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>LMS Analytics</span>
+            </a>
+        </li>
+
+        {{-- Added Assignments menu item --}}
+        <li class="menu-item {{ request()->routeIs('faculty.assignments.*') ? 'active' : '' }}">
+            <a href="{{ route('faculty.assignments.index') }}" class="menu-link">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Assignments</span>
+            </a>
+        </li>
+
+        {{-- Added Exams menu item --}}
+        <li class="menu-item {{ request()->routeIs('faculty.exams.*') ? 'active' : '' }}">
+            <a href="{{ route('faculty.exams.index') }}" class="menu-link">
+                <i class="bi bi-pencil-square"></i>
+                <span>Exams</span>
+            </a>
+        </li>
+
+        {{-- Added Quizzes menu item --}}
+        <li class="menu-item {{ request()->routeIs('faculty.quizzes.*') ? 'active' : '' }}">
+            <a href="{{ route('faculty.quizzes.index') }}" class="menu-link">
+                <i class="bi bi-clipboard-check"></i>
+                <span>Quizzes</span>
+            </a>
+        </li>
+
         <li class="menu-item {{ request()->routeIs('faculty.attendance.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('faculty.attendance.index') }}" class="menu-link">
                 <i class="bi bi-calendar-check"></i>
                 <span>Attendance</span>
             </a>
         </li>
 
         <li class="menu-item {{ request()->routeIs('faculty.grading.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('faculty.grading.index') }}" class="menu-link">
                 <i class="bi bi-award"></i>
                 <span>Grading</span>
             </a>
         </li>
 
         <li class="menu-item {{ request()->routeIs('faculty.materials.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('faculty.materials.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Course Materials</span>
             </a>
@@ -179,6 +254,13 @@
         @if(auth()->user()->isStudent())
         <li class="menu-header">Student</li>
 
+        <li class="menu-item {{ request()->routeIs('student.courses.enrollments') ? 'active' : '' }}">
+            <a href="{{ route('student.courses.enrollments') }}" class="menu-link">
+                <i class="bi bi-journal-plus"></i>
+                <span>Course Enrollment</span>
+            </a>
+        </li>
+
         <li class="menu-item {{ request()->routeIs('student.courses.*') ? 'active' : '' }}">
             <a href="{{ route('student.courses.index') }}" class="menu-link">
                 <i class="bi bi-journal-text"></i>
@@ -186,29 +268,94 @@
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('student.lms.*') ? 'active' : '' }}">
+            <a href="{{ route('student.lms.index') }}" class="menu-link">
+                <i class="bi bi-play-circle"></i>
+                <span>My Learning</span>
+            </a>
+        </li>
+
+        {{-- Updating assignment route link --}}
         <li class="menu-item {{ request()->routeIs('student.assignments.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('student.assignments.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Assignments</span>
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
+            <a href="{{ route('student.program-changes.index') }}" class="menu-link">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Program Change</span>
+            </a>
+        </li>
+
+        {{-- Adding exams menu item --}}
+        <li class="menu-item {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
+            <a href="{{ route('student.exams.index') }}" class="menu-link">
+                <i class="bi bi-pencil-square"></i>
+                <span>Exams</span>
+                @php
+                    $activeExamCount = 0;
+                    try {
+                        $student = Auth::user();
+                        $enrolledCourseIds = $student->courseEnrollments()
+                            ->where('status', 'enrolled')
+                            ->pluck('course_id');
+                        $now = \Carbon\Carbon::now();
+                        $activeExams = \App\Models\Exam::whereIn('course_id', $enrolledCourseIds)
+                            ->where('start_time', '<=', $now)
+                            ->where('end_time', '>=', $now)
+                            ->with(['attempts' => function ($query) use ($student) {
+                                $query->where('user_id', $student->id);
+                            }])
+                            ->get();
+
+                        $activeExamCount = $activeExams->filter(function ($exam) use ($now) {
+                            $attempt = $exam->attempts->first();
+                            if (!$attempt) {
+                                return true;
+                            }
+                            if (in_array($attempt->status, ['submitted', 'graded'], true)) {
+                                return false;
+                            }
+                            if (!$attempt->started_at) {
+                                return true;
+                            }
+                            $byDuration = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
+                            $deadline = $exam->end_time;
+                            $effectiveEnd = $deadline && $deadline->lt($byDuration) ? $deadline : $byDuration;
+                            return $effectiveEnd->gt($now);
+                        })->count();
+                    } catch (\Exception $e) {
+                        $activeExamCount = 0;
+                    }
+                @endphp
+                @if($activeExamCount > 0)
+                    <span class="badge bg-danger rounded-pill ms-auto">{{ $activeExamCount }}</span>
+                @endif
+            </a>
+        </li>
+
+        {{-- Updating grades route link --}}
         <li class="menu-item {{ request()->routeIs('student.grades.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('student.grades.index') }}" class="menu-link">
                 <i class="bi bi-award"></i>
                 <span>Grades</span>
             </a>
         </li>
 
+        {{-- Updating attendance route link --}}
         <li class="menu-item {{ request()->routeIs('student.attendance.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('student.attendance.index') }}" class="menu-link">
                 <i class="bi bi-calendar-check"></i>
                 <span>Attendance</span>
             </a>
         </li>
 
+        {{-- Updating fee payments route link --}}
         <li class="menu-item {{ request()->routeIs('student.fees.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('student.fees.index') }}" class="menu-link">
                 <i class="bi bi-cash-coin"></i>
                 <span>Fee Payments</span>
             </a>
@@ -225,22 +372,27 @@
         </li>
 
         <li class="menu-item {{ request()->routeIs('forums.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('forums.index') }}" class="menu-link">
                 <i class="bi bi-chat-dots"></i>
                 <span>Forums</span>
             </a>
         </li>
 
         <li class="menu-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('notifications.index') }}" class="menu-link">
                 <i class="bi bi-bell"></i>
                 <span>Notifications</span>
-                <span class="badge bg-danger rounded-pill ms-auto">3</span>
+                @php
+                    $unreadCount = Auth::check() ? Auth::user()->notifications()->where('is_read', false)->count() : 0;
+                @endphp
+                @if($unreadCount > 0)
+                    <span class="badge bg-danger rounded-pill ms-auto">{{ $unreadCount }}</span>
+                @endif
             </a>
         </li>
 
         <li class="menu-item {{ request()->routeIs('help.*') ? 'active' : '' }}">
-            <a href="#" class="menu-link">
+            <a href="{{ route('support.index') }}" class="menu-link">
                 <i class="bi bi-question-circle"></i>
                 <span>Help & Support</span>
             </a>

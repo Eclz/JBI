@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\User;
+use App\Models\Application;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -10,17 +10,15 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ApplicationSubmitted extends Mailable
+class ApplicationSubmitted extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $applicationNumber;
+    public $application;
 
-    public function __construct(User $user)
+    public function __construct(Application $application)
     {
-        $this->user = $user;
-        $this->applicationNumber = $this->generateApplicationNumber();
+        $this->application = $application;
     }
 
     public function envelope(): Envelope
@@ -34,15 +32,6 @@ class ApplicationSubmitted extends Mailable
     {
         return new Content(
             view: 'emails.application-submitted',
-            with: [
-                'user' => $this->user,
-                'applicationNumber' => $this->applicationNumber,
-            ],
         );
-    }
-
-    private function generateApplicationNumber()
-    {
-        return 'APP' . date('Y') . str_pad($this->user->id, 6, '0', STR_PAD_LEFT);
     }
 }

@@ -14,6 +14,9 @@ use App\Models\Grade;
 use App\Models\Department;
 use App\Models\AcademicYear;
 use App\Models\Semester;
+use App\Models\CourseEnrollment;
+use App\Models\Payment;
+use App\Models\Application;
 
 class DashboardController extends Controller
 {
@@ -52,8 +55,50 @@ class DashboardController extends Controller
                 $data['totalFaculty'] = User::where('role', 'faculty')->count();
                 $data['totalCourses'] = Course::count();
                 $data['totalDepartments'] = Department::count();
+                $data['activeStudents'] = User::where('role', 'student')->where('is_active', 1)->count();
+                $data['activeFaculty'] = User::where('role', 'faculty')->where('is_active', 1)->count();
+
+                // Financial data
+                $data['totalRevenue'] = FeeRecord::sum('total_amount');
+                $data['collectedRevenue'] = FeeRecord::sum('paid_amount');
+                $data['pendingRevenue'] = FeeRecord::sum('balance_amount');
+                $data['pendingFeesCount'] = FeeRecord::where('status', 'pending')->count();
+                $data['overdueFeesCount'] = FeeRecord::where('status', 'overdue')->count();
+
+                // Enrollment data
+                $data['totalEnrollments'] = CourseEnrollment::count();
+                $data['activeEnrollments'] = CourseEnrollment::where('status', 'active')->count();
+
+                // Recent activity
                 $data['recentUsers'] = User::latest()->take(5)->get();
-                $data['pendingFees'] = FeeRecord::where('status', 'pending')->count();
+                $data['recentEnrollments'] = CourseEnrollment::with(['student', 'course'])
+                    ->latest()
+                    ->take(5)
+                    ->get();
+                $data['recentPayments'] = Payment::with(['feeRecord.student'])
+                    ->latest()
+                    ->take(5)
+                    ->get();
+
+                // Monthly statistics
+                $currentMonth = now()->startOfMonth();
+                $data['monthlyEnrollments'] = CourseEnrollment::where('created_at', '>=', $currentMonth)->count();
+                $data['monthlyRevenue'] = Payment::where('created_at', '>=', $currentMonth)->sum('amount');
+                $data['monthlyNewStudents'] = User::where('role', 'student')
+                    ->where('created_at', '>=', $currentMonth)
+                    ->count();
+
+                // Attendance overview
+                $data['averageAttendance'] = Attendance::where('status', 'present')->count() /
+                    max(1, Attendance::count()) * 100;
+
+                // Academic performance
+                $data['averageGPA'] = Grade::avg('points_earned') ?? 0;
+
+                // Application statistics
+                $data['pendingApplications'] = Application::where('status', 'pending')->count();
+                $data['approvedApplications'] = Application::where('status', 'approved')->count();
+
                 return view('dashboard.admin', $data);
 
             case 'faculty':

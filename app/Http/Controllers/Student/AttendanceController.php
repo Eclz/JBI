@@ -12,7 +12,7 @@ class AttendanceController extends Controller
 {
     public function index()
     {
-        $attendanceData = Attendance::where('student_id', Auth::id())
+        $attendanceData = Attendance::where('user_id', Auth::id())
             ->with('course')
             ->selectRaw('course_id,
                 COUNT(*) as total_classes,
@@ -27,28 +27,29 @@ class AttendanceController extends Controller
 
     public function show(Course $course)
     {
-        // Check if student is enrolled
         $course->enrollments()
-            ->where('student_id', Auth::id())
+            ->where('user_id', Auth::id())
             ->where('status', 'enrolled')
             ->firstOrFail();
 
-        $attendanceRecords = Attendance::where('student_id', Auth::id())
+        $attendanceRecords = Attendance::where('user_id', Auth::id())
             ->where('course_id', $course->id)
-            ->orderBy('date', 'desc')
+            ->orderBy('attendance_date', 'desc')
             ->paginate(20);
 
         $attendanceStats = [
-            'total' => $attendanceRecords->total(),
-            'present' => Attendance::where('student_id', Auth::id())
+            'total' => Attendance::where('user_id', Auth::id())
+                ->where('course_id', $course->id)
+                ->count(),
+            'present' => Attendance::where('user_id', Auth::id())
                 ->where('course_id', $course->id)
                 ->where('status', 'present')
                 ->count(),
-            'late' => Attendance::where('student_id', Auth::id())
+            'late' => Attendance::where('user_id', Auth::id())
                 ->where('course_id', $course->id)
                 ->where('status', 'late')
                 ->count(),
-            'absent' => Attendance::where('student_id', Auth::id())
+            'absent' => Attendance::where('user_id', Auth::id())
                 ->where('course_id', $course->id)
                 ->where('status', 'absent')
                 ->count(),
@@ -69,16 +70,14 @@ class AttendanceController extends Controller
             return back()->withErrors(['error' => 'Invalid QR code.']);
         }
 
-        // Verify token
         $expectedToken = md5($qrData['course_id'] . $qrData['date'] . config('app.key'));
         if ($qrData['token'] !== $expectedToken) {
             return back()->withErrors(['error' => 'Invalid or expired QR code.']);
         }
 
-        // Check if student is enrolled in the course
         $course = Course::findOrFail($qrData['course_id']);
         $enrollment = $course->enrollments()
-            ->where('student_id', Auth::id())
+            ->where('user_id', Auth::id())
             ->where('status', 'enrolled')
             ->first();
 
@@ -86,21 +85,19 @@ class AttendanceController extends Controller
             return back()->withErrors(['error' => 'You are not enrolled in this course.']);
         }
 
-        // Mark attendance
         Attendance::updateOrCreate(
             [
-                'student_id' => Auth::id(),
+                'user_id' => Auth::id(),
                 'course_id' => $course->id,
-                'date' => $qrData['date'],
+                'attendance_date' => $qrData['date'],
             ],
             [
                 'status' => 'present',
+                'check_in_time' => now()->format('H:i:s'),
                 'marked_by' => Auth::id(),
             ]
         );
 
         return back()->with('success', 'Attendance marked successfully.');
     }
-
-    // Additional methods can be added here if needed
 }

@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\User;
+use App\Models\Application;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -10,17 +10,15 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class NewApplicationNotification extends Mailable
+class NewApplicationNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $applicant;
-    public $adminDashboardUrl;
+    public $application;
 
-    public function __construct(User $applicant)
+    public function __construct(Application $application)
     {
-        $this->applicant = $applicant;
-        $this->adminDashboardUrl = route('admin.applications.index');
+        $this->application = $application;
     }
 
     public function envelope(): Envelope
@@ -34,10 +32,6 @@ class NewApplicationNotification extends Mailable
     {
         return new Content(
             view: 'emails.new-application-notification',
-            with: [
-                'applicant' => $this->applicant,
-                'adminDashboardUrl' => $this->adminDashboardUrl,
-            ],
         );
     }
 }

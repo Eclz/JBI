@@ -45,6 +45,56 @@ class CourseEnrollment extends Model
     }
 
     /**
+     * Get the semester through the course
+     */
+    public function semester()
+    {
+        return $this->hasOneThrough(
+            Semester::class,
+            Course::class,
+            'id', // Foreign key on courses table
+            'id', // Foreign key on semesters table
+            'course_id', // Local key on course_enrollments table
+            'semester_id' // Local key on courses table
+        );
+    }
+
+    /**
+     * Get all grades for this enrollment
+     */
+    public function grades()
+    {
+        return $this->hasMany(Grade::class, 'user_id', 'user_id')
+                    ->where('course_id', $this->course_id);
+    }
+
+    /**
+     * Get all attendance records for this enrollment
+     */
+    public function attendances()
+    {
+        return $this->hasMany(\App\Models\Attendance::class, 'user_id', 'user_id')
+                    ->where('course_id', $this->course_id);
+    }
+
+    /**
+     * Calculate attendance percentage for this enrollment
+     */
+    public function getAttendancePercentageAttribute()
+    {
+        $total = $this->attendances()->count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $present = $this->attendances()
+                        ->whereIn('status', ['present', 'late'])
+                        ->count();
+
+        return round(($present / $total) * 100, 2);
+    }
+
+    /**
      * Scope for active enrollments
      */
     public function scopeActive($query)
@@ -58,5 +108,44 @@ class CourseEnrollment extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    /**
+     * Scope for pending enrollments
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Scope for dropped enrollments
+     */
+    public function scopeDropped($query)
+    {
+        return $query->where('status', 'dropped');
+    }
+
+    /**
+     * Get status badge class for UI
+     */
+    public function getStatusBadgeClass()
+    {
+        return match($this->status) {
+            'enrolled' => 'badge-success',
+            'completed' => 'badge-primary',
+            'dropped' => 'badge-warning',
+            'failed' => 'badge-danger',
+            'pending' => 'badge-info',
+            default => 'badge-secondary',
+        };
+    }
+
+    /**
+     * Get formatted status text
+     */
+    public function getStatusText()
+    {
+        return ucfirst($this->status);
     }
 }

@@ -32,7 +32,7 @@
             <div class="card bg-success text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="card-title">Present</h6>
-                    <h2 class="mb-0">{{ number_format($stats['total_present']) }}</h2>
+                    <h2 class="mb-0">{{ number_format($stats['present']) }}</h2>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
             <div class="card bg-danger text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="card-title">Absent</h6>
-                    <h2 class="mb-0">{{ number_format($stats['total_absent']) }}</h2>
+                    <h2 class="mb-0">{{ number_format($stats['absent']) }}</h2>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
     <!-- Filters -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-light">
-            <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+            <h5 class="card-title mb-0"><i class="fa fa-filter me-2"></i>Filters</h5>
         </div>
         <div class="card-body">
             <form method="GET" action="{{ route('admin.reports.attendance') }}">
@@ -68,18 +68,7 @@
                             <option value="">All Courses</option>
                             @foreach($courses as $course)
                                 <option value="{{ $course->id }}" {{ request('course_id') == $course->id ? 'selected' : '' }}>
-                                    {{ $course->course_code }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Semester</label>
-                        <select name="semester_id" class="form-select">
-                            <option value="">All Semesters</option>
-                            @foreach($semesters as $semester)
-                                <option value="{{ $semester->id }}" {{ request('semester_id') == $semester->id ? 'selected' : '' }}>
-                                    {{ $semester->semester_name }}
+                                    {{ $course->code ?? $course->course_code }}
                                 </option>
                             @endforeach
                         </select>
@@ -123,7 +112,7 @@
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h5 class="card-title mb-0"><i class="fas fa-book me-2"></i>Course-wise Attendance</h5>
+                    <h5 class="card-title mb-0"><i class="fa fa-book me-2"></i>Course-wise Attendance</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -136,16 +125,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($attendanceByCourse as $course)
+                                @foreach($courseAttendance as $course)
                                     <tr>
-                                        <td>{{ $course->course_code }}</td>
-                                        <td class="text-end">{{ number_format($course->total_records) }}</td>
+                                        <td>{{ $course->course->code ?? $course->course->course_code ?? 'N/A' }}</td>
+                                        <td class="text-end">{{ number_format($course->total) }}</td>
                                         <td class="text-end">
                                             <span class="badge bg-{{
-                                                $course->attendance_rate >= 80 ? 'success' :
-                                                ($course->attendance_rate >= 60 ? 'warning' : 'danger')
+                                                $course->rate >= 80 ? 'success' :
+                                                ($course->rate >= 60 ? 'warning' : 'danger')
                                             }}">
-                                                {{ number_format($course->attendance_rate, 1) }}%
+                                                {{ number_format($course->rate, 1) }}%
                                             </span>
                                         </td>
                                     </tr>
@@ -162,7 +151,7 @@
             <div class="card shadow-sm border-danger">
                 <div class="card-header bg-light">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>Low Attendance Alert (Below 75%)
+                        <i class="fa fa-exclamation-triangle text-danger me-2"></i>Low Attendance Alert (Below 75%)
                     </h5>
                 </div>
                 <div class="card-body">
@@ -171,25 +160,23 @@
                             <thead>
                                 <tr>
                                     <th>Student</th>
-                                    <th>Course</th>
                                     <th class="text-end">Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($lowAttendanceStudents as $student)
                                     <tr>
-                                        <td>{{ $student->name }}</td>
-                                        <td>{{ $student->course_code }}</td>
+                                        <td>{{ $student->student?->full_name ?: ($student->student?->name ?? 'N/A') }}</td>
                                         <td class="text-end">
                                             <span class="badge bg-danger">
-                                                {{ number_format($student->attendance_rate, 1) }}%
+                                                {{ number_format($student->rate, 1) }}%
                                             </span>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="text-center text-muted">
-                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                        <td colspan="2" class="text-center text-muted">
+                                            <i class="fa fa-check-circle text-success me-2"></i>
                                             All students have good attendance
                                         </td>
                                     </tr>
@@ -205,7 +192,7 @@
     <!-- Daily Attendance Trend -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
-            <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Daily Attendance Trend (Last 30 Days)</h5>
+            <h5 class="card-title mb-0"><i class="	fa fa-bar-chart me-2"></i>Daily Attendance Trend (Last 30 Days)</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -215,18 +202,16 @@
                             <th>Date</th>
                             <th class="text-end">Total</th>
                             <th class="text-end">Present</th>
-                            <th class="text-end">Absent</th>
                             <th class="text-end">Rate</th>
                             <th>Trend</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($dailyTrend as $day)
+                        @foreach($attendanceTrends as $day)
                             <tr>
                                 <td>{{ \Carbon\Carbon::parse($day->date)->format('M d, Y') }}</td>
                                 <td class="text-end">{{ number_format($day->total) }}</td>
                                 <td class="text-end">{{ number_format($day->present) }}</td>
-                                <td class="text-end">{{ number_format($day->absent) }}</td>
                                 <td class="text-end">
                                     <span class="badge bg-{{
                                         $day->rate >= 80 ? 'success' :
@@ -253,7 +238,7 @@
     <!-- Attendance Records -->
     <div class="card shadow-sm">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Attendance Records</h5>
+            <h5 class="card-title mb-0"><i class="fa fa-list me-2"></i>Attendance Records</h5>
             <a href="{{ route('admin.reports.attendance.export', request()->all()) }}"
                class="btn btn-success btn-sm">
                 <i class="fas fa-file-excel me-1"></i> Export CSV
@@ -275,10 +260,10 @@
                     <tbody>
                         @forelse($attendanceRecords as $record)
                             <tr>
-                                <td>{{ $record->enrollment->student->user->name }}</td>
-                                <td>{{ $record->enrollment->student->admission_number }}</td>
-                                <td>{{ $record->enrollment->course->course_code }}</td>
-                                <td>{{ $record->date->format('M d, Y') }}</td>
+                                <td>{{ $record->student?->full_name ?: ($record->student?->name ?? 'N/A') }}</td>
+                                <td>{{ $record->student?->studentProfile?->admission_number ?? 'N/A' }}</td>
+                                <td>{{ $record->course->code ?? $record->course->course_code ?? 'N/A' }}</td>
+                                <td>{{ $record->attendance_date?->format('M d, Y') ?? 'N/A' }}</td>
                                 <td>
                                     <span class="badge bg-{{
                                         $record->status === 'present' ? 'success' :
@@ -288,7 +273,7 @@
                                         {{ ucfirst($record->status) }}
                                     </span>
                                 </td>
-                                <td>{{ $record->remarks ?? '-' }}</td>
+                                <td>{{ $record->notes ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>

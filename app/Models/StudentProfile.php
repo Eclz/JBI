@@ -13,10 +13,15 @@ class StudentProfile extends Model
         'user_id',
         'admission_number',
         'admission_date',
+        'registration_fee_paid_at',
+        'registration_deadline_at',
+        'tuition_deadline_at',
         'department_id',
+        'program_id',
         'program',
         'specialization',
         'current_semester',
+        'year_of_study',
         'status',
         'application_status',
         'current_gpa',
@@ -43,6 +48,9 @@ class StudentProfile extends Model
 
     protected $casts = [
         'admission_date' => 'date',
+        'registration_fee_paid_at' => 'datetime',
+        'registration_deadline_at' => 'datetime',
+        'tuition_deadline_at' => 'datetime',
         'current_gpa' => 'decimal:2',
         'cumulative_gpa' => 'decimal:2',
         'previous_gpa' => 'decimal:2',
@@ -52,6 +60,7 @@ class StudentProfile extends Model
         'qualifications' => 'array',
         'achievements' => 'array',
         'documents' => 'array',
+        'year_of_study' => 'integer',
     ];
 
     /**
@@ -68,6 +77,11 @@ class StudentProfile extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function program()
+    {
+        return $this->belongsTo(Program::class);
     }
 
     /**

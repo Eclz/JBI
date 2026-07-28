@@ -14,10 +14,10 @@
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('admin.courses.edit', $course) }}" class="btn btn-warning">
-                        <i class="fa fa-edit me-2"></i>Edit Course
+                        <i class="fas fa-edit me-2"></i>Edit Course
                     </a>
                     <a href="{{ route('admin.courses.index') }}" class="btn btn-outline-secondary">
-                        <i class="fa fa-arrow-left me-2"></i>Back to Courses
+                        <i class="fas fa-arrow-left me-2"></i>Back to Courses
                     </a>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-primary text-white">
                             <h5 class="card-title mb-0">
-                                <i class="fa fa-book me-2"></i>Course Details
+                                <i class="fas fa-book me-2"></i>Course Details
                             </h5>
                         </div>
                         <div class="card-body">
@@ -64,7 +64,7 @@
                                     <h6 class="text-primary">Instructor</h6>
                                     <p class="mb-3">
                                         @if($course->instructor)
-                                            <a href="{{ route('admin.faculty.show', $course->instructor) }}" class="text-decoration-none">
+                                            <a href="{{ route('admin.faculty-staff.show', $course->instructor) }}" class="text-decoration-none">
                                                 {{ $course->instructor->name }}
                                             </a>
                                         @else
@@ -103,10 +103,10 @@
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">
-                                <i class="fa fa-users me-2"></i>Enrolled Students ({{ $course->enrollments->count() }})
+                                <i class="fas fa-users me-2"></i>Enrolled Students ({{ $course->enrollments->count() }})
                             </h5>
                             <a href="{{ route('admin.courses.enrollments', $course) }}" class="btn btn-light btn-sm">
-                                <i class="fa fa-plus me-1"></i>Manage Enrollments
+                                <i class="fas fa-plus me-1"></i>Manage Enrollments
                             </a>
                         </div>
                         <div class="card-body">
@@ -162,7 +162,7 @@
                                                 <td>
                                                     <a href="{{ route('admin.students.show', $enrollment->student) }}"
                                                        class="btn btn-sm btn-outline-primary">
-                                                        <i class="fa fa-eye"></i>
+                                                        <i class="fas fa-eye"></i>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -179,11 +179,11 @@
                                 @endif
                             @else
                                 <div class="text-center py-4">
-                                    <i class="fa fa-users fa-3x text-muted mb-3"></i>
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                     <h5 class="text-muted">No Students Enrolled</h5>
                                     <p class="text-muted">This course doesn't have any enrolled students yet.</p>
                                     <a href="{{ route('admin.courses.enrollments', $course) }}" class="btn btn-primary">
-                                        <i class="fa fa-plus me-2"></i>Enroll Students
+                                        <i class="fas fa-plus me-2"></i>Enroll Students
                                     </a>
                                 </div>
                             @endif
@@ -194,7 +194,7 @@
                     <div class="card shadow-sm">
                         <div class="card-header bg-info text-white">
                             <h5 class="card-title mb-0">
-                                <i class="fa fa-file-alt me-2"></i>Course Materials
+                                <i class="fas fa-file-alt me-2"></i>Course Materials
                             </h5>
                         </div>
                         <div class="card-body">
@@ -207,14 +207,14 @@
                                             <small class="text-muted">{{ $material->type }} • {{ $material->created_at->format('M d, Y') }}</small>
                                         </div>
                                         <a href="#" class="btn btn-sm btn-outline-primary">
-                                            <i class="fa fa-download"></i>
+                                            <i class="fas fa-download"></i>
                                         </a>
                                     </div>
                                     @endforeach
                                 </div>
                             @else
                                 <div class="text-center py-4">
-                                    <i class="fa fa-file-alt fa-3x text-muted mb-3"></i>
+                                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                                     <h5 class="text-muted">No Materials Available</h5>
                                     <p class="text-muted">Course materials will appear here when uploaded.</p>
                                 </div>
@@ -229,7 +229,7 @@
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-dark text-white">
                             <h6 class="card-title mb-0">
-                                <i class="fa fa-chart-bar me-2"></i>Course Statistics
+                                <i class="fas fa-chart-bar me-2"></i>Course Statistics
                             </h6>
                         </div>
                         <div class="card-body">
@@ -265,22 +265,22 @@
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-secondary text-white">
                             <h6 class="card-title mb-0">
-                                <i class="fa fa-cogs me-2"></i>Course Actions
+                                <i class="fas fa-cogs me-2"></i>Course Actions
                             </h6>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
                                 <a href="{{ route('admin.courses.enrollments', $course) }}" class="btn btn-outline-primary">
-                                    <i class="fa fa-users me-2"></i>Manage Enrollments
+                                    <i class="fas fa-users me-2"></i>Manage Enrollments
                                 </a>
                                 <a href="{{ route('admin.courses.materials', $course) }}" class="btn btn-outline-info">
-                                    <i class="fa fa-file-alt me-2"></i>Course Materials
+                                    <i class="fas fa-file-alt me-2"></i>Course Materials
                                 </a>
                                 <a href="{{ route('admin.courses.assignments', $course) }}" class="btn btn-outline-success">
-                                    <i class="fa fa-tasks me-2"></i>Assignments
+                                    <i class="fas fa-tasks me-2"></i>Assignments
                                 </a>
                                 <a href="{{ route('admin.courses.grades', $course) }}" class="btn btn-outline-warning">
-                                    <i class="fa fa-chart-line me-2"></i>Grade Reports
+                                    <i class="fas fa-chart-line me-2"></i>Grade Reports
                                 </a>
                             </div>
                         </div>
@@ -290,7 +290,7 @@
                     <div class="card shadow-sm">
                         <div class="card-header bg-light">
                             <h6 class="card-title mb-0">
-                                <i class="fa fa-info-circle me-2"></i>Course Information
+                                <i class="fas fa-info-circle me-2"></i>Course Information
                             </h6>
                         </div>
                         <div class="card-body">

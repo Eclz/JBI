@@ -11,6 +11,7 @@ use App\Models\Semester;
 use App\Models\User;
 use App\Models\CourseEnrollment;
 use App\Models\CourseMaterial;
+use App\Models\Program;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -61,8 +62,9 @@ class CourseController extends Controller
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::where('is_active', true)->get();
         $instructors = User::where('role', 'faculty')->where('is_active', true)->get();
+        $programs = Program::where('is_active', true)->with(['department', 'level'])->orderBy('name')->get();
 
-        return view('admin.courses.create', compact('departments', 'semesters', 'instructors'));
+        return view('admin.courses.create', compact('departments', 'semesters', 'instructors', 'programs'));
     }
 
     public function store(StoreCourseRequest $request)
@@ -78,8 +80,9 @@ class CourseController extends Controller
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::where('is_active', true)->get();
         $instructors = User::where('role', 'faculty')->where('is_active', true)->get();
+        $programs = Program::where('is_active', true)->with(['department', 'level'])->orderBy('name')->get();
 
-        return view('admin.courses.edit', compact('course', 'departments', 'semesters', 'instructors'));
+        return view('admin.courses.edit', compact('course', 'departments', 'semesters', 'instructors', 'programs'));
     }
 
     public function update(UpdateCourseRequest $request, Course $course)

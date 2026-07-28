@@ -16,8 +16,11 @@ class Course extends Model
         'description',
         'credits',
         'department_id',
+        'program',
+        'program_id',
         'instructor_id',
         'semester_id',
+        'year_of_study',
         'schedule',
         'room',
         'capacity',
@@ -36,6 +39,7 @@ class Course extends Model
         'max_students' => 'integer',
         'capacity' => 'integer',
         'credits' => 'integer',
+        'year_of_study' => 'integer',
         'fee_amount' => 'decimal:2',
     ];
 
@@ -61,6 +65,14 @@ class Course extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Get the program of the course.
+     */
+    public function program()
+    {
+        return $this->belongsTo(Program::class);
     }
 
     /**
@@ -119,6 +131,14 @@ class Course extends Model
     public function materials()
     {
         return $this->hasMany(CourseMaterial::class);
+    }
+
+    /**
+     * Get course quizzes
+     */
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
     }
 
     /**

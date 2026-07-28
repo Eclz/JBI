@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\FeeRecord;
 use App\Models\FeeStructure;
 use App\Models\User;
+use App\Models\Notification;
+use App\Models\Payment;
 use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Http\Requests\StoreFeeRecordRequest;
 use App\Http\Requests\ProcessPaymentRequest;
+use App\Services\ReceiptVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -74,6 +77,16 @@ class FeeController extends Controller
 
         // Get semesters for filter
         $semesters = Semester::orderBy('start_date', 'desc')->get();
+        $courses = \App\Models\Course::with('semester')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+        $students = User::where('role', 'student')
+            ->where('is_active', true)
+            ->with('studentProfile')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
 
         // Chart data for collection trends (last 6 months)
         $collectionChartLabels = [];
@@ -99,17 +112,71 @@ class FeeController extends Controller
             FeeRecord::where('status', 'partial')->count(),
         ];
 
+        $semesterTotals = FeeRecord::query()
+            ->join('fee_structures', 'fee_records.fee_structure_id', '=', 'fee_structures.id')
+            ->leftJoin('semesters', 'fee_structures.semester_id', '=', 'semesters.id')
+            ->selectRaw('COALESCE(semesters.name, "Unassigned") as semester_name, SUM(fee_records.paid_amount) as total_paid')
+            ->groupBy('semester_name')
+            ->orderBy('semester_name')
+            ->get();
+        $semesterChartLabels = $semesterTotals->pluck('semester_name')->all();
+        $semesterChartData = $semesterTotals->pluck('total_paid')->map(fn ($value) => (float) $value)->all();
+
+        $cashStatusCounts = Payment::where('payment_method', 'cash')
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->all();
+        $cashStatusLabels = ['pending', 'completed', 'failed'];
+        $cashStatusData = [
+            (int) ($cashStatusCounts['pending'] ?? 0),
+            (int) ($cashStatusCounts['completed'] ?? 0),
+            (int) ($cashStatusCounts['failed'] ?? 0),
+        ];
+
+        $semesterStudentBreakdown = FeeRecord::query()
+            ->join('users', 'fee_records.user_id', '=', 'users.id')
+            ->join('fee_structures', 'fee_records.fee_structure_id', '=', 'fee_structures.id')
+            ->leftJoin('semesters', 'fee_structures.semester_id', '=', 'semesters.id')
+            ->selectRaw('
+                COALESCE(semesters.name, "Unassigned") as semester_name,
+                fee_records.user_id as student_id,
+                COALESCE(NULLIF(CONCAT_WS(" ", users.first_name, users.last_name), ""), users.name, users.email) as student_name,
+                SUM(fee_records.total_amount) as total_amount,
+                SUM(fee_records.paid_amount) as paid_amount,
+                SUM(fee_records.balance_amount) as balance_amount,
+                COUNT(fee_records.id) as invoice_count
+            ')
+            ->groupBy(
+                'semesters.name',
+                'fee_records.user_id',
+                'users.first_name',
+                'users.last_name',
+                'users.name',
+                'users.email'
+            )
+            ->orderByRaw('COALESCE(semesters.name, "Unassigned") asc')
+            ->orderByRaw('COALESCE(NULLIF(CONCAT_WS(" ", users.first_name, users.last_name), ""), users.name, users.email) asc')
+            ->get();
+
         return view('admin.fees.index', compact(
             'feeRecords',
             'feeStructures',
             'semesters',
+            'courses',
+            'students',
             'totalCollected',
             'totalPending',
             'totalOverdue',
             'thisMonthCollection',
             'collectionChartLabels',
             'collectionChartData',
-            'statusChartData'
+            'statusChartData',
+            'semesterChartLabels',
+            'semesterChartData',
+            'cashStatusLabels',
+            'cashStatusData',
+            'semesterStudentBreakdown'
         ));
     }
 
@@ -117,7 +184,26 @@ class FeeController extends Controller
     {
         $fee->load(['student.studentProfile', 'feeStructure', 'processor']);
 
-        return view('admin.fees.show', compact('fee'));
+        $paymentEntries = Payment::where('fee_record_id', $fee->id)
+            ->orderBy('payment_date', 'asc')
+            ->get();
+        $runningPaid = 0;
+        $payments = $paymentEntries->map(function ($payment) use (&$runningPaid, $fee) {
+            if ($payment->status === 'completed') {
+                $runningPaid += $payment->amount;
+            }
+            $balanceAfter = max($fee->total_amount - $runningPaid, 0);
+
+            return [
+                'payment' => $payment,
+                'paid_to_date' => $runningPaid,
+                'balance_after' => $balanceAfter,
+            ];
+        })->sortByDesc(function ($row) {
+            return $row['payment']->payment_date;
+        })->values();
+
+        return view('admin.fees.show', compact('fee', 'payments'));
     }
 
     public function create()
@@ -269,6 +355,12 @@ class FeeController extends Controller
             $newPaidAmount = $fee->paid_amount + $paymentAmount;
             $newBalanceAmount = $fee->total_amount - $newPaidAmount;
 
+            $proofPath = null;
+            if ($request->hasFile('payment_proof')) {
+                $proofPath = $request->file('payment_proof')
+                    ->store('fee-payment-proofs/' . $fee->invoice_number, 'public');
+            }
+
             // Update payment history
             $paymentHistory = $fee->payment_history ?? [];
             $paymentHistory[] = [
@@ -277,6 +369,7 @@ class FeeController extends Controller
                 'method' => $request->payment_method,
                 'transaction_id' => $request->transaction_id,
                 'notes' => $request->payment_notes,
+                'proof_path' => $proofPath,
                 'processed_by' => auth()->id(),
                 'processed_at' => now(),
             ];
@@ -294,6 +387,20 @@ class FeeController extends Controller
                 'payment_notes' => $request->payment_notes,
                 'payment_history' => $paymentHistory,
                 'processed_by' => auth()->id(),
+            ]);
+
+            Payment::create([
+                'fee_record_id' => $fee->id,
+                'student_id' => $fee->user_id,
+                'amount' => $paymentAmount,
+                'payment_method' => $request->payment_method,
+                'transaction_id' => $request->transaction_id,
+                'reference_number' => $fee->invoice_number,
+                'notes' => $request->payment_notes,
+                'payment_proof' => $proofPath,
+                'status' => 'completed',
+                'processed_by' => auth()->id(),
+                'payment_date' => Carbon::parse($request->payment_date),
             ]);
 
             // Log the payment
@@ -318,12 +425,85 @@ class FeeController extends Controller
                 // Don't fail the payment if email fails
             }
 
-            return redirect()->route('admin.fees.show', $fee)
+            return redirect()->route('admin.fees.records.show', $fee)
                 ->with('success', 'Payment processed successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Failed to process payment: ' . $e->getMessage()]);
+        }
+    }
+
+    public function approvePayment(Payment $payment)
+    {
+        if ($payment->status !== 'pending') {
+            return back()->withErrors(['error' => 'Only pending payments can be approved.']);
+        }
+
+        $fee = $payment->feeRecord;
+        $fee->load('feeStructure');
+
+        try {
+            DB::beginTransaction();
+
+            $newPaidAmount = $fee->paid_amount + $payment->amount;
+            $newBalanceAmount = $fee->total_amount - $newPaidAmount;
+            $newStatus = $newBalanceAmount <= 0 ? 'paid' : 'partial';
+
+            $paymentHistory = $fee->payment_history ?? [];
+            $paymentHistory[] = [
+                'amount' => $payment->amount,
+                'date' => $payment->payment_date,
+                'method' => $payment->payment_method,
+                'transaction_id' => $payment->transaction_id,
+                'notes' => $payment->notes,
+                'proof_path' => $payment->payment_proof,
+                'processed_by' => auth()->id(),
+                'processed_at' => now(),
+            ];
+
+            $fee->update([
+                'paid_amount' => $newPaidAmount,
+                'balance_amount' => $newBalanceAmount,
+                'status' => $newStatus,
+                'paid_date' => $newStatus === 'paid' ? now() : $fee->paid_date,
+                'payment_method' => $payment->payment_method,
+                'payment_history' => $paymentHistory,
+                'processed_by' => auth()->id(),
+            ]);
+
+            $payment->update([
+                'status' => 'completed',
+                'processed_by' => auth()->id(),
+            ]);
+
+            $registrationFeeId = (int) \App\Models\SystemSetting::getSetting('registration_fee_structure_id', 0);
+            $isRegistrationFee = $fee->fee_structure_id === $registrationFeeId || $fee->feeStructure?->type === 'registration';
+            if ($isRegistrationFee) {
+                $profile = $fee->student?->studentProfile;
+                if ($profile && !$profile->registration_fee_paid_at) {
+                    $profile->update([
+                        'registration_fee_paid_at' => now(),
+                    ]);
+                }
+                \App\Services\AdmissionWorkflow::activateStudent($fee->student, null, auth()->id());
+            }
+
+            Notification::create([
+                'user_id' => $payment->student_id,
+                'type' => 'payment',
+                'title' => 'Payment Approved',
+                'message' => 'Your payment has been approved and posted to your account.',
+                'action_url' => route('student.fees.index'),
+                'priority' => 'normal',
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Payment approved and posted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to approve payment: ' . $e->getMessage()]);
         }
     }
 
@@ -333,20 +513,62 @@ class FeeController extends Controller
             'fee_structure_id' => 'required|exists:fee_structures,id',
             'student_ids' => 'nullable|array',
             'student_ids.*' => 'exists:users,id',
+            'generation_type' => 'nullable|in:all,selected',
+            'due_date' => 'nullable|date',
+            'semester_id' => 'nullable|exists:semesters,id',
+            'course_id' => 'nullable|exists:courses,id',
         ]);
+
+        if ($request->input('generation_type') === 'selected' && !$request->filled('student_ids')) {
+            return back()->withErrors(['student_ids' => 'Please select at least one student for selected generation.']);
+        }
 
         try {
             DB::beginTransaction();
 
             $feeStructure = FeeStructure::findOrFail($request->fee_structure_id);
 
-            // Get students to generate invoices for
-            $students = $request->student_ids
-                ? User::whereIn('id', $request->student_ids)->where('role', 'student')->get()
-                : User::where('role', 'student')->where('is_active', true)->get();
+            $studentsQuery = User::query()
+                ->where('role', 'student')
+                ->where('is_active', true);
+
+            if ($request->filled('student_ids')) {
+                $studentsQuery->whereIn('id', $request->student_ids);
+            }
+
+            if ($request->filled('semester_id')) {
+                $semesterId = (int) $request->semester_id;
+                $studentsQuery->whereHas('courseEnrollments', function ($q) use ($semesterId) {
+                    $q->where('status', 'enrolled')
+                        ->whereHas('course', function ($courseQuery) use ($semesterId) {
+                            $courseQuery->where('semester_id', $semesterId);
+                        });
+                });
+            }
+
+            if ($request->filled('course_id')) {
+                $courseId = (int) $request->course_id;
+                $studentsQuery->whereHas('courseEnrollments', function ($q) use ($courseId) {
+                    $q->where('status', 'enrolled')
+                        ->where('course_id', $courseId);
+                });
+            }
+
+            $students = $studentsQuery->get();
+
+            if ($students->isEmpty()) {
+                DB::rollBack();
+                return back()->withErrors(['error' => 'No students matched the selected invoice generation filters.']);
+            }
 
             $generatedCount = 0;
             $skippedCount = 0;
+            $todayPrefix = 'INV-' . now()->format('Ymd') . '-';
+            $invoiceSequence = (int) (
+                FeeRecord::where('invoice_number', 'like', $todayPrefix . '%')
+                    ->selectRaw('MAX(CAST(SUBSTRING(invoice_number, -6) AS UNSIGNED)) as max_sequence')
+                    ->value('max_sequence') ?? 0
+            );
 
             foreach ($students as $student) {
                 // Check if invoice already exists
@@ -359,8 +581,7 @@ class FeeController extends Controller
                     continue;
                 }
 
-                // Generate invoice number
-                $invoiceNumber = 'INV-' . now()->format('Ymd') . '-' . str_pad(FeeRecord::max('id') + 1, 6, '0', STR_PAD_LEFT);
+                $invoiceNumber = $this->generateInvoiceNumber($invoiceSequence);
 
                 FeeRecord::create([
                     'user_id' => $student->id,
@@ -373,7 +594,9 @@ class FeeController extends Controller
                     'paid_amount' => 0,
                     'balance_amount' => $feeStructure->amount,
                     'status' => 'pending',
-                    'due_date' => $feeStructure->due_date ?? now()->addDays(30),
+                    'due_date' => $request->filled('due_date')
+                        ? Carbon::parse($request->due_date)->toDateString()
+                        : ($feeStructure->due_date ?? now()->addDays(30)),
                 ]);
 
                 $generatedCount++;
@@ -392,6 +615,69 @@ class FeeController extends Controller
             DB::rollBack();
             return back()->withErrors(['error' => 'Failed to generate invoices: ' . $e->getMessage()]);
         }
+    }
+
+    public function demandNotice(FeeRecord $fee)
+    {
+        $fee->load(['student.studentProfile.department', 'feeStructure.academicYear', 'feeStructure.semester']);
+
+        return view('admin.fees.demand-notice', compact('fee'));
+    }
+
+    public function receipt(FeeRecord $fee)
+    {
+        $fee->load(['student.studentProfile.department', 'feeStructure.academicYear', 'feeStructure.semester']);
+        $payments = Payment::where('fee_record_id', $fee->id)
+            ->where('status', 'completed')
+            ->orderBy('payment_date', 'asc')
+            ->get();
+
+        $runningPaid = 0;
+        $paymentRows = $payments->map(function ($payment) use (&$runningPaid, $fee) {
+            $runningPaid += $payment->amount;
+            return [
+                'payment' => $payment,
+                'paid_to_date' => $runningPaid,
+                'balance_after' => max($fee->total_amount - $runningPaid, 0),
+            ];
+        });
+
+        $receiptNumber = ReceiptVerificationService::summaryReceiptNumber($fee);
+        $verificationCode = ReceiptVerificationService::summaryVerificationCode($fee);
+        $verificationUrl = route('receipts.verify');
+
+        return view('admin.fees.receipt', compact('fee', 'payments', 'paymentRows', 'receiptNumber', 'verificationCode', 'verificationUrl'));
+    }
+
+    public function transactionReceipt(Payment $payment)
+    {
+        $payment->load([
+            'feeRecord.student.studentProfile.department',
+            'feeRecord.feeStructure.academicYear',
+            'feeRecord.feeStructure.semester',
+            'processedBy',
+        ]);
+
+        if (!$payment->feeRecord) {
+            return back()->withErrors(['error' => 'No fee record attached to this payment.']);
+        }
+
+        $fee = $payment->feeRecord;
+        $receiptNumber = ReceiptVerificationService::transactionReceiptNumber($payment);
+        $verificationCode = ReceiptVerificationService::transactionVerificationCode($payment);
+        $verificationUrl = route('receipts.verify');
+
+        return view('admin.fees.transaction-receipt', compact('payment', 'fee', 'receiptNumber', 'verificationCode', 'verificationUrl'));
+    }
+
+    private function generateInvoiceNumber(int &$sequence): string
+    {
+        do {
+            $sequence++;
+            $invoiceNumber = 'INV-' . now()->format('Ymd') . '-' . str_pad($sequence, 6, '0', STR_PAD_LEFT);
+        } while (FeeRecord::where('invoice_number', $invoiceNumber)->exists());
+
+        return $invoiceNumber;
     }
 
     public function sendReminders(Request $request)
@@ -488,7 +774,7 @@ class FeeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:tuition,library,laboratory,technology,activity,other',
+            'type' => 'required|in:tuition,registration,library,laboratory,technology,activity,other',
             'amount' => 'required|numeric|min:0',
             'frequency' => 'required|in:one_time,semester,monthly,annual',
             'academic_year_id' => 'required|exists:academic_years,id',
@@ -542,7 +828,7 @@ class FeeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:tuition,library,laboratory,technology,activity,other',
+            'type' => 'required|in:tuition,registration,library,laboratory,technology,activity,other',
             'amount' => 'required|numeric|min:0',
             'frequency' => 'required|in:one_time,semester,monthly,annual',
             'academic_year_id' => 'required|exists:academic_years,id',

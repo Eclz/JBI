@@ -60,6 +60,31 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        if ($user->role === 'student' && $user->studentProfile) {
+            $profile = $user->studentProfile;
+            if ($profile->registration_deadline_at && !$profile->registration_fee_paid_at) {
+                if (now()->greaterThan($profile->registration_deadline_at)) {
+                    $user->update(['is_active' => false]);
+                    $profile->update(['status' => 'inactive']);
+                    $this->guard()->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return redirect()->route('login')
+                        ->withErrors(['error' => 'Your account was deactivated for missing the registration payment deadline.']);
+                }
+            }
+        }
+
+        if (!$user->is_active) {
+            $this->guard()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors(['error' => 'Your account is inactive. Please contact administration.']);
+        }
+
         // Log successful login
         AuditLog::create([
             'user_id' => $user->id,
@@ -77,9 +102,9 @@ class LoginController extends Controller
             case 'admin':
                 return redirect()->intended(route('admin.users.index'));
             case 'faculty':
-                return redirect()->intended(route('faculty.courses'));
+                return redirect()->intended(route('faculty.courses.index'));
             case 'student':
-                return redirect()->intended(route('student.courses'));
+                return redirect()->intended(route('student.dashboard'));
             default:
                 return redirect()->intended(route('dashboard'));
         }

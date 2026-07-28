@@ -35,7 +35,7 @@
                     <h5 class="card-title mb-0">Fee Record Information</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.fees.update', $fee) }}" method="POST" id="editFeeForm">
+                    <form action="{{ route('admin.fees.records.update', $fee) }}" method="POST" id="editFeeForm">
                         @csrf
                         @method('PUT')
 
@@ -175,15 +175,15 @@
                     </div>
                     <div class="mb-3">
                         <small class="text-muted d-block">Paid Amount</small>
-                        <strong class="text-success">${{ number_format($fee->paid_amount, 2) }}</strong>
+                        <strong class="text-success">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</strong>
                     </div>
                     <div class="mb-3">
                         <small class="text-muted d-block">Balance Amount</small>
-                        <strong class="text-danger">${{ number_format($fee->balance_amount, 2) }}</strong>
+                        <strong class="text-danger">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</strong>
                     </div>
                     <div>
                         <small class="text-muted d-block">Total Amount</small>
-                        <strong>${{ number_format($fee->total_amount, 2) }}</strong>
+                        <strong>{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</strong>
                     </div>
                 </div>
             </div>
@@ -213,7 +213,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Already Paid:</span>
-                        <strong class="text-success">-${{ number_format($fee->paid_amount, 2) }}</strong>
+                        <strong class="text-success">-{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</strong>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between">

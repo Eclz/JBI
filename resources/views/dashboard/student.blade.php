@@ -219,7 +219,7 @@
                             <h6 style="color: var(--jbi-navy);">Fee Status</h6>
                             <p class="text-muted small mb-0">
                                 @if(($feeBalance ?? 0) > 0)
-                                    ${{ number_format($feeBalance) }} due
+                                    {{ $currencyCode }} {{ number_format($feeBalance) }} due
                                 @else
                                     Paid in full
                                 @endif
@@ -241,7 +241,7 @@
                 </div>
                 <div>
                     <h6 class="mb-1" style="color: var(--jbi-navy);">Outstanding Balance</h6>
-                    <p class="mb-0 text-muted">You have a balance of ${{ number_format($feeBalance) }} due</p>
+                    <p class="mb-0 text-muted">You have a balance of {{ $currencyCode }} {{ number_format($feeBalance) }} due</p>
                 </div>
             </div>
             <a href="{{ route('student.fees.index') }}" class="btn" style="background: var(--jbi-accent); color: white; border-radius: 8px;">

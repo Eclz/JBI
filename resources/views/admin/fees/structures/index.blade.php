@@ -68,9 +68,9 @@
                                                 <span class="badge bg-info">{{ ucfirst($structure->type) }}</span>
                                             </td>
                                             <td>
-                                                <strong>${{ number_format($structure->amount, 2) }}</strong>
+                                                <strong>{{ $currencyCode }} {{ number_format($structure->amount, 2) }}</strong>
                                                 @if($structure->late_fee_amount > 0)
-                                                    <br><small class="text-warning">Late Fee: ${{ number_format($structure->late_fee_amount, 2) }}</small>
+                                                    <br><small class="text-warning">Late Fee: {{ $currencyCode }} {{ number_format($structure->late_fee_amount, 2) }}</small>
                                                 @endif
                                             </td>
                                             <td>

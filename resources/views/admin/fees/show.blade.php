@@ -11,11 +11,17 @@
                     <h4 class="mb-0">Fee Record Details</h4>
                     <div>
                         @if($fee->status != 'paid')
-                            <a href="{{ route('admin.fees.payment', $fee) }}" class="btn btn-success me-2">
+                            <a href="{{ route('admin.fees.records.payment', $fee) }}" class="btn btn-success me-2">
                                 <i class="fas fa-dollar-sign"></i> Record Payment
                             </a>
                         @endif
-                        <a href="{{ route('admin.fees.edit', $fee) }}" class="btn btn-primary me-2">
+                        <a href="{{ route('admin.fees.records.demand-notice', $fee) }}" class="btn btn-outline-warning me-2" target="_blank">
+                            <i class="fas fa-file-alt"></i> Demand Notice
+                        </a>
+                        <a href="{{ route('admin.fees.records.receipt', $fee) }}" class="btn btn-outline-dark me-2" target="_blank">
+                            <i class="fas fa-receipt"></i> Receipt
+                        </a>
+                        <a href="{{ route('admin.fees.records.edit', $fee) }}" class="btn btn-primary me-2">
                             <i class="fas fa-edit"></i> Edit
                         </a>
                         <a href="{{ route('admin.fees.index') }}" class="btn btn-secondary">
@@ -59,7 +65,17 @@
                                         </div>
                                         <div class="col-sm-6">
                                             <strong>Department:</strong>
-                                            <p>{{ $fee?->student?->studentProfile?->department->name ?? 'N/A' }}</p>
+                                            <p>
+                                                @if($fee->student->studentProfile && $fee->student->studentProfile->department)
+                                                    @if(is_object($fee->student->studentProfile->department))
+                                                        {{ $fee->student->studentProfile->department->name ?? 'N/A' }}
+                                                    @else
+                                                        {{ $fee->student->studentProfile->department }}
+                                                    @endif
+                                                @else
+                                                    N/A
+                                                @endif
+                                            </p>
                                         </div>
                                         <div class="col-sm-6">
                                             <strong>Year of Study:</strong>
@@ -131,38 +147,38 @@
                                 <div class="col-md-2">
                                     <div class="text-center">
                                         <h6 class="text-muted">Base Amount</h6>
-                                        <h4>${{ number_format($fee->amount, 2) }}</h4>
+                                        <h4>{{ $currencyCode }} {{ number_format($fee->amount, 2) }}</h4>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
                                         <h6 class="text-muted">Discount</h6>
-                                        <h4 class="text-success">-${{ number_format($fee->discount_amount, 2) }}</h4>
+                                        <h4 class="text-success">-{{ $currencyCode }} {{ number_format($fee->discount_amount, 2) }}</h4>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
                                         <h6 class="text-muted">Late Fee</h6>
-                                        <h4 class="text-warning">+${{ number_format($fee->late_fee, 2) }}</h4>
+                                        <h4 class="text-warning">+{{ $currencyCode }} {{ number_format($fee->late_fee, 2) }}</h4>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
                                         <h6 class="text-muted">Total Amount</h6>
-                                        <h4 class="text-primary">${{ number_format($fee->total_amount, 2) }}</h4>
+                                        <h4 class="text-primary">{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</h4>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
                                         <h6 class="text-muted">Paid Amount</h6>
-                                        <h4 class="text-success">${{ number_format($fee->paid_amount, 2) }}</h4>
+                                        <h4 class="text-success">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</h4>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
                                         <h6 class="text-muted">Balance</h6>
                                         <h4 class="{{ $fee->balance_amount > 0 ? 'text-danger' : 'text-success' }}">
-                                            ${{ number_format($fee->balance_amount, 2) }}
+                                            {{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}
                                         </h4>
                                     </div>
                                 </div>
@@ -209,7 +225,7 @@
                                         @foreach($fee->payment_history as $payment)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($payment['date'])->format('M d, Y') }}</td>
-                                            <td>${{ number_format($payment['amount'], 2) }}</td>
+                                            <td>{{ $currencyCode }} {{ number_format($payment['amount'], 2) }}</td>
                                             <td>
                                                 <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $payment['method'])) }}</span>
                                             </td>
@@ -225,6 +241,82 @@
                                                 @endif
                                             </td>
                                             <td>{{ $payment['notes'] ?? 'N/A' }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($payments->count() > 0)
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Student Payment Logs</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Paid To Date</th>
+                                            <th>Balance After</th>
+                                            <th>Method</th>
+                                            <th>Status</th>
+                                            <th>Proof</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($payments as $entry)
+                                        <tr>
+                                            @php
+                                                $payment = $entry['payment'];
+                                            @endphp
+                                            <td>{{ $payment->payment_date?->format('M d, Y H:i') ?? 'N/A' }}</td>
+                                            <td>{{ $currencyCode }} {{ number_format($payment->amount, 2) }}</td>
+                                            <td>{{ $currencyCode }} {{ number_format($entry['paid_to_date'], 2) }}</td>
+                                            <td>{{ $currencyCode }} {{ number_format($entry['balance_after'], 2) }}</td>
+                                            <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td>
+                                            <td>
+                                                <span class="badge bg-{{
+                                                    $payment->status === 'completed' ? 'success' :
+                                                    ($payment->status === 'pending' ? 'warning' : 'secondary')
+                                                }}">
+                                                    {{ ucfirst($payment->status) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($payment->payment_proof)
+                                                    <a href="{{ asset('storage/' . $payment->payment_proof) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        View
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($payment->status === 'pending')
+                                                    <form method="POST" action="{{ route('admin.fees.payments.approve', $payment) }}">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-success"
+                                                                onclick="return confirm('Approve this payment and post it to the fee record?')">
+                                                            Approve
+                                                        </button>
+                                                    </form>
+                                                @elseif($payment->status === 'completed')
+                                                    <a href="{{ route('admin.fees.payments.receipt', $payment) }}"
+                                                       target="_blank"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        Print Receipt
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
                                         </tr>
                                         @endforeach
                                     </tbody>
@@ -300,7 +392,7 @@ function confirmDelete() {
     if (confirm('Are you sure you want to delete this fee record? This action cannot be undone.')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ route("admin.fees.destroy", $fee) }}';
+        form.action = '{{ route("admin.fees.records.destroy", $fee) }}';
         form.innerHTML = `
             @csrf
             @method('DELETE')

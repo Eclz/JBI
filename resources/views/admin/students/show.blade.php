@@ -16,10 +16,10 @@
                 </div>
                 <div>
                     <a href="{{ route('admin.students.edit', $student) }}" class="btn btn-primary">
-                        <i class="fa fa-edit"></i> Edit Student
+                        <i class="fas fa-edit"></i> Edit Student
                     </a>
                     <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-success">
-                        <i class="fa fa-plus"></i> Enroll in Course
+                        <i class="fas fa-plus"></i> Enroll in Course
                     </a>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="fa fa-user"></i> Personal Information
+                                <i class="fas fa-user"></i> Personal Information
                             </h5>
                         </div>
                         <div class="card-body">
@@ -90,14 +90,24 @@
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="fa fa-graduation-cap"></i> Academic Information
+                                <i class="fas fa-graduation-cap"></i> Academic Information
                             </h5>
                         </div>
                         <div class="card-body">
                             <table class="table table-sm">
                                 <tr>
                                     <td><strong>Department:</strong></td>
-                                    <td>{{ $student->studentProfile->department->name ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($student->studentProfile->department)
+                                            @if(is_object($student->studentProfile->department))
+                                                {{ $student->studentProfile->department->name ?? 'N/A' }}
+                                            @else
+                                                {{ $student->studentProfile->department }}
+                                            @endif
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Program:</strong></td>
@@ -156,27 +166,27 @@
                     <ul class="nav nav-tabs mb-4" id="studentTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="courses-tab" data-bs-toggle="tab" data-bs-target="#courses" type="button" role="tab">
-                                <i class="fa fa-book"></i> Enrolled Courses
+                                <i class="fas fa-book"></i> Enrolled Courses
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades" type="button" role="tab">
-                                <i class="fa fa-chart-line"></i> Grades
+                                <i class="fas fa-chart-line"></i> Grades
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab">
-                                <i class="fa fa-calendar-check"></i> Attendance
+                                <i class="fas fa-calendar-check"></i> Attendance
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="fees-tab" data-bs-toggle="tab" data-bs-target="#fees" type="button" role="tab">
-                                <i class="fa fa-dollar-sign"></i> Fees
+                                <i class="fas fa-dollar-sign"></i> Fees
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">
-                                <i class="fa fa-sticky-note"></i> Notes
+                                <i class="fas fa-sticky-note"></i> Notes
                             </button>
                         </li>
                     </ul>
@@ -233,10 +243,10 @@
                                         </div>
                                     @else
                                         <div class="text-center py-4">
-                                            <i class="fa fa-book fa-3x text-muted mb-3"></i>
+                                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No courses enrolled yet.</p>
                                             <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-primary">
-                                                <i class="fa fa-plus"></i> Enroll in Course
+                                                <i class="fas fa-plus"></i> Enroll in Course
                                             </a>
                                         </div>
                                     @endif
@@ -280,7 +290,7 @@
                                         </div>
                                     @else
                                         <div class="text-center py-4">
-                                            <i class="fa fa-chart-line fa-3x text-muted mb-3"></i>
+                                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No grades recorded yet.</p>
                                         </div>
                                     @endif
@@ -332,7 +342,7 @@
                                         </div>
                                     @else
                                         <div class="text-center py-4">
-                                            <i class="fa fa-calendar-check fa-3x text-muted mb-3"></i>
+                                            <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No attendance records found.</p>
                                         </div>
                                     @endif
@@ -363,7 +373,7 @@
                                                     @foreach($student->feeRecords as $fee)
                                                         <tr>
                                                             <td>{{ $fee->description ?? 'N/A' }}</td>
-                                                            <td>${{ number_format($fee->amount, 2) }}</td>
+                                                            <td>{{ $currencyCode }} {{ number_format($fee->amount, 2) }}</td>
                                                             <td>{{ $fee->due_date ? \Carbon\Carbon::parse($fee->due_date)->format('M d, Y') : 'N/A' }}</td>
                                                             <td>
                                                                 @php
@@ -386,7 +396,7 @@
                                         </div>
                                     @else
                                         <div class="text-center py-4">
-                                            <i class="fa fa-dollar-sign fa-3x text-muted mb-3"></i>
+                                            <i class="fas fa-dollar-sign fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No fee records found.</p>
                                         </div>
                                     @endif
@@ -400,7 +410,7 @@
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Student Notes</h5>
                                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-                                        <i class="fa fa-plus"></i> Add Note
+                                        <i class="fas fa-plus"></i> Add Note
                                     </button>
                                 </div>
                                 <div class="card-body">
@@ -410,7 +420,7 @@
                                                 <div class="timeline-item mb-4">
                                                     <div class="timeline-marker">
                                                         <div class="timeline-marker-icon bg-{{ $note->type_badge }}">
-                                                            <i class="fa fa-sticky-note"></i>
+                                                            <i class="fas fa-sticky-note"></i>
                                                         </div>
                                                     </div>
                                                     <div class="timeline-content">
@@ -432,7 +442,7 @@
                                                             <div class="card-body py-2">
                                                                 <p class="mb-2">{{ $note->note }}</p>
                                                                 <small class="text-muted">
-                                                                    <i class="fa fa-user"></i> {{ $note->createdBy->name }}
+                                                                    <i class="fas fa-user"></i> {{ $note->createdBy->name }}
                                                                 </small>
                                                             </div>
                                                         </div>
@@ -442,10 +452,10 @@
                                         </div>
                                     @else
                                         <div class="text-center py-4">
-                                            <i class="fa fa-sticky-note fa-3x text-muted mb-3"></i>
+                                            <i class="fas fa-sticky-note fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No notes recorded yet.</p>
                                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-                                                <i class="fa fa-plus"></i> Add First Note
+                                                <i class="fas fa-plus"></i> Add First Note
                                             </button>
                                         </div>
                                     @endif
@@ -514,7 +524,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save"></i> Save Note
+                        <i class="fas fa-save"></i> Save Note
                     </button>
                 </div>
             </form>
@@ -554,7 +564,7 @@
     border-radius: 50%;
     display: flex;
     align-items: center;
-    justify-content-center;
+    justify-content: center;
     color: white;
     font-size: 12px;
 }

@@ -46,7 +46,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Amount:</strong></td>
-                                    <td><strong class="text-success">${{ number_format($feeStructure->amount, 2) }}</strong></td>
+                                    <td><strong class="text-success">{{ $currencyCode }} {{ number_format($feeStructure->amount, 2) }}</strong></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Frequency:</strong></td>
@@ -74,7 +74,7 @@
                                     <td><strong>Late Fee:</strong></td>
                                     <td>
                                         @if($feeStructure->late_fee_amount > 0)
-                                            ${{ number_format($feeStructure->late_fee_amount, 2) }}
+                                            {{ $currencyCode }} {{ number_format($feeStructure->late_fee_amount, 2) }}
                                             @if($feeStructure->late_fee_days)
                                                 <br><small class="text-muted">After {{ $feeStructure->late_fee_days }} days</small>
                                             @endif
@@ -117,7 +117,7 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">Fee Records Using This Structure</h5>
                             <div>
-                                <form action="{{ route('admin.fees.generate-invoices') }}" method="POST" class="d-inline">
+                                <form action="{{ route('admin.fees.records.generate-invoices') }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="fee_structure_id" value="{{ $feeStructure->id }}">
                                     <button type="submit" class="btn btn-sm btn-success"
@@ -153,9 +153,9 @@
                                                         </div>
                                                     </td>
                                                     <td>{{ $record->invoice_number ?? 'N/A' }}</td>
-                                                    <td>${{ number_format($record->total_amount, 2) }}</td>
-                                                    <td>${{ number_format($record->paid_amount, 2) }}</td>
-                                                    <td>${{ number_format($record->balance_amount, 2) }}</td>
+                                                    <td>{{ $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
+                                                    <td>{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                                                    <td>{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                                                     <td>
                                                         @switch($record->status)
                                                             @case('paid')
@@ -187,7 +187,7 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        <a href="{{ route('admin.fees.show', $record) }}"
+                                                        <a href="{{ route('admin.fees.records.show', $record) }}"
                                                            class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
@@ -206,7 +206,7 @@
                                     <i class="fas fa-file-invoice fa-2x text-muted mb-3"></i>
                                     <h6>No Fee Records Found</h6>
                                     <p class="text-muted">No invoices have been generated using this fee structure yet.</p>
-                                    <form action="{{ route('admin.fees.generate-invoices') }}" method="POST" class="d-inline">
+                                    <form action="{{ route('admin.fees.records.generate-invoices') }}" method="POST" class="d-inline">
                                         @csrf
                                         <input type="hidden" name="fee_structure_id" value="{{ $feeStructure->id }}">
                                         <button type="submit" class="btn btn-primary"

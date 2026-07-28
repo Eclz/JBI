@@ -1,325 +1,265 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application Details - JBI University</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .application-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-        }
-        .status-badge {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-        }
-        .info-card {
-            border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-        }
-        .info-card .card-header {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-            font-weight: 600;
-        }
-        .document-link {
-            display: inline-block;
-            margin: 0.25rem;
-            padding: 0.5rem 1rem;
-            background-color: #e3f2fd;
-            border: 1px solid #2196f3;
-            border-radius: 0.25rem;
-            text-decoration: none;
-            color: #1976d2;
-        }
-        .document-link:hover {
-            background-color: #bbdefb;
-            color: #0d47a1;
-        }
-        .action-buttons {
-            position: sticky;
-            top: 20px;
-            z-index: 100;
-        }
-    </style>
-</head>
-<body>
-    @extends('layouts.app')
+@extends('layouts.app')
 
-    @section('content')
-    <div class="application-header">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="mb-2">
-                        <i class="fa fa-user-graduate me-2"></i>
-                        {{ $user->name }}
-                    </h1>
-                    <p class="mb-0 opacity-75">
-                        <i class="fa fa-envelope me-2"></i>{{ $user->email }}
-                        <span class="ms-3">
-                            <i class="fa fa-calendar me-2"></i>Applied: {{ $user->created_at->format('M d, Y') }}
+@section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="bi bi-file-earmark-person me-2"></i>
+                            Application Details - {{ $application->first_name }} {{ $application->last_name }}
+                        </h4>
+                        <span class="badge
+                            @if($application->status === 'pending') bg-warning
+                            @elseif($application->status === 'approved') bg-info
+                            @elseif($application->status === 'rejected') bg-danger
+                            @elseif($application->status === 'admitted') bg-success
+                            @else bg-secondary @endif fs-6">
+                            {{ ucfirst($application->status) }}
                         </span>
-                    </p>
-                </div>
-                <div class="col-md-4 text-end">
-                    @if($user->studentProfile)
-                        <span class="badge status-badge
-                            @if($user->studentProfile->application_status === 'submitted') bg-warning
-                            @elseif($user->studentProfile->application_status === 'under_review') bg-info
-                            @elseif($user->studentProfile->application_status === 'approved') bg-success
-                            @elseif($user->studentProfile->application_status === 'rejected') bg-danger
-                            @else bg-secondary @endif">
-                            {{ ucfirst(str_replace('_', ' ', $user->studentProfile->application_status ?? 'pending')) }}
-                        </span>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8">
-                <!-- Personal Information -->
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-user me-2"></i>Personal Information</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Full Name:</strong> {{ $user->full_name }}</p>
-                                <p><strong>Email:</strong> {{ $user->email }}</p>
-                                <p><strong>Phone:</strong> {{ $user->phone }}</p>
-                                <p><strong>Date of Birth:</strong> {{ $user->date_of_birth ? $user->date_of_birth->format('M d, Y') : 'Not provided' }}</p>
-                                <p><strong>Gender:</strong> {{ ucfirst($user->gender ?? 'Not specified') }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-8">
+                            <!-- Personal Information -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-person me-2"></i>Personal Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Full Name:</strong> {{ $application->first_name }} {{ $application->last_name }}</p>
+                                            <p><strong>Email:</strong> {{ $application->email }}</p>
+                                            <p><strong>Phone:</strong> {{ $application->phone }}</p>
+                                            <p><strong>Date of Birth:</strong> {{ $application->date_of_birth ? $application->date_of_birth->format('M d, Y') : 'Not provided' }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Gender:</strong> {{ ucfirst($application->gender ?? 'Not specified') }}</p>
+                                            <p><strong>Address:</strong><br>{{ $application->address }}</p>
+                                            <p><strong>Type:</strong> <span class="badge bg-primary">{{ ucfirst($application->type) }}</span></p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <p><strong>Address:</strong><br>{{ $user->address }}</p>
-                                <p><strong>Emergency Contact:</strong> {{ $user->emergency_contact }}</p>
-                                <p><strong>Emergency Phone:</strong> {{ $user->emergency_phone }}</p>
-                                <p><strong>Email Verified:</strong>
-                                    @if($user->email_verified_at)
-                                        <span class="badge bg-success">Yes</span>
-                                        <small class="text-muted">({{ $user->email_verified_at->format('M d, Y H:i') }})</small>
+
+                            <!-- Academic Information -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-mortarboard me-2"></i>Academic Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Program:</strong> {{ $application->program->name ?? $application->program ?? 'Not specified' }}</p>
+                                            <p><strong>Program Level:</strong> {{ $application->program->level->name ?? 'Not specified' }}</p>
+                                            <p><strong>Department:</strong> {{ $application->program->department->name ?? 'Not specified' }}</p>
+                                            <p><strong>Previous Institution:</strong> {{ $application->previous_school }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            @if($application->admission_number)
+                                            <p><strong>Admission Number:</strong> <span class="badge bg-success">{{ $application->admission_number }}</span></p>
+                                            @endif
+                                            @if($application->student_number)
+                                            <p><strong>Student Number:</strong> <span class="badge bg-info">{{ $application->student_number }}</span></p>
+                                            @endif
+                                            <p><strong>Qualifications:</strong><br>
+                                                <small class="text-muted">{{ $application->previous_qualification ?? 'Not provided' }}</small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Guardian Information (for students) -->
+                            @if($application->type === 'student')
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Guardian Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Guardian Name:</strong> {{ $application->guardian_name }}</p>
+                                            <p><strong>Guardian Phone:</strong> {{ $application->guardian_phone }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Guardian Email:</strong> {{ $application->guardian_email ?? 'Not provided' }}</p>
+                                            <p><strong>Relationship:</strong> {{ $application->guardian_relationship ?? 'Not specified' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
+                            <!-- Documents -->
+                            @if($application->documents && is_array($application->documents) && count($application->documents) > 0)
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Submitted Documents</h5>
+                                </div>
+                                <div class="card-body">
+                                    @foreach($application->documents as $index => $document)
+                                        <a href="{{ asset('storage/' . $document) }}" target="_blank" class="btn btn-outline-primary btn-sm me-2 mb-2">
+                                            <i class="bi bi-download me-1"></i>Document {{ $index + 1 }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+
+                            <!-- Payment Information -->
+                            @if($application->status === 'approved' || $application->status === 'admitted')
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Payment Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if($application->payment_proof)
+                                        <p><strong>Payment Proof:</strong> <span class="badge bg-success">Submitted</span></p>
+                                        <a href="{{ asset('storage/' . $application->payment_proof) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye me-1"></i>View Payment Proof
+                                        </a>
+                                        @if($application->payment_verified_at)
+                                            <p class="mt-2"><strong>Verified At:</strong> {{ $application->payment_verified_at->format('M d, Y H:i') }}</p>
+                                        @else
+                                            <span class="badge bg-warning ms-2">Pending Verification</span>
+                                        @endif
                                     @else
-                                        <span class="badge bg-warning">No</span>
+                                        <p class="text-muted">Payment proof not yet submitted</p>
                                     @endif
-                                </p>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                            @endif
 
-                @if($user->studentProfile)
-                <!-- Academic Information -->
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-graduation-cap me-2"></i>Academic Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Program:</strong> {{ $user->studentProfile->program }}</p>
-                                <p><strong>Specialization:</strong> {{ $user->studentProfile->specialization ?? 'Not specified' }}</p>
-                                <p><strong>Department:</strong> {{ $user->studentProfile->department->name ?? 'Not assigned' }}</p>
-                                <p><strong>Admission Number:</strong> {{ $user->studentProfile->admission_number }}</p>
+                            <!-- Notes -->
+                            @if($application->review_notes)
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-sticky me-2"></i>Reviewer Notes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>{{ $application->review_notes }}</p>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <p><strong>Expected Graduation:</strong> {{ $user->studentProfile->expected_graduation_date ? $user->studentProfile->expected_graduation_date->format('M Y') : 'Not calculated' }}</p>
-                                <p><strong>Current Status:</strong>
-                                    <span class="badge bg-secondary">{{ ucfirst($user->studentProfile->status) }}</span>
-                                </p>
-                            </div>
+                            @endif
                         </div>
-                    </div>
-                </div>
 
-                <!-- Previous Education -->
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-school me-2"></i>Previous Education</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Previous School:</strong> {{ $user->studentProfile->previous_school }}</p>
-                                <p><strong>School Address:</strong> {{ $user->studentProfile->previous_school_address ?? 'Not provided' }}</p>
-                                <p><strong>Graduation Year:</strong> {{ $user->studentProfile->graduation_year ?? 'Not provided' }}</p>
-                                <p><strong>Previous GPA:</strong> {{ $user->studentProfile->previous_gpa ?? 'Not provided' }}</p>
+                        <!-- Right Column - Actions -->
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Application Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Application ID:</strong> {{ $application->id }}</p>
+                                    <p><strong>Submitted:</strong> {{ $application->created_at->format('M d, Y H:i') }}</p>
+                                    <p><strong>Last Updated:</strong> {{ $application->updated_at->format('M d, Y H:i') }}</p>
+                                    @if($application->reviewed_at)
+                                    <p><strong>Reviewed:</strong> {{ $application->reviewed_at->format('M d, Y H:i') }}</p>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                @if($user->studentProfile->qualifications)
-                                    <p><strong>Test Scores:</strong></p>
-                                    <ul class="list-unstyled ms-3">
-                                        @if(isset($user->studentProfile->qualifications['sat_score']) && $user->studentProfile->qualifications['sat_score'])
-                                            <li>SAT: {{ $user->studentProfile->qualifications['sat_score'] }}</li>
-                                        @endif
-                                        @if(isset($user->studentProfile->qualifications['act_score']) && $user->studentProfile->qualifications['act_score'])
-                                            <li>ACT: {{ $user->studentProfile->qualifications['act_score'] }}</li>
-                                        @endif
-                                        @if(isset($user->studentProfile->qualifications['toefl_score']) && $user->studentProfile->qualifications['toefl_score'])
-                                            <li>TOEFL: {{ $user->studentProfile->qualifications['toefl_score'] }}</li>
-                                        @endif
-                                        @if(isset($user->studentProfile->qualifications['ielts_score']) && $user->studentProfile->qualifications['ielts_score'])
-                                            <li>IELTS: {{ $user->studentProfile->qualifications['ielts_score'] }}</li>
-                                        @endif
+
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Approval Readiness</h5>
+                                </div>
+                                <div class="card-body">
+                                    @php
+                                        $readiness = $approvalReadiness ?? ['score' => 0, 'ready' => false, 'checks' => []];
+                                        $readinessColor = $readiness['ready'] ? 'success' : ($readiness['score'] >= 60 ? 'warning' : 'danger');
+                                    @endphp
+                                    <div class="mb-2">
+                                        <span class="badge bg-{{ $readinessColor }}">{{ $readiness['score'] }}%</span>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        @foreach(($readiness['weighted_checks'] ?? []) as $check)
+                                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                <span>{{ $check['label'] }}</span>
+                                                @if($check['passed'])
+                                                    <span class="badge bg-success">OK</span>
+                                                @else
+                                                    <span class="badge bg-danger">Missing ({{ $check['weight'] }}%)</span>
+                                                @endif
+                                            </li>
+                                        @endforeach
                                     </ul>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Guardian Information -->
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-users me-2"></i>Guardian Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Guardian Name:</strong> {{ $user->studentProfile->guardian_name }}</p>
-                                <p><strong>Guardian Phone:</strong> {{ $user->studentProfile->guardian_phone }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Guardian Email:</strong> {{ $user->studentProfile->guardian_email ?? 'Not provided' }}</p>
-                                <p><strong>Guardian Address:</strong><br>{{ $user->studentProfile->guardian_address }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Documents -->
-                @if($user->studentProfile->documents && count($user->studentProfile->documents) > 0)
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-file-alt me-2"></i>Submitted Documents</h5>
-                    </div>
-                    <div class="card-body">
-                        @foreach($user->studentProfile->documents as $index => $document)
-                            <a href="{{ asset('storage/' . $document) }}" target="_blank" class="document-link">
-                                <i class="fa fa-download me-2"></i>Document {{ $index + 1 }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-
-                <!-- Application Notes -->
-                @if($user->studentProfile->application_notes)
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-sticky-note me-2"></i>Application Notes</h5>
-                    </div>
-                    <div class="card-body">
-                        <p>{{ $user->studentProfile->application_notes }}</p>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Admin Notes -->
-                @if($user->studentProfile->notes)
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fa fa-clipboard me-2"></i>Admin Notes</h5>
-                    </div>
-                    <div class="card-body">
-                        <div style="white-space: pre-line;">{{ $user->studentProfile->notes }}</div>
-                    </div>
-                </div>
-                @endif
-                @endif
-            </div>
-
-            <!-- Action Panel -->
-            <div class="col-lg-4">
-                <div class="action-buttons">
-                    @if($user->studentProfile && $user->studentProfile->application_status === 'submitted')
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fa fa-cogs me-2"></i>Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            <form action="{{ route('admin.applications.approve', $user->id) }}" method="POST" class="mb-3">
-                                @csrf
-                                <div class="mb-3">
-                                    <label for="approval_notes" class="form-label">Approval Notes (Optional)</label>
-                                    <textarea name="notes" id="approval_notes" class="form-control" rows="3" placeholder="Add any notes for approval..."></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-success w-100" onclick="return confirm('Are you sure you want to approve this application?')">
-                                    <i class="fa fa-check me-2"></i>Approve Application
-                                </button>
-                            </form>
+                            </div>
 
-                            <form action="{{ route('admin.applications.reject', $user->id) }}" method="POST">
-                                @csrf
-                                <div class="mb-3">
-                                    <label for="rejection_notes" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
-                                    <textarea name="notes" id="rejection_notes" class="form-control" rows="3" placeholder="Please provide a reason for rejection..." required></textarea>
+                            <!-- Actions -->
+                            @if($application->status === 'pending')
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Actions</h5>
                                 </div>
-                                <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to reject this application?')">
-                                    <i class="fa fa-times me-2"></i>Reject Application
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    @else
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <p class="text-muted">
-                                @if($user->studentProfile->application_status === 'approved')
-                                    <i class="fa fa-check-circle text-success fa-2x mb-2"></i><br>
-                                    Application has been approved
-                                @elseif($user->studentProfile->application_status === 'rejected')
-                                    <i class="fa fa-times-circle text-danger fa-2x mb-2"></i><br>
-                                    Application has been rejected
-                                @else
-                                    <i class="fa fa-clock text-warning fa-2x mb-2"></i><br>
-                                    Application is under review
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                    @endif
+                                <div class="card-body">
+                                    <form action="{{ route('admin.applications.approve', $application->id) }}" method="POST" class="mb-3">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label for="approval_notes" class="form-label">Approval Notes (Optional)</label>
+                                            <textarea name="notes" id="approval_notes" class="form-control" rows="3"></textarea>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="force_approve" id="force_approve" value="1">
+                                            <label class="form-check-label" for="force_approve">
+                                                Force approval if checklist is incomplete
+                                            </label>
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100" onclick="return confirm('Approve this application?')">
+                                            <i class="bi bi-check-circle me-1"></i>Approve
+                                        </button>
+                                    </form>
 
-                    <!-- Quick Info -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fa fa-info-circle me-2"></i>Quick Info</h6>
-                        </div>
-                        <div class="card-body">
-                            <small class="text-muted">
-                                <p><strong>Application ID:</strong> {{ $user->id }}</p>
-                                <p><strong>Submitted:</strong> {{ $user->created_at->format('M d, Y H:i') }}</p>
-                                <p><strong>Last Updated:</strong> {{ $user->updated_at->format('M d, Y H:i') }}</p>
-                                @if($user->studentProfile)
-                                <p><strong>Department:</strong> {{ $user->studentProfile->department->name ?? 'Not assigned' }}</p>
-                                @endif
-                            </small>
-                        </div>
-                    </div>
+                                    <form action="{{ route('admin.applications.reject', $application->id) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label for="rejection_notes" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                                            <textarea name="notes" id="rejection_notes" class="form-control" rows="3" required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Reject this application?')">
+                                            <i class="bi bi-x-circle me-1"></i>Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            @elseif($application->status === 'approved' && $application->payment_proof && !$application->payment_verified_at)
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Verify Payment</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ route('admin.applications.verify-payment', $application->id) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label for="verify_notes" class="form-label">Verification Notes (Optional)</label>
+                                            <textarea name="notes" id="verify_notes" class="form-control" rows="3"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100" onclick="return confirm('Verify payment and send admission letter?')">
+                                            <i class="bi bi-check-circle me-1"></i>Verify Payment & Send Admission Letter
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            @endif
 
-                    <!-- Navigation -->
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-primary w-100">
-                                <i class="fa fa-arrow-left me-2"></i>Back to Applications
-                            </a>
+                            <div class="card">
+                                <div class="card-body">
+                                    <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-arrow-left me-1"></i>Back to Applications
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    @endsection
-</body>
-</html>
+</div>
+@endsection

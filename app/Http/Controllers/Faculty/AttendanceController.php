@@ -7,26 +7,58 @@ use App\Models\Course;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AttendanceController extends Controller
 {
-    public function index()
+    public function overview()
     {
         $courses = Course::where('instructor_id', Auth::id())
+            ->withCount('enrollments as enrolled_students_count')
             ->with(['semester', 'enrollments'])
             ->get();
 
-        return view('faculty.attendance.index', compact('courses'));
+        // Calculate attendance statistics per course
+        $attendanceStats = [];
+        $totalClasses = 0;
+
+        foreach ($courses as $course) {
+            $stats = Attendance::where('course_id', $course->id)
+                ->selectRaw('
+                    COUNT(*) as total_records,
+                    SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present_count,
+                    SUM(CASE WHEN status = "late" THEN 1 ELSE 0 END) as late_count,
+                    SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent_count
+                ')
+                ->first();
+
+            $attendanceStats[$course->id] = $stats;
+            $totalClasses += $stats->total_records ?? 0;
+        }
+
+        return view('faculty.attendance.index', compact('courses', 'attendanceStats', 'totalClasses'));
+    }
+
+    public function index(Course $course)
+    {
+        $this->authorize('view', $course);
+
+        $attendanceRecords = Attendance::where('course_id', $course->id)
+            ->with(['student', 'markedBy'])
+            ->orderBy('attendance_date', 'desc')
+            ->paginate(20);
+
+        return view('faculty.attendance.show', compact('course', 'attendanceRecords'));
     }
 
     public function show(Course $course)
     {
         $this->authorize('view', $course);
-        
+
         $attendanceRecords = Attendance::where('course_id', $course->id)
-            ->with('student')
-            ->orderBy('date', 'desc')
+            ->with(['student', 'markedBy'])
+            ->orderBy('attendance_date', 'desc')
             ->paginate(20);
 
         return view('faculty.attendance.show', compact('course', 'attendanceRecords'));
@@ -35,7 +67,7 @@ class AttendanceController extends Controller
     public function mark(Request $request, Course $course)
     {
         $this->authorize('update', $course);
-        
+
         $request->validate([
             'date' => 'required|date',
             'attendance' => 'required|array',
@@ -45,9 +77,9 @@ class AttendanceController extends Controller
         foreach ($request->attendance as $studentId => $status) {
             Attendance::updateOrCreate(
                 [
-                    'student_id' => $studentId,
+                    'user_id' => $studentId,
                     'course_id' => $course->id,
-                    'date' => $request->date,
+                    'attendance_date' => $request->date,
                 ],
                 [
                     'status' => $status,
@@ -62,7 +94,7 @@ class AttendanceController extends Controller
     public function generateQRCode(Course $course)
     {
         $this->authorize('view', $course);
-        
+
         $qrData = [
             'course_id' => $course->id,
             'date' => now()->toDateString(),

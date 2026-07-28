@@ -23,7 +23,7 @@ class RoleMiddleware
         $user = Auth::user();
 
 
-        if ($user->role !== $role) {
+        if (!$user->hasRole($role)) {
             // Redirect based on user's actual role
             switch ($user->role) {
                 case 'admin':

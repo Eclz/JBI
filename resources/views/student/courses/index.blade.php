@@ -3,6 +3,7 @@
 @section('title', 'My Courses')
 
 @section('content')
+<div class="container-fluid px-4 py-4">
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3 mb-0 text-primary">
@@ -10,7 +11,20 @@
         </h1>
         <p class="text-muted mb-0">Your enrolled courses for this semester</p>
     </div>
+    <a href="{{ route('student.courses.enrollments') }}" class="btn btn-outline-primary">
+        <i class="bi bi-journal-plus me-1"></i> Enroll Courses
+    </a>
 </div>
+
+@if($currentSemester && ($registrationOpen || $currentSemester->is_active))
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-info-circle me-2"></i>
+            Enrollment is open for {{ $currentSemester->name }}. Select your course units now.
+        </div>
+        <a href="{{ route('student.courses.enrollments') }}" class="btn btn-sm btn-primary">Enroll Courses</a>
+    </div>
+@endif
 
 <!-- Course Statistics -->
 <div class="row mb-4">
@@ -65,11 +79,11 @@
                     </div>
                     <span class="badge bg-success">Enrolled</span>
                 </div>
-                
+
                 <div class="card-body">
                     <h5 class="card-title">{{ $course->name }}</h5>
                     <p class="card-text text-muted">{{ Str::limit($course->description, 100) }}</p>
-                    
+
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <small class="text-muted">Credits</small>
@@ -80,25 +94,25 @@
                             <div class="fw-bold">{{ $course->instructor->first_name ?? 'TBA' }} {{ $course->instructor->last_name ?? '' }}</div>
                         </div>
                     </div>
-                    
+
                     @if($course->schedule_days && $course->schedule_time)
                         <div class="mb-3">
                             <small class="text-muted">Schedule</small>
                             <div>{{ $course->schedule_days }} {{ $course->schedule_time }}</div>
                         </div>
                     @endif
-                    
+
                     <div class="mb-3">
                         <small class="text-muted">Room</small>
                         <div>{{ $course->room ?? 'TBA' }}</div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <small class="text-muted">Enrolled</small>
                         <div>{{ $enrollment->enrollment_date->format('M d, Y') }}</div>
                     </div>
                 </div>
-                
+
                 <div class="card-footer bg-transparent">
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-muted">{{ $course->semester->name ?? 'No Semester' }}</small>
@@ -132,4 +146,6 @@
         {{ $enrollments->links() }}
     </div>
 @endif
+</div>
+
 @endsection

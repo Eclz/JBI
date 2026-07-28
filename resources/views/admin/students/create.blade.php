@@ -162,25 +162,26 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="program" class="form-label">Program *</label>
-                                <select class="form-select @error('program') is-invalid @enderror"
-                                        id="program" name="program" required>
+                                <label for="program_id" class="form-label">Program *</label>
+                                <select class="form-select @error('program_id') is-invalid @enderror"
+                                        id="program_id" name="program_id" required>
                                     <option value="">Select Program</option>
-                                    <option value="Bachelor of Arts in Biblical Studies" {{ old('program') == 'Bachelor of Arts in Biblical Studies' ? 'selected' : '' }}>Bachelor of Arts in Biblical Studies</option>
-                                    <option value="Bachelor of Arts in Theology" {{ old('program') == 'Bachelor of Arts in Theology' ? 'selected' : '' }}>Bachelor of Arts in Theology</option>
-                                    <option value="Bachelor of Arts in Christian Ministry" {{ old('program') == 'Bachelor of Arts in Christian Ministry' ? 'selected' : '' }}>Bachelor of Arts in Christian Ministry</option>
-                                    <option value="Bachelor of Science in Christian Education" {{ old('program') == 'Bachelor of Science in Christian Education' ? 'selected' : '' }}>Bachelor of Science in Christian Education</option>
-                                    <option value="Master of Divinity" {{ old('program') == 'Master of Divinity' ? 'selected' : '' }}>Master of Divinity</option>
-                                    <option value="Master of Arts in Biblical Studies" {{ old('program') == 'Master of Arts in Biblical Studies' ? 'selected' : '' }}>Master of Arts in Biblical Studies</option>
-                                    <option value="Master of Arts in Theology" {{ old('program') == 'Master of Arts in Theology' ? 'selected' : '' }}>Master of Arts in Theology</option>
-                                    <option value="Master of Arts in Christian Ministry" {{ old('program') == 'Master of Arts in Christian Ministry' ? 'selected' : '' }}>Master of Arts in Christian Ministry</option>
-                                    <option value="Doctor of Ministry" {{ old('program') == 'Doctor of Ministry' ? 'selected' : '' }}>Doctor of Ministry</option>
-                                    <option value="Certificate in Biblical Studies" {{ old('program') == 'Certificate in Biblical Studies' ? 'selected' : '' }}>Certificate in Biblical Studies</option>
-                                    <option value="Certificate in Christian Ministry" {{ old('program') == 'Certificate in Christian Ministry' ? 'selected' : '' }}>Certificate in Christian Ministry</option>
+                                    @forelse($programs as $program)
+                                        <option value="{{ $program->id }}"
+                                                data-department="{{ $program->department_id }}"
+                                                {{ old('program_id') == $program->id ? 'selected' : '' }}>
+                                            {{ $program->name }} @if($program->level) ({{ $program->level->name }}) @endif
+                                        </option>
+                                    @empty
+                                        <option value="" data-department="all" disabled>No programs available</option>
+                                    @endforelse
                                 </select>
-                                @error('program')
+                                @error('program_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                @if($programs->isEmpty())
+                                    <div class="form-text text-muted">Create programs in Admin &gt; Program Management.</div>
+                                @endif
                             </div>
 
                             <div class="mb-3">
@@ -291,3 +292,54 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const departmentSelect = document.getElementById('department_id');
+    const programSelect = document.getElementById('program_id');
+
+    const updatePrograms = () => {
+        const departmentId = departmentSelect.value;
+        let hasVisible = false;
+
+        Array.from(programSelect.options).forEach((option, index) => {
+            if (index === 0) {
+                option.hidden = false;
+                option.disabled = false;
+                return;
+            }
+
+            const optionDepartment = option.getAttribute('data-department');
+            const matches = !departmentId || optionDepartment === departmentId || optionDepartment === 'all';
+            option.hidden = !matches;
+            option.disabled = !matches;
+            if (matches) {
+                hasVisible = true;
+            }
+        });
+
+        if (!hasVisible && departmentId) {
+            Array.from(programSelect.options).forEach((option, index) => {
+                if (index === 0) {
+                    option.hidden = false;
+                    option.disabled = false;
+                    return;
+                }
+
+                option.hidden = false;
+                option.disabled = false;
+            });
+            hasVisible = programSelect.options.length > 1;
+        }
+
+        if (!hasVisible) {
+            programSelect.value = '';
+        }
+    };
+
+    departmentSelect.addEventListener('change', updatePrograms);
+    updatePrograms();
+});
+</script>
+@endpush

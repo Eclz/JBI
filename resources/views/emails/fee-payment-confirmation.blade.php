@@ -134,7 +134,7 @@
 
         <div class="amount-box">
             <p style="margin: 0; font-size: 14px; opacity: 0.9;">Payment Amount</p>
-            <h2>${{ number_format($paymentAmount, 2) }}</h2>
+            <h2>{{ $currencyCode }} {{ number_format($paymentAmount, 2) }}</h2>
         </div>
 
         <div class="payment-details">
@@ -142,18 +142,18 @@
 
             <div class="detail-row">
                 <span class="detail-label">Total Fee Amount:</span>
-                <span class="detail-value">${{ number_format($feeRecord->total_amount, 2) }}</span>
+                <span class="detail-value">{{ $currencyCode }} {{ number_format($feeRecord->total_amount, 2) }}</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Total Paid:</span>
-                <span class="detail-value" style="color: #28a745;">${{ number_format($feeRecord->paid_amount, 2) }}</span>
+                <span class="detail-value" style="color: #28a745;">{{ $currencyCode }} {{ number_format($feeRecord->paid_amount, 2) }}</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Balance Due:</span>
                 <span class="detail-value" style="color: {{ $feeRecord->balance_amount > 0 ? '#dc3545' : '#28a745' }}; font-weight: bold;">
-                    ${{ number_format($feeRecord->balance_amount, 2) }}
+                    {{ $currencyCode }} {{ number_format($feeRecord->balance_amount, 2) }}
                 </span>
             </div>
 
@@ -173,7 +173,7 @@
 
         @if($feeRecord->balance_amount > 0)
             <div class="receipt-note">
-                <strong>Note:</strong> You still have a balance of <strong>${{ number_format($feeRecord->balance_amount, 2) }}</strong> remaining on this fee. Please make payment by {{ $feeRecord->due_date->format('F d, Y') }} to avoid late fees.
+                <strong>Note:</strong> You still have a balance of <strong>{{ $currencyCode }} {{ number_format($feeRecord->balance_amount, 2) }}</strong> remaining on this fee. Please make payment by {{ $feeRecord->due_date->format('F d, Y') }} to avoid late fees.
             </div>
         @else
             <div class="success-message" style="font-size: 16px;">

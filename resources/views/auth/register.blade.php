@@ -760,7 +760,7 @@
                 <div class="mt-4">
                     <h6>Need Help?</h6>
                     <p class="small">Contact our admissions office at<br>
-                    <strong>admissions@jbi.edu</strong><br>
+                    <strong>admission@jbiuniversity.com</strong><br>
                     <strong>(555) 123-4567</strong></p>
                 </div>
             </div>

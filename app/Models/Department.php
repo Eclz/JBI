@@ -80,6 +80,14 @@ class Department extends Model
     }
 
     /**
+     * Get programs under this department.
+     */
+    public function programs(): HasMany
+    {
+        return $this->hasMany(Program::class);
+    }
+
+    /**
      * Scope to get only active departments.
      */
     public function scopeActive($query)

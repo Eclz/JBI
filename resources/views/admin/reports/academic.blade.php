@@ -24,7 +24,7 @@
             <div class="card bg-primary text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="card-title">Total Grades</h6>
-                    <h2 class="mb-0">{{ number_format($stats['total_grades']) }}</h2>
+                    <h2 class="mb-0">{{ number_format($stats['total_grades'] ?? 0) }}</h2>
                 </div>
             </div>
         </div>
@@ -32,7 +32,7 @@
             <div class="card bg-success text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="card-title">Average GPA</h6>
-                    <h2 class="mb-0">{{ number_format($stats['average_gpa'], 2) }}</h2>
+                    <h2 class="mb-0">{{ number_format($stats['average_gpa'] ?? 0, 2) }}</h2>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
             <div class="card bg-info text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="card-title">Pass Rate</h6>
-                    <h2 class="mb-0">{{ number_format($stats['pass_rate'], 1) }}%</h2>
+                    <h2 class="mb-0">{{ number_format($stats['pass_rate'] ?? 0, 1) }}%</h2>
                 </div>
             </div>
         </div>
@@ -48,7 +48,7 @@
             <div class="card bg-warning text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="card-title">Fail Rate</h6>
-                    <h2 class="mb-0">{{ number_format($stats['fail_rate'], 1) }}%</h2>
+                    <h2 class="mb-0">{{ number_format($stats['fail_rate'] ?? 0, 1) }}%</h2>
                 </div>
             </div>
         </div>
@@ -68,7 +68,7 @@
                             <option value="">All Years</option>
                             @foreach($academicYears as $year)
                                 <option value="{{ $year->id }}" {{ request('academic_year_id') == $year->id ? 'selected' : '' }}>
-                                    {{ $year->year_name }}
+                                    {{ $year->name ?? $year->year }}
                                 </option>
                             @endforeach
                         </select>
@@ -79,7 +79,7 @@
                             <option value="">All Semesters</option>
                             @foreach($semesters as $semester)
                                 <option value="{{ $semester->id }}" {{ request('semester_id') == $semester->id ? 'selected' : '' }}>
-                                    {{ $semester->semester_name }}
+                                    {{ $semester->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -148,8 +148,8 @@
                                                     (in_array($grade->grade, ['B', 'B+', 'B-']) ? 'info' :
                                                     (in_array($grade->grade, ['C', 'C+', 'C-']) ? 'warning' : 'danger'))
                                                 }}" role="progressbar"
-                                                     style="width: {{ ($grade->count / $stats['total_grades']) * 100 }}%">
-                                                    {{ number_format(($grade->count / $stats['total_grades']) * 100, 1) }}%
+                                                     style="width: {{ $stats['total_grades'] > 0 ? ($grade->count / $stats['total_grades']) * 100 : 0 }}%">
+                                                    {{ $stats['total_grades'] > 0 ? number_format(($grade->count / $stats['total_grades']) * 100, 1) : 0 }}%
                                                 </div>
                                             </div>
                                         </td>
@@ -193,7 +193,7 @@
                                                 {{ $index + 1 }}
                                             @endif
                                         </td>
-                                        <td>{{ $performer->name }}</td>
+                                        <td>{{ $performer->full_name ?: ($performer->name ?? 'N/A') }}</td>
                                         <td>{{ $performer->studentProfile->department->name ?? 'N/A' }}</td>
                                         <td class="text-end">
                                             <span class="badge bg-success">{{ number_format($performer->avg_gpa, 2) }}</span>
@@ -233,7 +233,7 @@
                                 <td>{{ $course->course_name }}</td>
                                 <td class="text-end">{{ number_format($course->enrolled_count) }}</td>
                                 <td class="text-end">{{ number_format($course->graded_count) }}</td>
-                                <td class="text-end">{{ $course->avg_grade ?? 'N/A' }}</td>
+                                <td class="text-end">{{ $course->avg_grade !== null ? number_format($course->avg_grade, 2) . '%' : 'N/A' }}</td>
                                 <td class="text-end">
                                     @if($course->pass_rate !== null)
                                         <span class="badge bg-{{ $course->pass_rate >= 70 ? 'success' : ($course->pass_rate >= 50 ? 'warning' : 'danger') }}">
@@ -277,20 +277,20 @@
                     <tbody>
                         @forelse($grades as $grade)
                             <tr>
-                                <td>{{ $grade->enrollment->student->user->name }}</td>
-                                <td>{{ $grade->enrollment->student->admission_number }}</td>
-                                <td>{{ $grade->enrollment->course->course_code }} - {{ $grade->enrollment->course->course_name }}</td>
-                                <td>{{ $grade->enrollment->semester->semester_name }}</td>
+                                <td>{{ $grade->student?->full_name ?: ($grade->student?->name ?? 'N/A') }}</td>
+                                <td>{{ $grade->student?->studentProfile?->admission_number ?? 'N/A' }}</td>
+                                <td>{{ ($grade->course->code ?? $grade->course->course_code ?? 'N/A') }} - {{ $grade->course->name ?? 'N/A' }}</td>
+                                <td>{{ $grade->course?->semester?->name ?? 'N/A' }}</td>
                                 <td class="text-end">
                                     <span class="badge bg-{{
-                                        in_array($grade->grade, ['A', 'A+', 'A-']) ? 'success' :
-                                        (in_array($grade->grade, ['B', 'B+', 'B-']) ? 'info' :
-                                        (in_array($grade->grade, ['C', 'C+', 'C-']) ? 'warning' : 'danger'))
+                                        in_array($grade->letter_grade, ['A', 'A+', 'A-']) ? 'success' :
+                                        (in_array($grade->letter_grade, ['B', 'B+', 'B-']) ? 'info' :
+                                        (in_array($grade->letter_grade, ['C', 'C+', 'C-']) ? 'warning' : 'danger'))
                                     }}">
-                                        {{ $grade->grade }}
+                                        {{ $grade->letter_grade ?? 'N/A' }}
                                     </span>
                                 </td>
-                                <td class="text-end">{{ number_format($grade->points, 2) }}</td>
+                                <td class="text-end">{{ number_format($grade->grade_points ?? 0, 2) }}</td>
                                 <td>{{ $grade->created_at->format('M d, Y') }}</td>
                             </tr>
                         @empty

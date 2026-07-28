@@ -24,7 +24,8 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Updated Font Awesome to version 6 for better icon support -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Page specific CSS -->
     @stack('styles')
@@ -158,13 +159,203 @@
             background-color: white;
             border-bottom: 1px solid #e9ecef;
             padding: 0 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        /* Content Area */
-        .content-area {
-            flex: 1;
-            padding: 2rem;
+        /* Enhanced navbar component styles */
+        .navbar .search-wrapper {
+            position: relative;
+        }
+
+        .navbar .search-wrapper input {
+            border-radius: 20px;
+            padding-left: 2.5rem;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            width: 250px;
+        }
+
+        .navbar .search-wrapper input:focus {
+            width: 300px;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(59, 91, 219, 0.15);
+        }
+
+        .navbar .search-wrapper .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            pointer-events: none;
+        }
+
+        .navbar .notification-btn,
+        .navbar .user-menu-btn {
+            position: relative;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .navbar .notification-btn:hover,
+        .navbar .user-menu-btn:hover {
+            background: #f8f9fa;
+            border-color: var(--primary-color);
+        }
+
+        .navbar .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            background: #dc3545;
+            color: white;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .navbar .dropdown-menu {
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .navbar .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .navbar .notification-item:hover {
             background-color: #f8f9fa;
+        }
+
+        .navbar .notification-item.unread {
+            background-color: #f0f4ff;
+        }
+
+        .navbar .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .navbar .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .navbar .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .navbar .quick-action-btn {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            color: #495057;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .navbar .quick-action-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Mobile navbar enhancements */
+        #mobile-menu-toggle {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        #mobile-menu-toggle:hover {
+            background: #f8f9fa;
+            border-color: var(--primary-color);
+        }
+
+        /* Breadcrumb in navbar */
+        .navbar-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .navbar-breadcrumb a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .navbar-breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive navbar adjustments */
+        @media (max-width: 992px) {
+            .navbar .search-wrapper input {
+                width: 180px;
+            }
+
+            .navbar .search-wrapper input:focus {
+                width: 220px;
+            }
+
+            .navbar .quick-actions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar .search-wrapper {
+                display: none;
+            }
+
+            .top-header .d-flex > div:last-child {
+                display: none !important;
+            }
         }
 
         /* Guest Content Area */
@@ -181,51 +372,6 @@
             padding: 0.75rem 1.5rem;
             font-size: 0.875rem;
             color: #6c757d;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            /* Show mobile nav for guests */
-            body.guest-user .mobile-nav {
-                display: block;
-            }
-
-            /* Authenticated users mobile */
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.show {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .content-area {
-                padding: 1rem;
-            }
-
-            /* Guest users mobile adjustments */
-            body.guest-user .sidebar {
-                top: var(--mobile-header-height);
-                height: calc(100vh - var(--mobile-header-height));
-            }
-        }
-
-        @media (min-width: 769px) {
-            body.guest-user {
-                padding-top: 0;
-            }
-
-            body.guest-user .mobile-nav {
-                display: none;
-            }
-
-            body.guest-user .main-content {
-                margin-left: var(--sidebar-width);
-            }
         }
 
         /* Utility Classes */
@@ -251,11 +397,11 @@
             letter-spacing: 0.05em;
         }
 
-        .nav-item {
+        .sidebar .nav-item {
             margin: 0.25rem 0;
         }
 
-        .nav-link {
+        .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.75);
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
@@ -264,17 +410,17 @@
             transition: all 0.2s ease;
         }
 
-        .nav-link:hover {
+        .sidebar .nav-link:hover {
             color: #fff;
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .nav-link.active {
+        .sidebar .nav-link.active {
             color: #fff;
             background-color: var(--primary-color);
         }
 
-        .nav-link i {
+        .sidebar .nav-link i {
             margin-right: 0.5rem;
             font-size: 1.25rem;
             width: 1.5rem;
@@ -396,91 +542,160 @@
             <!-- Navbar for Authenticated Users -->
             <nav class="navbar navbar-expand-lg navbar-light">
                 <div class="container-fluid px-0">
-                    <button id="mobile-menu-toggle" class="btn btn-sm d-md-none">
+                    <!-- Enhanced mobile menu toggle -->
+                    <button id="mobile-menu-toggle" class="btn d-md-none">
                         <i class="bi bi-list fs-4"></i>
                     </button>
 
-                    <div class="ms-auto d-flex align-items-center">
-                        <!-- Search Form -->
-                        <div class="me-3 d-none d-lg-block">
-                            <div class="input-group">
-                                <input type="search" class="form-control form-control-sm" placeholder="Search...">
-                                <button class="btn btn-sm btn-outline-secondary" type="submit">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
+                    <!-- Added breadcrumb navigation -->
+                    <div class="navbar-breadcrumb d-none d-lg-flex">
+                        @yield('breadcrumbs')
+                    </div>
+
+                    <div class="ms-auto d-flex align-items-center gap-2">
+                        <!-- Enhanced search with icon -->
+                        <div class="search-wrapper d-none d-lg-block">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="search" class="form-control form-control-sm" placeholder="Search students, courses, staff...">
                         </div>
 
-                        <!-- Notifications -->
-                        <div class="dropdown me-2 position-relative">
-                            <button class="btn btn-sm" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-bell fs-5"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    3
-                                </span>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end p-0" style="width: 320px;">
-                                <div class="p-2 border-bottom d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">Notifications</h6>
-                                    <a href="#" class="text-decoration-none small">Mark all as read</a>
-                                </div>
-                                <div class="notification-list" style="max-height: 300px; overflow-y: auto;">
-                                    <a href="#" class="dropdown-item p-2 border-bottom">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0">
-                                                <div class="bg-primary text-white rounded-circle p-1">
-                                                    <i class="bi bi-envelope"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1 ms-2">
-                                                <p class="mb-0 small">New assignment posted in CS301</p>
-                                                <small class="text-muted">2 hours ago</small>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <a href="#" class="dropdown-item p-2 border-bottom">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0">
-                                                <div class="bg-success text-white rounded-circle p-1">
-                                                    <i class="bi bi-check-circle"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1 ms-2">
-                                                <p class="mb-0 small">Your assignment has been graded</p>
-                                                <small class="text-muted">1 day ago</small>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                                <div class="p-2 border-top text-center">
-                                    <a href="#" class="text-decoration-none small">View all notifications</a>
-                                </div>
-                            </div>
+                        <!-- Quick action buttons for common tasks -->
+                        <div class="quick-actions d-none d-xl-flex">
+                            @if(Auth::user()->role === 'admin' || Auth::user()->role === 'faculty')
+                                <a href="{{ route('admin.students.create') }}" class="quick-action-btn" title="Add Student">
+                                    <i class="bi bi-person-plus"></i>
+                                </a>
+                                <a href="{{ route('admin.courses.create') }}" class="quick-action-btn" title="Add Course">
+                                    <i class="bi bi-journal-plus"></i>
+                                </a>
+                            @endif
                         </div>
 
-                        <!-- User Menu -->
+                        <!-- Enhanced notifications dropdown with real database data -->
                         <div class="dropdown">
-                            <button class="btn btn-sm dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
-                                <div class="avatar-sm bg-light text-dark me-2">
-                                    {{ substr(Auth::user()->first_name ?? 'S', 0, 1) }}{{ substr(Auth::user()->last_name ?? 'A', 0, 1) }}
-                                </div>
-                                <span class="d-none d-lg-inline">{{ Auth::user()->first_name ?? 'System' }} {{ Auth::user()->last_name ?? 'Administrator' }}</span>
+                            <button class="notification-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell fs-5"></i>
+                                @if(isset($unreadNotificationsCount) && $unreadNotificationsCount > 0)
+                                    <span class="notification-badge">{{ $unreadNotificationsCount }}</span>
+                                @endif
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ route('profile.show') }}">
-                                    <i class="bi bi-person me-2"></i> My Profile
-                                </a></li>
-                                <li><a class="dropdown-item" href="#">
-                                    <i class="bi bi-gear me-2"></i> Settings
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            <div class="dropdown-menu dropdown-menu-end p-0" style="width: 360px;">
+                                <div class="p-3 border-bottom bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 fw-semibold">Notifications</h6>
+                                        @if(isset($unreadNotificationsCount) && $unreadNotificationsCount > 0)
+                                            <a href="#" class="text-primary text-decoration-none small" onclick="markAllAsRead(event)">
+                                                <i class="bi bi-check-all me-1"></i>Mark all read
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="notification-list" style="max-height: 400px; overflow-y: auto;">
+                                    @if(isset($headerNotifications) && $headerNotifications->count() > 0)
+                                        @foreach($headerNotifications as $notification)
+                                            <a href="{{ $notification->action_url ?? route('notifications.index') }}"
+                                               class="notification-item {{ !$notification->is_read ? 'unread' : '' }} text-decoration-none d-block"
+                                               data-notification-id="{{ $notification->id }}">
+                                                <div class="d-flex gap-3">
+                                                    <div class="notification-icon
+                                                        @if($notification->priority === 'urgent') bg-danger
+                                                        @elseif($notification->priority === 'high') bg-warning
+                                                        @elseif($notification->type === 'grade_posted') bg-success
+                                                        @elseif($notification->type === 'payment') bg-info
+                                                        @else bg-primary
+                                                        @endif
+                                                        text-white flex-shrink-0">
+                                                        @if($notification->type === 'assignment_due')
+                                                            <i class="bi bi-file-earmark-text"></i>
+                                                        @elseif($notification->type === 'grade_posted')
+                                                            <i class="bi bi-trophy"></i>
+                                                        @elseif($notification->type === 'payment')
+                                                            <i class="bi bi-credit-card"></i>
+                                                        @elseif($notification->type === 'announcement')
+                                                            <i class="bi bi-megaphone"></i>
+                                                        @elseif($notification->type === 'enrollment')
+                                                            <i class="bi bi-person-check"></i>
+                                                        @else
+                                                            <i class="bi bi-bell"></i>
+                                                        @endif
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <p class="mb-1 fw-medium text-dark">{{ $notification->title }}</p>
+                                                        <p class="mb-1 small text-muted">{{ Str::limit($notification->message, 60) }}</p>
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-clock me-1"></i>
+                                                            {{ $notification->created_at->diffForHumans() }}
+                                                        </small>
+                                                    </div>
+                                                    @if(!$notification->is_read)
+                                                        <div class="flex-shrink-0">
+                                                            <span class="badge bg-primary rounded-pill">New</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                    @else
+                                        <div class="text-center py-5">
+                                            <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                                            <p class="text-muted mt-3 mb-0">No notifications</p>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="p-3 border-top bg-light text-center">
+                                    <a href="{{ route('notifications.index') }}" class="text-primary text-decoration-none small fw-medium">
+                                        View All Notifications <i class="bi bi-arrow-right ms-1"></i>
                                     </a>
-                                </li>
-                            </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced user menu with dynamic user data -->
+                        <div class="dropdown">
+                            <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @if(Auth::user()->profile_picture)
+                                    <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="User" class="user-avatar">
+                                @else
+                                    <div class="user-avatar">
+                                        {{ Auth::user()->initials }}
+                                    </div>
+                                @endif
+                                <div class="d-none d-lg-block text-start">
+                                    <div class="fw-medium small">{{ Auth::user()->full_name }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ ucfirst(Auth::user()->role) }}</div>
+                                </div>
+                                <i class="bi bi-chevron-down small"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <div class="px-3 py-2 border-bottom">
+                                    <div class="fw-medium">{{ Auth::user()->full_name }}</div>
+                                    <div class="small text-muted">{{ Auth::user()->email }}</div>
+                                    <span class="badge bg-primary mt-1">{{ ucfirst(Auth::user()->role) }}</span>
+                                </div>
+                                <a class="dropdown-item" href="{{ route('profile.show') }}">
+                                    <i class="bi bi-person me-2"></i>My Profile
+                                </a>
+                                <a class="dropdown-item" href="{{ route('settings.index') }}">
+                                    <i class="bi bi-gear me-2"></i>Settings
+                                </a>
+                                <a class="dropdown-item" href="{{ route('notifications.index') }}">
+                                    <i class="bi bi-bell me-2"></i>Notifications
+                                    @if(isset($unreadNotificationsCount) && $unreadNotificationsCount > 0)
+                                        <span class="badge bg-danger ms-1">{{ $unreadNotificationsCount }}</span>
+                                    @endif
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ route('support.index') }}">
+                                    <i class="bi bi-question-circle me-2"></i>Help & Support
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <form method="POST" action="{{ route('logout') }}" class="mb-0">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -553,125 +768,49 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- jQuery (for plugins that require it) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-    <!-- Custom JS -->
-    <script src="{{ asset('js/app.js') }}"></script>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-            // Mobile menu toggle for authenticated users
-            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-            if (mobileMenuToggle) {
-                mobileMenuToggle.addEventListener('click', function() {
-                    toggleSidebar();
-                });
-            }
-
-            // Mobile menu toggle for guest users
-            const mobileMenuToggleGuest = document.getElementById('mobile-menu-toggle-guest');
-            if (mobileMenuToggleGuest) {
-                mobileMenuToggleGuest.addEventListener('click', function() {
-                    toggleSidebar();
-                });
-            }
-
-            // Sidebar toggle function
-            function toggleSidebar() {
-                const isOpen = sidebar.classList.contains('show');
-
-                if (isOpen) {
-                    closeSidebar();
-                } else {
-                    openSidebar();
+        function markAllAsRead(event) {
+            event.preventDefault();
+            // Add AJAX call to mark notifications as read
+            fetch('{{ route("notifications.mark-all-read") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json'
                 }
-            }
-
-            function openSidebar() {
-                sidebar.classList.add('show');
-                sidebarOverlay.classList.add('show');
-                document.body.style.overflow = 'hidden';
-
-                // Update toggle button icons
-                updateToggleIcons('close');
-            }
-
-            function closeSidebar() {
-                sidebar.classList.remove('show');
-                sidebarOverlay.classList.remove('show');
-                document.body.style.overflow = '';
-
-                // Update toggle button icons
-                updateToggleIcons('open');
-            }
-
-            function updateToggleIcons(state) {
-                const toggleButtons = [mobileMenuToggle, mobileMenuToggleGuest].filter(btn => btn);
-                toggleButtons.forEach(btn => {
-                    const icon = btn.querySelector('i');
-                    if (icon) {
-                        icon.className = state === 'close' ? 'bi bi-x-lg' : 'bi bi-list';
-                    }
-                });
-            }
-
-            // Overlay click to close
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', function() {
-                    closeSidebar();
-                });
-            }
-
-            // Close sidebar when clicking menu links on mobile
-            const menuLinks = document.querySelectorAll('.sidebar-menu .menu-link');
-            menuLinks.forEach(function(link) {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth < 768) {
-                        setTimeout(closeSidebar, 150);
-                    }
-                });
-            });
-
-            // Handle window resize
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 768) {
-                    closeSidebar();
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove unread class from all notifications
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                    });
+                    // Update badge
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) badge.textContent = '0';
                 }
             });
+        }
 
-            // Handle escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && sidebar.classList.contains('show')) {
-                    closeSidebar();
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('.navbar .search-wrapper input');
+                if (searchInput) {
+                    searchInput.focus();
                 }
-            });
-
-            // Prevent sidebar from closing when clicking inside it
-            sidebar.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-
-            // Initialize tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            // Auto-hide alerts after 5 seconds
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    if (alert.querySelector('.btn-close')) {
-                        const bsAlert = new bootstrap.Alert(alert);
-                        bsAlert.close();
-                    }
-                });
-            }, 5000);
+            }
         });
+
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
     </script>
 
     <!-- Page specific JS -->
