@@ -102,7 +102,7 @@ class FacultyProfileFactory extends Factory
                     'publisher' => 'Seminary Publications',
                     'year' => fake()->year('-3 years'),
                 ],
-            ], fake()->numberBetween(1, 5)),
+            ], fake()->numberBetween(1, 3)),
             'certifications' => fake()->optional(0.6)->randomElements([
                 'Certified Biblical Counselor',
                 'Licensed Minister',
