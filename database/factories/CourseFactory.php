@@ -95,6 +95,7 @@ class CourseFactory extends Factory
 
         return [
             'code' => $code,
+            'course_code' => $code,
             'name' => $courseName,
             'description' => fake()->paragraph(3),
             'credits' => fake()->randomElement([1, 2, 3, 4]),
@@ -126,14 +127,12 @@ class CourseFactory extends Factory
         ]);
     }
 
-    /**
-     * Create course with specific department
-     */
     public function forDepartment(Department $department): static
     {
         return $this->state(fn (array $attributes) => [
             'department_id' => $department->id,
             'code' => $department->code . fake()->numberBetween(101, 499),
+            'course_code' => $department->code . fake()->numberBetween(101, 499),
         ]);
     }
 
