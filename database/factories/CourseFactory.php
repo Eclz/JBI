@@ -70,8 +70,10 @@ class CourseFactory extends Factory
 
         $courseGroup = fake()->randomElement($courses);
         $courseName = fake()->randomElement($courseGroup['courses']);
-        $courseNumber = fake()->numberBetween(101, 499);
-        $code = $courseGroup['prefix'] . $courseNumber;
+        do {
+            $courseNumber = fake()->numberBetween(101, 999);
+            $code = $courseGroup['prefix'] . $courseNumber;
+        } while (Course::where('course_code', $code)->orWhere('code', $code)->exists());
 
         $department = Department::where('code', $courseGroup['prefix'])->first() 
                      ?? Department::factory()->create(['code' => $courseGroup['prefix']]);
@@ -129,11 +131,17 @@ class CourseFactory extends Factory
 
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
-            'department_id' => $department->id,
-            'code' => $department->code . fake()->numberBetween(101, 499),
-            'course_code' => $department->code . fake()->numberBetween(101, 499),
-        ]);
+        return $this->state(function (array $attributes) use ($department) {
+            do {
+                $code = $department->code . fake()->numberBetween(101, 999);
+            } while (Course::where('course_code', $code)->orWhere('code', $code)->exists());
+            
+            return [
+                'department_id' => $department->id,
+                'code' => $code,
+                'course_code' => $code,
+            ];
+        });
     }
 
     /**
