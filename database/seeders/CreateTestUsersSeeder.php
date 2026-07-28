@@ -102,11 +102,13 @@ class CreateTestUsersSeeder extends Seeder
         StudentProfile::create([
             'user_id' => $student->id,
             'department_id' => $firstDepartment->id,
+            'admission_number' => 'ADM-' . $student->student_id,
             'program' => 'Bachelor of Theology',
             'admission_date' => now()->subMonths(6),
-            'academic_status' => 'active',
-            'year_level' => 1,
-            'gpa' => 3.75,
+            'status' => 'active',
+            'year_of_study' => 1,
+            'current_gpa' => 3.75,
+            'cumulative_gpa' => 3.75,
         ]);
 
         $this->command->info('✓ Student user created: student@jbiuniversity.com');
