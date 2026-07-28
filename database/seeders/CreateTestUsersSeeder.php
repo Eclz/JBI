@@ -35,8 +35,11 @@ class CreateTestUsersSeeder extends Seeder
         User::whereIn('email', [
             'admin@jbiuniversity.com',
             'faculty@jbiuniversity.com',
-            'student@jbiuniversity.com'
-        ])->delete();
+            'student@jbiuniversity.com',
+            'parent@jbiuniversity.com',
+        ])->orWhereIn('employee_id', ['JBI001', 'JBI002'])
+          ->orWhere('student_id', 'JBI2024001')
+          ->delete();
 
         // Create Admin User
         $admin = User::create([
