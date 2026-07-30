@@ -59,10 +59,13 @@ class DashboardController extends Controller
             ->whereNotIn('id', $submittedAssignmentIds)
             ->count();
 
-        // Calculate overall attendance
-        $totalClasses = Attendance::whereIn('course_id', $enrolledCourses->pluck('course.id'))
-            ->distinct('course_id', 'attendance_date')
-            ->count();
+        $courseIds = $enrolledCourses->pluck('course.id')->toArray();
+        $totalClasses = \Illuminate\Support\Facades\DB::table(function ($query) use ($courseIds) {
+            $query->select('course_id', 'attendance_date')
+                ->from('attendance')
+                ->whereIn('course_id', $courseIds)
+                ->distinct();
+        }, 'unique_classes')->count();
 
         $attendedClasses = Attendance::where('user_id', $student->id)
             ->whereIn('status', ['present', 'late'])
