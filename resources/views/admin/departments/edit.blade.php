@@ -156,12 +156,12 @@
 
                     <div class="mb-3">
                         <strong>Current Code:</strong><br>
-                        <span class="badge badge-secondary">{{ $department->code }}</span>
+                        {{ $department->code }}
                     </div>
 
                     <div class="mb-3">
                         <strong>Current Status:</strong><br>
-                        <span class="badge badge-{{ $department->is_active ? 'success' : 'secondary' }}">
+                        <span class="badge bg-{{ $department->is_active ? 'success' : 'secondary' }}">
                             {{ $department->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>

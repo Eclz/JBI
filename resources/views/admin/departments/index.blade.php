@@ -162,7 +162,7 @@
                             @foreach($departments as $department)
                                 <tr>
                                     <td>
-                                        <span class="badge badge-secondary">{{ $department->code }}</span>
+                                        {{ $department->code }}
                                     </td>
                                     <td>
                                         <strong>{{ $department->name }}</strong>
@@ -200,13 +200,13 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge badge-info">{{ $department->courses_count }}</span>
+                                        {{ $department->courses_count }}
                                     </td>
                                     <td>
-                                        <span class="badge badge-success">{{ $department->faculty_members_count }}</span>
+                                        {{ $department->faculty_members_count }}
                                     </td>
                                     <td>
-                                        <span class="badge badge-warning">{{ $department->students_count }}</span>
+                                        {{ $department->students_count }}
                                     </td>
                                     <td>
                                         <button class="btn btn-sm toggle-status {{ $department->is_active ? 'btn-success' : 'btn-secondary' }}"

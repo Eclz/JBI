@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0 text-gray-800">{{ $department->name }}</h1>
-            <p class="mb-0 text-muted">Department Code: <span class="badge badge-secondary">{{ $department->code }}</span></p>
+            <p class="mb-0 text-muted">Department Code: <strong>{{ $department->code }}</strong></p>
         </div>
         <div>
             <a href="{{ route('admin.departments.edit', $department) }}" class="btn btn-warning">
@@ -113,7 +113,7 @@
 
                     <div class="mb-3">
                         <strong>Department Code:</strong><br>
-                        <span class="badge badge-secondary">{{ $department->code }}</span>
+                        {{ $department->code }}
                     </div>
 
                     @if($department->faculty)
@@ -134,7 +134,7 @@
 
                     <div class="mb-3">
                         <strong>Status:</strong><br>
-                        <span class="badge badge-{{ $department->is_active ? 'success' : 'secondary' }}">
+                        <span class="badge bg-{{ $department->is_active ? 'success' : 'secondary' }}">
                             {{ $department->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
@@ -245,7 +245,7 @@
                                                     <div>
                                                         {{ $faculty->user->first_name }} {{ $faculty->user->last_name }}
                                                         @if($department->headOfDepartment && $department->headOfDepartment->id === $faculty->user->id)
-                                                            <span class="badge badge-warning ml-1">Head</span>
+                                                            <span class="badge bg-warning text-dark ml-1">Head</span>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -253,7 +253,7 @@
                                             <td>{{ $faculty->user->email }}</td>
                                             <td>{{ $faculty->designation ?? 'Faculty Member' }}</td>
                                             <td>
-                                                <span class="badge badge-{{ $faculty->employment_status === 'full_time' ? 'success' : ($faculty->employment_status === 'part_time' ? 'warning' : 'info') }}">
+                                                <span class="badge bg-{{ $faculty->employment_status === 'full_time' ? 'success' : ($faculty->employment_status === 'part_time' ? 'warning text-dark' : 'info text-dark') }}">
                                                     {{ ucfirst(str_replace('_', ' ', $faculty->employment_status ?? 'active')) }}
                                                 </span>
                                             </td>
@@ -309,13 +309,13 @@
                                 <tbody>
                                     @foreach($department->courses as $course)
                                         <tr>
-                                            <td><span class="badge badge-info">{{ $course->code }}</span></td>
+                                            <td>{{ $course->code }}</td>
                                             <td>{{ $course->name }}</td>
                                             <td>{{ $course->credits }}</td>
                                             <td>{{ $course->semester->name ?? 'N/A' }}</td>
                                             <td>{{ $course->enrollments->count() }}</td>
                                             <td>
-                                                <span class="badge badge-{{ $course->is_active ? 'success' : 'secondary' }}">
+                                                <span class="badge bg-{{ $course->is_active ? 'success' : 'secondary' }}">
                                                     {{ $course->is_active ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
