@@ -11,6 +11,7 @@ class Course extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'code',
         'course_code',
         'name',
         'description',
@@ -42,6 +43,20 @@ class Course extends Model
         'year_of_study' => 'integer',
         'fee_amount' => 'decimal:2',
     ];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::saving(function ($course) {
+            if ($course->code && !$course->course_code) {
+                $course->course_code = $course->code;
+            } elseif ($course->course_code && !$course->code) {
+                $course->code = $course->course_code;
+            }
+        });
+    }
 
     /**
      * Course statuses
