@@ -19,7 +19,7 @@
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3 border-bottom border-primary border-2">
                     <h6 class="fw-bold mb-0 text-primary">{{ strtoupper($survey->title) }}</h6>
