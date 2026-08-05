@@ -75,4 +75,24 @@ class Notification extends Model
             'read_at' => now(),
         ]);
     }
+
+    /**
+     * Automatically send email notification when created.
+     */
+    protected static function booted()
+    {
+        static::created(function ($notification) {
+            try {
+                $user = $notification->user;
+                if ($user && !empty($user->email)) {
+                    if (in_array($user->role, ['student', 'applicant'])) {
+                        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\NotificationMail($notification, $user));
+                        $notification->updateQuietly(['email_sent' => true]);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send notification email: ' . $e->getMessage());
+            }
+        });
+    }
 }

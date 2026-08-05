@@ -21,6 +21,7 @@ class Application extends Model
         'address',
         'program',
         'program_id',
+        'program_choices',
         'previous_school',
         'previous_qualification',
         'previous_gpa',
@@ -43,12 +44,14 @@ class Application extends Model
         'admission_number',
         'student_number',
         'admitted_at',
+        'payment_ref',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'previous_gpa' => 'decimal:2',
         'documents' => 'array',
+        'program_choices' => 'array',
         'reviewed_at' => 'datetime',
         'payment_uploaded_at' => 'datetime',
         'payment_verified_at' => 'datetime',
@@ -71,9 +74,9 @@ class Application extends Model
         return $this->belongsTo(User::class, 'payment_verified_by');
     }
 
-    public function program()
+    public function programRecord()
     {
-        return $this->belongsTo(Program::class);
+        return $this->belongsTo(Program::class, 'program_id');
     }
 
     /**
@@ -82,6 +85,18 @@ class Application extends Model
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
+    }
+
+    /**
+     * Generate unique payment reference.
+     */
+    public static function generatePaymentRef(): string
+    {
+        do {
+            $ref = 'PAY-' . date('Y') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+        } while (self::where('payment_ref', $ref)->exists());
+        
+        return $ref;
     }
 
     /**

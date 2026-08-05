@@ -67,11 +67,31 @@ class Course extends Model
     const STATUS_CANCELLED = 'cancelled';
 
     /**
-     * Get the instructor of the course
+     * Get the instructor / faculty of the course
      */
     public function instructor()
     {
         return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    public function faculty()
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    public function getTitleAttribute()
+    {
+        return $this->attributes['title'] ?? $this->attributes['name'] ?? $this->attributes['code'] ?? '';
+    }
+
+    public function getYearAttribute()
+    {
+        return $this->attributes['year_of_study'] ?? 1;
+    }
+
+    public function getSemesterAttribute()
+    {
+        return $this->attributes['semester_number'] ?? $this->attributes['semester_id'] ?? 1;
     }
 
     /**
@@ -81,6 +101,7 @@ class Course extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
 
     /**
      * Get the program of the course.

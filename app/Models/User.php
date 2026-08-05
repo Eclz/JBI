@@ -414,4 +414,20 @@ class User extends Authenticatable
     {
         return $query->where('role', $role);
     }
+
+    /**
+     * Check if the student is admitted.
+     */
+    public function isAdmitted(): bool
+    {
+        return $this->role === self::ROLE_STUDENT && $this->studentProfile && $this->studentProfile->status === 'active';
+    }
+
+    /**
+     * Generate default password for admission.
+     */
+    public static function generateJBIDefaultPassword(): string
+    {
+        return 'JBI@' . \Illuminate\Support\Str::random(8);
+    }
 }
