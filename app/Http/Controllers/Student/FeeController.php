@@ -22,8 +22,9 @@ class FeeController extends Controller
         $currencyCode = SystemSetting::getSetting('default_currency', '$');
         
         $paymentLedgerRaw = Payment::where('student_id', Auth::id())
+            ->where('status', 'completed')
             ->with(['feeRecord.feeStructure.academicYear', 'feeRecord.feeStructure.semester'])
-            ->orderBy('payment_date', 'asc')
+            ->orderBy('payment_date', 'desc')
             ->get();
 
         $runningPaid = [];
@@ -44,8 +45,6 @@ class FeeController extends Controller
                 'paid_to_date' => $paidToDate,
                 'balance_after' => $balanceAfter,
             ];
-        })->sortByDesc(function ($row) {
-            return $row['payment']->payment_date;
         })->values();
 
         return view('student.fees.ledger', compact('paymentLedger', 'currencyCode'));

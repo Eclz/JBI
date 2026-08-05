@@ -14,6 +14,7 @@ class CourseEnrollment extends Model
         'course_id',
         'enrollment_date',
         'status',
+        'enrollment_type',
         'final_grade',
         'letter_grade',
         'grade_points',

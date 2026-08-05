@@ -107,11 +107,14 @@
                             <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 80px; height: 2px;"></div>
 
                             <!-- Step 5: Admitted -->
+                            @php
+                                $step5Success = isset($application) && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified'));
+                            @endphp
                             <div class="d-flex flex-column align-items-center" style="min-width: 120px;">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center bg-light text-muted mb-2" style="width: 40px; height: 40px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step5Success ? 'bg-success text-white' : 'bg-light text-muted' }} mb-2" style="width: 40px; height: 40px;">
                                     <i class="bi bi-mortarboard fs-5"></i>
                                 </div>
-                                <span class="small fw-semibold text-muted">Fully Admitted</span>
+                                <span class="small fw-semibold {{ $step5Success ? 'text-success' : 'text-muted' }}">Fully Admitted</span>
                             </div>
                         </div>
                     </div>
@@ -575,7 +578,106 @@
                         </div>
                     @endif
 
-                    <!-- CASE 5: Application Rejected -->
+                    <!-- CASE 5: Fully Admitted after Proof of Payment Approval -->
+                    @if(isset($application) && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified')))
+                        <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); border-top: 4px solid #1e3a8a !important;">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center shadow" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-mortarboard-fill fs-1"></i>
+                                    </div>
+                                </div>
+                                <h3 class="fw-bold text-primary mb-2">Step 5: Fully Admitted to JBI University! 🎉</h3>
+                                <p class="text-muted mx-auto mb-4" style="max-width: 580px;">
+                                    Congratulations <strong>{{ $student->full_name }}</strong>! Your application <strong>#{{ $application->application_number }}</strong> and proof of fee payment have been verified and approved by the Admissions Board.
+                                </p>
+                                <div class="d-inline-flex flex-column align-items-start bg-white p-3 text-start border shadow-sm mb-4" style="border-radius: 10px; width: 100%; max-width: 480px;">
+                                    <div class="small mb-1 text-dark"><strong>Enrolled Programme:</strong> {{ $application->programRecord->name ?? $application->program }}</div>
+                                    <div class="small mb-1 text-dark"><strong>Student Reg No:</strong> <span class="badge bg-primary">{{ $student->studentProfile?->student_id ?? 'STD-2026-001' }}</span></div>
+                                    <div class="small text-dark"><strong>Admission Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>FULLY ADMITTED & ACTIVE</span></div>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-lg btn-primary text-white shadow fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#onboardingWizardModal" style="border-radius: 8px;">
+                                        <i class="bi bi-rocket-takeoff-fill me-2"></i>GET STARTED WITH PORTAL
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onboarding Wizard Modal -->
+                        <div class="modal fade" id="onboardingWizardModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+                                    <div class="modal-header text-white py-3" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%);">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="bi bi-compass me-2"></i>Welcome to JBI Student Portal Guide
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <div id="onboardingCarousel" class="carousel slide" data-bs-interval="false">
+                                            <div class="carousel-inner">
+                                                <!-- Slide 1 -->
+                                                <div class="carousel-item active text-center py-3">
+                                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                                        <i class="bi bi-person-badge fs-2"></i>
+                                                    </div>
+                                                    <h5 class="fw-bold text-dark mb-2">1. Bio Data & Academic Journey</h5>
+                                                    <p class="text-muted small mx-auto" style="max-width: 500px;">
+                                                        Your student profile contains your official Student ID, enrolled programme details, cumulative GPA, and visual Academic Journey roadmap tracking your progress from Year 1 to Graduation.
+                                                    </p>
+                                                </div>
+                                                <!-- Slide 2 -->
+                                                <div class="carousel-item text-center py-3">
+                                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                                        <i class="bi bi-journal-bookmark-fill fs-2"></i>
+                                                    </div>
+                                                    <h5 class="fw-bold text-dark mb-2">2. Semester Enrollment & Timetables</h5>
+                                                    <p class="text-muted small mx-auto" style="max-width: 500px;">
+                                                        Enroll for upcoming semesters, register for courses (Normal, Retake, or Missed Papers), view your teaching schedules, tests, and exam timetables in a unified grid layout.
+                                                    </p>
+                                                </div>
+                                                <!-- Slide 3 -->
+                                                <div class="carousel-item text-center py-3">
+                                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                                        <i class="bi bi-receipt fs-2"></i>
+                                                    </div>
+                                                    <h5 class="fw-bold text-dark mb-2">3. Fees, Invoices & PRN Generation</h5>
+                                                    <p class="text-muted small mx-auto" style="max-width: 500px;">
+                                                        Track tuition statements, view itemized retake/missed paper invoices, check programme fee structures, and generate bank payment PRNs directly from your portal.
+                                                    </p>
+                                                </div>
+                                                <!-- Slide 4 -->
+                                                <div class="carousel-item text-center py-3">
+                                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                                        <i class="bi bi-envelope-check fs-2"></i>
+                                                    </div>
+                                                    <h5 class="fw-bold text-dark mb-2">4. Student Mailbox & LMS Notifications</h5>
+                                                    <p class="text-muted small mx-auto" style="max-width: 500px;">
+                                                        Message fellow classmates and faculty lecturers directly. Receive automated alerts for published assignments, upcoming quizzes, tests, and exam schedules.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-target="#onboardingCarousel" data-bs-slide="prev">
+                                                    <i class="bi bi-arrow-left me-1"></i>Previous
+                                                </button>
+                                                <button class="btn btn-outline-primary btn-sm me-2" type="button" data-bs-target="#onboardingCarousel" data-bs-slide="next">
+                                                    Next<i class="bi bi-arrow-right ms-1"></i>
+                                                </button>
+                                                <a href="{{ route('student.dashboard') }}" class="btn btn-primary fw-bold px-4">
+                                                    <i class="bi bi-check-circle me-1"></i>Explore Student Portal
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- CASE 6: Application Rejected -->
                     @if(isset($application) && $application->status === 'rejected')
                         <div class="card border-0 shadow-sm mb-4">
                             <div class="card-header bg-danger text-white py-3">

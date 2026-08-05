@@ -577,11 +577,20 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/my-programme', [StudentProgrammeCoursesController::class, 'myProgramme'])->name('my-programme');
     Route::get('/enrollment', [StudentProgrammeCoursesController::class, 'showEnrollment'])->name('enrollment.index');
     Route::post('/enrollment', [StudentProgrammeCoursesController::class, 'processEnrollment'])->name('enrollment.store');
+    Route::delete('/enrollment/unenroll/{course}', [StudentProgrammeCoursesController::class, 'unenroll'])->name('enrollment.unenroll');
 });
 
 
 // Shared routes (All authenticated users)
 Route::middleware(['auth'])->group(function () {
+    // Mailbox & Messaging
+    Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/{message}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
+
+    // Academic Calendar
+    Route::get('/academic-calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('academic-calendar.index');
+
     // General course browsing
     Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');

@@ -390,36 +390,27 @@
             </a>
         </li>
 
-        {{-- Collapsible Timetable Menu for Student --}}
-        @php
-            $isTimetableActive = request()->routeIs('student.timetables.*');
-        @endphp
-        <li class="menu-item-dropdown {{ $isTimetableActive ? 'active' : '' }}">
-            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
+        {{-- Single Timetable Link --}}
+        <li class="menu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">
+            <a href="{{ route('student.timetables.teaching') }}" class="menu-link">
                 <i class="bi bi-calendar3" style="color: #3a7bd5;"></i>
-                <span class="fw-bold text-uppercase">Timetable</span>
-                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem; color: #3a7bd5;"></i>
+                <span>Timetables</span>
             </a>
-            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isTimetableActive ? 'block' : 'none' }};">
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.timetables.teaching') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.timetables.teaching') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }};">
-                        <i class="bi bi-book me-2" style="font-size: 1rem;"></i>
-                        <span>TEACHING TIMETABLE</span>
-                    </a>
-                </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.timetables.tests') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.timetables.tests') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }};">
-                        <i class="bi bi-patch-check me-2" style="font-size: 1rem;"></i>
-                        <span>TESTS TIMETABLE</span>
-                    </a>
-                </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.timetables.exams') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.timetables.exams') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }};">
-                        <i class="bi bi-pencil-square me-2" style="font-size: 1rem;"></i>
-                        <span>EXAMS TIMETABLE</span>
-                    </a>
-                </li>
-            </ul>
+        </li>
+
+        {{-- Mailbox & Academic Calendar --}}
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper" style="color: #3a7bd5;"></i>
+                <span>Mailbox</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
+            <a href="{{ route('academic-calendar.index') }}" class="menu-link">
+                <i class="bi bi-calendar-week" style="color: #3a7bd5;"></i>
+                <span>Academic Calendar</span>
+            </a>
         </li>
 
         @php
@@ -440,7 +431,7 @@
                     </a>
                 </li>
                 <li class="submenu-item py-1">
-                    <a href="#" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); transition: color 0.2s;">
+                    <a href="{{ route('student.fees.ledger') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.ledger') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
                         <i class="bi bi-file-earmark-check me-2" style="font-size: 1rem;"></i>
                         <span>MY TRANSACTIONS</span>
                     </a>

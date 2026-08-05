@@ -8,8 +8,10 @@ use App\Models\Program;
 use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\CourseEnrollment;
+use App\Models\FeeRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ProgrammeCoursesController extends Controller
 {
@@ -68,7 +70,29 @@ class ProgrammeCoursesController extends Controller
         }
         $semesters = Semester::all();
 
-        return view('student.enrollment.index', compact('user', 'studentProfile', 'academicYears', 'semesters'));
+        // Available courses for enrollment
+        $program = null;
+        if ($studentProfile?->program_id) {
+            $program = Program::find($studentProfile->program_id);
+        }
+
+        $query = Course::with('faculty');
+        if ($program) {
+            $query->where(function($q) use ($program) {
+                $q->where('program_id', $program->id)
+                  ->orWhere('department_id', $program->department_id)
+                  ->orWhereNull('program_id');
+            });
+        }
+
+        $availableCourses = $query->get();
+
+        // Currently enrolled courses for student
+        $currentEnrollments = CourseEnrollment::with('course.faculty')
+            ->where('user_id', $user->id)
+            ->get();
+
+        return view('student.enrollment.index', compact('user', 'studentProfile', 'academicYears', 'semesters', 'availableCourses', 'currentEnrollments'));
     }
 
     public function processEnrollment(Request $request)
@@ -77,6 +101,9 @@ class ProgrammeCoursesController extends Controller
             'year_of_study' => 'required|integer|min:1|max:6',
             'current_semester' => 'required|integer|in:1,2',
             'academic_year_id' => 'required|exists:academic_years,id',
+            'course_ids' => 'required|array|min:1',
+            'course_ids.*' => 'exists:courses,id',
+            'enrollment_types' => 'required|array',
         ]);
 
         $user = Auth::user();
@@ -90,6 +117,80 @@ class ProgrammeCoursesController extends Controller
             ]);
         }
 
-        return redirect()->route('student.my-programme')->with('success', 'Successfully enrolled for Year ' . $request->year_of_study . ' Semester ' . $request->current_semester . '!');
+        $invoicesGenerated = 0;
+
+        foreach ($request->course_ids as $courseId) {
+            $type = $request->enrollment_types[$courseId] ?? 'normal';
+            $course = Course::find($courseId);
+
+            CourseEnrollment::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'course_id' => $courseId,
+                ],
+                [
+                    'status' => 'enrolled',
+                    'enrollment_type' => $type,
+                    'enrollment_date' => now(),
+                ]
+            );
+
+            // Generate invoice if retake or missed paper
+            if ($type === 'retake') {
+                $amount = 150000; // Retake Fee UGX 150,000
+                FeeRecord::create([
+                    'user_id' => $user->id,
+                    'invoice_number' => 'INV-RET-' . strtoupper(Str::random(6)),
+                    'amount' => $amount,
+                    'total_amount' => $amount,
+                    'balance_amount' => $amount,
+                    'paid_amount' => 0,
+                    'type' => 'retake_fee',
+                    'status' => 'unpaid',
+                    'due_date' => now()->addDays(30),
+                    'payment_notes' => "Automatic Retake Fee Invoice for course: {$course->code} - {$course->title}",
+                ]);
+                $invoicesGenerated++;
+            } elseif ($type === 'missed_paper') {
+                $amount = 100000; // Missed Paper Fee UGX 100,000
+                FeeRecord::create([
+                    'user_id' => $user->id,
+                    'invoice_number' => 'INV-MIS-' . strtoupper(Str::random(6)),
+                    'amount' => $amount,
+                    'total_amount' => $amount,
+                    'balance_amount' => $amount,
+                    'paid_amount' => 0,
+                    'type' => 'missed_paper_fee',
+                    'status' => 'unpaid',
+                    'due_date' => now()->addDays(30),
+                    'payment_notes' => "Automatic Missed Paper Examination Fee Invoice for course: {$course->code} - {$course->title}",
+                ]);
+                $invoicesGenerated++;
+            }
+        }
+
+        $msg = 'Successfully enrolled for Year ' . $request->year_of_study . ' Semester ' . $request->current_semester . ' with ' . count($request->course_ids) . ' courses!';
+        if ($invoicesGenerated > 0) {
+            $msg .= " ({$invoicesGenerated} retake/missed paper fee invoices generated and added to your billing statement).";
+        }
+
+        return redirect()->route('student.enrollment.index')->with('success', $msg);
+    }
+
+    public function unenroll(Request $request, Course $course)
+    {
+        $user = Auth::user();
+
+        // Check if enrollment is active for semester
+        $enrollment = CourseEnrollment::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+
+        if ($enrollment) {
+            $enrollment->delete();
+            return back()->with('success', "Unenrolled successfully from {$course->code} - {$course->title}.");
+        }
+
+        return back()->with('error', "You are not enrolled in {$course->code}.");
     }
 }
