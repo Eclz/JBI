@@ -19,35 +19,22 @@ class FeeController extends Controller
 {
     public function ledger()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', '$');
-        
-        $paymentLedgerRaw = Payment::where('student_id', Auth::id())
+        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $user = Auth::user();
+
+        // Get all fee records for student (Tuition, Functional, Retake, Missed Paper)
+        $feeRecords = FeeRecord::where('user_id', $user->id)
+            ->with(['feeStructure.academicYear', 'feeStructure.semester'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Also fetch completed payments
+        $payments = Payment::where('student_id', $user->id)
             ->where('status', 'completed')
-            ->with(['feeRecord.feeStructure.academicYear', 'feeRecord.feeStructure.semester'])
             ->orderBy('payment_date', 'desc')
             ->get();
 
-        $runningPaid = [];
-        $paymentLedger = $paymentLedgerRaw->map(function ($payment) use (&$runningPaid) {
-            $feeId = $payment->fee_record_id;
-            $feeTotal = $payment->feeRecord?->total_amount ?? 0;
-            $paidToDate = $runningPaid[$feeId] ?? 0;
-
-            if ($payment->status === 'completed') {
-                $paidToDate += $payment->amount;
-                $runningPaid[$feeId] = $paidToDate;
-            }
-
-            $balanceAfter = max($feeTotal - $paidToDate, 0);
-
-            return [
-                'payment' => $payment,
-                'paid_to_date' => $paidToDate,
-                'balance_after' => $balanceAfter,
-            ];
-        })->values();
-
-        return view('student.fees.ledger', compact('paymentLedger', 'currencyCode'));
+        return view('student.fees.ledger', compact('feeRecords', 'payments', 'currencyCode'));
     }
 
     public function index()

@@ -437,19 +437,13 @@
                     </a>
                 </li>
                 <li class="submenu-item py-1">
-                    <a href="#" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); transition: color 0.2s;">
-                        <i class="bi bi-file-earmark-code me-2" style="font-size: 1rem;"></i>
-                        <span>MIGRATED TRANSACTIONS</span>
-                    </a>
-                </li>
-                <li class="submenu-item py-1">
                     <a href="{{ route('student.fees.ledger') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.ledger') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
                         <i class="bi bi-file-earmark-text me-2" style="font-size: 1rem; color: {{ request()->routeIs('student.fees.ledger') ? '#3a7bd5' : 'inherit' }}"></i>
                         <span>MY STUDENT LEDGER</span>
                     </a>
                 </li>
                 <li class="submenu-item py-1">
-                    <a href="#" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); transition: color 0.2s;">
+                    <a href="{{ route('student.fees.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.index') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
                         <i class="bi bi-file-earmark-richtext me-2" style="font-size: 1rem;"></i>
                         <span>MY FEES STRUCTURE</span>
                     </a>
