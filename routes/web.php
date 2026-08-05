@@ -578,6 +578,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/enrollment', [StudentProgrammeCoursesController::class, 'showEnrollment'])->name('enrollment.index');
     Route::post('/enrollment', [StudentProgrammeCoursesController::class, 'processEnrollment'])->name('enrollment.store');
     Route::delete('/enrollment/unenroll/{course}', [StudentProgrammeCoursesController::class, 'unenroll'])->name('enrollment.unenroll');
+    Route::get('/admission-letter', [StudentDashboardController::class, 'showAdmissionLetter'])->name('admission-letter.show');
 });
 
 

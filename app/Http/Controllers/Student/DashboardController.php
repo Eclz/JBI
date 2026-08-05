@@ -260,4 +260,24 @@ class DashboardController extends Controller
             });
         }
     }
+
+    public function showAdmissionLetter()
+    {
+        $student = Auth::user();
+        $application = \App\Models\Application::where('email', $student->email)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$application) {
+            $application = new \App\Models\Application([
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'program' => $student->studentProfile?->program ?? 'BSc. Computer Science',
+            ]);
+        }
+
+        return view('student.admission_letter', compact('student', 'application'));
+    }
 }

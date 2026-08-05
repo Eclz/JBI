@@ -596,10 +596,13 @@
                                     <div class="small mb-1 text-dark"><strong>Student Reg No:</strong> <span class="badge bg-primary">{{ $student->studentProfile?->student_id ?? 'STD-2026-001' }}</span></div>
                                     <div class="small text-dark"><strong>Admission Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>FULLY ADMITTED & ACTIVE</span></div>
                                 </div>
-                                <div>
+                                <div class="d-flex flex-wrap justify-content-center gap-2">
                                     <button type="button" class="btn btn-lg btn-primary text-white shadow fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#onboardingWizardModal" style="border-radius: 8px;">
                                         <i class="bi bi-rocket-takeoff-fill me-2"></i>GET STARTED WITH PORTAL
                                     </button>
+                                    <a href="{{ route('student.admission-letter.show') }}" class="btn btn-lg btn-outline-primary fw-bold px-4 py-2" style="border-radius: 8px;">
+                                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>VIEW & DOWNLOAD ADMISSION LETTER
+                                    </a>
                                 </div>
                             </div>
                         </div>
