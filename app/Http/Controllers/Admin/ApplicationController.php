@@ -31,7 +31,7 @@ class ApplicationController extends Controller
 
     public function index(Request $request)
     {
-        $query = Application::with(['program.department', 'program.level']);
+        $query = Application::with(['programRecord.department', 'programRecord.level']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -68,7 +68,7 @@ class ApplicationController extends Controller
 
     public function show($id)
     {
-        $application = Application::with(['program.department', 'program.level'])->findOrFail($id);
+        $application = Application::with(['programRecord.department', 'programRecord.level'])->findOrFail($id);
         $approvalReadiness = $this->buildApprovalReadiness($application);
 
         return view('admin.applications.show', compact('application', 'approvalReadiness'));

@@ -34,8 +34,12 @@ class CourseController extends Controller
             ->when(request('semester'), function ($query, $semester) {
                 $query->where('semester_id', $semester);
             })
+            ->when(request('status'), function ($query, $status) {
+                $query->where('status', $status);
+            })
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::orderBy('start_date', 'desc')->get();

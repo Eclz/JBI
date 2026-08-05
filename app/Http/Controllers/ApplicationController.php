@@ -78,7 +78,7 @@ class ApplicationController extends Controller
                     'title' => 'New Application Received',
                     'message' => "New {$application->type} application from {$application->full_name}",
                     'priority' => 'high',
-                    'link' => route('admin.applications.show', $application),
+                    'action_url' => route('admin.applications.show', $application),
                 ]);
 
                 Mail::to($admin->email)->queue(new NewApplicationNotification($application));
@@ -139,7 +139,7 @@ class ApplicationController extends Controller
                     'title' => 'Payment Proof Uploaded',
                     'message' => "{$application->full_name} has uploaded payment proof",
                     'priority' => 'high',
-                    'link' => route('admin.applications.show', $application),
+                    'action_url' => route('admin.applications.show', $application),
                 ]);
             }
 

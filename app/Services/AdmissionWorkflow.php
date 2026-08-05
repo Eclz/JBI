@@ -75,6 +75,15 @@ class AdmissionWorkflow
         if ($application) {
             Mail::to($application->email)->send(new AdmissionLetter($application));
         }
+
+        try {
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->send(new \App\Mail\AdminAdmissionNotification($user, $application));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send admin admission notification: ' . $e->getMessage());
+        }
     }
 
     private static function generateAdmissionNumber(string $departmentCode): string

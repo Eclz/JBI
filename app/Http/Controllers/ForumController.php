@@ -80,7 +80,7 @@ class ForumController extends Controller
         ForumReply::create([
             'topic_id' => $topic->id,
             'content' => $request->content,
-            'author_id' => Auth::id(),
+            'user_id' => Auth::id(),
         ]);
 
         $topic->touch(); // Update the topic's updated_at timestamp

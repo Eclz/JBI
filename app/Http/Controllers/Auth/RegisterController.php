@@ -10,6 +10,7 @@ use App\Models\FacultyProfile;
 use App\Models\Department;
 use App\Models\AcademicYear;
 use App\Models\Semester;
+use App\Models\Program;
 use App\Mail\EmailVerification;
 use App\Mail\ApplicationSubmitted;
 use App\Mail\AdmissionApproved;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
@@ -33,16 +35,12 @@ class RegisterController extends Controller
 
     public function showRegistrationForm()
     {
-        $departments = Department::where('is_active', true)->get();
-        $currentAcademicYear = AcademicYear::where('is_current', true)->first();
-        $currentSemester = Semester::where('is_current', true)->first();
-
-        return view('auth.register', compact('departments', 'currentAcademicYear', 'currentSemester'));
+        return view('auth.register');
     }
 
     public function register(Request $request)
     {
-        // Custom validation based on role
+        // Custom validation
         $validator = $this->getValidationRules($request);
 
         if ($validator->fails()) {
@@ -54,61 +52,44 @@ class RegisterController extends Controller
         try {
             // Handle file uploads
             $profilePicture = null;
-            $documents = [];
 
             if ($request->hasFile('profile_picture')) {
                 $profilePicture = $request->file('profile_picture')->store('profile-pictures', 'public');
             }
 
-            if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $key => $file) {
-                    $documents[$key] = $file->store('student-documents', 'public');
-                }
-            }
-
-            // Create user account
+            // Create user account as student
             $user = User::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
+                'role' => 'student',
                 'phone' => $request->phone,
-                'date_of_birth' => $request->date_of_birth,
-                'gender' => $request->gender,
-                'address' => $request->address,
-                'emergency_contact' => $request->emergency_contact_name,
-                'emergency_phone' => $request->emergency_contact_phone,
-                'profile_picture' => $profilePicture,
-                'is_active' => false, // Requires admin approval
+                'is_active' => true, // Active to allow logging in to apply
                 'email_verified_at' => null, // Requires email verification
             ]);
 
-            // Create role-specific profile with enhanced data
-            if ($request->role === 'student') {
-                $this->createStudentProfile($user, $request, $documents);
-            } elseif ($request->role === 'faculty') {
-                $this->createFacultyProfile($user, $request, $documents);
-            }
-
             DB::commit();
 
-            // Send emails with better error handling
-            $emailResults = [];
+            // Create database notification for successful registration
+            try {
+                \App\Models\Notification::create([
+                    'user_id' => $user->id,
+                    'title' => 'Account Created Successfully',
+                    'message' => 'Welcome to JBI University! Please complete your profile application to proceed.',
+                    'type' => 'info',
+                    'priority' => 'high',
+                ]);
+            } catch (\Exception $notifError) {
+                Log::error('Failed to create registration notification: ' . $notifError->getMessage());
+            }
 
-            // Send email verification
+            // Send email verification in the background
+            $emailResults = [];
             $emailResults['verification'] = $this->sendEmailSafely(function() use ($user) {
                 Mail::to($user->email)->send(new EmailVerification($user));
             }, 'Email verification', $user->email);
-
-            // Send application submitted confirmation
-            $emailResults['confirmation'] = $this->sendEmailSafely(function() use ($user) {
-                Mail::to($user->email)->send(new ApplicationSubmitted($user));
-            }, 'Application confirmation', $user->email);
-
-            // Send notification to admins
-            $emailResults['admin_notifications'] = $this->sendAdminNotifications($user);
 
             // Log email results
             Log::info('Registration completed for user: ' . $user->email, [
@@ -116,24 +97,15 @@ class RegisterController extends Controller
                 'email_results' => $emailResults
             ]);
 
-            $message = 'Registration successful! Please check your email to verify your account. Your application is now under review.';
+            // Authenticate and log in the user immediately
+            Auth::login($user);
 
-            // Add email status to success message if there were issues
-            $failedEmails = array_filter($emailResults, function($result) {
-                return !$result;
-            });
-
-            if (!empty($failedEmails)) {
-                $message .= ' Note: Some email notifications may be delayed due to server issues.';
-            }
-
-            return redirect()->route('login')->with('success', $message);
+            return redirect()->route('dashboard')->with('success', 'Account created successfully! Please fill out your admission application below.');
 
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Registration failed: ' . $e->getMessage(), [
                 'email' => $request->email,
-                'role' => $request->role,
                 'trace' => $e->getTraceAsString()
             ]);
             return back()->withErrors(['error' => 'Registration failed: ' . $e->getMessage()])->withInput();
@@ -168,7 +140,7 @@ class RegisterController extends Controller
 
         $user->markEmailAsVerified();
 
-        return redirect()->route('login')->with('success', 'Email verified successfully! Your application is now under review.');
+        return redirect()->route('login')->with('success', 'Email verified successfully! You can now log in and complete your admission application.');
     }
 
     public function resendVerification(Request $request)
@@ -211,6 +183,20 @@ class RegisterController extends Controller
 
                 if ($success) {
                     $successCount++;
+                }
+
+                // Create database notification for web UI
+                try {
+                    \App\Models\Notification::create([
+                        'user_id' => $admin->id,
+                        'type' => 'application',
+                        'title' => 'New User Registration',
+                        'message' => "New registration from {$user->name} as {$user->role}",
+                        'priority' => 'high',
+                        'action_url' => route('admin.users.show', $user),
+                    ]);
+                } catch (\Exception $dbNotificationError) {
+                    Log::error('Failed to create database notification: ' . $dbNotificationError->getMessage());
                 }
             }
 
@@ -305,63 +291,15 @@ class RegisterController extends Controller
 
     private function getValidationRules($request)
     {
-        $baseRules = [
+        $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
-            'role' => 'required|in:student,faculty',
             'phone' => 'required|string|max:20',
-            'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other',
-            'address' => 'required|string|max:500',
-            'emergency_contact_name' => 'required|string|max:255',
-            'emergency_contact_phone' => 'required|string|max:20',
-            'department_id' => 'required|exists:departments,id',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ];
 
-        if ($request->role === 'student') {
-            $studentRules = [
-                'program' => 'required|string|max:255',
-                'specialization' => 'nullable|string|max:255',
-                'guardian_name' => 'required|string|max:255',
-                'guardian_phone' => 'required|string|max:20',
-                'guardian_email' => 'nullable|email',
-                'guardian_address' => 'required|string|max:500',
-                'previous_school' => 'required|string|max:255',
-                'previous_school_address' => 'nullable|string|max:500',
-                'graduation_year' => 'required|integer|min:1990|max:' . date('Y'),
-                'previous_gpa' => 'nullable|numeric|min:0|max:4',
-                'sat_score' => 'nullable|integer|min:400|max:1600',
-                'act_score' => 'nullable|integer|min:1|max:36',
-                'toefl_score' => 'nullable|integer|min:0|max:120',
-                'ielts_score' => 'nullable|numeric|min:0|max:9',
-                'major_subjects' => 'nullable|string',
-                'other_certifications' => 'nullable|string',
-                'application_notes' => 'nullable|string|max:1000',
-            ];
-            $baseRules = array_merge($baseRules, $studentRules);
-        }
-
-        if ($request->role === 'faculty') {
-            $facultyRules = [
-                'position' => 'required|string|max:255',
-                'highest_degree' => 'required|string|max:255',
-                'degree_institution' => 'required|string|max:255',
-                'degree_year' => 'required|integer|min:1970|max:' . date('Y'),
-                'specialization' => 'required|string|max:255',
-                'years_of_experience' => 'required|integer|min:0|max:50',
-                'certifications' => 'nullable|string',
-                'previous_positions' => 'nullable|string',
-                'research_interests' => 'nullable|string',
-                'application_notes' => 'nullable|string|max:1000',
-            ];
-            $baseRules = array_merge($baseRules, $facultyRules);
-        }
-
-        return Validator::make($request->all(), $baseRules);
+        return Validator::make($request->all(), $rules);
     }
 
     private function generateAdmissionNumber()

@@ -26,11 +26,34 @@ class DashboardController extends Controller
 
         // Get student profile with department
         $studentProfile = $student->studentProfile()->with('department')->first();
+
+        // Check if student is admitted (has active profile status)
+        if (!$studentProfile || $studentProfile->status !== 'active') {
+            $application = \App\Models\Application::where('email', $student->email)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $programs = \App\Models\Program::where('is_active', true)
+                ->with(['department', 'level'])
+                ->orderBy('name')
+                ->get();
+
+            $programChoices = collect();
+            if ($application && is_array($application->program_choices)) {
+                $programChoices = \App\Models\Program::whereIn('id', $application->program_choices)
+                    ->with(['department', 'level'])
+                    ->get()
+                    ->sortBy(function ($p) use ($application) {
+                        return array_search($p->id, $application->program_choices);
+                    });
+            }
+
+            return view('student.dashboard_unadmitted', compact('student', 'studentProfile', 'application', 'programs', 'programChoices'));
+        }
+
         $currentSemester = Semester::where('is_current', true)->first();
 
-        if ($studentProfile) {
-            $this->enforcePaymentDeadlines($student, $studentProfile, $currentSemester);
-        }
+        $this->enforcePaymentDeadlines($student, $studentProfile, $currentSemester);
 
         // Get enrolled courses with relationships
         $enrolledCourses = $student->courseEnrollments()

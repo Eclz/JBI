@@ -17,6 +17,40 @@ use Illuminate\Support\Str;
 
 class FeeController extends Controller
 {
+    public function ledger()
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', '$');
+        
+        $paymentLedgerRaw = Payment::where('student_id', Auth::id())
+            ->with(['feeRecord.feeStructure.academicYear', 'feeRecord.feeStructure.semester'])
+            ->orderBy('payment_date', 'asc')
+            ->get();
+
+        $runningPaid = [];
+        $paymentLedger = $paymentLedgerRaw->map(function ($payment) use (&$runningPaid) {
+            $feeId = $payment->fee_record_id;
+            $feeTotal = $payment->feeRecord?->total_amount ?? 0;
+            $paidToDate = $runningPaid[$feeId] ?? 0;
+
+            if ($payment->status === 'completed') {
+                $paidToDate += $payment->amount;
+                $runningPaid[$feeId] = $paidToDate;
+            }
+
+            $balanceAfter = max($feeTotal - $paidToDate, 0);
+
+            return [
+                'payment' => $payment,
+                'paid_to_date' => $paidToDate,
+                'balance_after' => $balanceAfter,
+            ];
+        })->sortByDesc(function ($row) {
+            return $row['payment']->payment_date;
+        })->values();
+
+        return view('student.fees.ledger', compact('paymentLedger', 'currencyCode'));
+    }
+
     public function index()
     {
         $feeRecords = FeeRecord::where('user_id', Auth::id())

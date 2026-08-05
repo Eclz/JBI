@@ -47,13 +47,31 @@ class StudentController extends Controller
             })
             ->when(request('status'), function ($query, $status) {
                 if ($status === 'active') {
-                    $query->where('is_active', true);
+                    $query->where('is_active', true)
+                          ->whereHas('studentProfile', function ($q) {
+                              $q->where('status', 'active');
+                          });
                 } elseif ($status === 'inactive') {
                     $query->where('is_active', false);
+                } elseif (in_array($status, ['graduated', 'suspended', 'dropped'])) {
+                    $query->whereHas('studentProfile', function ($q) use ($status) {
+                        $q->where('status', $status);
+                    });
                 }
             })
+            ->when(request('semester'), function ($query, $semester) {
+                $query->whereHas('studentProfile', function ($q) use ($semester) {
+                    $q->where('current_semester', $semester);
+                });
+            })
+            ->when(request('year_of_study'), function ($query, $year) {
+                $query->whereHas('studentProfile', function ($q) use ($year) {
+                    $q->where('year_of_study', $year);
+                });
+            })
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $departments = Department::where('is_active', true)->get();
 
