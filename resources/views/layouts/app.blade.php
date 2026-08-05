@@ -365,13 +365,31 @@
             min-height: calc(100vh - var(--mobile-header-height));
         }
 
-        /* Footer Styles */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-area {
+            flex: 1 0 auto;
+        }
+
+        /* Fixed Sticky Bottom Footer Styles */
         .footer {
-            background-color: white;
+            margin-top: auto;
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: #ffffff;
             border-top: 1px solid #e9ecef;
             padding: 0.75rem 1.5rem;
             font-size: 0.875rem;
             color: #6c757d;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
         }
 
         /* Utility Classes */
