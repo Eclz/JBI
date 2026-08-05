@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY', 'pk_test_51NzDemoStripeKeyForIllustration12345'),
+        'secret' => env('STRIPE_SECRET', 'sk_test_51NzDemoStripeSecretForIllustration12345'),
+        'webhook' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];
+

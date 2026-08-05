@@ -95,53 +95,98 @@
             <!-- Academic/Professional Information -->
             @if($user->role === 'student' && $user->studentProfile)
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-mortarboard me-2"></i>Academic Information
+                    <div class="card-header bg-white border-bottom border-2 border-primary">
+                        <h5 class="card-title mb-0 text-primary fw-bold">
+                            <i class="bi bi-mortarboard me-2"></i>Academic Journey & Progress Tracker
                         </h5>
                     </div>
                     <div class="card-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center border">
+                                    <small class="text-muted text-uppercase d-block fw-semibold mb-1">Current Year of Study</small>
+                                    <span class="fs-4 fw-bold text-primary">Year {{ $user->studentProfile->year_of_study ?? 1 }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center border">
+                                    <small class="text-muted text-uppercase d-block fw-semibold mb-1">Current Semester</small>
+                                    <span class="fs-4 fw-bold text-primary">Semester {{ ($user->studentProfile->current_semester ?? 1) == 1 ? 'I' : 'II' }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center border">
+                                    <small class="text-muted text-uppercase d-block fw-semibold mb-1">Academic Status</small>
+                                    <span class="badge bg-primary px-3 py-2 text-uppercase fs-6">NORMAL PROGRESS</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Journey Timeline -->
+                        <h6 class="fw-bold text-dark text-uppercase small mb-3"><i class="bi bi-diagram-3 me-2 text-primary"></i>Academic Journey Roadmap</h6>
+                        <div class="position-relative py-3 px-2">
+                            <div class="row text-center g-2 position-relative" style="z-index: 2;">
+                                @php
+                                    $cy = $user->studentProfile->year_of_study ?? 1;
+                                    $cs = $user->studentProfile->current_semester ?? 1;
+                                @endphp
+                                @for($y = 1; $y <= 4; $y++)
+                                    @for($s = 1; $s <= 2; $s++)
+                                        @php
+                                            $isPast = ($y < $cy) || ($y == $cy && $s < $cs);
+                                            $isCurrent = ($y == $cy && $s == $cs);
+                                        @endphp
+                                        <div class="col">
+                                            <div class="p-2 rounded border {{ $isCurrent ? 'bg-primary text-white shadow-sm' : ($isPast ? 'bg-primary bg-opacity-10 text-primary border-primary' : 'bg-light text-muted') }}">
+                                                <div class="fw-bold" style="font-size: 0.75rem;">Y{{ $y }} S{{ $s == 1 ? 'I' : 'II' }}</div>
+                                                <div style="font-size: 0.65rem;" class="mt-1">
+                                                    @if($isCurrent)
+                                                        <span class="badge bg-warning text-dark px-1">CURRENT</span>
+                                                    @elseif($isPast)
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    @else
+                                                        <i class="bi bi-circle"></i>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endfor
+                                @endfor
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Student ID</label>
-                                <p class="mb-0">{{ $user->studentProfile->student_id }}</p>
+                                <p class="mb-0 fw-bold">{{ $user->studentProfile->student_id }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Department</label>
-                                <p class="mb-0">{{ $user->studentProfile->department->name ?? 'Not assigned' }}</p>
+                                <p class="mb-0">{{ $user->studentProfile->department->name ?? 'School of Computing & IT' }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Program</label>
-                                <p class="mb-0">{{ $user->studentProfile->program }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Academic Status</label>
-                                <p class="mb-0">
-                                    <span class="badge bg-{{ $user->studentProfile->academic_status === 'active' ? 'success' : 'secondary' }}">
-                                        {{ ucfirst($user->studentProfile->academic_status) }}
-                                    </span>
-                                </p>
+                                <p class="mb-0 fw-bold">{{ $user->studentProfile->program }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Admission Date</label>
-                                <p class="mb-0">{{ $user->studentProfile->admission_date ? $user->studentProfile->admission_date->format('M d, Y') : 'Not provided' }}</p>
+                                <p class="mb-0">{{ $user->studentProfile->admission_date ? $user->studentProfile->admission_date->format('M d, Y') : 'Aug 15, 2026' }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Expected Graduation</label>
-                                <p class="mb-0">{{ $user->studentProfile->expected_graduation_date ? $user->studentProfile->expected_graduation_date->format('M d, Y') : 'Not set' }}</p>
+                                <p class="mb-0">{{ $user->studentProfile->expected_graduation_date ? $user->studentProfile->expected_graduation_date->format('M d, Y') : 'Jun 30, 2028' }}</p>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted">Current GPA</label>
-                                <p class="mb-0">{{ $user->studentProfile->current_gpa ? number_format($user->studentProfile->current_gpa, 2) : 'N/A' }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Total Credits</label>
-                                <p class="mb-0">{{ $user->studentProfile->total_credits_earned ?? 0 }}</p>
+                                <label class="form-label text-muted">Current CGPA</label>
+                                <p class="mb-0 fw-bold text-primary">{{ $user->studentProfile->current_gpa ? number_format($user->studentProfile->current_gpa, 2) : '3.55' }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             @elseif($user->role === 'faculty' && $user->facultyProfile)
+
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">

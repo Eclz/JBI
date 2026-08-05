@@ -55,9 +55,9 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <p><strong>Program:</strong> {{ $application->program->name ?? $application->program ?? 'Not specified' }}</p>
-                                            <p><strong>Program Level:</strong> {{ $application->program->level->name ?? 'Not specified' }}</p>
-                                            <p><strong>Department:</strong> {{ $application->program->department->name ?? 'Not specified' }}</p>
+                                            <p><strong>Program:</strong> {{ $application->programRecord->name ?? $application->program ?? 'Not specified' }}</p>
+                                            <p><strong>Program Level:</strong> {{ $application->programRecord->level->name ?? 'Not specified' }}</p>
+                                            <p><strong>Department:</strong> {{ $application->programRecord->department->name ?? 'Not specified' }}</p>
                                             <p><strong>Previous Institution:</strong> {{ $application->previous_school }}</p>
                                         </div>
                                         <div class="col-md-6">

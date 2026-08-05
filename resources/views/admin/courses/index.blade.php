@@ -15,43 +15,48 @@
                 </div>
                 <div class="card-body">
                     <!-- Search and Filter -->
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search courses...">
+                    <form method="GET" action="{{ route('admin.courses.index') }}" id="filterForm">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <input type="text" name="search" class="form-control" id="searchInput" placeholder="Search courses..." value="{{ request('search') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <select name="department" class="form-select" id="departmentFilter">
+                                    <option value="">All Departments</option>
+                                    @foreach($departments as $department)
+                                        <option value="{{ $department->id }}" {{ request('department') == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="semester" class="form-select" id="semesterFilter">
+                                    <option value="">All Semesters</option>
+                                    @foreach($semesters as $semester)
+                                        <option value="{{ $semester->id }}" {{ request('semester') == $semester->id ? 'selected' : '' }}>{{ $semester->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="status" class="form-select" id="statusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-search"></i> Filter
+                                </button>
+                                <a href="{{ route('admin.courses.index') }}" class="btn btn-outline-secondary">Reset</a>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-outline-success" onclick="exportCourses()">
+                                    <i class="fa fa-download"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-control" id="departmentFilter">
-                                <option value="">All Departments</option>
-                                @foreach($departments as $department)
-                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-control" id="semesterFilter">
-                                <option value="">All Semesters</option>
-                                @foreach($semesters as $semester)
-                                    <option value="{{ $semester->id }}">{{ $semester->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-control" id="statusFilter">
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-outline-secondary" id="resetFilters">Reset</button>
-                        </div>
-                        <div class="col-md-1">
-                            <button class="btn btn-outline-success" onclick="exportCourses()">
-                                <i class="fa fa-download"></i>
-                            </button>
-                        </div>
-                    </div>
+                    </form>
 
                     <!-- Courses Table -->
                     <div class="table-responsive">
@@ -188,51 +193,33 @@ function confirmDelete(courseId) {
 }
 
 function exportCourses() {
-
+    const form = document.getElementById('filterForm');
+    const queryString = new URLSearchParams(new FormData(form)).toString();
+    window.location.href = "{{ route('admin.reports.courses.export') }}?" + queryString;
 }
 
 // Search and filter functionality
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const filterForm = document.getElementById('filterForm');
     const departmentFilter = document.getElementById('departmentFilter');
     const semesterFilter = document.getElementById('semesterFilter');
     const statusFilter = document.getElementById('statusFilter');
-    const resetButton = document.getElementById('resetFilters');
 
-    function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const departmentId = departmentFilter.value;
-        const semesterId = semesterFilter.value;
-        const status = statusFilter.value;
-
-        const rows = document.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-            const courseCode = row.cells[0]?.textContent.toLowerCase() || '';
-            const courseName = row.cells[1]?.textContent.toLowerCase() || '';
-            const department = row.cells[2]?.textContent || '';
-            const rowStatus = row.cells[7]?.textContent.toLowerCase() || '';
-
-            const matchesSearch = courseCode.includes(searchTerm) || courseName.includes(searchTerm);
-            const matchesDepartment = !departmentId || department.includes(departmentId);
-            const matchesStatus = !status || rowStatus.includes(status);
-
-            row.style.display = matchesSearch && matchesDepartment && matchesStatus ? '' : 'none';
+    if (departmentFilter) {
+        departmentFilter.addEventListener('change', function() {
+            filterForm.submit();
         });
     }
-
-    searchInput.addEventListener('input', applyFilters);
-    departmentFilter.addEventListener('change', applyFilters);
-    semesterFilter.addEventListener('change', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-
-    resetButton.addEventListener('click', function() {
-        searchInput.value = '';
-        departmentFilter.value = '';
-        semesterFilter.value = '';
-        statusFilter.value = '';
-        applyFilters();
-    });
+    if (semesterFilter) {
+        semesterFilter.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
 });
 </script>
 @endpush

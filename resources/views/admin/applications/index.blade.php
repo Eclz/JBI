@@ -112,8 +112,8 @@
                                                     {{ ucfirst($application->type) }}
                                                 </span>
                                             </td>
-                                            <td>{{ $application->program->name ?? $application->program ?? 'N/A' }}</td>
-                                            <td>{{ $application->program->department->name ?? 'N/A' }}</td>
+                                            <td>{{ $application->programRecord->name ?? $application->program ?? 'N/A' }}</td>
+                                            <td>{{ $application->programRecord->department->name ?? 'N/A' }}</td>
                                             <td>{{ $application->created_at->format('M j, Y') }}</td>
                                             <td>
                                                 @php
