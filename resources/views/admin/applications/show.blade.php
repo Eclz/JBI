@@ -98,19 +98,90 @@
 
                             <!-- Documents -->
                             @if($application->documents && is_array($application->documents) && count($application->documents) > 0)
-                            <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Submitted Documents</h5>
+                            <div class="card mb-3 border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom border-primary border-2 py-3">
+                                    <h5 class="mb-0 text-primary fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Submitted Applicant Documents ({{ count($application->documents) }})</h5>
                                 </div>
                                 <div class="card-body">
-                                    @foreach($application->documents as $index => $document)
-                                        <a href="{{ asset('storage/' . $document) }}" target="_blank" class="btn btn-outline-primary btn-sm me-2 mb-2">
-                                            <i class="bi bi-download me-1"></i>Document {{ $index + 1 }}
-                                        </a>
-                                    @endforeach
+                                    <div class="row g-3">
+                                        @foreach($application->documents as $index => $document)
+                                            @php
+                                                $fileUrl = asset('storage/' . $document);
+                                                $ext = strtolower(pathinfo($document, PATHINFO_EXTENSION));
+                                                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                                $isPdf = $ext === 'pdf';
+                                            @endphp
+                                            <div class="col-md-6 col-lg-4">
+                                                <div class="card h-100 border p-3 text-center bg-light">
+                                                    <div class="mb-2 fs-1 text-primary">
+                                                        @if($isImage)
+                                                            <i class="bi bi-file-earmark-image"></i>
+                                                        @elseif($isPdf)
+                                                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                                        @else
+                                                            <i class="bi bi-file-earmark-word text-info"></i>
+                                                        @endif
+                                                    </div>
+                                                    <h6 class="fw-bold mb-1 text-truncate">Document {{ $index + 1 }}</h6>
+                                                    <small class="text-muted d-block mb-3 text-uppercase">{{ $ext ?: 'FILE' }} Document</small>
+
+                                                    <div class="d-flex justify-content-center gap-2">
+                                                        <button type="button" class="btn btn-sm btn-primary" onclick="openAdminDocPreview('{{ $fileUrl }}', 'Document {{ $index + 1 }}', '{{ $ext }}')">
+                                                            <i class="bi bi-eye me-1"></i>Preview
+                                                        </button>
+                                                        <a href="{{ $fileUrl }}" target="_blank" download class="btn btn-sm btn-outline-secondary">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
                             @endif
+
+                            <!-- Document Preview Modal -->
+                            <div class="modal fade" id="adminDocPreviewModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                                        <div class="modal-header bg-dark text-white py-3">
+                                            <h5 class="modal-title fw-bold" id="adminDocPreviewTitle"><i class="bi bi-eye me-2"></i>Document Preview</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-0 text-center bg-light" style="min-height: 550px;">
+                                            <div id="adminDocPreviewContainer" class="w-100 h-100 d-flex align-items-center justify-content-center py-4">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light">
+                                            <a id="adminDocDownloadBtn" href="#" target="_blank" download class="btn btn-primary fw-bold">
+                                                <i class="bi bi-download me-1"></i>Download Original File
+                                            </a>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <script>
+                                function openAdminDocPreview(url, title, ext) {
+                                    document.getElementById('adminDocPreviewTitle').innerHTML = '<i class="bi bi-eye me-2"></i>' + title;
+                                    document.getElementById('adminDocDownloadBtn').href = url;
+                                    const container = document.getElementById('adminDocPreviewContainer');
+
+                                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext.toLowerCase())) {
+                                        container.innerHTML = '<img src="' + url + '" class="img-fluid rounded shadow-sm" style="max-height: 550px; object-fit: contain;">';
+                                    } else if (ext.toLowerCase() === 'pdf') {
+                                        container.innerHTML = '<iframe src="' + url + '" class="w-100" style="height: 580px; border: none;"></iframe>';
+                                    } else {
+                                        container.innerHTML = '<div class="p-5 text-center"><i class="bi bi-file-earmark-word fs-1 text-primary d-block mb-3"></i><p class="text-muted">Direct preview not available for ' + ext.toUpperCase() + ' files.</p><a href="' + url + '" target="_blank" class="btn btn-primary"><i class="bi bi-download me-1"></i>Download to View File</a></div>';
+                                    }
+
+                                    const modal = new bootstrap.Modal(document.getElementById('adminDocPreviewModal'));
+                                    modal.show();
+                                }
+                            </script>
 
                             <!-- Payment Information -->
                             @if($application->status === 'approved' || $application->status === 'admitted')
@@ -121,8 +192,15 @@
                                 <div class="card-body">
                                     @if($application->payment_proof)
                                         <p><strong>Payment Proof:</strong> <span class="badge bg-success">Submitted</span></p>
-                                        <a href="{{ asset('storage/' . $application->payment_proof) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                            <i class="bi bi-eye me-1"></i>View Payment Proof
+                                        @php
+                                            $proofUrl = asset('storage/' . $application->payment_proof);
+                                            $proofExt = strtolower(pathinfo($application->payment_proof, PATHINFO_EXTENSION));
+                                        @endphp
+                                        <button type="button" class="btn btn-primary btn-sm me-2" onclick="openAdminDocPreview('{{ $proofUrl }}', 'Payment Proof Receipt', '{{ $proofExt }}')">
+                                            <i class="bi bi-eye me-1"></i>Preview Payment Proof
+                                        </button>
+                                        <a href="{{ $proofUrl }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-download me-1"></i>Download
                                         </a>
                                         @if($application->payment_verified_at)
                                             <p class="mt-2"><strong>Verified At:</strong> {{ $application->payment_verified_at->format('M d, Y H:i') }}</p>

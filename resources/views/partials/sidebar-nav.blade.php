@@ -460,16 +460,16 @@
         </li>
 
         {{-- My MailBox --}}
-        <li class="menu-item">
-            <a href="#" class="menu-link">
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
                 <i class="bi bi-envelope" style="color: #3a7bd5;"></i>
                 <span>My MailBox</span>
             </a>
         </li>
 
         {{-- Academic Calendar --}}
-        <li class="menu-item">
-            <a href="#" class="menu-link">
+        <li class="menu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
+            <a href="{{ route('academic-calendar.index') }}" class="menu-link">
                 <i class="bi bi-calendar-event" style="color: #3a7bd5;"></i>
                 <span>Academic Calendar</span>
             </a>
