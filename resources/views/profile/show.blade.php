@@ -33,10 +33,12 @@
 
                     @if($user->role === 'student' && $user->studentProfile)
                         <div class="mb-3">
-                            <span class="badge bg-info">{{ $user->studentProfile->student_id }}</span>
+                            <span class="badge bg-primary px-3 py-2 text-uppercase fs-6 shadow-sm"><i class="bi bi-person-badge me-1"></i>{{ $user->studentProfile->student_id }}</span>
                         </div>
-                        <div class="mb-3">
-                            <span class="badge bg-success">{{ $user->studentProfile->program }}</span>
+                        <div class="mt-3 p-3 text-start rounded-3 bg-white border border-primary border-2 shadow-sm">
+                            <small class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;"><i class="bi bi-journal-bookmark me-1 text-primary"></i>ENROLLED DEGREE PROGRAMME</small>
+                            <h6 class="fw-bold text-primary mb-1" style="font-size: 0.95rem; line-height: 1.4;">{{ $user->studentProfile->program }}</h6>
+                            <small class="text-muted"><i class="bi bi-building me-1"></i>{{ $user->studentProfile->department->name ?? 'School of Computing & IT' }}</small>
                         </div>
                     @elseif($user->role === 'faculty' && $user->facultyProfile)
                         <div class="mb-3">
@@ -157,18 +159,20 @@
 
                         <hr class="my-4">
 
+                        <div class="col-12 mb-2">
+                            <div class="p-3.5 bg-light rounded-3 border-start border-4 border-primary border shadow-sm">
+                                <small class="text-muted text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;"><i class="bi bi-award-fill text-primary me-1"></i>ENROLLED DEGREE PROGRAMME</small>
+                                <h5 class="fw-bold text-dark mb-1" style="color: #1e3a8a !important;">{{ $user->studentProfile->program }}</h5>
+                                <div class="d-flex align-items-center flex-wrap gap-3 small text-muted">
+                                    <span><i class="bi bi-building me-1"></i>Department: <strong>{{ $user->studentProfile->department->name ?? 'School of Computing & IT' }}</strong></span>
+                                    <span><i class="bi bi-mortarboard me-1"></i>Degree Level: <strong>Undergraduate</strong></span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Student ID</label>
                                 <p class="mb-0 fw-bold">{{ $user->studentProfile->student_id }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Department</label>
-                                <p class="mb-0">{{ $user->studentProfile->department->name ?? 'School of Computing & IT' }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Program</label>
-                                <p class="mb-0 fw-bold">{{ $user->studentProfile->program }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Admission Date</label>

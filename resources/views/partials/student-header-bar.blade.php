@@ -44,23 +44,23 @@
     </div>
 
     <!-- Quick Navigation Buttons Bar -->
-    <div class="px-3 py-2 bg-light border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div class="btn-group btn-group-sm flex-wrap" role="group">
-            <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary {{ request()->routeIs('profile.show') ? 'active bg-secondary text-white' : '' }}">
-                <i class="bi bi-person me-1"></i>VIEW BIO DATA
+    <div class="px-3 py-2.5 bg-light border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="btn-group flex-wrap shadow-sm rounded" role="group" style="gap: 2px;">
+            <a href="{{ route('profile.show') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('profile.*') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
+                <i class="bi bi-person me-1.5"></i>VIEW BIO DATA
             </a>
-            <a href="{{ route('student.grades.index') }}" class="btn btn-outline-secondary {{ request()->routeIs('student.grades.*') ? 'active bg-secondary text-white' : '' }}">
-                <i class="bi bi-award me-1"></i>VIEW RESULTS
+            <a href="{{ route('student.grades.index') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('student.grades.*') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
+                <i class="bi bi-award me-1.5"></i>VIEW RESULTS
             </a>
-            <a href="{{ route('student.fees.index') }}" class="btn btn-outline-secondary {{ request()->routeIs('student.fees.index') ? 'active bg-secondary text-white' : '' }}">
-                <i class="bi bi-receipt me-1"></i>VIEW INVOICES
+            <a href="{{ route('student.fees.index') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('student.fees.index') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
+                <i class="bi bi-receipt me-1.5"></i>VIEW INVOICES
             </a>
-            <a href="{{ route('student.fees.ledger') }}" class="btn btn-outline-secondary {{ request()->routeIs('student.fees.ledger') ? 'active bg-secondary text-white' : '' }}">
-                <i class="bi bi-file-earmark-text me-1"></i>MY TRANSACTIONS
+            <a href="{{ route('student.fees.ledger') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('student.fees.ledger') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
+                <i class="bi bi-file-earmark-text me-1.5"></i>MY TRANSACTIONS
             </a>
         </div>
-        <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-primary fw-bold">
-            <i class="bi bi-qr-code me-1"></i>Generate PRN
+        <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-primary fw-bold px-3 py-2 shadow-sm">
+            <i class="bi bi-qr-code me-1.5"></i>Generate PRN
         </a>
     </div>
 </div>
