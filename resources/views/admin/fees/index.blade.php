@@ -168,23 +168,27 @@
                                         <tbody>
                                             @forelse($feeRecords as $record)
                                             <tr class="{{ $record->is_overdue ? 'table-warning' : '' }}">
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        @if($record->student->avatar)
-                                                            <img src="{{ asset('storage/' . $record->student->avatar) }}"
-                                                                 class="rounded-circle me-2" width="32" height="32">
-                                                        @else
-                                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
-                                                                 style="width: 32px; height: 32px;">
-                                                                <span class="text-white small">{{ substr($record->student->first_name, 0, 1) }}</span>
-                                                            </div>
-                                                        @endif
-                                                        <div>
-                                                            <div>{{ $record->student->first_name }} {{ $record->student->last_name }}</div>
-                                                            <small class="text-muted">{{ $record->student->studentProfile->student_id ?? 'N/A' }}</small>
-                                                        </div>
-                                                    </div>
-                                                </td>
+                                                 <td>
+                                                     <div class="d-flex align-items-center">
+                                                         @if($record->student)
+                                                             @if($record->student->avatar)
+                                                                 <img src="{{ asset('storage/' . $record->student->avatar) }}"
+                                                                      class="rounded-circle me-2" width="32" height="32">
+                                                             @else
+                                                                 <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                                      style="width: 32px; height: 32px; min-width: 32px;">
+                                                                     <span class="text-white small fw-bold">{{ substr($record->student->first_name ?? 'S', 0, 1) }}</span>
+                                                                 </div>
+                                                             @endif
+                                                             <div>
+                                                                 <div class="fw-bold text-dark">{{ $record->student->first_name }} {{ $record->student->last_name }}</div>
+                                                                 <small class="text-muted">{{ $record->student->email }}</small>
+                                                             </div>
+                                                         @else
+                                                             <span class="badge bg-secondary">Unassigned</span>
+                                                         @endif
+                                                     </div>
+                                                 </td>
                                                 <td>{{ $record->feeStructure->name }}</td>
                                                 <td>
                                                     <span class="badge bg-secondary">{{ $record->invoice_number }}</span>
