@@ -290,6 +290,35 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         });
     });
 
+    // Academic Schools Management
+    Route::resource('schools', \App\Http\Controllers\Admin\SchoolController::class);
+
+    // Comprehensive Bursar & Finance Hub (17 Sub-Modules)
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'dashboard'])->name('dashboard');
+        Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
+        Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store');
+        Route::get('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'budgets'])->name('budgets.index');
+        Route::post('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBudget'])->name('budgets.store');
+        Route::get('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'expenses'])->name('expenses.index');
+        Route::post('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeExpense'])->name('expenses.store');
+        Route::get('/payables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payables'])->name('payables.index');
+        Route::post('/payables/suppliers', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeSupplier'])->name('payables.suppliers.store');
+        Route::post('/payables/invoices', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeVendorInvoice'])->name('payables.invoices.store');
+        Route::get('/receivables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'receivables'])->name('receivables.index');
+        Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
+        Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate');
+        Route::get('/procurement', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'procurement'])->name('procurement.index');
+        Route::get('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'assets'])->name('assets.index');
+        Route::post('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeAsset'])->name('assets.store');
+        Route::get('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'banking'])->name('banking.index');
+        Route::post('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBankAccount'])->name('banking.store');
+        Route::get('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'grants'])->name('grants.index');
+        Route::post('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeGrant'])->name('grants.store');
+        Route::get('/reports', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'reports'])->name('reports.index');
+        Route::get('/audit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'audit'])->name('audit.index');
+    });
+
     // Department Management
     Route::resource('departments', DepartmentController::class);
 
@@ -537,6 +566,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
 
     // Fee Management
     Route::get('/fees', [StudentFeeController::class, 'index'])->name('fees.index');
+    Route::get('/fees/structure', [StudentFeeController::class, 'structure'])->name('fees.structure');
     Route::get('/ledger', [StudentFeeController::class, 'ledger'])->name('fees.ledger');
     Route::get('/fees/{fee}/pay', [StudentFeeController::class, 'pay'])->name('fees.pay');
     Route::post('/fees/{fee}/pay', [StudentFeeController::class, 'processPayment'])->name('fees.processPayment');

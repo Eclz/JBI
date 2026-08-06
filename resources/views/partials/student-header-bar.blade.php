@@ -52,6 +52,9 @@
             <a href="{{ route('student.grades.index') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('student.grades.*') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
                 <i class="bi bi-award me-1.5"></i>VIEW RESULTS
             </a>
+            <a href="{{ route('student.fees.structure') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('student.fees.structure') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
+                <i class="bi bi-file-earmark-spreadsheet me-1.5"></i>FEE STRUCTURE
+            </a>
             <a href="{{ route('student.fees.index') }}" class="btn btn-sm px-3 py-2 {{ request()->routeIs('student.fees.index') ? 'btn-primary active text-white fw-bold shadow-sm' : 'btn-outline-primary text-dark fw-semibold bg-white' }}">
                 <i class="bi bi-receipt me-1.5"></i>VIEW INVOICES
             </a>

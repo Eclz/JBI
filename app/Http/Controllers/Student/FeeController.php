@@ -37,6 +37,18 @@ class FeeController extends Controller
         return view('student.fees.ledger', compact('feeRecords', 'payments', 'currencyCode'));
     }
 
+    public function structure()
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $user = Auth::user();
+        $sp = $user->studentProfile;
+        $feeStructures = \App\Models\FeeStructure::where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('student.fees.structure', compact('user', 'sp', 'feeStructures', 'currencyCode'));
+    }
+
     public function index()
     {
         $feeRecords = FeeRecord::where('user_id', Auth::id())

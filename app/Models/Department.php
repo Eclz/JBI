@@ -16,6 +16,7 @@ class Department extends Model
         'name',
         'code',
         'description',
+        'school_id',
         'faculty_id',
         'head_of_department_id',
         'location',
@@ -30,6 +31,14 @@ class Department extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    /**
+     * Get the school that owns the department.
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
 
     /**
      * Get the faculty that owns the department.

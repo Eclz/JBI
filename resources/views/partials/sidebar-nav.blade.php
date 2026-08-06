@@ -124,6 +124,13 @@
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('admin.schools.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.schools.index') }}" class="menu-link">
+                <i class="bi bi-buildings"></i>
+                <span>Schools Management</span>
+            </a>
+        </li>
+
         <li class="menu-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
             <a href="{{ route('admin.departments.index') }}" class="menu-link">
                 <i class="bi bi-building"></i>
@@ -166,10 +173,89 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.fees.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.fees.index') }}" class="menu-link">
-                <i class="bi bi-cash-coin"></i>
-                <span>Fee Management</span>
+        <li class="menu-header">Finance & Governance</li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.*') || request()->routeIs('admin.fees.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.dashboard') }}" class="menu-link fw-bold text-primary">
+                <i class="bi bi-bank"></i>
+                <span>Finance & Bursar Hub</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.fees.structures.index') }}" class="menu-link ps-4">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                <span>Fee Structures</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.fees.index') }}" class="menu-link ps-4">
+                <i class="bi bi-receipt"></i>
+                <span>Student Fee Records</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.revenue.index') }}" class="menu-link ps-4">
+                <i class="bi bi-currency-exchange"></i>
+                <span>Revenue & Income</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.budgets.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.budgets.index') }}" class="menu-link ps-4">
+                <i class="bi bi-pie-chart"></i>
+                <span>Department Budgets</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.expenses.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.expenses.index') }}" class="menu-link ps-4">
+                <i class="bi bi-cart-check"></i>
+                <span>Expenditures</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.payables.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.payables.index') }}" class="menu-link ps-4">
+                <i class="bi bi-truck"></i>
+                <span>Accounts Payable</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.receivables.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.receivables.index') }}" class="menu-link ps-4">
+                <i class="bi bi-person-lines-fill"></i>
+                <span>Accounts Receivable</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.payroll.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.payroll.index') }}" class="menu-link ps-4">
+                <i class="bi bi-person-badge"></i>
+                <span>Payroll Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.assets.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.assets.index') }}" class="menu-link ps-4">
+                <i class="bi bi-qr-code-scan"></i>
+                <span>Asset Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.banking.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.banking.index') }}" class="menu-link ps-4">
+                <i class="bi bi-piggy-bank"></i>
+                <span>Banking & Cash</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.reports.index') }}" class="menu-link ps-4">
+                <i class="bi bi-journal-text"></i>
+                <span>Financial Statements</span>
             </a>
         </li>
 
