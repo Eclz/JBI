@@ -366,7 +366,6 @@
                         </div>
                     @endif
 
-                    <!-- CASE 2: Application Submitted, Under Review (Academic Verification) -->
                     <!-- CASE 2: Admission Fee Payment Portal (APPEARS FIRST - NON-REFUNDABLE) -->
                     @if(isset($application) && in_array($application->payment_status, ['pending', 'rejected']))
                         @php
@@ -393,30 +392,6 @@
                                         </div>
                                     </div>
                                 </div>
-                    @endif
-
-                    <!-- CASE 3: Application Review (APPEARS NEXT AFTER PAYMENT) -->
-                    @if(isset($application) && in_array($application->payment_status, ['uploaded', 'verified']) && $application->status === 'pending')
-                        <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px;">
-                            <div class="card-body">
-                                <div class="mb-4">
-                                    <span class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </span>
-                                </div>
-                                <h4 class="fw-bold mb-2 text-dark">Step 3: Application & Document Review</h4>
-                                <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
-                                    Your non-refundable admission fee payment has been submitted. The academic admissions board is currently verifying your profile, credentials, and uploaded documents.
-                                </p>
-                                <div class="d-inline-flex flex-column align-items-start bg-light p-3 text-start border" style="border-radius: 10px; width: 100%; max-width: 480px;">
-                                    <div class="small mb-1.5 text-dark"><strong>Submitted On:</strong> {{ $application->created_at->format('M d, Y h:i A') }}</div>
-                                    <div class="small mb-1.5 text-dark"><strong>Primary Program:</strong> {{ $application->programRecord->name ?? $application->program }}</div>
-                                    <div class="small mb-1.5 text-dark"><strong>Payment Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Admission Fee Paid (Non-Refundable)</span></div>
-                                    <div class="small text-dark"><strong>Academic Review:</strong> <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Under Admissions Board Verification</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
 
                                 <!-- Course Brief Info & Fee Card -->
                                 <div class="card border-0 bg-light mb-4" style="border-radius: 10px;">
@@ -547,6 +522,29 @@
                                             </div>
                                         </div>
                                     </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- CASE 3: Application Review (APPEARS NEXT AFTER PAYMENT) -->
+                    @if(isset($application) && in_array($application->payment_status, ['uploaded', 'verified']) && $application->status === 'pending')
+                        <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px;">
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <span class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </div>
+                                <h4 class="fw-bold mb-2 text-dark">Step 3: Application & Document Review</h4>
+                                <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
+                                    Your non-refundable admission fee payment has been submitted. The academic admissions board is currently verifying your profile, credentials, and uploaded documents.
+                                </p>
+                                <div class="d-inline-flex flex-column align-items-start bg-light p-3 text-start border" style="border-radius: 10px; width: 100%; max-width: 480px;">
+                                    <div class="small mb-1.5 text-dark"><strong>Submitted On:</strong> {{ $application->created_at->format('M d, Y h:i A') }}</div>
+                                    <div class="small mb-1.5 text-dark"><strong>Primary Program:</strong> {{ $application->programRecord->name ?? $application->program }}</div>
+                                    <div class="small mb-1.5 text-dark"><strong>Payment Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Admission Fee Paid (Non-Refundable)</span></div>
+                                    <div class="small text-dark"><strong>Academic Review:</strong> <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Under Admissions Board Verification</span></div>
                                 </div>
                             </div>
                         </div>
