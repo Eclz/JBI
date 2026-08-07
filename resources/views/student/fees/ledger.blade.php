@@ -25,19 +25,19 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm p-3 border-start border-primary border-4 rounded-3">
                 <small class="text-muted text-uppercase fw-semibold d-block mb-1">Total Fee Transactions</small>
-                <h4 class="fw-bold text-primary mb-0">UGX {{ number_format($feeRecords->sum('total_amount') > 0 ? $feeRecords->sum('total_amount') : $feeRecords->sum('amount'), 2) }}</h4>
+                <h4 class="fw-bold text-primary mb-0">{{ $currencyCode }} {{ number_format($feeRecords->sum('total_amount') > 0 ? $feeRecords->sum('total_amount') : $feeRecords->sum('amount'), 2) }}</h4>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-sm p-3 border-start border-success border-4 rounded-3">
                 <small class="text-muted text-uppercase fw-semibold d-block mb-1">Total Paid To Date</small>
-                <h4 class="fw-bold text-success mb-0">UGX {{ number_format($feeRecords->sum('paid_amount'), 2) }}</h4>
+                <h4 class="fw-bold text-success mb-0">{{ $currencyCode }} {{ number_format($feeRecords->sum('paid_amount'), 2) }}</h4>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-sm p-3 border-start border-danger border-4 rounded-3">
                 <small class="text-muted text-uppercase fw-semibold d-block mb-1">Outstanding Balance Due</small>
-                <h4 class="fw-bold text-danger mb-0">UGX {{ number_format($feeRecords->sum('balance_amount'), 2) }}</h4>
+                <h4 class="fw-bold text-danger mb-0">{{ $currencyCode }} {{ number_format($feeRecords->sum('balance_amount'), 2) }}</h4>
             </div>
         </div>
     </div>
@@ -49,29 +49,26 @@
             <span class="badge bg-primary px-3 py-1">{{ $feeRecords->count() }} RECORDS</span>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                    <thead class="bg-light text-muted">
-                        <tr>
-                            <th>REF / INVOICE NO</th>
-                            <th>FEE CATEGORY & DESCRIPTION</th>
-                            <th>TOTAL AMOUNT</th>
-                            <th>PAID AMOUNT</th>
-                            <th>BALANCE DUE</th>
-                            <th>DATE GENERATED</th>
-                            <th class="text-end">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($feeRecords as $record)
+            @if($feeRecords->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Transaction / Fee Details</th>
+                                <th>Total Amount</th>
+                                <th>Paid Amount</th>
+                                <th>Balance</th>
+                                <th>Date</th>
+                                <th class="text-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($feeRecords as $record)
                             <tr>
                                 <td>
-                                    <span class="fw-bold text-primary">{{ $record->invoice_number ?? 'INV-'.$record->id }}</span>
-                                </td>
-                                <td>
-                                    @if($record->type === 'retake_fee')
+                                    @if($record->type === 'retake' || str_contains(strtolower($record->payment_notes ?? ''), 'retake'))
                                         <span class="badge bg-warning text-dark me-1"><i class="bi bi-arrow-repeat me-1"></i>RETAKE FEE</span>
-                                    @elseif($record->type === 'missed_paper_fee')
+                                    @elseif($record->type === 'missed_paper' || str_contains(strtolower($record->payment_notes ?? ''), 'missed paper'))
                                         <span class="badge bg-danger me-1"><i class="bi bi-exclamation-triangle me-1"></i>MISSED PAPER FEE</span>
                                     @elseif($record->type === 'registration' || str_contains(strtolower($record->payment_notes ?? ''), 'functional'))
                                         <span class="badge bg-info me-1"><i class="bi bi-gear me-1"></i>FUNCTIONAL FEE</span>
@@ -80,9 +77,9 @@
                                     @endif
                                     <span class="fw-semibold text-dark">{{ $record->payment_notes ?? $record->feeStructure?->name ?? 'Semester Tuition Fee' }}</span>
                                 </td>
-                                <td class="fw-bold">UGX {{ number_format($record->total_amount > 0 ? $record->total_amount : $record->amount, 2) }}</td>
-                                <td class="fw-bold text-success">UGX {{ number_format($record->paid_amount, 2) }}</td>
-                                <td class="fw-bold text-danger">UGX {{ number_format($record->balance_amount, 2) }}</td>
+                                <td class="fw-bold">{{ $currencyCode }} {{ number_format($record->total_amount > 0 ? $record->total_amount : $record->amount, 2) }}</td>
+                                <td class="fw-bold text-success">{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                                <td class="fw-bold text-danger">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                                 <td>{{ $record->created_at->format('M d, Y') }}</td>
                                 <td class="text-end">
                                     @if($record->status === 'paid' || $record->balance_amount <= 0)

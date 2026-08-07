@@ -33,11 +33,11 @@
         <div class="d-flex align-items-center flex-wrap gap-3 small">
             <div>
                 <span class="text-muted fw-semibold text-uppercase">TOTAL FEES BAL DUE:</span>
-                <span class="fw-bold text-danger ms-1 fs-6">UGX {{ number_format($actualBalance, 2) }}</span>
+                <span class="fw-bold text-danger ms-1 fs-6">{{ $currencyCode }} {{ number_format($actualBalance, 2) }}</span>
             </div>
             <div>
                 <span class="badge bg-success px-2.5 py-1.5 text-white">
-                    <i class="bi bi-check-circle me-1"></i>PAID: UGX {{ number_format($paidAmount, 2) }}
+                    <i class="bi bi-check-circle me-1"></i>PAID: {{ $currencyCode }} {{ number_format($paidAmount, 2) }}
                 </span>
             </div>
         </div>

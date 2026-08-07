@@ -190,7 +190,7 @@ class ExamController extends Controller
 
         // Check payment requirement
         if ($exam->required_payment > 0 && !$attempt->payment_verified) {
-            $currency = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+            $currency = \App\Models\SystemSetting::getSetting('default_currency', 'UGX');
             return back()->with('error', 'You must complete the payment of ' . $currency . ' ' . number_format($exam->required_payment, 2) . ' before attempting this exam.');
         }
 

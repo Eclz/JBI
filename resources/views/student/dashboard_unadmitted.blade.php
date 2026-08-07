@@ -433,7 +433,7 @@
                                             </div>
                                             <div class="col-md-5 text-md-end border-start-md">
                                                 <h6 class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Admission Fee Amount</h6>
-                                                <h2 class="fw-bold text-success mb-0">${{ number_format($feeAmount, 2) }} <span class="fs-6 fw-normal text-muted">USD</span></h2>
+                                                <h2 class="fw-bold text-success mb-0">{{ $currencyCode }} {{ number_format($feeAmount, 2) }}</h2>
                                             </div>
                                         </div>
                                     </div>
@@ -494,7 +494,7 @@
                                                 <p class="text-muted mb-3" style="font-size: 0.8rem;">Pay securely online using your Visa, Mastercard, or American Express.</p>
                                                 <div class="d-grid gap-2 mt-4">
                                                     <button type="button" class="btn btn-sm btn-primary py-2" onclick="alert('Online credit card payment channel simulated successfully. Please upload the transaction confirmation receipt below.')" style="border-radius: 6px;">
-                                                        <i class="bi bi-shield-check me-2"></i>Pay ${{ number_format($feeAmount, 2) }} Online
+                                                        <i class="bi bi-shield-check me-2"></i>Pay {{ $currencyCode }} {{ number_format($feeAmount, 2) }} Online
                                                     </button>
                                                 </div>
                                             </div>
