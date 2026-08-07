@@ -259,15 +259,15 @@
 
                             <!-- Document Preview Modal -->
                             <div class="modal fade" id="adminDocPreviewModal" data-bs-focus="false" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-xl modal-dialog-centered">
+                                <div class="modal-dialog modal-xl" style="margin: 2rem auto;">
                                     <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
                                         <div class="modal-header bg-dark text-white py-3">
                                             <h5 class="modal-title fw-bold" id="adminDocPreviewTitle"><i class="bi bi-eye me-2"></i>Document Preview</h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body p-0 text-center bg-dark text-white position-relative" style="min-height: 600px; max-height: 80vh;">
-                                            <div id="adminDocPreviewContainer" class="w-100 h-100 d-flex align-items-center justify-content-center overflow-auto" style="min-height: 600px;">
-                                                <div class="spinner-border text-light" role="status"></div>
+                                        <div class="modal-body p-0 bg-dark text-white position-relative" style="height: 75vh; min-height: 550px; max-height: 750px; overflow: hidden;">
+                                            <div id="adminDocPreviewContainer" class="w-100 h-100 position-relative" style="overflow: hidden;">
+                                                <div class="spinner-border text-light position-absolute top-50 start-50 translate-middle" role="status"></div>
                                             </div>
                                         </div>
                                         <div class="modal-footer bg-light py-2">
@@ -289,11 +289,11 @@
                                     const cleanExt = (ext || '').toLowerCase().trim();
 
                                     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(cleanExt)) {
-                                        container.innerHTML = '<div class="p-3 d-flex align-items-center justify-content-center w-100 h-100"><img src="' + url + '" class="img-fluid rounded shadow" style="max-height: 75vh; max-width: 100%; object-fit: contain;"></div>';
+                                        container.innerHTML = '<div class="w-100 h-100 d-flex align-items-center justify-content-center p-3" style="overflow: hidden;"><img src="' + url + '" class="img-fluid rounded shadow" style="max-height: 100%; max-width: 100%; object-fit: contain;"></div>';
                                     } else if (cleanExt === 'pdf') {
-                                        container.innerHTML = '<iframe src="' + url + '#toolbar=1&navpanes=0&scrollbar=1" class="w-100 h-100" style="min-height: 620px; border: none; display: block;" loading="lazy"></iframe>';
+                                        container.innerHTML = '<iframe src="' + url + '#toolbar=1&navpanes=0&scrollbar=1" class="w-100 h-100" style="border: none; display: block; width: 100%; height: 100%; margin: 0; padding: 0;" loading="lazy"></iframe>';
                                     } else {
-                                        container.innerHTML = '<div class="p-5 text-center my-auto"><i class="bi bi-file-earmark-word fs-1 text-primary d-block mb-3"></i><p class="text-white-50 fs-5 mb-3">Direct preview is not available for <strong>' + cleanExt.toUpperCase() + '</strong> files.</p><a href="' + url + '" target="_blank" download class="btn btn-primary px-4 py-2"><i class="bi bi-download me-2"></i>Download File to View</a></div>';
+                                        container.innerHTML = '<div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-5 text-center"><i class="bi bi-file-earmark-word fs-1 text-primary d-block mb-3"></i><p class="text-white-50 fs-5 mb-3">Direct preview is not available for <strong>' + cleanExt.toUpperCase() + '</strong> files.</p><a href="' + url + '" target="_blank" download class="btn btn-primary px-4 py-2"><i class="bi bi-download me-2"></i>Download File to View</a></div>';
                                     }
 
                                     const modalEl = document.getElementById('adminDocPreviewModal');
