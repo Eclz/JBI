@@ -242,12 +242,30 @@ class Course extends Model
     }
 
     /**
+     * Get available slots attribute
+     */
+    public function getAvailableSlotsAttribute()
+    {
+        $capacity = $this->capacity ?? $this->max_students ?? 30;
+        $enrolled = $this->activeEnrollments()->count();
+        return max(0, $capacity - $enrolled);
+    }
+
+    /**
+     * Get maximum capacity attribute
+     */
+    public function getMaxCapacityAttribute()
+    {
+        return $this->capacity ?? $this->max_students ?? 30;
+    }
+
+    /**
      * Check if course is full
      */
     public function getIsFullAttribute()
     {
-        $capacity = $this->capacity ?? $this->max_students;
-        if (!$capacity) {
+        return $this->available_slots <= 0;
+    }
             return false; // Unlimited capacity
         }
         return $this->enrolled_count >= $capacity;
