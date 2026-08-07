@@ -354,6 +354,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/applications/bulk-approve', [AdminApplicationController::class, 'bulkApprove'])->name('applications.bulk-approve');
     Route::post('/applications/{application}/approve', [AdminApplicationController::class, 'approve'])->name('applications.approve');
     Route::post('/applications/{application}/reject', [AdminApplicationController::class, 'reject'])->name('applications.reject');
+    Route::post('/applications/{application}/update-program', [AdminApplicationController::class, 'updateProgram'])->name('applications.update-program');
     // Payment verification route
     Route::post('/applications/{application}/verify-payment', [AdminApplicationController::class, 'verifyPayment'])->name('applications.verify-payment');
 

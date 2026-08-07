@@ -112,7 +112,18 @@
                                                     {{ ucfirst($application->type) }}
                                                 </span>
                                             </td>
-                                            <td>{{ $application->programRecord->name ?? $application->program ?? 'N/A' }}</td>
+                                            <td>
+                                                <div>
+                                                    <strong class="text-dark">{{ $application->programRecord->name ?? $application->program ?? 'N/A' }}</strong>
+                                                    @if(is_array($application->program_choices) && count($application->program_choices) > 1)
+                                                        <div class="mt-1">
+                                                            <span class="badge bg-info text-dark" style="font-size: 0.7rem;">
+                                                                <i class="bi bi-list-stars me-1"></i>{{ count($application->program_choices) }} Course Choices
+                                                            </span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </td>
                                             <td>{{ $application->programRecord->department->name ?? 'N/A' }}</td>
                                             <td>{{ $application->created_at->format('M j, Y') }}</td>
                                             <td>

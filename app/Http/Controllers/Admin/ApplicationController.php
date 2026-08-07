@@ -71,7 +71,81 @@ class ApplicationController extends Controller
         $application = Application::with(['programRecord.department', 'programRecord.level'])->findOrFail($id);
         $approvalReadiness = $this->buildApprovalReadiness($application);
 
-        return view('admin.applications.show', compact('application', 'approvalReadiness'));
+        $programChoices = collect();
+        if (is_array($application->program_choices) && count($application->program_choices) > 0) {
+            $rawChoices = Program::whereIn('id', $application->program_choices)
+                ->with(['department', 'level'])
+                ->get();
+            
+            $programChoices = collect($application->program_choices)->map(function($pId) use ($rawChoices) {
+                return $rawChoices->firstWhere('id', $pId);
+            })->filter()->values();
+        } elseif ($application->program_id) {
+            $p = Program::with(['department', 'level'])->find($application->program_id);
+            if ($p) {
+                $programChoices = collect([$p]);
+            }
+        }
+
+        foreach ($programChoices as $prog) {
+            $capacity = $prog->capacity ?? 50;
+            $enrolledCount = Application::where('program_id', $prog->id)
+                ->whereIn('status', ['approved', 'admitted'])
+                ->count();
+            $prog->setAttribute('capacity', $capacity);
+            $prog->setAttribute('enrolled_count', $enrolledCount);
+            $prog->setAttribute('available_slots', max(0, $capacity - $enrolledCount));
+            $prog->setAttribute('is_full', ($capacity - $enrolledCount) <= 0);
+        }
+
+        $allPrograms = Program::where('is_active', true)->with(['department', 'level'])->get();
+        foreach ($allPrograms as $prog) {
+            $capacity = $prog->capacity ?? 50;
+            $enrolledCount = Application::where('program_id', $prog->id)
+                ->whereIn('status', ['approved', 'admitted'])
+                ->count();
+            $prog->setAttribute('capacity', $capacity);
+            $prog->setAttribute('enrolled_count', $enrolledCount);
+            $prog->setAttribute('available_slots', max(0, $capacity - $enrolledCount));
+            $prog->setAttribute('is_full', ($capacity - $enrolledCount) <= 0);
+        }
+
+        return view('admin.applications.show', compact('application', 'approvalReadiness', 'programChoices', 'allPrograms'));
+    }
+
+    public function updateProgram(Request $request, $id)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $application = Application::findOrFail($id);
+        $program = Program::with('department')->findOrFail($request->program_id);
+
+        $capacity = $program->capacity ?? 50;
+        $enrolledCount = Application::where('program_id', $program->id)
+            ->whereIn('status', ['approved', 'admitted'])
+            ->count();
+        $availableSlots = max(0, $capacity - $enrolledCount);
+
+        $application->update([
+            'program_id' => $program->id,
+            'program' => $program->name,
+            'department' => $program->department?->name,
+        ]);
+
+        // Also update student profile if user account exists
+        $user = User::where('email', $application->email)->first();
+        if ($user && $user->studentProfile) {
+            $user->studentProfile->update([
+                'program_id' => $program->id,
+                'program' => $program->name,
+                'department_id' => $program->department_id,
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Assigned programme updated successfully to {$program->name} ({$program->code}). Available slots remaining: {$availableSlots}.");
     }
 
     public function approve(Request $request, $id)

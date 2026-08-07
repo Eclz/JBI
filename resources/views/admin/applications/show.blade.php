@@ -47,6 +47,122 @@
                                 </div>
                             </div>
 
+                            <!-- Applied Courses / Programme Choices & Live Slots Tracker -->
+                            <div class="card mb-4 border-0 shadow-sm overflow-hidden" style="border-radius: 10px;">
+                                <div class="card-header bg-white border-bottom border-primary border-2 py-3 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-primary fw-bold">
+                                        <i class="bi bi-journal-bookmark-fill me-2"></i>Applicant's Course & Programme Choices
+                                    </h5>
+                                    <span class="badge bg-primary px-3 py-2" style="border-radius: 6px;">
+                                        {{ isset($programChoices) ? count($programChoices) : 1 }} Choice(s) Submitted
+                                    </span>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Preference Rank</th>
+                                                    <th>Code</th>
+                                                    <th>Programme Name</th>
+                                                    <th>Faculty / Department</th>
+                                                    <th>Available Slots Tracker</th>
+                                                    <th class="text-end">Assign Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @if(isset($programChoices) && count($programChoices) > 0)
+                                                    @foreach($programChoices as $rankIndex => $choiceProg)
+                                                        @php
+                                                            $isAssigned = ($application->program_id == $choiceProg->id) || ($application->program === $choiceProg->name);
+                                                            $rankLabel = match($rankIndex) {
+                                                                0 => '1st Choice (Primary)',
+                                                                1 => '2nd Choice',
+                                                                2 => '3rd Choice',
+                                                                3 => '4th Choice',
+                                                                4 => '5th Choice',
+                                                                5 => '6th Choice',
+                                                                default => ($rankIndex + 1) . 'th Choice'
+                                                            };
+                                                        @endphp
+                                                        <tr class="{{ $isAssigned ? 'table-success bg-opacity-10' : '' }}">
+                                                            <td>
+                                                                <span class="badge {{ $rankIndex === 0 ? 'bg-primary' : 'bg-secondary' }}">
+                                                                    {{ $rankLabel }}
+                                                                </span>
+                                                            </td>
+                                                            <td><code class="fw-bold bg-light px-2 py-1 rounded text-dark">{{ $choiceProg->code }}</code></td>
+                                                            <td>
+                                                                <strong class="text-dark">{{ $choiceProg->name }}</strong>
+                                                                <div class="small text-muted">{{ $choiceProg->level->name ?? 'N/A' }}</div>
+                                                            </td>
+                                                            <td>{{ $choiceProg->department->name ?? 'N/A' }}</td>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="me-2">
+                                                                        <span class="badge {{ $choiceProg->is_full ? 'bg-danger' : 'bg-success' }} px-2 py-1">
+                                                                            <i class="bi bi-people-fill me-1"></i>
+                                                                            {{ $choiceProg->available_slots }} / {{ $choiceProg->capacity }} Slots Left
+                                                                        </span>
+                                                                    </div>
+                                                                    <small class="text-muted">({{ $choiceProg->enrolled_count }} enrolled)</small>
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                @if($isAssigned)
+                                                                    <span class="badge bg-success px-3 py-1 fs-6">
+                                                                        <i class="bi bi-check-circle-fill me-1"></i>ASSIGNED TO APPLICANT
+                                                                    </span>
+                                                                @else
+                                                                    <form action="{{ route('admin.applications.update-program', $application->id) }}" method="POST" class="d-inline">
+                                                                        @csrf
+                                                                        <input type="hidden" name="program_id" value="{{ $choiceProg->id }}">
+                                                                        <button type="submit" class="btn btn-sm btn-outline-primary fw-bold" onclick="return confirm('Assign {{ $choiceProg->name }} to this applicant?')">
+                                                                            <i class="bi bi-person-check me-1"></i>Select & Assign
+                                                                        </button>
+                                                                    </form>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                @else
+                                                    <tr>
+                                                        <td colspan="6" class="text-center text-muted py-3">
+                                                            Primary Programme: <strong>{{ $application->programRecord->name ?? $application->program ?? 'Not specified' }}</strong>
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Admin Change Course Selector Form -->
+                                    <div class="p-3 bg-light border-top">
+                                        <form action="{{ route('admin.applications.update-program', $application->id) }}" method="POST">
+                                            @csrf
+                                            <div class="row align-items-center g-2">
+                                                <div class="col-md-7">
+                                                    <label class="form-label small fw-bold mb-1 text-dark">Assign Different University Programme for Applicant:</label>
+                                                    <select name="program_id" class="form-select form-select-sm" required>
+                                                        <option value="">Select University Programme...</option>
+                                                        @foreach($allPrograms as $prog)
+                                                            <option value="{{ $prog->id }}" {{ $application->program_id == $prog->id ? 'selected' : '' }}>
+                                                                {{ $prog->name }} ({{ $prog->code }}) &mdash; {{ $prog->available_slots }} slots available
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5 d-flex align-items-end gap-2 mt-md-4">
+                                                    <button type="submit" class="btn btn-sm btn-primary fw-bold px-3" style="border-radius: 6px;">
+                                                        <i class="bi bi-save me-1"></i>Update Assigned Programme
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Academic Information -->
                             <div class="card mb-3">
                                 <div class="card-header bg-light">
@@ -55,7 +171,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <p><strong>Program:</strong> {{ $application->programRecord->name ?? $application->program ?? 'Not specified' }}</p>
+                                            <p><strong>Assigned Program:</strong> <span class="badge bg-primary fs-6">{{ $application->programRecord->name ?? $application->program ?? 'Not specified' }}</span></p>
                                             <p><strong>Program Level:</strong> {{ $application->programRecord->level->name ?? 'Not specified' }}</p>
                                             <p><strong>Department:</strong> {{ $application->programRecord->department->name ?? 'Not specified' }}</p>
                                             <p><strong>Previous Institution:</strong> {{ $application->previous_school }}</p>
