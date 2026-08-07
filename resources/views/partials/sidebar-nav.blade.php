@@ -124,10 +124,10 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.schools.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.schools.index') }}" class="menu-link">
+        <li class="menu-item {{ request()->routeIs('admin.faculties.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.faculties.index') }}" class="menu-link">
                 <i class="bi bi-buildings"></i>
-                <span>Schools Management</span>
+                <span>Faculties Management</span>
             </a>
         </li>
 

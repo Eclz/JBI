@@ -290,8 +290,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         });
     });
 
-    // Academic Schools Management
-    Route::resource('schools', \App\Http\Controllers\Admin\SchoolController::class);
+    // Academic Faculties Management
+    Route::resource('faculties', \App\Http\Controllers\Admin\FacultyController::class);
 
     // Comprehensive Bursar & Finance Hub (17 Sub-Modules)
     Route::prefix('finance')->name('finance.')->group(function () {

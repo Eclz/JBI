@@ -1,262 +1,107 @@
 @extends('layouts.app')
 
-@section('title', $faculty->name)
+@section('title', 'Faculty Details - ' . $faculty->name)
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <!-- Page Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-0">{{ $faculty->name }}</h1>
-                    <p class="text-muted">Faculty Code: {{ $faculty->code }}</p>
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary fw-bold"><i class="bi bi-buildings me-2"></i>{{ $faculty->name }}</h1>
+            <p class="text-muted mb-0">Faculty Code: <span class="badge bg-secondary font-monospace">{{ $faculty->code }}</span></p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.faculties.edit', $faculty) }}" class="btn btn-primary fw-bold">
+                <i class="bi bi-pencil me-1"></i>Edit Faculty
+            </a>
+            <a href="{{ route('admin.faculties.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Faculties
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Faculty Overview Info Card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-info-circle me-2 text-primary"></i>Faculty Information</h5>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('admin.faculties.edit', $faculty) }}" class="btn btn-primary">
-                        <i class="bi bi-pencil"></i> Edit Faculty
-                    </a>
-                    <a href="{{ route('admin.faculties.index') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Back to Faculties
-                    </a>
-                </div>
-            </div>
-
-            <!-- Faculty Information -->
-            <div class="row">
-                <!-- Basic Information -->
-                <div class="col-lg-8">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Faculty Information</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <dl class="row">
-                                        <dt class="col-sm-4">Name:</dt>
-                                        <dd class="col-sm-8">{{ $faculty->name }}</dd>
-
-                                        <dt class="col-sm-4">Code:</dt>
-                                        <dd class="col-sm-8">
-                                            <span class="badge bg-secondary">{{ $faculty->code }}</span>
-                                        </dd>
-
-                                        <dt class="col-sm-4">Status:</dt>
-                                        <dd class="col-sm-8">
-                                            <span class="badge bg-{{ $faculty->is_active ? 'success' : 'danger' }}">
-                                                {{ $faculty->is_active ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </dd>
-
-                                        @if($faculty->dean)
-                                        <dt class="col-sm-4">Dean:</dt>
-                                        <dd class="col-sm-8">
-                                            <a href="{{ route('admin.faculty-staff.show', $faculty->dean) }}" class="text-decoration-none">
-                                                {{ $faculty->dean->name }}
-                                            </a>
-                                        </dd>
-                                        @endif
-                                    </dl>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <dl class="row">
-                                        @if($faculty->email)
-                                        <dt class="col-sm-4">Email:</dt>
-                                        <dd class="col-sm-8">
-                                            <a href="mailto:{{ $faculty->email }}">{{ $faculty->email }}</a>
-                                        </dd>
-                                        @endif
-
-                                        @if($faculty->phone)
-                                        <dt class="col-sm-4">Phone:</dt>
-                                        <dd class="col-sm-8">{{ $faculty->phone }}</dd>
-                                        @endif
-
-                                        @if($faculty->location)
-                                        <dt class="col-sm-4">Location:</dt>
-                                        <dd class="col-sm-8">{{ $faculty->location }}</dd>
-                                        @endif
-
-                                        @if($faculty->website)
-                                        <dt class="col-sm-4">Website:</dt>
-                                        <dd class="col-sm-8">
-                                            <a href="{{ $faculty->website }}" target="_blank" class="text-decoration-none">
-                                                {{ $faculty->website }} <i class="bi bi-box-arrow-up-right"></i>
-                                            </a>
-                                        </dd>
-                                        @endif
-                                    </dl>
-                                </div>
-                            </div>
-
-                            @if($faculty->description)
-                            <div class="mt-3">
-                                <h6>Description:</h6>
-                                <p class="text-muted">{{ $faculty->description }}</p>
-                            </div>
-                            @endif
-                        </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <small class="text-uppercase fw-bold text-muted d-block">Dean of Faculty</small>
+                        @if($faculty->dean)
+                            <div class="fw-bold text-dark fs-6">{{ $faculty->dean->full_name }}</div>
+                            <small class="text-muted">{{ $faculty->dean->email }}</small>
+                        @else
+                            <span class="text-muted italic">Not Assigned</span>
+                        @endif
                     </div>
-                </div>
-
-                <!-- Statistics -->
-                <div class="col-lg-4">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Statistics</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-6 mb-3">
-                                    <div class="border-end">
-                                        <h4 class="text-primary mb-0">{{ $stats['departments_count'] }}</h4>
-                                        <small class="text-muted">Departments</small>
-                                    </div>
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <h4 class="text-success mb-0">{{ $stats['faculty_members_count'] }}</h4>
-                                    <small class="text-muted">Faculty Members</small>
-                                </div>
-                                <div class="col-6">
-                                    <div class="border-end">
-                                        <h4 class="text-info mb-0">{{ $stats['students_count'] }}</h4>
-                                        <small class="text-muted">Students</small>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <h4 class="text-warning mb-0">{{ $stats['courses_count'] }}</h4>
-                                    <small class="text-muted">Courses</small>
-                                </div>
-                            </div>
-                        </div>
+                    <hr>
+                    <div class="mb-3">
+                        <small class="text-uppercase fw-bold text-muted d-block">Building & Location</small>
+                        <span class="fw-semibold text-dark">{{ $faculty->location ?? 'Main Campus' }}</span>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <small class="text-uppercase fw-bold text-muted d-block">Contact Info</small>
+                        <div><i class="bi bi-envelope me-2"></i>{{ $faculty->email ?? 'N/A' }}</div>
+                        <div><i class="bi bi-telephone me-2"></i>{{ $faculty->phone ?? 'N/A' }}</div>
+                    </div>
+                    <hr>
+                    <div>
+                        <small class="text-uppercase fw-bold text-muted d-block">Description</small>
+                        <p class="text-muted mb-0 small">{{ $faculty->description ?? 'No description provided.' }}</p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Departments -->
-            @if($faculty->departments->count() > 0)
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Departments ({{ $faculty->departments->count() }})</h5>
-                    <a href="{{ route('admin.departments.create') }}?faculty_id={{ $faculty->id }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-plus"></i> Add Department
-                    </a>
+        <!-- Linked Academic Departments Table -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-diagram-3 me-2 text-primary"></i>Departments Under {{ $faculty->name }}</h5>
+                    <a href="{{ route('admin.departments.create') }}" class="btn btn-sm btn-outline-primary fw-bold"><i class="bi bi-plus-lg me-1"></i>Add Department</a>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Code</th>
-                                    <th>Head</th>
-                                    <th>Faculty Members</th>
-                                    <th>Students</th>
-                                    <th>Courses</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th class="ps-3">Code</th>
+                                    <th>Department Name</th>
+                                    <th>Head of Department (HOD)</th>
+                                    <th class="text-end pe-3">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($faculty->departments as $department)
-                                <tr>
-                                    <td>
-                                        <a href="{{ route('admin.departments.show', $department) }}" class="text-decoration-none">
-                                            {{ $department->name }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ $department->code }}</span>
-                                    </td>
-                                    <td>
-                                        @if($department->head)
-                                            {{ $department->head->name }}
-                                        @else
-                                            <span class="text-muted">No head assigned</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-success">{{ $department->faculty_members_count ?? 0 }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ $department->students_count ?? 0 }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-warning">{{ $department->courses_count ?? 0 }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{{ $department->is_active ? 'success' : 'danger' }}">
-                                            {{ $department->is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="{{ route('admin.departments.show', $department) }}"
-                                               class="btn btn-outline-info" title="View">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="{{ route('admin.departments.edit', $department) }}"
-                                               class="btn btn-outline-primary" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
+                                @forelse($faculty->departments as $dept)
+                                    <tr>
+                                        <td class="ps-3"><span class="badge bg-secondary font-monospace">{{ $dept->code }}</span></td>
+                                        <td class="fw-bold text-dark">{{ $dept->name }}</td>
+                                        <td>
+                                            @if($dept->headOfDepartment)
+                                                <div class="fw-bold text-primary">{{ $dept->headOfDepartment->full_name }}</div>
+                                                <small class="text-muted">{{ $dept->headOfDepartment->email }}</small>
+                                            @else
+                                                <span class="text-muted small">Not Assigned</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <a href="{{ route('admin.departments.show', $dept) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> View</a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">No academic departments linked to this faculty yet.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            @else
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-building display-1 text-muted"></i>
-                    <h5 class="mt-3">No Departments</h5>
-                    <p class="text-muted">This faculty doesn't have any departments yet.</p>
-                    <a href="{{ route('admin.departments.create') }}?faculty_id={{ $faculty->id }}" class="btn btn-primary">
-                        <i class="bi bi-plus"></i> Add First Department
-                    </a>
-                </div>
-            </div>
-            @endif
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle status toggle
-    document.querySelector('.toggle-status')?.addEventListener('click', function() {
-        const facultyId = this.dataset.facultyId;
-        const currentStatus = this.dataset.currentStatus === '1';
-
-        if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this faculty?`)) {
-            fetch(`/admin/faculties/${facultyId}/toggle-status`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || 'Failed to update status');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating status');
-            });
-        }
-    });
-});
-</script>
-@endpush
