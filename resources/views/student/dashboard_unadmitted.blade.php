@@ -45,65 +45,86 @@
         <!-- TAB 1: DASHBOARD -->
         <div class="tab-pane fade show active" id="main-dashboard" role="tabpanel" aria-labelledby="main-dashboard-tab">
             
-            <!-- Application Progress Stepper -->
+            <!-- Application Progress Stepper (5 Steps Flow) -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm py-4 px-3">
                         <div class="d-flex justify-content-around text-center flex-wrap">
-                            <!-- Step 1: Account & Profile Submitted -->
-                            @php
-                                $step1Success = isset($application);
-                            @endphp
-                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 120px;">
+                            
+                            <!-- Step 1: Account Created -->
+                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 110px;">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white mb-2" style="width: 40px; height: 40px;">
                                     <i class="bi bi-person-check fs-5"></i>
                                 </div>
-                                <span class="small fw-semibold text-success">1. Bio Data & Profile</span>
+                                <span class="small fw-semibold text-success">1. Account Created</span>
                             </div>
 
                             <!-- Line -->
-                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 80px; height: 2px;"></div>
+                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 60px; height: 2px;"></div>
 
-                            <!-- Step 2: Admission Fee Payment FIRST -->
+                            <!-- Step 2: Bio Data & Profile -->
                             @php
-                                $step2Success = isset($application) && in_array($application->payment_status, ['uploaded', 'verified']);
-                                $step2Active = isset($application) && in_array($application->payment_status, ['pending', 'rejected']);
+                                $step2Success = isset($application);
+                                $step2Active = !$step2Success;
                             @endphp
-                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 120px;">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step2Success ? 'bg-success text-white' : ($step2Active ? 'bg-primary text-white' : 'bg-light text-muted') }} mb-2" style="width: 40px; height: 40px;">
+                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 110px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step2Success ? 'bg-success text-white' : 'bg-primary text-white' }} mb-2" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-file-earmark-person fs-5"></i>
+                                </div>
+                                <span class="small fw-semibold {{ $step2Success ? 'text-success' : 'text-primary' }}">2. Bio Data & Profile</span>
+                            </div>
+
+                            <!-- Line -->
+                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 60px; height: 2px;"></div>
+
+                            <!-- Step 3: Admission Fee -->
+                            @php
+                                $step3Success = isset($application) && in_array($application->payment_status, ['uploaded', 'verified']);
+                                $step3Active = isset($application) && in_array($application->payment_status, ['pending', 'rejected']);
+                            @endphp
+                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 110px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step3Success ? 'bg-success text-white' : ($step3Active ? 'bg-primary text-white' : 'bg-light text-muted') }} mb-2" style="width: 40px; height: 40px;">
                                     <i class="bi bi-credit-card fs-5"></i>
                                 </div>
-                                <span class="small fw-semibold {{ $step2Success ? 'text-success' : ($step2Active ? 'text-primary' : 'text-muted') }}">2. Admission Fee</span>
+                                <span class="small fw-semibold {{ $step3Success ? 'text-success' : ($step3Active ? 'text-primary' : 'text-muted') }}">3. Admission Fee</span>
                             </div>
 
                             <!-- Line -->
-                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 80px; height: 2px;"></div>
+                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 60px; height: 2px;"></div>
 
-                            <!-- Step 3: Application Review NEXT -->
+                            <!-- Step 4: Application Review -->
                             @php
-                                $step3Success = isset($application) && ($application->status === 'approved' || $application->status === 'admitted');
-                                $step3Active = isset($application) && $step2Success && $application->status === 'pending';
+                                $step4Success = isset($application) && ($application->status === 'approved' || $application->status === 'admitted');
+                                $step4Active = isset($application) && $step3Success && $application->status === 'pending';
                             @endphp
-                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 120px;">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step3Success ? 'bg-success text-white' : ($step3Active ? 'bg-primary text-white' : 'bg-light text-muted') }} mb-2" style="width: 40px; height: 40px;">
+                            <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 110px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step4Success ? 'bg-success text-white' : ($step4Active ? 'bg-primary text-white' : 'bg-light text-muted') }} mb-2" style="width: 40px; height: 40px;">
                                     <i class="bi bi-clock-history fs-5"></i>
                                 </div>
-                                <span class="small fw-semibold {{ $step3Success ? 'text-success' : ($step3Active ? 'text-primary' : 'text-muted') }}">3. Application Review</span>
+                                <span class="small fw-semibold {{ $step4Success ? 'text-success' : ($step4Active ? 'text-primary' : 'text-muted') }}">4. Application Review</span>
                             </div>
 
                             <!-- Line -->
-                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 80px; height: 2px;"></div>
+                            <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 60px; height: 2px;"></div>
 
-                            <!-- Step 4: Fully Admitted -->
+                            <!-- Step 5: Admitted / Rejected -->
                             @php
-                                $step4Success = isset($application) && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified'));
+                                $step5Success = isset($application) && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified'));
+                                $step5Rejected = isset($application) && $application->status === 'rejected';
                             @endphp
-                            <div class="d-flex flex-column align-items-center" style="min-width: 120px;">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step4Success ? 'bg-success text-white' : 'bg-light text-muted' }} mb-2" style="width: 40px; height: 40px;">
-                                    <i class="bi bi-mortarboard fs-5"></i>
+                            <div class="d-flex flex-column align-items-center" style="min-width: 110px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step5Success ? 'bg-success text-white' : ($step5Rejected ? 'bg-danger text-white' : 'bg-light text-muted') }} mb-2" style="width: 40px; height: 40px;">
+                                    @if($step5Rejected)
+                                        <i class="bi bi-x-circle fs-5"></i>
+                                    @else
+                                        <i class="bi bi-mortarboard fs-5"></i>
+                                    @endif
                                 </div>
-                                <span class="small fw-semibold {{ $step4Success ? 'text-success' : 'text-muted' }}">4. Fully Admitted</span>
+                                <span class="small fw-semibold {{ $step5Success ? 'text-success' : ($step5Rejected ? 'text-danger' : 'text-muted') }}">
+                                    {{ $step5Rejected ? '5. Not Admitted' : '5. Admitted' }}
+                                </span>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -380,7 +401,7 @@
                         @endphp
                         <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-radius: 12px;">
                             <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);">
-                                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2"></i>Step 2: Admission Fee Payment (Non-Refundable)</h5>
+                                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2"></i>Step 3: Admission Fee Payment (Non-Refundable)</h5>
                             </div>
                             <div class="card-body p-4">
                                 <div class="alert alert-danger border-0 shadow-sm mb-4 py-3 px-3" style="border-radius: 10px;">
@@ -527,7 +548,7 @@
                         </div>
                     @endif
 
-                    <!-- CASE 3: Application Review (APPEARS NEXT AFTER PAYMENT) -->
+                    <!-- CASE 4: Application Review (APPEARS NEXT AFTER PAYMENT) -->
                     @if(isset($application) && in_array($application->payment_status, ['uploaded', 'verified']) && $application->status === 'pending')
                         <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px;">
                             <div class="card-body">
@@ -536,7 +557,7 @@
                                         <span class="visually-hidden">Loading...</span>
                                     </span>
                                 </div>
-                                <h4 class="fw-bold mb-2 text-dark">Step 3: Application & Document Review</h4>
+                                <h4 class="fw-bold mb-2 text-dark">Step 4: Application & Document Review</h4>
                                 <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
                                     Your non-refundable admission fee payment has been submitted. The academic admissions board is currently verifying your profile, credentials, and uploaded documents.
                                 </p>
@@ -550,7 +571,36 @@
                         </div>
                     @endif
 
-                    <!-- CASE 4: Payment Uploaded, Payment Verification Pending -->
+                    <!-- CASE 5: Application Rejected (Not Admitted) -->
+                    @if(isset($application) && $application->status === 'rejected')
+                        <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%); border-top: 4px solid #dc3545 !important;">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-danger text-white d-inline-flex align-items-center justify-content-center shadow" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-x-circle-fill fs-1"></i>
+                                    </div>
+                                </div>
+                                <h3 class="fw-bold text-danger mb-2">Step 5: Application Status - Not Admitted</h3>
+                                <p class="text-muted mx-auto mb-4" style="max-width: 580px;">
+                                    We regret to inform you that your application <strong>#{{ $application->application_number }}</strong> has not been approved by the Admissions Board for this academic intake.
+                                </p>
+                                <div class="d-inline-flex flex-column align-items-start bg-white p-3 text-start border shadow-sm mb-4" style="border-radius: 10px; width: 100%; max-width: 480px;">
+                                    <div class="small mb-1 text-dark"><strong>Programme:</strong> {{ $application->programRecord->name ?? $application->program }}</div>
+                                    <div class="small mb-1 text-dark"><strong>Status:</strong> <span class="badge bg-danger"><i class="bi bi-x-lg me-1"></i>REJECTED / NOT ADMITTED</span></div>
+                                    @if($application->admin_notes)
+                                        <div class="small text-dark"><strong>Admissions Note:</strong> {{ $application->admin_notes }}</div>
+                                    @endif
+                                </div>
+                                <div>
+                                    <a href="mailto:admissions@jbi.ac.ug" class="btn btn-outline-danger fw-bold px-4 py-2" style="border-radius: 8px;">
+                                        <i class="bi bi-envelope-fill me-2"></i>Contact Admissions Board Support
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- CASE 6: Payment Uploaded, Payment Verification Pending -->
                     @if(isset($application) && $application->status === 'approved' && $application->payment_status === 'uploaded')
                         <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px;">
                             <div class="card-body">
@@ -572,7 +622,7 @@
                         </div>
                     @endif
 
-                    <!-- CASE 5: Fully Admitted after Proof of Payment Approval -->
+                    <!-- CASE 7: Fully Admitted after Proof of Payment Approval -->
                     @if(isset($application) && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified')))
                         <div class="card border-0 shadow-sm mb-4 text-center py-5" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); border-top: 4px solid #1e3a8a !important;">
                             <div class="card-body">
@@ -581,7 +631,7 @@
                                         <i class="bi bi-mortarboard-fill fs-1"></i>
                                     </div>
                                 </div>
-                                <h3 class="fw-bold text-primary mb-2">Step 4: Fully Admitted to JBI University! 🎉</h3>
+                                <h3 class="fw-bold text-primary mb-2">Step 5: Fully Admitted to JBI University! 🎉</h3>
                                 <p class="text-muted mx-auto mb-4" style="max-width: 580px;">
                                     Congratulations <strong>{{ $student->full_name }}</strong>! Your application <strong>#{{ $application->application_number }}</strong> and proof of fee payment have been verified and approved by the Admissions Board.
                                 </p>
