@@ -29,7 +29,7 @@ class BursarFinanceController extends Controller
      */
     public function dashboard()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         
         $totalTuitionCollected = FeeRecord::sum('paid_amount');
         $totalOutstandingFees = FeeRecord::sum('balance_amount');
@@ -63,7 +63,7 @@ class BursarFinanceController extends Controller
      */
     public function revenue()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $revenues = FinanceRevenue::with('receiver')->latest()->paginate(15);
         $totalRevenue = FinanceRevenue::sum('amount');
 
@@ -105,7 +105,7 @@ class BursarFinanceController extends Controller
      */
     public function budgets()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $budgets = FinanceBudget::with(['department', 'approver'])->latest()->paginate(15);
         $departments = Department::orderBy('name')->get();
 
@@ -135,7 +135,7 @@ class BursarFinanceController extends Controller
      */
     public function expenses()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $expenses = FinanceExpense::with(['department', 'requester', 'approver'])->latest()->paginate(15);
         $departments = Department::orderBy('name')->get();
 
@@ -175,7 +175,7 @@ class BursarFinanceController extends Controller
      */
     public function payables()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $suppliers = Supplier::withCount('invoices')->latest()->get();
         $invoices = VendorInvoice::with('supplier')->latest()->paginate(15);
 
@@ -221,7 +221,7 @@ class BursarFinanceController extends Controller
      */
     public function receivables()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $debtors = FeeRecord::where('balance_amount', '>', 0)
             ->with('student.studentProfile')
             ->orderBy('balance_amount', 'desc')
@@ -237,7 +237,7 @@ class BursarFinanceController extends Controller
      */
     public function payroll()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $payrolls = PayrollRecord::with('user')->latest()->paginate(15);
         $staffCount = User::whereIn('role', ['admin', 'faculty', 'bursar'])->count();
 
@@ -285,7 +285,7 @@ class BursarFinanceController extends Controller
      */
     public function assets()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $assets = UniversityAsset::with('department')->latest()->paginate(15);
         $departments = Department::orderBy('name')->get();
         $totalAssetValue = UniversityAsset::sum('current_value');
@@ -318,7 +318,7 @@ class BursarFinanceController extends Controller
      */
     public function banking()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $accounts = BankAccount::latest()->get();
 
         return view('admin.finance.banking.index', compact('accounts', 'currencyCode'));
@@ -345,7 +345,7 @@ class BursarFinanceController extends Controller
      */
     public function grants()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $grants = ResearchGrant::with('principalInvestigator')->latest()->paginate(15);
         $professors = User::whereIn('role', ['admin', 'faculty'])->get();
 
@@ -377,7 +377,7 @@ class BursarFinanceController extends Controller
      */
     public function reports()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $tuitionRevenue = FeeRecord::sum('paid_amount');
         $otherRevenue = FinanceRevenue::sum('amount');
         $totalRevenue = $tuitionRevenue + $otherRevenue;

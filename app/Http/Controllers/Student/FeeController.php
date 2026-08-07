@@ -19,7 +19,7 @@ class FeeController extends Controller
 {
     public function ledger()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $user = Auth::user();
 
         // Get all fee records for student (Tuition, Functional, Retake, Missed Paper)
@@ -39,7 +39,7 @@ class FeeController extends Controller
 
     public function structure()
     {
-        $currencyCode = SystemSetting::getSetting('default_currency', 'UGX');
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $user = Auth::user();
         $sp = $user->studentProfile;
         $feeStructures = \App\Models\FeeStructure::where('is_active', true)
