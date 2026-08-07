@@ -266,10 +266,6 @@ class Course extends Model
     {
         return $this->available_slots <= 0;
     }
-            return false; // Unlimited capacity
-        }
-        return $this->enrolled_count >= $capacity;
-    }
 
     /**
      * Get course schedule as formatted string
