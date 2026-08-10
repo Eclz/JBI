@@ -257,10 +257,10 @@
                             </div>
                             @endif
 
-                            <!-- Document Preview Modal -->
-                            <div class="modal fade" id="adminDocPreviewModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px; margin: 1.75rem auto;">
-                                    <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 10px;">
+                            <!-- Document Preview Modal (No transition animation for instant rock-solid display) -->
+                            <div class="modal" id="adminDocPreviewModal" tabindex="-1" aria-hidden="true" style="transition: none !important;">
+                                <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px; margin: 1.75rem auto; transition: none !important; transform: none !important;">
+                                    <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 10px; transition: none !important; animation: none !important;">
                                         <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #0f2942 0%, #1e3a8a 100%);">
                                             <div class="d-flex align-items-center">
                                                 <i class="bi bi-file-earmark-pdf fs-4 me-2 text-warning"></i>
