@@ -362,13 +362,6 @@
         @if(auth()->user()->isStudent() && auth()->user()->isAdmitted())
         <li class="menu-header">Student</li>
 
-        <li class="menu-item {{ request()->routeIs('student.courses.enrollments') ? 'active' : '' }}">
-            <a href="{{ route('student.courses.enrollments') }}" class="menu-link">
-                <i class="bi bi-journal-plus"></i>
-                <span>Course Enrollment</span>
-            </a>
-        </li>
-
         <li class="menu-item {{ request()->routeIs('student.courses.*') && !request()->routeIs('student.courses.enrollments') ? 'active' : '' }}">
             <a href="{{ route('student.courses.index') }}" class="menu-link">
                 <i class="bi bi-journal-text"></i>
