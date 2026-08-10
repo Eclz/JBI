@@ -258,47 +258,70 @@
                             @endif
 
                             <!-- Document Preview Modal -->
-                            <div class="modal fade" id="adminDocPreviewModal" data-bs-focus="false" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-xl" style="margin: 2rem auto;">
-                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-                                        <div class="modal-header bg-dark text-white py-3">
-                                            <h5 class="modal-title fw-bold" id="adminDocPreviewTitle"><i class="bi bi-eye me-2"></i>Document Preview</h5>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body p-0 bg-dark text-white position-relative" style="height: 75vh; min-height: 550px; max-height: 750px; overflow: hidden;">
-                                            <div id="adminDocPreviewContainer" class="w-100 h-100 position-relative" style="overflow: hidden;">
-                                                <div class="spinner-border text-light position-absolute top-50 start-50 translate-middle" role="status"></div>
+                            <div class="modal fade" id="adminDocPreviewModal" data-bs-focus="false" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px; margin: 1.75rem auto;">
+                                    <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 10px;">
+                                        <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #0f2942 0%, #1e3a8a 100%);">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-file-earmark-pdf fs-4 me-2 text-warning"></i>
+                                                <div>
+                                                    <h5 class="modal-title fw-bold mb-0 text-white" id="adminDocPreviewTitle">Document Preview</h5>
+                                                    <small class="text-white-50" id="adminDocPreviewSubtitle">Official Applicant Document</small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <a id="adminDocOpenNewTabBtn" href="#" target="_blank" class="btn btn-sm btn-outline-light px-3 py-1.5" style="border-radius: 6px;">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>Open Full Screen
+                                                </a>
+                                                <a id="adminDocDownloadHeaderBtn" href="#" download class="btn btn-sm btn-warning fw-bold px-3 py-1.5 text-dark" style="border-radius: 6px;">
+                                                    <i class="bi bi-download me-1"></i>Download
+                                                </a>
+                                                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                         </div>
-                                        <div class="modal-footer bg-light py-2">
-                                            <a id="adminDocDownloadBtn" href="#" target="_blank" download class="btn btn-primary fw-bold">
-                                                <i class="bi bi-download me-1"></i>Download Original File
-                                            </a>
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <div class="modal-body p-0 bg-light position-relative" style="height: 75vh; min-height: 580px; overflow: hidden; background-color: #f8fafc !important;">
+                                            <div id="adminDocPreviewContainer" class="w-100 h-100 position-relative" style="overflow: hidden; background: #f8fafc;">
+                                                <div class="spinner-border text-primary position-absolute top-50 start-50 translate-middle" role="status"></div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-white py-2.5 px-4 d-flex justify-content-between align-items-center">
+                                            <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Verified Applicant Document Record</small>
+                                            <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal" style="border-radius: 6px;">Close Preview</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <script>
-                                function openAdminDocPreview(url, title, ext) {
-                                    document.getElementById('adminDocPreviewTitle').innerHTML = '<i class="bi bi-eye me-2"></i>' + title;
-                                    document.getElementById('adminDocDownloadBtn').href = url;
-                                    const container = document.getElementById('adminDocPreviewContainer');
+                                let adminPreviewModalInstance = null;
 
+                                function openAdminDocPreview(url, title, ext) {
+                                    document.getElementById('adminDocPreviewTitle').innerText = title || 'Document Preview';
+                                    document.getElementById('adminDocPreviewSubtitle').innerText = 'Format: ' + (ext || 'Document').toUpperCase();
+                                    
+                                    document.getElementById('adminDocOpenNewTabBtn').href = url;
+                                    document.getElementById('adminDocDownloadHeaderBtn').href = url;
+                                    
+                                    const container = document.getElementById('adminDocPreviewContainer');
                                     const cleanExt = (ext || '').toLowerCase().trim();
 
                                     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(cleanExt)) {
-                                        container.innerHTML = '<div class="w-100 h-100 d-flex align-items-center justify-content-center p-3" style="overflow: hidden;"><img src="' + url + '" class="img-fluid rounded shadow" style="max-height: 100%; max-width: 100%; object-fit: contain;"></div>';
+                                        container.innerHTML = '<div class="w-100 h-100 d-flex align-items-center justify-content-center p-3" style="background: #0f172a;"><img src="' + url + '" class="img-fluid rounded shadow" style="max-height: 100%; max-width: 100%; object-fit: contain;"></div>';
                                     } else if (cleanExt === 'pdf') {
-                                        container.innerHTML = '<iframe src="' + url + '#toolbar=1&navpanes=0&scrollbar=1" class="w-100 h-100" style="border: none; display: block; width: 100%; height: 100%; margin: 0; padding: 0;" loading="lazy"></iframe>';
+                                        container.innerHTML = '<object data="' + url + '#toolbar=1&navpanes=0&scrollbar=1" type="application/pdf" class="w-100 h-100" style="min-height: 580px; border: none; display: block;"><iframe src="' + url + '#toolbar=1&navpanes=0&scrollbar=1" class="w-100 h-100" style="min-height: 580px; border: none; display: block;"><div class="p-5 text-center"><i class="bi bi-file-earmark-pdf fs-1 text-danger d-block mb-3"></i><p class="fs-5 text-dark mb-3">Your browser does not support inline PDF previews.</p><a href="' + url + '" target="_blank" class="btn btn-primary fw-bold px-4 py-2"><i class="bi bi-box-arrow-up-right me-2"></i>Open PDF in New Window</a></div></iframe></object>';
                                     } else {
-                                        container.innerHTML = '<div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-5 text-center"><i class="bi bi-file-earmark-word fs-1 text-primary d-block mb-3"></i><p class="text-white-50 fs-5 mb-3">Direct preview is not available for <strong>' + cleanExt.toUpperCase() + '</strong> files.</p><a href="' + url + '" target="_blank" download class="btn btn-primary px-4 py-2"><i class="bi bi-download me-2"></i>Download File to View</a></div>';
+                                        container.innerHTML = '<div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-5 text-center" style="background: #f8fafc;"><i class="bi bi-file-earmark-word fs-1 text-primary d-block mb-3"></i><h5 class="text-dark fw-bold mb-2">Preview Not Available Inline</h5><p class="text-muted fs-6 mb-4">Direct inline preview is not supported for <strong>' + cleanExt.toUpperCase() + '</strong> files.</p><div class="d-flex gap-2"><a href="' + url + '" target="_blank" class="btn btn-outline-primary px-4 py-2 fw-bold" style="border-radius: 6px;"><i class="bi bi-box-arrow-up-right me-2"></i>Open File</a><a href="' + url + '" download class="btn btn-primary px-4 py-2 fw-bold" style="border-radius: 6px;"><i class="bi bi-download me-2"></i>Download File</a></div></div>';
                                     }
 
                                     const modalEl = document.getElementById('adminDocPreviewModal');
-                                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                                    modal.show();
+                                    if (!adminPreviewModalInstance) {
+                                        adminPreviewModalInstance = new bootstrap.Modal(modalEl, {
+                                            backdrop: 'static',
+                                            keyboard: true,
+                                            focus: false
+                                        });
+                                    }
+                                    adminPreviewModalInstance.show();
                                 }
                             </script>
 
