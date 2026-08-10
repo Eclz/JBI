@@ -257,7 +257,18 @@
                             </div>
                             @endif
 
-                            <!-- Document Preview Modal (No transition animation for instant rock-solid display) -->
+                            <style>
+                                #adminDocPreviewModal,
+                                #adminDocPreviewModal *,
+                                .modal-backdrop,
+                                .modal-backdrop.fade {
+                                    transition: none !important;
+                                    animation: none !important;
+                                    transform: none !important;
+                                }
+                            </style>
+
+                            <!-- Document Preview Modal (No transitions or animations) -->
                             <div class="modal" id="adminDocPreviewModal" tabindex="-1" aria-hidden="true" style="transition: none !important;">
                                 <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px; margin: 1.75rem auto; transition: none !important; transform: none !important;">
                                     <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 10px; transition: none !important; animation: none !important;">
@@ -281,7 +292,7 @@
                                         </div>
                                         <div class="modal-body p-0 bg-light position-relative" style="height: 75vh; min-height: 580px; overflow: hidden; background-color: #f8fafc !important;">
                                             <div id="adminDocPreviewContainer" class="w-100 h-100 position-relative" style="overflow: hidden; background: #f8fafc;">
-                                                <div class="spinner-border text-primary position-absolute top-50 start-50 translate-middle" role="status"></div>
+                                                <div class="position-absolute top-50 start-50 translate-middle text-primary fw-bold">Loading document preview...</div>
                                             </div>
                                         </div>
                                         <div class="modal-footer bg-white py-2.5 px-4 d-flex justify-content-between align-items-center">
@@ -301,7 +312,7 @@
                                         modalEl.addEventListener('hidden.bs.modal', function () {
                                             const container = document.getElementById('adminDocPreviewContainer');
                                             if (container) {
-                                                container.innerHTML = '<div class="spinner-border text-primary position-absolute top-50 start-50 translate-middle" role="status"></div>';
+                                                container.innerHTML = '<div class="position-absolute top-50 start-50 translate-middle text-primary fw-bold">Loading document preview...</div>';
                                             }
                                         });
                                     }
