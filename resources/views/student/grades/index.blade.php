@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container-fluid px-4 py-4">
+    @if(Auth::check() && Auth::user()->isStudent())
+        @include('partials.student-header-bar')
+    @endif
     <!-- Redesigned header section with better styling -->
     <div class="row mb-4">
         <div class="col-12">

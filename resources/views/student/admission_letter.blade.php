@@ -3,6 +3,8 @@
 @section('title', 'Official Letter of Admission')
 
 @section('content')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <div class="container-fluid px-4 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
         <div>
@@ -12,23 +14,30 @@
             <p class="text-muted small mb-0">Johnson Bible Institute (JBI) University Official Admission Record</p>
         </div>
         <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-primary fw-bold">
-                <i class="bi bi-printer me-2"></i>PRINT / DOWNLOAD PDF
+            <button id="download-pdf-btn" onclick="downloadAdmissionLetterPDF()" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" style="border-radius: 8px;">
+                <i class="bi bi-download me-2"></i>DOWNLOAD ADMISSION LETTER (PDF)
             </button>
-            <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary px-3 py-2" style="border-radius: 8px;">
                 <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
             </a>
         </div>
     </div>
 
-    <!-- Official Printable Letterhead -->
-    <div class="card border-0 shadow-sm mx-auto p-4 p-md-5 bg-white" style="max-width: 850px; font-family: 'Georgia', serif; color: #222; border-top: 6px solid #1e3a8a !important;">
-        <!-- Header & Logo -->
-        <div class="text-center pb-4 mb-4 border-bottom border-2 border-primary">
-            <img src="{{ asset('images/jbi.png') }}" alt="JBI Logo" style="max-height: 80px;" class="mb-2">
-            <h2 class="fw-bold text-uppercase mb-1" style="color: #1e3a8a; letter-spacing: 1px;">JOHNSON BIBLE INSTITUTE UNIVERSITY</h2>
-            <p class="fst-italic text-muted small mb-1">"Excellence in Education, Service to Humanity & Faith"</p>
-            <div class="small text-muted">
+    <!-- Official Printable Letterhead Card -->
+    <div id="admission-letter-card" class="card border-0 shadow-sm mx-auto p-4 p-md-5 bg-white position-relative overflow-hidden" style="max-width: 850px; font-family: 'Georgia', serif; color: #222; border-top: 6px solid #1e3a8a !important; border-radius: 12px;">
+        <!-- Watermark Background Logo -->
+        <div class="position-absolute top-50 start-50 translate-middle pointer-events-none text-center" style="opacity: 0.04; z-index: 0; width: 450px;">
+            <img src="{{ asset('images/jbi.png') }}" alt="Watermark Logo" class="w-100 img-fluid mx-auto d-block">
+        </div>
+
+        <!-- Header & Centered Logo -->
+        <div class="text-center pb-4 mb-4 border-bottom border-2 border-primary position-relative" style="z-index: 1;">
+            <div class="mb-3 d-flex justify-content-center align-items-center text-center w-100">
+                <img src="{{ asset('images/jbi.png') }}" alt="JBI Logo" style="max-height: 110px; width: auto; object-fit: contain; display: block; margin-left: auto; margin-right: auto;" class="mx-auto d-block">
+            </div>
+            <h2 class="fw-bold text-uppercase mb-1 text-center" style="color: #1e3a8a; letter-spacing: 1.2px; font-size: 1.75rem;">JOHNSON BIBLE INSTITUTE UNIVERSITY</h2>
+            <p class="fst-italic text-muted small mb-2 text-center">"Excellence in Education, Service to Humanity & Faith"</p>
+            <div class="small text-muted text-center" style="font-size: 0.825rem; line-height: 1.5;">
                 91 Progress Road, Lindhaven, Roodepoort, South Africa<br>
                 Tel: +27 67 965 3866 | Email: info@johnsonbibleinstitute.com | Website: www.johnsonbibleinstitute.com
             </div>
@@ -113,6 +122,41 @@
         </div>
     </div>
 </div>
+
+<script>
+function downloadAdmissionLetterPDF() {
+    const downloadBtn = document.getElementById('download-pdf-btn');
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Downloading PDF...';
+
+    const element = document.getElementById('admission-letter-card');
+    
+    if (typeof html2pdf !== 'undefined') {
+        const opt = {
+            margin:       [0.2, 0.2, 0.2, 0.2],
+            filename:     'JBI_Admission_Letter_{{ Str::slug($student->full_name) }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalText;
+        }).catch(err => {
+            console.error('PDF Generation Error:', err);
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalText;
+            window.print();
+        });
+    } else {
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = originalText;
+        window.print();
+    }
+}
+</script>
 
 <style>
 @media print {

@@ -20,19 +20,23 @@ use Illuminate\Support\Facades\Mail;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $student = Auth::user();
 
         // Get student profile with department
         $studentProfile = $student->studentProfile()->with('department')->first();
 
-        // Check if student is admitted (has active profile status)
-        if (!$studentProfile || $studentProfile->status !== 'active') {
-            $application = \App\Models\Application::where('email', $student->email)
-                ->orderBy('created_at', 'desc')
-                ->first();
+        $application = \App\Models\Application::where('email', $student->email)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
+        $requestedAdmissionView = $request->query('view') === 'admission' || $request->query('view') === 'unadmitted';
+        $isAdmitted = ($studentProfile && $studentProfile->status === 'active') || ($application && in_array($application->status, ['admitted', 'approved']));
+        $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null);
+
+        // Check if student is not admitted, or has not yet acknowledged admission onboarding, or explicitly requested admission view
+        if (!$studentProfile || $studentProfile->status !== 'active' || ($isAdmitted && !$hasAcknowledged) || $requestedAdmissionView) {
             $programs = \App\Models\Program::where('is_active', true)
                 ->with(['department', 'level'])
                 ->orderBy('name')
@@ -279,5 +283,20 @@ class DashboardController extends Controller
         }
 
         return view('student.admission_letter', compact('student', 'application'));
+    }
+
+    public function acknowledgeAdmission(Request $request)
+    {
+        $student = Auth::user();
+        $studentProfile = $student->studentProfile;
+
+        if ($studentProfile) {
+            $studentProfile->admission_acknowledged_at = now();
+            $studentProfile->save();
+        }
+
+        session(['admission_acknowledged' => true]);
+
+        return redirect()->route('student.dashboard')->with('success', 'Welcome to your Student Portal!');
     }
 }

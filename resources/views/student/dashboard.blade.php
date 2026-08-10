@@ -28,7 +28,15 @@
                         @if($studentProfile)
                         <div class="text-end">
                             <div class="fs-6" style="color: rgba(255, 255, 255, 0.8);">Admission Number</div>
-                            <div class="fs-5 fw-bold" style="color: #ffffff;">{{ $studentProfile->admission_number ?? 'N/A' }}</div>
+                            <div class="fs-5 fw-bold mb-2" style="color: #ffffff;">{{ $studentProfile->admission_number ?? 'N/A' }}</div>
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{{ route('student.admission-letter.show') }}" class="btn btn-sm btn-light text-primary fw-bold shadow-sm" style="border-radius: 6px;">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>Admission Letter
+                                </a>
+                                <a href="{{ route('student.dashboard') }}?view=admission" class="btn btn-sm btn-outline-light" style="border-radius: 6px;">
+                                    <i class="bi bi-mortarboard me-1"></i>Admission Status
+                                </a>
+                            </div>
                         </div>
                         @endif
                     </div>

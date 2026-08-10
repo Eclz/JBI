@@ -32,23 +32,27 @@
         </div>
     @endif
 
+    @php
+        $hasEnrolled = $currentEnrollments->count() > 0;
+    @endphp
+
     <!-- Tabs Navigation -->
     <ul class="nav nav-pills mb-4" id="enrollmentTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active px-4 py-2 fw-bold me-2" id="wizard-tab" data-bs-toggle="pill" data-bs-target="#wizard-pane" type="button" role="tab">
-                <i class="bi bi-magic me-2"></i>Enrollment Wizard & Course Selection
+            <button class="nav-link {{ $hasEnrolled ? 'active' : '' }} px-4 py-2 fw-bold me-2" id="current-tab" data-bs-toggle="pill" data-bs-target="#current-pane" type="button" role="tab">
+                <i class="bi bi-list-check me-2"></i>My Currently Enrolled Courses ({{ $currentEnrollments->count() }})
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link px-4 py-2 fw-bold" id="current-tab" data-bs-toggle="pill" data-bs-target="#current-pane" type="button" role="tab">
-                <i class="bi bi-list-check me-2"></i>My Currently Enrolled Courses ({{ $currentEnrollments->count() }})
+            <button class="nav-link {{ !$hasEnrolled ? 'active' : '' }} px-4 py-2 fw-bold" id="wizard-tab" data-bs-toggle="pill" data-bs-target="#wizard-pane" type="button" role="tab">
+                <i class="bi bi-magic me-2"></i>Enrollment Wizard & Course Selection
             </button>
         </li>
     </ul>
 
     <div class="tab-content" id="enrollmentTabsContent">
         <!-- TAB 1: ENROLLMENT WIZARD -->
-        <div class="tab-pane fade show active" id="wizard-pane" role="tabpanel">
+        <div class="tab-pane fade {{ !$hasEnrolled ? 'show active' : '' }}" id="wizard-pane" role="tabpanel">
             <form action="{{ route('student.enrollment.store') }}" method="POST" id="enrollmentWizardForm">
                 @csrf
 
@@ -186,7 +190,7 @@
         </div>
 
         <!-- TAB 2: CURRENT ENROLLED COURSES -->
-        <div class="tab-pane fade" id="current-pane" role="tabpanel">
+        <div class="tab-pane fade {{ $hasEnrolled ? 'show active' : '' }}" id="current-pane" role="tabpanel">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3 border-bottom border-primary border-2 d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-journal-text me-2"></i>REGISTERED COURSES LIST</h6>

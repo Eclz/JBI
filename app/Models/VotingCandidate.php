@@ -16,6 +16,13 @@ class VotingCandidate extends Model
         'photo',
         'manifesto',
         'party_affiliation',
+        'status',
+        'vetted_at',
+        'vetting_notes',
+    ];
+
+    protected $casts = [
+        'vetted_at' => 'datetime',
     ];
 
     public function position()

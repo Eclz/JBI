@@ -4,6 +4,9 @@
 
 @section('content')
 <div class="container-fluid px-4 py-4">
+    @if(Auth::check() && Auth::user()->isStudent())
+        @include('partials.student-header-bar')
+    @endif
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0 text-primary">

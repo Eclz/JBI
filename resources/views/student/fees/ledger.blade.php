@@ -49,55 +49,54 @@
             <span class="badge bg-primary px-3 py-1">{{ $feeRecords->count() }} RECORDS</span>
         </div>
         <div class="card-body p-0">
-            @if($feeRecords->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Transaction / Fee Details</th>
-                                <th>Total Amount</th>
-                                <th>Paid Amount</th>
-                                <th>Balance</th>
-                                <th>Date</th>
-                                <th class="text-end">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($feeRecords as $record)
-                            <tr>
-                                <td>
-                                    @if($record->type === 'retake' || str_contains(strtolower($record->payment_notes ?? ''), 'retake'))
-                                        <span class="badge bg-warning text-dark me-1"><i class="bi bi-arrow-repeat me-1"></i>RETAKE FEE</span>
-                                    @elseif($record->type === 'missed_paper' || str_contains(strtolower($record->payment_notes ?? ''), 'missed paper'))
-                                        <span class="badge bg-danger me-1"><i class="bi bi-exclamation-triangle me-1"></i>MISSED PAPER FEE</span>
-                                    @elseif($record->type === 'registration' || str_contains(strtolower($record->payment_notes ?? ''), 'functional'))
-                                        <span class="badge bg-info me-1"><i class="bi bi-gear me-1"></i>FUNCTIONAL FEE</span>
-                                    @else
-                                        <span class="badge bg-primary me-1"><i class="bi bi-book me-1"></i>TUITION FEE</span>
-                                    @endif
-                                    <span class="fw-semibold text-dark">{{ $record->payment_notes ?? $record->feeStructure?->name ?? 'Semester Tuition Fee' }}</span>
-                                </td>
-                                <td class="fw-bold">{{ $currencyCode }} {{ number_format($record->total_amount > 0 ? $record->total_amount : $record->amount, 2) }}</td>
-                                <td class="fw-bold text-success">{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
-                                <td class="fw-bold text-danger">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
-                                <td>{{ $record->created_at->format('M d, Y') }}</td>
-                                <td class="text-end">
-                                    @if($record->status === 'paid' || $record->balance_amount <= 0)
-                                        <span class="badge bg-success px-2 py-1"><i class="bi bi-check-circle me-1"></i>PAID</span>
-                                    @elseif($record->paid_amount > 0)
-                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-pie-chart me-1"></i>PARTIAL</span>
-                                    @else
-                                        <span class="badge bg-danger px-2 py-1"><i class="bi bi-clock me-1"></i>UNPAID</span>
-                                    @endif
-                                </td>
-                            </tr>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Transaction / Fee Details</th>
+                            <th>Total Amount</th>
+                            <th>Paid Amount</th>
+                            <th>Balance</th>
+                            <th>Date</th>
+                            <th class="text-end">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($feeRecords as $record)
+                        <tr>
+                            <td>
+                                @if($record->type === 'retake' || str_contains(strtolower($record->payment_notes ?? ''), 'retake'))
+                                    <span class="badge bg-warning text-dark me-1"><i class="bi bi-arrow-repeat me-1"></i>RETAKE FEE</span>
+                                @elseif($record->type === 'missed_paper' || str_contains(strtolower($record->payment_notes ?? ''), 'missed paper'))
+                                    <span class="badge bg-danger me-1"><i class="bi bi-exclamation-triangle me-1"></i>MISSED PAPER FEE</span>
+                                @elseif($record->type === 'registration' || str_contains(strtolower($record->payment_notes ?? ''), 'functional'))
+                                    <span class="badge bg-info me-1"><i class="bi bi-gear me-1"></i>FUNCTIONAL FEE</span>
+                                @else
+                                    <span class="badge bg-primary me-1"><i class="bi bi-book me-1"></i>TUITION FEE</span>
+                                @endif
+                                <span class="fw-semibold text-dark">{{ $record->payment_notes ?? $record->feeStructure?->name ?? 'Semester Tuition Fee' }}</span>
+                            </td>
+                            <td class="fw-bold">{{ $currencyCode }} {{ number_format($record->total_amount > 0 ? $record->total_amount : $record->amount, 2) }}</td>
+                            <td class="fw-bold text-success">{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                            <td class="fw-bold text-danger">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
+                            <td>{{ $record->created_at->format('M d, Y') }}</td>
+                            <td class="text-end">
+                                @if($record->status === 'paid' || $record->balance_amount <= 0)
+                                    <span class="badge bg-success px-2 py-1"><i class="bi bi-check-circle me-1"></i>PAID</span>
+                                @elseif($record->paid_amount > 0)
+                                    <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-pie-chart me-1"></i>PARTIAL</span>
+                                @else
+                                    <span class="badge bg-danger px-2 py-1"><i class="bi bi-clock me-1"></i>UNPAID</span>
+                                @endif
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="bi bi-receipt fs-1 d-block mb-2 text-muted opacity-50"></i>
-                                    No fee transaction records found for your account.
-                                </td>
-                            </tr>
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-receipt fs-1 d-block mb-2 text-muted opacity-50"></i>
+                                No fee transaction records found for your account.
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>

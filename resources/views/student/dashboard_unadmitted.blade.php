@@ -31,6 +31,11 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link px-4 py-2 fw-semibold me-2" id="biodata-profile-tab" data-bs-toggle="pill" data-bs-target="#biodata-profile" type="button" role="tab" aria-controls="biodata-profile" aria-selected="false" style="border-radius: 8px;">
+                        <i class="bi bi-file-earmark-person me-2"></i>Bio Data & Profile
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link px-4 py-2 fw-semibold" id="available-programmes-tab" data-bs-toggle="pill" data-bs-target="#available-programmes" type="button" role="tab" aria-controls="available-programmes" aria-selected="false" style="border-radius: 8px;">
                         <i class="bi bi-journal-bookmark-fill me-2"></i>Available Programmes
                     </button>
@@ -641,11 +646,14 @@
                                     <div class="small text-dark"><strong>Admission Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>FULLY ADMITTED & ACTIVE</span></div>
                                 </div>
                                 <div class="d-flex flex-wrap justify-content-center gap-2">
+                                    <a href="{{ route('student.admission-letter.show') }}" class="btn btn-lg btn-success text-white shadow fw-bold px-4 py-2" style="border-radius: 8px;">
+                                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>VIEW & DOWNLOAD PROVISIONAL ADMISSION LETTER
+                                    </a>
                                     <button type="button" class="btn btn-lg btn-primary text-white shadow fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#onboardingWizardModal" style="border-radius: 8px;">
-                                        <i class="bi bi-rocket-takeoff-fill me-2"></i>GET STARTED WITH PORTAL
+                                        <i class="bi bi-rocket-takeoff-fill me-2"></i>WELCOME GUIDE
                                     </button>
-                                    <a href="{{ route('student.admission-letter.show') }}" class="btn btn-lg btn-outline-primary fw-bold px-4 py-2" style="border-radius: 8px;">
-                                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>VIEW & DOWNLOAD ADMISSION LETTER
+                                    <a href="{{ route('student.dashboard.acknowledge') }}" class="btn btn-lg btn-outline-primary fw-bold px-4 py-2" style="border-radius: 8px;">
+                                        <i class="bi bi-arrow-right-circle-fill me-2"></i>ENTER STUDENT PORTAL
                                     </a>
                                 </div>
                             </div>
@@ -713,7 +721,7 @@
                                                 <button class="btn btn-outline-primary btn-sm me-2" type="button" data-bs-target="#onboardingCarousel" data-bs-slide="next">
                                                     Next<i class="bi bi-arrow-right ms-1"></i>
                                                 </button>
-                                                <a href="{{ route('student.dashboard') }}" class="btn btn-primary fw-bold px-4">
+                                                <a href="{{ route('student.dashboard.acknowledge') }}" class="btn btn-primary fw-bold px-4">
                                                     <i class="bi bi-check-circle me-1"></i>Explore Student Portal
                                                 </a>
                                             </div>
@@ -1139,6 +1147,136 @@
                                 @endforeach
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: BIO DATA & PROFILE -->
+        <div class="tab-pane fade" id="biodata-profile" role="tabpanel" aria-labelledby="biodata-profile-tab">
+            <div class="row g-4">
+                <!-- Profile Header & Avatar Card -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm text-center p-4 h-100" style="border-radius: 12px;">
+                        <div class="mb-3 position-relative d-inline-block mx-auto">
+                            @php
+                                $avatarPath = $student->avatar ?? ($application->documents['profile_picture'] ?? null);
+                                $avatarUrl = $avatarPath ? Storage::url($avatarPath) : null;
+                            @endphp
+                            @if($avatarUrl)
+                                <img src="{{ $avatarUrl }}" alt="Profile Photo" class="rounded-circle shadow-sm" style="width: 130px; height: 130px; object-fit: cover; border: 4px solid #1e3a8a;">
+                            @else
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 130px; height: 130px; font-size: 2.8rem; font-weight: 700;">
+                                    {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}
+                                </div>
+                            @endif
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">{{ $student->full_name }}</h4>
+                        <p class="text-muted small mb-3">{{ $student->email }}</p>
+
+                        <div class="d-flex flex-column gap-2 mb-4 text-start bg-light p-3 rounded" style="border-radius: 8px;">
+                            <div class="small"><strong class="text-dark">Account Type:</strong> <span class="badge bg-primary ms-1">STUDENT APPLICANT</span></div>
+                            <div class="small"><strong class="text-dark">Application No:</strong> <span class="badge bg-secondary ms-1">{{ $application->application_number ?? 'Not Submitted' }}</span></div>
+                            @if($application && $application->admission_number)
+                                <div class="small"><strong class="text-dark">Admission No:</strong> <span class="badge bg-success ms-1">{{ $application->admission_number }}</span></div>
+                            @endif
+                            <div class="small"><strong class="text-dark">Phone:</strong> <span class="text-muted ms-1">{{ $student->phone ?? 'N/A' }}</span></div>
+                        </div>
+
+                        <a href="{{ route('profile.show') }}" class="btn btn-outline-primary fw-bold w-100 py-2" style="border-radius: 8px;">
+                            <i class="bi bi-pencil-square me-2"></i>Edit Full Account Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bio Data Details Cards -->
+                <div class="col-lg-8">
+                    <!-- Personal Info Card -->
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-file-earmark-person-fill me-2"></i>Personal Bio Data Details</h5>
+                            <span class="badge bg-light text-dark border px-3 py-1.5"><i class="bi bi-shield-check me-1 text-success"></i>Verified Applicant Record</span>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Full Name</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $student->full_name }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Email Address</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $student->email }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Phone Number</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $student->phone ?? 'Not Provided' }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Date of Birth</label>
+                                    <div class="fw-bold text-dark fs-6">
+                                        {{ $application?->date_of_birth ? \Carbon\Carbon::parse($application->date_of_birth)->format('M d, Y') : ($student->date_of_birth ? ($student->date_of_birth instanceof \DateTimeInterface ? $student->date_of_birth->format('M d, Y') : \Carbon\Carbon::parse($student->date_of_birth)->format('M d, Y')) : 'Not Provided') }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Gender</label>
+                                    <div class="fw-bold text-dark fs-6">
+                                        {{ ucfirst($application?->gender ?? ($student->gender ?? 'Not Specified')) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Residential Address</label>
+                                    <div class="fw-bold text-dark fs-6">
+                                        {{ $application?->address ?? ($student->address ?? 'Not Provided') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guardian / Emergency Contact Card -->
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-people-fill me-2"></i>Guardian & Emergency Contact Bio Data</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Guardian Name</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $application?->guardian_name ?? 'Not Provided' }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Guardian Phone</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $application?->guardian_phone ?? 'Not Provided' }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Guardian Email</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $application?->guardian_email ?? 'Not Provided' }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Relationship</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $application?->guardian_relationship ?? 'Not Specified' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Academic Background Card -->
+                    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-mortarboard-fill me-2"></i>Academic History & Background</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Previous Institution / School</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $application?->previous_school ?? 'Not Provided' }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">Qualifications Obtained</label>
+                                    <div class="fw-bold text-dark fs-6">{{ $application?->previous_qualification ?? 'Not Provided' }}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

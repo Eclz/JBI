@@ -339,9 +339,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Admin E-Voting Management
     Route::get('/evoting', [AdminEVotingController::class, 'index'])->name('evoting.index');
     Route::post('/evoting/session', [AdminEVotingController::class, 'storeSession'])->name('evoting.sessions.store');
+    Route::post('/evoting/session/{session}/vetting', [AdminEVotingController::class, 'updateSessionVetting'])->name('evoting.sessions.vetting');
     Route::post('/evoting/session/{session}/toggle', [AdminEVotingController::class, 'toggleSessionStatus'])->name('evoting.sessions.toggle');
     Route::post('/evoting/session/{session}/positions', [AdminEVotingController::class, 'storePosition'])->name('evoting.positions.store');
     Route::post('/evoting/position/{position}/candidates', [AdminEVotingController::class, 'storeCandidate'])->name('evoting.candidates.store');
+    Route::post('/evoting/candidate/{candidate}/vet', [AdminEVotingController::class, 'vetCandidate'])->name('evoting.candidates.vet');
     Route::get('/evoting/session/{session}/results', [AdminEVotingController::class, 'results'])->name('evoting.results');
 
     // Admin Evaluation Surveys
@@ -573,6 +575,9 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::post('/fees/{fee}/pay', [StudentFeeController::class, 'processPayment'])->name('fees.processPayment');
     Route::get('/fees/{fee}/receipt', [StudentFeeController::class, 'receipt'])->name('fees.receipt');
     Route::get('/fees/{fee}/payments/{payment}/receipt', [StudentFeeController::class, 'transactionReceipt'])->name('fees.transaction-receipt');
+    Route::post('/prn/generate', [StudentFeeController::class, 'generatePrn'])->name('fees.prn.generate');
+    Route::get('/prn/{prn}', [StudentFeeController::class, 'showPrn'])->name('fees.prn.show');
+    Route::post('/prn/{prn}/pay', [StudentFeeController::class, 'processPrnPayment'])->name('fees.prn.pay');
 
     // Attendance
     Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance.index');
@@ -598,6 +603,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/evoting/announcements', [StudentEVotingController::class, 'announcements'])->name('evoting.announcements');
     Route::get('/evoting/positions', [StudentEVotingController::class, 'positions'])->name('evoting.positions');
     Route::post('/evoting/vote', [StudentEVotingController::class, 'vote'])->name('evoting.vote');
+    Route::post('/evoting/candidacy', [StudentEVotingController::class, 'applyCandidacy'])->name('evoting.candidacy.apply');
 
     // Evaluation Surveys
     Route::get('/evaluation-surveys', [StudentEvaluationSurveyController::class, 'index'])->name('evaluation-surveys.index');
@@ -610,6 +616,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::post('/enrollment', [StudentProgrammeCoursesController::class, 'processEnrollment'])->name('enrollment.store');
     Route::delete('/enrollment/unenroll/{course}', [StudentProgrammeCoursesController::class, 'unenroll'])->name('enrollment.unenroll');
     Route::get('/admission-letter', [StudentDashboardController::class, 'showAdmissionLetter'])->name('admission-letter.show');
+    Route::match(['get', 'post'], '/dashboard/acknowledge', [StudentDashboardController::class, 'acknowledgeAdmission'])->name('dashboard.acknowledge');
 });
 
 

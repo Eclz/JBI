@@ -76,13 +76,19 @@
 </head>
 <body>
     <div class="letterhead">
-        <div class="header">
-            <div class="logo">JBI UNIVERSITY</div>
-            <div class="university-motto">"Excellence in Education, Service to Humanity"</div>
-            <p style="font-size: 12px; margin-top: 10px;">
-                JBI University | 91 Progress Road Lindhaven Roodeport South Africa<br>
-                Tel: +27 67 965 3866 | Email: info@johnsonbibleinstitute.com<br>
-                Website: www.johnsonbibleinstitute.com
+        <div class="header" style="text-align: center;">
+            <div style="margin-bottom: 12px;">
+                @if(isset($message) && is_object($message))
+                    <img src="{{ $message->embed(public_path('images/jbi.png')) }}" alt="JBI Logo" style="max-height: 90px; width: auto;" />
+                @else
+                    <img src="{{ asset('images/jbi.png') }}" alt="JBI Logo" style="max-height: 90px; width: auto;" />
+                @endif
+            </div>
+            <h2 style="margin: 0 0 5px 0; color: #1e3a8a; font-size: 22px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">JOHNSON BIBLE INSTITUTE UNIVERSITY</h2>
+            <div class="university-motto" style="font-style: italic; color: #555; font-size: 13px; margin-bottom: 8px;">"Excellence in Education, Service to Humanity & Faith"</div>
+            <p style="font-size: 11px; color: #666; margin-top: 5px; line-height: 1.5;">
+                91 Progress Road, Lindhaven, Roodepoort, South Africa<br>
+                Tel: +27 67 965 3866 | Email: info@johnsonbibleinstitute.com | Website: www.johnsonbibleinstitute.com
             </p>
         </div>
 

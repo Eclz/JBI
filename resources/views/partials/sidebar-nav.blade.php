@@ -575,8 +575,8 @@
 
         <li class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
             <a href="{{ route('profile.show') }}" class="menu-link">
-                <i class="bi bi-person-circle"></i>
-                <span>My Profile</span>
+                <i class="bi bi-file-earmark-person"></i>
+                <span>My Bio Data & Profile</span>
             </a>
         </li>
 

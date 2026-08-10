@@ -28,6 +28,8 @@ class EVotingController extends Controller
             'academic_year_id' => 'nullable|exists:academic_years,id',
             'start_time' => 'nullable|date',
             'end_time' => 'nullable|date|after:start_time',
+            'vetting_start_at' => 'nullable|date',
+            'vetting_end_at' => 'nullable|date|after:vetting_start_at',
             'is_active' => 'boolean',
         ]);
 
@@ -35,6 +37,17 @@ class EVotingController extends Controller
         VotingSession::create($validated);
 
         return redirect()->route('admin.evoting.index')->with('success', 'Voting session created successfully!');
+    }
+
+    public function updateSessionVetting(Request $request, VotingSession $session)
+    {
+        $validated = $request->validate([
+            'vetting_start_at' => 'required|date',
+            'vetting_end_at' => 'required|date|after:vetting_start_at',
+        ]);
+
+        $session->update($validated);
+        return back()->with('success', 'Vetting window period updated successfully.');
     }
 
     public function toggleSessionStatus(VotingSession $session)
@@ -69,9 +82,28 @@ class EVotingController extends Controller
             $validated['photo'] = $request->file('photo')->store('evoting/candidates', 'public');
         }
 
+        $validated['status'] = 'approved';
+        $validated['vetted_at'] = now();
+
         $position->candidates()->create($validated);
 
-        return back()->with('success', 'Candidate added successfully!');
+        return back()->with('success', 'Candidate added & approved successfully!');
+    }
+
+    public function vetCandidate(Request $request, VotingCandidate $candidate)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:approved,rejected,pending',
+            'vetting_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $candidate->update([
+            'status' => $validated['status'],
+            'vetting_notes' => $validated['vetting_notes'] ?? null,
+            'vetted_at' => now(),
+        ]);
+
+        return back()->with('success', 'Candidate vetting status updated to ' . ucfirst($validated['status']) . '.');
     }
 
     public function results(VotingSession $session)

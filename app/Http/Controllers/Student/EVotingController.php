@@ -75,4 +75,55 @@ class EVotingController extends Controller
 
         return back()->with('success', 'Your vote has been cast successfully!');
     }
+
+    public function applyCandidacy(Request $request)
+    {
+        $user = Auth::user();
+        $profile = $user->studentProfile;
+
+        if (!$profile || $profile->status !== 'active') {
+            return back()->with('error', 'Only active students can apply for election candidacy.');
+        }
+
+        $request->validate([
+            'voting_position_id' => 'required|exists:voting_positions,id',
+            'manifesto' => 'required|string|max:2000',
+            'party_affiliation' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $position = VotingPosition::with('session')->findOrFail($request->voting_position_id);
+        $session = $position->session;
+
+        // Check if vetting period is open
+        if (!$session || !$session->is_vetting_open) {
+            return back()->with('error', 'Candidacy application & vetting window is currently closed for this election session.');
+        }
+
+        // Check if student already applied for this position
+        $existing = VotingCandidate::where('voting_position_id', $position->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            return back()->with('error', 'You have already submitted a candidacy application for this post.');
+        }
+
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('evoting/candidates', 'public');
+        }
+
+        VotingCandidate::create([
+            'voting_position_id' => $position->id,
+            'user_id' => $user->id,
+            'name' => $user->full_name,
+            'photo' => $photoPath,
+            'manifesto' => $request->manifesto,
+            'party_affiliation' => $request->party_affiliation ?? 'Independent',
+            'status' => 'pending',
+        ]);
+
+        return back()->with('success', 'Your candidacy application for ' . $position->title . ' has been submitted successfully and is pending vetting approval!');
+    }
 }
