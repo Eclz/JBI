@@ -79,9 +79,9 @@
         <div class="header" style="text-align: center;">
             <div style="margin-bottom: 12px;">
                 @if(isset($message) && is_object($message))
-                    <img src="{{ $message->embed(public_path('images/jbi.png')) }}" alt="JBI Logo" style="max-height: 90px; width: auto;" />
+                    <img src="{{ $message->embed(public_path('images/jbi-logo.webp')) }}" alt="JBI Logo" style="max-height: 95px; width: auto;" />
                 @else
-                    <img src="{{ asset('images/jbi.png') }}" alt="JBI Logo" style="max-height: 90px; width: auto;" />
+                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI Logo" style="max-height: 95px; width: auto;" />
                 @endif
             </div>
             <h2 style="margin: 0 0 5px 0; color: #1e3a8a; font-size: 22px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">JOHNSON BIBLE INSTITUTE UNIVERSITY</h2>

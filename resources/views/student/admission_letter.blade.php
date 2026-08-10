@@ -32,8 +32,8 @@
          style="max-width: 880px; font-family: 'Times New Roman', Times, serif; color: #1a1a1a; background: #ffffff; border: 12px double #0f2942 !important; border-radius: 4px;">
         
         <!-- Subtle Background Watermark Seal -->
-        <div class="position-absolute top-50 start-50 translate-middle pointer-events-none text-center" style="opacity: 0.04; z-index: 0; width: 480px;">
-            <img src="{{ asset('images/jbi.png') }}" alt="Watermark Seal" class="w-100 img-fluid mx-auto d-block" onerror="this.onerror=null; this.src='{{ asset('images/jbi-logo.webp') }}';">
+        <div class="position-absolute top-50 start-50 translate-middle pointer-events-none text-center" style="opacity: 0.05; z-index: 0; width: 480px;">
+            <img src="{{ asset('images/jbi-logo.webp') }}" alt="Watermark Seal" class="w-100 img-fluid mx-auto d-block">
         </div>
 
         <!-- Gold Accent Top Bar -->
@@ -42,10 +42,9 @@
         <!-- University Header & Letterhead Logo -->
         <div class="text-center pb-3 mb-4 border-bottom border-2 border-dark position-relative" style="z-index: 1;">
             <div class="mb-2 d-flex justify-content-center align-items-center">
-                <img src="{{ asset('images/jbi.png') }}" alt="JBI University Emblem" 
-                     style="max-height: 115px; width: auto; object-fit: contain;" 
-                     class="mx-auto d-block"
-                     onerror="this.onerror=null; this.src='{{ asset('images/jbi-logo.webp') }}';">
+                <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University Emblem" 
+                     style="max-height: 125px; width: auto; object-fit: contain;" 
+                     class="mx-auto d-block">
             </div>
             <h1 class="fw-bold text-uppercase mb-0 text-center" style="color: #0f2942; letter-spacing: 2px; font-size: 2.1rem; font-family: 'Georgia', serif;">
                 JOHNSON BIBLE INSTITUTE UNIVERSITY
