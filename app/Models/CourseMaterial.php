@@ -24,6 +24,7 @@ class CourseMaterial extends Model
         'is_published',
         'order',
         'uploaded_by',
+        'access_permissions',
     ];
 
     protected $casts = [
@@ -31,6 +32,7 @@ class CourseMaterial extends Model
         'is_published' => 'boolean',
         'file_size' => 'integer',
         'order' => 'integer',
+        'access_permissions' => 'array',
     ];
 
     /**

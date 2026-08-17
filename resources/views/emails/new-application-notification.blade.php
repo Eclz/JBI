@@ -107,7 +107,7 @@
         <p><strong>Action Required:</strong> Please review this application and either approve or reject it through the admin dashboard.</p>
 
         <div style="text-align: center;">
-            <a href="{{ route('admin.applications.show', $application) }}" class="review-button">Review Application</a>
+            <a href="{{ $link }}" class="review-button">Review Application</a>
         </div>
 
         <p>You can access the full application details, documents, and make approval decisions through the admin panel.</p>

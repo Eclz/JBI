@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Pagination\Paginator;
 use App\Models\Department;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +22,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::share('departments', Department::all());
+        Paginator::useBootstrapFive();
+
+        try {
+            $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+            View::share('currencyCode', $currencyCode);
+            View::share('systemCurrency', $currencyCode);
+            View::share('departments', Department::all());
+        } catch (\Throwable $e) {
+            View::share('currencyCode', 'USD');
+            View::share('systemCurrency', 'USD');
+            View::share('departments', collect());
+        }
     }
 }
+

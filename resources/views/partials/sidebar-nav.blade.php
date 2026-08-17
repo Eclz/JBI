@@ -124,6 +124,13 @@
             </a>
         </li>
 
+        <li class="menu-item {{ request()->routeIs('admin.faculties.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.faculties.index') }}" class="menu-link">
+                <i class="bi bi-buildings"></i>
+                <span>Faculties Management</span>
+            </a>
+        </li>
+
         <li class="menu-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
             <a href="{{ route('admin.departments.index') }}" class="menu-link">
                 <i class="bi bi-building"></i>
@@ -166,10 +173,89 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.fees.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.fees.index') }}" class="menu-link">
-                <i class="bi bi-cash-coin"></i>
-                <span>Fee Management</span>
+        <li class="menu-header">Finance & Governance</li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.*') || request()->routeIs('admin.fees.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.dashboard') }}" class="menu-link fw-bold text-primary">
+                <i class="bi bi-bank"></i>
+                <span>Finance & Bursar Hub</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.fees.structures.index') }}" class="menu-link ps-4">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                <span>Fee Structures</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.fees.index') }}" class="menu-link ps-4">
+                <i class="bi bi-receipt"></i>
+                <span>Student Fee Records</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.revenue.index') }}" class="menu-link ps-4">
+                <i class="bi bi-currency-exchange"></i>
+                <span>Revenue & Income</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.budgets.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.budgets.index') }}" class="menu-link ps-4">
+                <i class="bi bi-pie-chart"></i>
+                <span>Department Budgets</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.expenses.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.expenses.index') }}" class="menu-link ps-4">
+                <i class="bi bi-cart-check"></i>
+                <span>Expenditures</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.payables.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.payables.index') }}" class="menu-link ps-4">
+                <i class="bi bi-truck"></i>
+                <span>Accounts Payable</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.receivables.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.receivables.index') }}" class="menu-link ps-4">
+                <i class="bi bi-person-lines-fill"></i>
+                <span>Accounts Receivable</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.payroll.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.payroll.index') }}" class="menu-link ps-4">
+                <i class="bi bi-person-badge"></i>
+                <span>Payroll Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.assets.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.assets.index') }}" class="menu-link ps-4">
+                <i class="bi bi-qr-code-scan"></i>
+                <span>Asset Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.banking.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.banking.index') }}" class="menu-link ps-4">
+                <i class="bi bi-piggy-bank"></i>
+                <span>Banking & Cash</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.reports.index') }}" class="menu-link ps-4">
+                <i class="bi bi-journal-text"></i>
+                <span>Financial Statements</span>
             </a>
         </li>
 
@@ -186,7 +272,29 @@
                 <span>System Settings</span>
             </a>
         </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.timetables.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.timetables.index') }}" class="menu-link">
+                <i class="bi bi-calendar3"></i>
+                <span>Timetable Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.evoting.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.evoting.index') }}" class="menu-link">
+                <i class="bi bi-check2-square"></i>
+                <span>E-Voting Management</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('admin.evaluation-surveys.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.evaluation-surveys.index') }}" class="menu-link">
+                <i class="bi bi-clipboard2-check"></i>
+                <span>Evaluation Surveys</span>
+            </a>
+        </li>
         @endif
+
 
         @if(auth()->user()->isFaculty())
         <li class="menu-header">FACULTY</li>
@@ -251,17 +359,10 @@
         </li>
         @endif
 
-        @if(auth()->user()->isStudent())
+        @if(auth()->user()->isStudent() && auth()->user()->isAdmitted())
         <li class="menu-header">Student</li>
 
-        <li class="menu-item {{ request()->routeIs('student.courses.enrollments') ? 'active' : '' }}">
-            <a href="{{ route('student.courses.enrollments') }}" class="menu-link">
-                <i class="bi bi-journal-plus"></i>
-                <span>Course Enrollment</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('student.courses.*') ? 'active' : '' }}">
+        <li class="menu-item {{ request()->routeIs('student.courses.*') && !request()->routeIs('student.courses.enrollments') ? 'active' : '' }}">
             <a href="{{ route('student.courses.index') }}" class="menu-link">
                 <i class="bi bi-journal-text"></i>
                 <span>My Courses</span>
@@ -353,21 +454,100 @@
             </a>
         </li>
 
-        {{-- Updating fee payments route link --}}
-        <li class="menu-item {{ request()->routeIs('student.fees.*') ? 'active' : '' }}">
-            <a href="{{ route('student.fees.index') }}" class="menu-link">
+        {{-- My Programme & Enrollment --}}
+        <li class="menu-item {{ request()->routeIs('student.my-programme') ? 'active' : '' }}">
+            <a href="{{ route('student.my-programme') }}" class="menu-link">
+                <i class="bi bi-journal-bookmark"></i>
+                <span>My Programme</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('student.enrollment.*') ? 'active' : '' }}">
+            <a href="{{ route('student.enrollment.index') }}" class="menu-link">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Enrollment & Registration</span>
+            </a>
+        </li>
+
+        {{-- Single Timetable Link --}}
+        <li class="menu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">
+            <a href="{{ route('student.timetables.teaching') }}" class="menu-link">
+                <i class="bi bi-calendar3"></i>
+                <span>Timetables</span>
+            </a>
+        </li>
+
+        {{-- Mailbox & Academic Calendar --}}
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper"></i>
+                <span>Mailbox</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
+            <a href="{{ route('academic-calendar.index') }}" class="menu-link">
+                <i class="bi bi-calendar-week"></i>
+                <span>Academic Calendar</span>
+            </a>
+        </li>
+
+        @php
+            $isPaymentsActive = request()->routeIs('student.fees.*');
+        @endphp
+        {{-- Collapsible Payments Menu for Student --}}
+        <li class="menu-item-dropdown {{ $isPaymentsActive ? 'active' : '' }}">
+            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
                 <i class="bi bi-cash-coin"></i>
-                <span>Fee Payments</span>
+                <span class="fw-bold text-uppercase">Payments</span>
+                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
+            </a>
+            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isPaymentsActive ? 'block' : 'none' }};">
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.fees.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.index') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-paperclip me-2" style="font-size: 1rem;"></i>
+                        <span>MY BILLS/INVOICES</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.fees.ledger') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.ledger') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-file-earmark-check me-2" style="font-size: 1rem;"></i>
+                        <span>MY TRANSACTIONS & LEDGER</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.fees.structure') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.structure') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-file-earmark-richtext me-2" style="font-size: 1rem;"></i>
+                        <span>MY FEES STRUCTURE</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        {{-- E-Voting --}}
+        <li class="menu-item {{ request()->routeIs('student.evoting.*') ? 'active' : '' }}">
+            <a href="{{ route('student.evoting.index') }}" class="menu-link">
+                <i class="bi bi-check2-square"></i>
+                <span>E-Voting</span>
+            </a>
+        </li>
+
+        {{-- Evaluation Survey --}}
+        <li class="menu-item {{ request()->routeIs('student.evaluation-surveys.*') ? 'active' : '' }}">
+            <a href="{{ route('student.evaluation-surveys.index') }}" class="menu-link">
+                <i class="bi bi-clipboard2-check"></i>
+                <span>Evaluation Survey</span>
             </a>
         </li>
         @endif
+
 
         <li class="menu-header">Common</li>
 
         <li class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
             <a href="{{ route('profile.show') }}" class="menu-link">
-                <i class="bi bi-person-circle"></i>
-                <span>My Profile</span>
+                <i class="bi bi-file-earmark-person"></i>
+                <span>My Bio Data & Profile</span>
             </a>
         </li>
 
@@ -427,14 +607,14 @@
         </li>
 
         <li class="menu-item">
-            <a href="#" class="menu-link">
+            <a href="{{ url('/#about') }}" class="menu-link">
                 <i class="bi bi-info-circle"></i>
                 <span>About JBI University</span>
             </a>
         </li>
 
         <li class="menu-item">
-            <a href="#" class="menu-link">
+            <a href="{{ url('/#contact') }}" class="menu-link">
                 <i class="bi bi-telephone"></i>
                 <span>Contact Us</span>
             </a>
@@ -769,6 +949,16 @@
         height: calc(100vh - 60px);
     }
 }
+
+/* Submenu hover styles */
+.submenu-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+.submenu-link {
+    padding-left: 0.5rem;
+}
 </style>
 
 <script>
@@ -861,4 +1051,18 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
     });
 });
+
+function toggleDropdownMenu(btn) {
+    const parent = btn.parentElement;
+    const submenu = parent.querySelector('.submenu-list');
+    const chevron = btn.querySelector('.dropdown-chevron');
+    
+    if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        chevron.classList.replace('bi-chevron-down', 'bi-chevron-up');
+    } else {
+        submenu.style.display = 'none';
+        chevron.classList.replace('bi-chevron-up', 'bi-chevron-down');
+    }
+}
 </script>

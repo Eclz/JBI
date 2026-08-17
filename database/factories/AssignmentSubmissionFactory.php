@@ -23,9 +23,10 @@ class AssignmentSubmissionFactory extends Factory
         $student = User::where('role', 'student')->inRandomOrder()->first() 
                   ?? User::factory()->student()->create();
 
-        $submittedAt = fake()->dateTimeBetween($assignment->available_from ?? '-30 days', 'now');
-        $isLate = $submittedAt > $assignment->due_date;
-        $daysLate = $isLate ? $submittedAt->diffInDays($assignment->due_date) : 0;
+        $availableFrom = \Carbon\Carbon::parse($assignment->available_from ?? '-30 days');
+        $submittedAt = fake()->dateTimeBetween($availableFrom, $availableFrom->copy()->addDays(5));
+        $isLate = \Carbon\Carbon::instance($submittedAt)->gt(\Carbon\Carbon::parse($assignment->due_date));
+        $daysLate = $isLate ? \Carbon\Carbon::instance($submittedAt)->diffInDays(\Carbon\Carbon::parse($assignment->due_date)) : 0;
 
         // Generate realistic submission content
         $submissionTexts = [
@@ -65,7 +66,7 @@ class AssignmentSubmissionFactory extends Factory
                 'citations' => fake()->numberBetween(75, 100),
             ]),
             'status' => fake()->randomElement(['submitted', 'graded', 'returned']),
-            'graded_at' => fake()->optional(0.7)->dateTimeBetween($submittedAt, 'now'),
+            'graded_at' => fake()->optional(0.7)->dateTimeBetween(\Carbon\Carbon::instance($submittedAt), \Carbon\Carbon::instance($submittedAt)->copy()->addDays(3)),
             'graded_by' => $assignment->course->instructor_id,
             'attempt_number' => 1,
         ];
@@ -83,7 +84,10 @@ class AssignmentSubmissionFactory extends Factory
             return [
                 'score' => $score,
                 'status' => 'graded',
-                'graded_at' => fake()->dateTimeBetween($attributes['submitted_at'], 'now'),
+                'graded_at' => fake()->dateTimeBetween(
+                    \Carbon\Carbon::parse($attributes['submitted_at']),
+                    \Carbon\Carbon::parse($attributes['submitted_at'])->copy()->addDays(3)
+                ),
                 'feedback' => fake()->paragraph(2),
             ];
         });
@@ -96,12 +100,13 @@ class AssignmentSubmissionFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $assignment = Assignment::find($attributes['assignment_id']);
-            $lateDate = fake()->dateTimeBetween($assignment->due_date, '+7 days');
+            $dueDate = \Carbon\Carbon::parse($assignment->due_date);
+            $lateDate = fake()->dateTimeBetween($dueDate, $dueDate->copy()->addDays(7));
             
             return [
                 'submitted_at' => $lateDate,
                 'is_late' => true,
-                'days_late' => $lateDate->diffInDays($assignment->due_date),
+                'days_late' => $lateDate->diffInDays($dueDate),
             ];
         });
     }

@@ -92,10 +92,10 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Default Currency</label>
-                        <input type="text" name="default_currency" class="form-control" maxlength="3"
-                               value="{{ old('default_currency', $settings->get('default_currency')->value ?? 'USD') }}" placeholder="USD">
-                        <small class="text-muted">3-letter currency code (e.g., USD, EUR, GBP)</small>
+                        <label class="form-label fw-bold text-dark"><i class="bi bi-currency-exchange me-1 text-primary"></i>System Default Currency</label>
+                        <input type="text" name="default_currency" class="form-control form-control-lg text-uppercase fw-bold" maxlength="5"
+                               value="{{ old('default_currency', $settings->get('default_currency')->value ?? 'USD') }}" placeholder="USD" required>
+                        <small class="text-muted d-block mt-1">3 to 5-letter global currency code (e.g. <strong>USD</strong>, <strong>EUR</strong>, <strong>GBP</strong>, <strong>UGX</strong>, <strong>KES</strong>). Applies dynamically across all fees, invoices, receipts, and finance modules.</small>
                     </div>
 
                     <div class="form-check form-switch mb-3">

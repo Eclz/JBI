@@ -13,9 +13,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('faculty_profiles', function (Blueprint $table) {
-            // Use raw SQL for qualification to handle single quote in default value
+            // Use schema builder for SQLite, raw SQL for other databases to handle single quote in default value
             if (Schema::hasColumn('faculty_profiles', 'qualification')) {
-                DB::statement("ALTER TABLE `faculty_profiles` MODIFY `qualification` VARCHAR(255) NULL DEFAULT 'Bachelor''s Degree'");
+                if (DB::connection()->getDriverName() === 'sqlite') {
+                    $table->string('qualification')->nullable()->default("Bachelor''s Degree")->change();
+                } else {
+                    DB::statement("ALTER TABLE `faculty_profiles` MODIFY `qualification` VARCHAR(255) NULL DEFAULT 'Bachelor''s Degree'");
+                }
             }
 
             if (Schema::hasColumn('faculty_profiles', 'department_id')) {
@@ -70,9 +74,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('faculty_profiles', function (Blueprint $table) {
-            // Revert qualification to not nullable using raw SQL
+            // Revert qualification to not nullable using schema builder for SQLite, raw SQL for other databases
             if (Schema::hasColumn('faculty_profiles', 'qualification')) {
-                DB::statement('ALTER TABLE `faculty_profiles` MODIFY `qualification` VARCHAR(255) NOT NULL');
+                if (DB::connection()->getDriverName() === 'sqlite') {
+                    $table->string('qualification')->nullable(false)->change();
+                } else {
+                    DB::statement('ALTER TABLE `faculty_profiles` MODIFY `qualification` VARCHAR(255) NOT NULL');
+                }
             }
 
             // Revert specialization to not nullable

@@ -20,17 +20,44 @@ use Illuminate\Support\Facades\Mail;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $student = Auth::user();
 
         // Get student profile with department
         $studentProfile = $student->studentProfile()->with('department')->first();
+
+        $application = \App\Models\Application::where('email', $student->email)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $requestedAdmissionView = $request->query('view') === 'admission' || $request->query('view') === 'unadmitted';
+        $isAdmitted = ($studentProfile && $studentProfile->status === 'active') || ($application && in_array($application->status, ['admitted', 'approved']));
+        $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null);
+
+        // Check if student is not admitted, or has not yet acknowledged admission onboarding, or explicitly requested admission view
+        if (!$studentProfile || $studentProfile->status !== 'active' || ($isAdmitted && !$hasAcknowledged) || $requestedAdmissionView) {
+            $programs = \App\Models\Program::where('is_active', true)
+                ->with(['department', 'level'])
+                ->orderBy('name')
+                ->get();
+
+            $programChoices = collect();
+            if ($application && is_array($application->program_choices)) {
+                $programChoices = \App\Models\Program::whereIn('id', $application->program_choices)
+                    ->with(['department', 'level'])
+                    ->get()
+                    ->sortBy(function ($p) use ($application) {
+                        return array_search($p->id, $application->program_choices);
+                    });
+            }
+
+            return view('student.dashboard_unadmitted', compact('student', 'studentProfile', 'application', 'programs', 'programChoices'));
+        }
+
         $currentSemester = Semester::where('is_current', true)->first();
 
-        if ($studentProfile) {
-            $this->enforcePaymentDeadlines($student, $studentProfile, $currentSemester);
-        }
+        $this->enforcePaymentDeadlines($student, $studentProfile, $currentSemester);
 
         // Get enrolled courses with relationships
         $enrolledCourses = $student->courseEnrollments()
@@ -59,10 +86,13 @@ class DashboardController extends Controller
             ->whereNotIn('id', $submittedAssignmentIds)
             ->count();
 
-        // Calculate overall attendance
-        $totalClasses = Attendance::whereIn('course_id', $enrolledCourses->pluck('course.id'))
-            ->distinct('course_id', 'attendance_date')
-            ->count();
+        $courseIds = $enrolledCourses->pluck('course.id')->toArray();
+        $totalClasses = \Illuminate\Support\Facades\DB::table(function ($query) use ($courseIds) {
+            $query->select('course_id', 'attendance_date')
+                ->from('attendance')
+                ->whereIn('course_id', $courseIds)
+                ->distinct();
+        }, 'unique_classes')->count();
 
         $attendedClasses = Attendance::where('user_id', $student->id)
             ->whereIn('status', ['present', 'late'])
@@ -233,5 +263,40 @@ class DashboardController extends Controller
                 $message->to($student->email)->subject('Tuition Requirement Not Met');
             });
         }
+    }
+
+    public function showAdmissionLetter()
+    {
+        $student = Auth::user();
+        $application = \App\Models\Application::where('email', $student->email)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$application) {
+            $application = new \App\Models\Application([
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'program' => $student->studentProfile?->program ?? 'BSc. Computer Science',
+            ]);
+        }
+
+        return view('student.admission_letter', compact('student', 'application'));
+    }
+
+    public function acknowledgeAdmission(Request $request)
+    {
+        $student = Auth::user();
+        $studentProfile = $student->studentProfile;
+
+        if ($studentProfile) {
+            $studentProfile->admission_acknowledged_at = now();
+            $studentProfile->save();
+        }
+
+        session(['admission_acknowledged' => true]);
+
+        return redirect()->route('student.dashboard')->with('success', 'Welcome to your Student Portal!');
     }
 }

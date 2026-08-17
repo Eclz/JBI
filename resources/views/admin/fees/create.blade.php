@@ -67,7 +67,7 @@
                                 <div class="mb-3">
                                     <label for="amount" class="form-label">Base Amount <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">{{ $currencyCode }}</span>
                                         <input type="number" class="form-control @error('amount') is-invalid @enderror"
                                                name="amount" id="amount" step="0.01" min="0"
                                                value="{{ old('amount') }}" required>
@@ -83,7 +83,7 @@
                                 <div class="mb-3">
                                     <label for="discount_amount" class="form-label">Discount Amount</label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">{{ $currencyCode }}</span>
                                         <input type="number" class="form-control @error('discount_amount') is-invalid @enderror"
                                                name="discount_amount" id="discount_amount" step="0.01" min="0"
                                                value="{{ old('discount_amount', 0) }}">
@@ -99,7 +99,7 @@
                                 <div class="mb-3">
                                     <label for="late_fee" class="form-label">Late Fee</label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">{{ $currencyCode }}</span>
                                         <input type="number" class="form-control @error('late_fee') is-invalid @enderror"
                                                name="late_fee" id="late_fee" step="0.01" min="0"
                                                value="{{ old('late_fee', 0) }}">
@@ -115,7 +115,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Total Amount</label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">{{ $currencyCode }}</span>
                                         <input type="text" class="form-control bg-light" id="total_amount_display" readonly>
                                     </div>
                                 </div>

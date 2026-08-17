@@ -48,16 +48,20 @@ class AssignmentController extends Controller
             ->firstOrFail();
 
         $request->validate([
-            'content' => 'required|string',
-            'attachment' => 'nullable|file|max:10240',
+            'submission_text' => 'nullable|string',
+            'file' => 'nullable|file|max:10240',
         ]);
+
+        if (!$request->submission_text && !$request->hasFile('file')) {
+            return back()->withErrors(['error' => 'Please provide a submission text or upload a file.']);
+        }
 
         $existingSubmission = AssignmentSubmission::where([
             'assignment_id' => $assignment->id,
             'user_id' => Auth::id(),
         ])->first();
 
-        if ($existingSubmission) {
+        if ($existingSubmission && $existingSubmission->status !== 'draft') {
             return back()->withErrors(['error' => 'You have already submitted this assignment.']);
         }
 
@@ -65,21 +69,43 @@ class AssignmentController extends Controller
             return back()->withErrors(['error' => 'Assignment submission deadline has passed.']);
         }
 
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('submissions', 'public');
+        $files = $existingSubmission ? ($existingSubmission->submitted_files ?? []) : [];
+        if ($request->hasFile('file')) {
+            // Delete old file if updating draft
+            if (count($files) > 0) {
+                Storage::disk('public')->delete($files[0]);
+                $files = [];
+            }
+            $files[] = $request->file('file')->store('submissions', 'public');
         }
 
-        AssignmentSubmission::create([
-            'assignment_id' => $assignment->id,
-            'user_id' => Auth::id(),
-            'content' => $request->content,
-            'attachment_path' => $attachmentPath,
-            'submitted_at' => now(),
-            'status' => 'submitted',
-        ]);
+        $status = $request->action === 'draft' ? 'draft' : 'submitted';
 
-        return back()->with('success', 'Assignment submitted successfully.');
+        if ($existingSubmission) {
+            $existingSubmission->update([
+                'submission_text' => $request->submission_text,
+                'submitted_files' => $files,
+                'submitted_at' => now(),
+                'status' => $status,
+            ]);
+        } else {
+            AssignmentSubmission::create([
+                'assignment_id' => $assignment->id,
+                'user_id' => Auth::id(),
+                'submission_text' => $request->submission_text,
+                'submitted_files' => $files,
+                'submitted_at' => now(),
+                'status' => $status,
+            ]);
+        }
+
+        $message = $status === 'draft' ? 'Draft saved successfully.' : 'Assignment submitted successfully.';
+        return back()->with('success', $message);
+    }
+
+    public function updateSubmission(Request $request, Assignment $assignment, AssignmentSubmission $submission)
+    {
+        return $this->submit($request, $assignment);
     }
 
     public function download(Assignment $assignment)

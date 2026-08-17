@@ -74,6 +74,26 @@ class AdmissionWorkflow
 
         if ($application) {
             Mail::to($application->email)->send(new AdmissionLetter($application));
+
+            // Deliver Admission Letter directly to Student's Mailbox
+            \App\Models\Message::create([
+                'sender_id' => $processedBy ?: (\App\Models\User::where('role', 'admin')->first()?->id ?: $user->id),
+                'receiver_id' => $user->id,
+                'subject' => 'Official JBI University Letter of Admission - Reg No: ' . $registrationNumber,
+                'body' => "Dear {$user->first_name},\n\nCongratulations! We are pleased to inform you that you have been granted official admission to JBI University for the programme: " . ($application->programRecord->name ?? $application->program) . ".\n\nYour Admission Registration Number is: {$registrationNumber}.\n\nYou can view and download your official Letter of Admission directly in your portal.",
+                'type' => 'system',
+                'is_read' => false,
+                'related_link' => route('student.admission-letter.show'),
+            ]);
+        }
+
+        try {
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->send(new \App\Mail\AdminAdmissionNotification($user, $application));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send admin admission notification: ' . $e->getMessage());
         }
     }
 

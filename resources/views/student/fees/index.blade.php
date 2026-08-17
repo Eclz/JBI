@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container-fluid px-4 py-4">
+    @if(Auth::check() && Auth::user()->isStudent())
+        @include('partials.student-header-bar')
+    @endif
     <!-- Header section -->
     <div class="row mb-4">
         <div class="col-12 d-flex justify-content-between align-items-center">
@@ -213,7 +216,10 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         @if($record->status !== 'paid')
-                                            <a href="{{ route('student.fees.pay', $record) }}" class="btn btn-sm btn-primary">Pay Now</a>
+                                            <button type="button" class="btn btn-sm btn-primary fw-bold mb-1" data-bs-toggle="modal" data-bs-target="#generatePrnHeaderModal">
+                                                <i class="bi bi-qr-code me-1"></i>Generate PRN
+                                            </button>
+                                            <a href="{{ route('student.fees.pay', $record) }}" class="btn btn-sm btn-outline-primary mb-1">Pay Direct</a>
                                         @else
                                             <a href="{{ route('student.fees.receipt', $record) }}" class="btn btn-sm btn-outline-secondary">Receipt</a>
                                         @endif
@@ -240,86 +246,78 @@
         </div>
     </div>
 
+    <!-- Generated PRNs History & Status Table -->
     <div class="row mt-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom" style="padding: 1rem 1.5rem;">
-                    <h5 class="mb-0" style="color: #212529; font-weight: 600;">Payment Ledger</h5>
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-qr-code-scan me-2"></i>My Generated Payment Reference Numbers (PRNs)</h5>
+                    <span class="badge bg-primary px-3 py-1">{{ $userPrns->count() }} PRNs GENERATED</span>
                 </div>
                 <div class="card-body p-0">
-                    @if($paymentLedger->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead style="background-color: #f8f9fa;">
-                                <tr>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Date</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Fee</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Semester</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Amount</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Paid To Date</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Balance After</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Method</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Status</th>
-                                    <th class="border-0 py-3 px-4" style="color: #495057; font-weight: 600; font-size: 0.875rem;">Proof</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($paymentLedger as $entry)
-                                <tr>
-                                    @php
-                                        $payment = $entry['payment'];
-                                    @endphp
-                                    <td class="px-4 py-3" style="color: #212529;">
-                                        {{ $payment->payment_date?->format('M d, Y H:i') ?? '-' }}
-                                    </td>
-                                    <td class="px-4 py-3" style="color: #212529;">
-                                        {{ $payment->feeRecord?->feeStructure?->name ?? 'General Fee' }}
-                                    </td>
-                                    <td class="px-4 py-3" style="color: #212529;">
-                                        {{ $payment->feeRecord?->feeStructure?->semester?->name ?? 'N/A' }}
-                                    </td>
-                                    <td class="px-4 py-3" style="color: #212529; font-weight: 600;">
-                                        {{ $currencyCode }} {{ number_format($payment->amount, 2) }}
-                                    </td>
-                                    <td class="px-4 py-3" style="color: #198754; font-weight: 600;">
-                                        {{ $currencyCode }} {{ number_format($entry['paid_to_date'], 2) }}
-                                    </td>
-                                    <td class="px-4 py-3" style="color: #dc3545; font-weight: 600;">
-                                        {{ $currencyCode }} {{ number_format($entry['balance_after'], 2) }}
-                                    </td>
-                                    <td class="px-4 py-3" style="color: #212529;">
-                                        {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        @if($payment->status === 'completed')
-                                            <span class="badge" style="background-color: #d1e7dd; color: #0f5132; padding: 0.35rem 0.65rem; font-weight: 600;">Completed</span>
-                                        @elseif($payment->status === 'pending')
-                                            <span class="badge" style="background-color: #fff3cd; color: #856404; padding: 0.35rem 0.65rem; font-weight: 600;">Pending</span>
-                                        @else
-                                            <span class="badge" style="background-color: #f8d7da; color: #842029; padding: 0.35rem 0.65rem; font-weight: 600;">{{ ucfirst($payment->status) }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        @if($payment->payment_proof)
-                                            <a href="{{ asset('storage/' . $payment->payment_proof) }}" target="_blank" class="btn btn-sm btn-outline-secondary">View</a>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                    @if($userPrns->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 small">
+                                <thead class="bg-light text-muted">
+                                    <tr>
+                                        <th class="ps-3">PRN Number</th>
+                                        <th>Fee Item</th>
+                                        <th>Amount</th>
+                                        <th>Payment Type</th>
+                                        <th>Generated Date</th>
+                                        <th>30-Day Expiry Date</th>
+                                        <th>Status</th>
+                                        <th class="text-end pe-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($userPrns as $prn)
+                                        <tr>
+                                            <td class="ps-3">
+                                                <span class="fw-bold text-primary font-monospace">{{ $prn->prn_number }}</span>
+                                            </td>
+                                            <td class="fw-semibold">{{ $prn->fee_item_name }}</td>
+                                            <td class="fw-bold text-success">{{ $currencyCode }} {{ number_format($prn->amount, 2) }}</td>
+                                            <td><span class="badge bg-light text-dark border text-uppercase">{{ $prn->payment_type }}</span></td>
+                                            <td>{{ $prn->generated_at->format('M d, Y') }}</td>
+                                            <td>
+                                                @if($prn->expires_at)
+                                                    <span class="{{ $prn->is_expired ? 'text-danger fw-bold' : 'text-dark' }}">
+                                                        {{ $prn->expires_at->format('M d, Y') }}
+                                                    </span>
+                                                @else
+                                                    <span>-</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($prn->status === 'paid')
+                                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>PAID</span>
+                                                @elseif($prn->is_expired)
+                                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>EXPIRED (30 DAYS)</span>
+                                                @else
+                                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>PENDING</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <a href="{{ route('student.fees.prn.show', $prn) }}" class="btn btn-sm btn-outline-primary fw-bold">
+                                                    <i class="bi bi-eye me-1"></i>View Slip / Pay
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     @else
-                    <div class="text-center py-5">
-                        <i class="bi bi-journal-text display-6" style="color: #dee2e6;"></i>
-                        <h6 class="mt-3" style="color: #6c757d;">No payment records yet</h6>
-                    </div>
+                        <div class="text-center py-4 text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>You haven't generated any Payment Reference Numbers (PRNs) yet. Click "Generate PRN" above to create one.
+                        </div>
                     @endif
                 </div>
             </div>
         </div>
+    </div>
+
     </div>
 </div>
 @endsection

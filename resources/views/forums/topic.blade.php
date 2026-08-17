@@ -88,7 +88,7 @@
             <h5 class="card-title mb-0">Post a Reply</h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('forums.topics.replies.store', [$topic->forum, $topic]) }}" method="POST">
+            <form action="{{ route('forums.topics.replies.store', $topic) }}" method="POST">
                 @csrf
                 <div class="mb-3">
                     <textarea name="content" class="form-control" rows="5" placeholder="Write your reply..." required></textarea>

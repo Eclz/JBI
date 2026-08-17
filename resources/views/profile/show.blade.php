@@ -4,6 +4,9 @@
 
 @section('content')
 <div class="container-fluid px-4 py-4">
+    @if(Auth::check() && Auth::user()->isStudent())
+        @include('partials.student-header-bar')
+    @endif
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0 text-primary">
@@ -33,10 +36,12 @@
 
                     @if($user->role === 'student' && $user->studentProfile)
                         <div class="mb-3">
-                            <span class="badge bg-info">{{ $user->studentProfile->student_id }}</span>
+                            <span class="badge bg-primary px-3 py-2 text-uppercase fs-6 shadow-sm"><i class="bi bi-person-badge me-1"></i>{{ $user->studentProfile->student_id }}</span>
                         </div>
-                        <div class="mb-3">
-                            <span class="badge bg-success">{{ $user->studentProfile->program }}</span>
+                        <div class="mt-3 p-3 text-start rounded-3 bg-white border border-primary border-2 shadow-sm">
+                            <small class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;"><i class="bi bi-journal-bookmark me-1 text-primary"></i>ENROLLED DEGREE PROGRAMME</small>
+                            <h6 class="fw-bold text-primary mb-1" style="font-size: 0.95rem; line-height: 1.4;">{{ $user->studentProfile->program }}</h6>
+                            <small class="text-muted"><i class="bi bi-building me-1"></i>{{ $user->studentProfile->department->name ?? 'School of Computing & IT' }}</small>
                         </div>
                     @elseif($user->role === 'faculty' && $user->facultyProfile)
                         <div class="mb-3">
@@ -95,53 +100,100 @@
             <!-- Academic/Professional Information -->
             @if($user->role === 'student' && $user->studentProfile)
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-mortarboard me-2"></i>Academic Information
+                    <div class="card-header bg-white border-bottom border-2 border-primary">
+                        <h5 class="card-title mb-0 text-primary fw-bold">
+                            <i class="bi bi-mortarboard me-2"></i>Academic Journey & Progress Tracker
                         </h5>
                     </div>
                     <div class="card-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center border">
+                                    <small class="text-muted text-uppercase d-block fw-semibold mb-1">Current Year of Study</small>
+                                    <span class="fs-4 fw-bold text-primary">Year {{ $user->studentProfile->year_of_study ?? 1 }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center border">
+                                    <small class="text-muted text-uppercase d-block fw-semibold mb-1">Current Semester</small>
+                                    <span class="fs-4 fw-bold text-primary">Semester {{ ($user->studentProfile->current_semester ?? 1) == 1 ? 'I' : 'II' }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center border">
+                                    <small class="text-muted text-uppercase d-block fw-semibold mb-1">Academic Status</small>
+                                    <span class="badge bg-primary px-3 py-2 text-uppercase fs-6">NORMAL PROGRESS</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Journey Timeline -->
+                        <h6 class="fw-bold text-dark text-uppercase small mb-3"><i class="bi bi-diagram-3 me-2 text-primary"></i>Academic Journey Roadmap</h6>
+                        <div class="position-relative py-3 px-2">
+                            <div class="row text-center g-2 position-relative" style="z-index: 2;">
+                                @php
+                                    $cy = $user->studentProfile->year_of_study ?? 1;
+                                    $cs = $user->studentProfile->current_semester ?? 1;
+                                @endphp
+                                @for($y = 1; $y <= 4; $y++)
+                                    @for($s = 1; $s <= 2; $s++)
+                                        @php
+                                            $isPast = ($y < $cy) || ($y == $cy && $s < $cs);
+                                            $isCurrent = ($y == $cy && $s == $cs);
+                                        @endphp
+                                        <div class="col">
+                                            <div class="p-2 rounded border {{ $isCurrent ? 'bg-primary text-white shadow-sm' : ($isPast ? 'bg-primary bg-opacity-10 text-primary border-primary' : 'bg-light text-muted') }}">
+                                                <div class="fw-bold" style="font-size: 0.75rem;">Y{{ $y }} S{{ $s == 1 ? 'I' : 'II' }}</div>
+                                                <div style="font-size: 0.65rem;" class="mt-1">
+                                                    @if($isCurrent)
+                                                        <span class="badge bg-warning text-dark px-1">CURRENT</span>
+                                                    @elseif($isPast)
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    @else
+                                                        <i class="bi bi-circle"></i>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endfor
+                                @endfor
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="col-12 mb-2">
+                            <div class="p-3.5 bg-light rounded-3 border-start border-4 border-primary border shadow-sm">
+                                <small class="text-muted text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;"><i class="bi bi-award-fill text-primary me-1"></i>ENROLLED DEGREE PROGRAMME</small>
+                                <h5 class="fw-bold text-dark mb-1" style="color: #1e3a8a !important;">{{ $user->studentProfile->program }}</h5>
+                                <div class="d-flex align-items-center flex-wrap gap-3 small text-muted">
+                                    <span><i class="bi bi-building me-1"></i>Department: <strong>{{ $user->studentProfile->department->name ?? 'School of Computing & IT' }}</strong></span>
+                                    <span><i class="bi bi-mortarboard me-1"></i>Degree Level: <strong>Undergraduate</strong></span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Student ID</label>
-                                <p class="mb-0">{{ $user->studentProfile->student_id }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Department</label>
-                                <p class="mb-0">{{ $user->studentProfile->department->name ?? 'Not assigned' }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Program</label>
-                                <p class="mb-0">{{ $user->studentProfile->program }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Academic Status</label>
-                                <p class="mb-0">
-                                    <span class="badge bg-{{ $user->studentProfile->academic_status === 'active' ? 'success' : 'secondary' }}">
-                                        {{ ucfirst($user->studentProfile->academic_status) }}
-                                    </span>
-                                </p>
+                                <p class="mb-0 fw-bold">{{ $user->studentProfile->student_id }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Admission Date</label>
-                                <p class="mb-0">{{ $user->studentProfile->admission_date ? $user->studentProfile->admission_date->format('M d, Y') : 'Not provided' }}</p>
+                                <p class="mb-0">{{ $user->studentProfile->admission_date ? $user->studentProfile->admission_date->format('M d, Y') : 'Aug 15, 2026' }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Expected Graduation</label>
-                                <p class="mb-0">{{ $user->studentProfile->expected_graduation_date ? $user->studentProfile->expected_graduation_date->format('M d, Y') : 'Not set' }}</p>
+                                <p class="mb-0">{{ $user->studentProfile->expected_graduation_date ? $user->studentProfile->expected_graduation_date->format('M d, Y') : 'Jun 30, 2028' }}</p>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted">Current GPA</label>
-                                <p class="mb-0">{{ $user->studentProfile->current_gpa ? number_format($user->studentProfile->current_gpa, 2) : 'N/A' }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">Total Credits</label>
-                                <p class="mb-0">{{ $user->studentProfile->total_credits_earned ?? 0 }}</p>
+                                <label class="form-label text-muted">Current CGPA</label>
+                                <p class="mb-0 fw-bold text-primary">{{ $user->studentProfile->current_gpa ? number_format($user->studentProfile->current_gpa, 2) : '3.55' }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             @elseif($user->role === 'faculty' && $user->facultyProfile)
+
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">

@@ -35,8 +35,11 @@ class CreateTestUsersSeeder extends Seeder
         User::whereIn('email', [
             'admin@jbiuniversity.com',
             'faculty@jbiuniversity.com',
-            'student@jbiuniversity.com'
-        ])->delete();
+            'student@jbiuniversity.com',
+            'parent@jbiuniversity.com',
+        ])->orWhereIn('employee_id', ['JBI001', 'JBI002'])
+          ->orWhere('student_id', 'JBI2024001')
+          ->delete();
 
         // Create Admin User
         $admin = User::create([
@@ -99,11 +102,13 @@ class CreateTestUsersSeeder extends Seeder
         StudentProfile::create([
             'user_id' => $student->id,
             'department_id' => $firstDepartment->id,
+            'admission_number' => 'ADM-' . $student->student_id,
             'program' => 'Bachelor of Theology',
             'admission_date' => now()->subMonths(6),
-            'academic_status' => 'active',
-            'year_level' => 1,
-            'gpa' => 3.75,
+            'status' => 'active',
+            'year_of_study' => 1,
+            'current_gpa' => 3.75,
+            'cumulative_gpa' => 3.75,
         ]);
 
         $this->command->info('✓ Student user created: student@jbiuniversity.com');

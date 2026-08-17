@@ -11,6 +11,7 @@ class Course extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'code',
         'course_code',
         'name',
         'description',
@@ -44,6 +45,20 @@ class Course extends Model
     ];
 
     /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::saving(function ($course) {
+            if ($course->code && !$course->course_code) {
+                $course->course_code = $course->code;
+            } elseif ($course->course_code && !$course->code) {
+                $course->code = $course->course_code;
+            }
+        });
+    }
+
+    /**
      * Course statuses
      */
     const STATUS_ACTIVE = 'active';
@@ -52,11 +67,31 @@ class Course extends Model
     const STATUS_CANCELLED = 'cancelled';
 
     /**
-     * Get the instructor of the course
+     * Get the instructor / faculty of the course
      */
     public function instructor()
     {
         return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    public function faculty()
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    public function getTitleAttribute()
+    {
+        return $this->attributes['title'] ?? $this->attributes['name'] ?? $this->attributes['code'] ?? '';
+    }
+
+    public function getYearAttribute()
+    {
+        return $this->attributes['year_of_study'] ?? 1;
+    }
+
+    public function getSemesterAttribute()
+    {
+        return $this->attributes['semester_number'] ?? $this->attributes['semester_id'] ?? 1;
     }
 
     /**
@@ -66,6 +101,7 @@ class Course extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
 
     /**
      * Get the program of the course.
@@ -206,15 +242,29 @@ class Course extends Model
     }
 
     /**
+     * Get available slots attribute
+     */
+    public function getAvailableSlotsAttribute()
+    {
+        $capacity = $this->capacity ?? $this->max_students ?? 30;
+        $enrolled = $this->activeEnrollments()->count();
+        return max(0, $capacity - $enrolled);
+    }
+
+    /**
+     * Get maximum capacity attribute
+     */
+    public function getMaxCapacityAttribute()
+    {
+        return $this->capacity ?? $this->max_students ?? 30;
+    }
+
+    /**
      * Check if course is full
      */
     public function getIsFullAttribute()
     {
-        $capacity = $this->capacity ?? $this->max_students;
-        if (!$capacity) {
-            return false; // Unlimited capacity
-        }
-        return $this->enrolled_count >= $capacity;
+        return $this->available_slots <= 0;
     }
 
     /**

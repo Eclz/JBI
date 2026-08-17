@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FeeRecord;
 use App\Models\Notification;
 use App\Models\Payment;
+use App\Models\PaymentReferenceNumber;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\AdmissionWorkflow;
@@ -17,9 +18,47 @@ use Illuminate\Support\Str;
 
 class FeeController extends Controller
 {
+    public function ledger()
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $user = Auth::user();
+        \App\Services\FeeInvoiceService::ensureStudentInvoiced($user);
+
+        // Get all fee records for student (Tuition, Functional, Retake, Missed Paper)
+        $feeRecords = FeeRecord::where('user_id', $user->id)
+            ->with(['feeStructure.academicYear', 'feeStructure.semester'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Also fetch completed payments
+        $payments = Payment::where('student_id', $user->id)
+            ->where('status', 'completed')
+            ->orderBy('payment_date', 'desc')
+            ->get();
+
+        return view('student.fees.ledger', compact('feeRecords', 'payments', 'currencyCode'));
+    }
+
+    public function structure()
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $user = Auth::user();
+        \App\Services\FeeInvoiceService::ensureStudentInvoiced($user);
+
+        $sp = $user->studentProfile;
+        $feeStructures = \App\Models\FeeStructure::where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('student.fees.structure', compact('user', 'sp', 'feeStructures', 'currencyCode'));
+    }
+
     public function index()
     {
-        $feeRecords = FeeRecord::where('user_id', Auth::id())
+        $user = Auth::user();
+        \App\Services\FeeInvoiceService::ensureStudentInvoiced($user);
+
+        $feeRecords = FeeRecord::where('user_id', $user->id)
             ->with('feeStructure')
             ->orderBy('due_date', 'asc')
             ->paginate(20);
@@ -77,7 +116,137 @@ class FeeController extends Controller
             'outstanding' => FeeRecord::where('user_id', Auth::id())->sum('balance_amount'),
         ];
 
-        return view('student.fees.index', compact('feeRecords', 'summary', 'firstPayable', 'paymentLedger', 'semesterBalances'));
+        $allUnpaidFees = FeeRecord::where('user_id', Auth::id())
+            ->where('balance_amount', '>', 0)
+            ->get();
+
+        $userPrns = PaymentReferenceNumber::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Check for expired PRNs
+        foreach ($userPrns as $prn) {
+            $isExp = $prn->is_expired; // auto updates status if expired
+        }
+
+        return view('student.fees.index', compact('feeRecords', 'summary', 'firstPayable', 'paymentLedger', 'semesterBalances', 'allUnpaidFees', 'userPrns'));
+    }
+
+    public function generatePrn(Request $request)
+    {
+        $request->validate([
+            'fee_record_id' => 'required|exists:fee_records,id',
+            'payment_type' => 'required|in:full,partial',
+            'custom_amount' => 'nullable|numeric|min:1',
+        ]);
+
+        $feeRecord = FeeRecord::where('user_id', Auth::id())
+            ->findOrFail($request->fee_record_id);
+
+        if ($feeRecord->balance_amount <= 0) {
+            return back()->with('error', 'This fee item has already been fully paid.');
+        }
+
+        $amount = $request->payment_type === 'full' 
+            ? $feeRecord->balance_amount 
+            : min($request->custom_amount ?? $feeRecord->balance_amount, $feeRecord->balance_amount);
+
+        if ($amount <= 0) {
+            return back()->with('error', 'Please enter a valid payment amount.');
+        }
+
+        $itemName = $feeRecord->payment_notes ?? $feeRecord->feeStructure?->name ?? 'University Tuition & Fees';
+        $prnNumber = PaymentReferenceNumber::generateUniquePrn();
+
+        $prn = PaymentReferenceNumber::create([
+            'user_id' => Auth::id(),
+            'fee_record_id' => $feeRecord->id,
+            'fee_structure_id' => $feeRecord->fee_structure_id,
+            'prn_number' => $prnNumber,
+            'fee_item_name' => $itemName,
+            'amount' => $amount,
+            'payment_type' => $request->payment_type,
+            'status' => 'pending',
+            'generated_at' => now(),
+            'expires_at' => now()->addDays(30), // Time-bound within 30 days
+        ]);
+
+        return redirect()->route('student.fees.prn.show', $prn)
+            ->with('success', 'PRN ' . $prnNumber . ' generated successfully! Valid for 30 days.');
+    }
+
+    public function showPrn(PaymentReferenceNumber $prn)
+    {
+        if ($prn->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Trigger expiration check
+        $isExp = $prn->is_expired;
+
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $paymentMethods = $this->paymentMethods();
+
+        return view('student.fees.prn_slip', compact('prn', 'currencyCode', 'paymentMethods'));
+    }
+
+    public function processPrnPayment(Request $request, PaymentReferenceNumber $prn)
+    {
+        if ($prn->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($prn->is_expired) {
+            return redirect()->route('student.fees.index')
+                ->with('error', 'This PRN expired on ' . ($prn->expires_at ? $prn->expires_at->format('M d, Y') : '30-day limit') . '. Please generate a new PRN to make your payment.');
+        }
+
+        if ($prn->status === 'paid') {
+            return redirect()->route('student.fees.index')
+                ->with('info', 'This PRN has already been paid and completed.');
+        }
+
+        $request->validate([
+            'payment_method' => 'required|string',
+        ]);
+
+        $feeRecord = $prn->feeRecord;
+
+        if ($feeRecord) {
+            $newPaidAmount = $feeRecord->paid_amount + $prn->amount;
+            $newBalance = max(0, $feeRecord->total_amount - $newPaidAmount);
+
+            $feeRecord->update([
+                'paid_amount' => $newPaidAmount,
+                'balance_amount' => $newBalance,
+                'paid_date' => now(),
+                'payment_method' => $request->payment_method,
+                'status' => $newBalance <= 0 ? 'paid' : 'partial',
+            ]);
+        }
+
+        $prn->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+            'payment_method' => $request->payment_method,
+            'transaction_reference' => Str::uuid()->toString(),
+        ]);
+
+        // Create transaction entry
+        Payment::create([
+            'fee_record_id' => $feeRecord?->id,
+            'student_id' => Auth::id(),
+            'amount' => $prn->amount,
+            'payment_method' => $request->payment_method,
+            'transaction_id' => $prn->transaction_reference,
+            'reference_number' => $prn->prn_number,
+            'notes' => 'Payment made via PRN ' . $prn->prn_number . ' for ' . $prn->fee_item_name,
+            'status' => 'completed',
+            'payment_date' => now(),
+        ]);
+
+        return redirect()->route('student.fees.index')
+            ->with('success', 'Payment of USD ' . number_format($prn->amount, 2) . ' processed successfully using PRN ' . $prn->prn_number . '! Your account balance has been updated.');
     }
 
     public function pay(FeeRecord $fee)

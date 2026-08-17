@@ -116,56 +116,61 @@
 
                 <div class="card-body">
                     <!-- Enhanced Search and Filter -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="bi bi-search text-muted"></i>
-                                </span>
-                                <input type="text" class="form-control border-start-0" id="searchInput"
-                                       placeholder="Search by name, email, or admission number...">
+                    <form method="GET" action="{{ route('admin.students.index') }}" id="filterForm">
+                        <div class="row mb-4 col-12 align-items-center">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-search text-muted"></i>
+                                    </span>
+                                    <input type="text" name="search" class="form-control border-start-0" id="searchInput"
+                                           placeholder="Search by name, email, or ID..." value="{{ request('search') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="department" class="form-select" id="departmentFilter">
+                                    <option value="">All Departments</option>
+                                    @foreach($departments as $department)
+                                        <option value="{{ $department->id }}" {{ request('department') == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="status" class="form-select" id="statusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                    <option value="graduated" {{ request('status') == 'graduated' ? 'selected' : '' }}>Graduated</option>
+                                    <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                                    <option value="dropped" {{ request('status') == 'dropped' ? 'selected' : '' }}>Dropped</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <select name="year_of_study" class="form-select" id="yearOfStudyFilter">
+                                    <option value="">All Years</option>
+                                    @for($i = 1; $i <= 4; $i++)
+                                        <option value="{{ $i }}" {{ request('year_of_study') == $i ? 'selected' : '' }}>Yr {{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="semester" class="form-select" id="semesterFilter">
+                                    <option value="">All Semesters</option>
+                                    @for($i = 1; $i <= 8; $i++)
+                                        <option value="{{ $i }}" {{ request('semester') == $i ? 'selected' : '' }}>Sem {{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary w-100 px-1">
+                                    <i class="bi bi-search"></i> Filter
+                                </button>
+                                <a href="{{ route('admin.students.index') }}" class="btn btn-outline-secondary w-100 px-1">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset
+                                </a>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="departmentFilter">
-                                <option value="">All Departments</option>
-                                @foreach($departments as $department)
-                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="statusFilter">
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="graduated">Graduated</option>
-                                <option value="suspended">Suspended</option>
-                                <option value="dropped">Dropped</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="semesterFilter">
-                                <option value="">All Semesters</option>
-                                <option value="1">1st Semester</option>
-                                <option value="2">2nd Semester</option>
-                                <option value="3">3rd Semester</option>
-                                <option value="4">4th Semester</option>
-                                <option value="5">5th Semester</option>
-                                <option value="6">6th Semester</option>
-                                <option value="7">7th Semester</option>
-                                <option value="8">8th Semester</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="sortBy">
-                                <option value="name">Sort by Name</option>
-                                <option value="admission_date">Admission Date</option>
-                                <option value="gpa">GPA</option>
-                                <option value="department">Department</option>
-                            </select>
-                        </div>
-                    </div>
+                    </form>
 
                     <!-- Enhanced Students Table -->
                     <div class="table-responsive">
@@ -226,6 +231,9 @@
                                             <br>
                                             <small class="text-muted">
                                                 {{ $student->studentProfile?->program ?? 'N/A' }}
+                                                @if($student->studentProfile?->year_of_study)
+                                                    • Yr {{ $student->studentProfile->year_of_study }}
+                                                @endif
                                                 @if($student->studentProfile?->current_semester)
                                                     • Sem {{ $student->studentProfile->current_semester }}
                                                 @endif
@@ -493,6 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const departmentFilter = document.getElementById('departmentFilter');
     const statusFilter = document.getElementById('statusFilter');
     const semesterFilter = document.getElementById('semesterFilter');
+    const yearOfStudyFilter = document.getElementById('yearOfStudyFilter');
     const sortBy = document.getElementById('sortBy');
     const resetButton = document.getElementById('resetFilters');
     const selectAllCheckbox = document.getElementById('selectAll');
@@ -501,40 +510,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedCount = document.getElementById('selectedCount');
 
     // Search and filter functionality
-    function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const departmentId = departmentFilter.value;
-        const status = statusFilter.value;
-        const semester = semesterFilter.value;
+    const filterForm = document.getElementById('filterForm');
 
-        const rows = document.querySelectorAll('.student-row');
-
-        rows.forEach(row => {
-            const studentData = row.textContent.toLowerCase();
-            const matchesSearch = studentData.includes(searchTerm);
-            const matchesDepartment = !departmentId || studentData.includes(departmentId);
-            const matchesStatus = !status || studentData.includes(status);
-            const matchesSemester = !semester || studentData.includes(`sem ${semester}`);
-
-            row.style.display = matchesSearch && matchesDepartment && matchesStatus && matchesSemester ? '' : 'none';
+    if (departmentFilter) {
+        departmentFilter.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    if (semesterFilter) {
+        semesterFilter.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    if (yearOfStudyFilter) {
+        yearOfStudyFilter.addEventListener('change', function() {
+            filterForm.submit();
         });
     }
 
-    // Event listeners for filters
-    searchInput.addEventListener('input', applyFilters);
-    departmentFilter.addEventListener('change', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-    semesterFilter.addEventListener('change', applyFilters);
-
-    resetButton.addEventListener('click', function() {
-        searchInput.value = '';
-        departmentFilter.value = '';
-        statusFilter.value = '';
-        semesterFilter.value = '';
-        sortBy.value = 'name';
-        applyFilters();
-        clearSelection();
-    });
+    if (resetButton) {
+        resetButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "{{ route('admin.students.index') }}";
+        });
+    }
 
     // Bulk selection functionality
     selectAllCheckbox.addEventListener('change', function() {

@@ -44,10 +44,12 @@ class StudentProfile extends Model
         'documents',
         'application_notes',
         'notes',
+        'admission_acknowledged_at',
     ];
 
     protected $casts = [
         'admission_date' => 'date',
+        'admission_acknowledged_at' => 'datetime',
         'registration_fee_paid_at' => 'datetime',
         'registration_deadline_at' => 'datetime',
         'tuition_deadline_at' => 'datetime',

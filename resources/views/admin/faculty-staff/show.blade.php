@@ -45,7 +45,7 @@
                 </div>
                 <div class="card-body text-center">
                     @if($facultyStaff->profile_picture)
-                        <img src="{{ Storage::url($facultyStaff->profile_picture) }}"
+                        <img src="{{ $facultyStaff->profile_picture_url }}"
                              alt="{{ $facultyStaff->name }}"
                              class="rounded-circle mb-3"
                              style="width: 120px; height: 120px; object-fit: cover;">

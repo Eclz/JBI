@@ -134,6 +134,11 @@ class FeeController extends Controller
             (int) ($cashStatusCounts['failed'] ?? 0),
         ];
 
+        $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $concatSql = $dbDriver === 'sqlite'
+            ? 'TRIM(COALESCE(users.first_name, "") || " " || COALESCE(users.last_name, ""))'
+            : 'CONCAT_WS(" ", users.first_name, users.last_name)';
+
         $semesterStudentBreakdown = FeeRecord::query()
             ->join('users', 'fee_records.user_id', '=', 'users.id')
             ->join('fee_structures', 'fee_records.fee_structure_id', '=', 'fee_structures.id')
@@ -141,7 +146,7 @@ class FeeController extends Controller
             ->selectRaw('
                 COALESCE(semesters.name, "Unassigned") as semester_name,
                 fee_records.user_id as student_id,
-                COALESCE(NULLIF(CONCAT_WS(" ", users.first_name, users.last_name), ""), users.name, users.email) as student_name,
+                COALESCE(NULLIF(' . $concatSql . ', ""), users.name, users.email) as student_name,
                 SUM(fee_records.total_amount) as total_amount,
                 SUM(fee_records.paid_amount) as paid_amount,
                 SUM(fee_records.balance_amount) as balance_amount,
@@ -156,7 +161,7 @@ class FeeController extends Controller
                 'users.email'
             )
             ->orderByRaw('COALESCE(semesters.name, "Unassigned") asc')
-            ->orderByRaw('COALESCE(NULLIF(CONCAT_WS(" ", users.first_name, users.last_name), ""), users.name, users.email) asc')
+            ->orderByRaw('COALESCE(NULLIF(' . $concatSql . ', ""), users.name, users.email) asc')
             ->get();
 
         return view('admin.fees.index', compact(

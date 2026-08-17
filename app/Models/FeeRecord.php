@@ -17,6 +17,7 @@ class FeeRecord extends Model
         'fee_structure_id',
         'invoice_number',
         'amount',
+        'type',
         'discount_amount',
         'late_fee',
         'total_amount',

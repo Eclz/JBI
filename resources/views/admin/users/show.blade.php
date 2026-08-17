@@ -107,9 +107,9 @@
                     </div>
                     <div class="mb-3">
                         <label class="text-muted small">Emergency Contact</label>
-                        <div class="fw-medium">{{ $user->emergency_contact_name ?? 'Not provided' }}</div>
-                        @if($user->emergency_contact_phone)
-                        <small class="text-muted d-block">{{ $user->emergency_contact_phone }}</small>
+                        <div class="fw-medium">{{ $user->emergency_contact ?? 'Not provided' }}</div>
+                        @if($user->emergency_phone)
+                        <small class="text-muted d-block">{{ $user->emergency_phone }}</small>
                         @endif
                     </div>
                     <div class="mb-0">
@@ -327,6 +327,101 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Application & Registration Profile -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-file-earmark-person text-primary"></i> Application & Registration Profile</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Program Applied For</p>
+                            <p class="fw-medium mb-0">{{ $user->studentProfile->program ?? 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Admission Number / Status</p>
+                            <p class="fw-medium mb-0">
+                                <span class="badge bg-secondary">{{ $user->studentProfile->admission_number ?? 'Pending' }}</span>
+                                <span class="badge bg-info">{{ ucfirst($user->studentProfile->application_status ?? 'Submitted') }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3 pt-3 border-top">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Previous School / Institution</p>
+                            <p class="fw-medium mb-0">{{ $user->studentProfile->previous_school ?? 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Previous GPA</p>
+                            <p class="fw-medium mb-0">{{ $user->studentProfile->previous_gpa ?? 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    @if(!empty($user->studentProfile->qualifications))
+                    <div class="row mb-3 pt-3 border-top">
+                        <div class="col-12">
+                            <p class="mb-1 text-muted small">Academic Qualifications & Test Scores</p>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                @foreach($user->studentProfile->qualifications as $key => $value)
+                                    @if($value)
+                                        <span class="badge bg-light text-dark border">
+                                            {{ str_replace('_', ' ', ucfirst($key)) }}: 
+                                            @if(is_array($value))
+                                                {{ implode(', ', $value) }}
+                                            @elseif(is_bool($value))
+                                                {{ $value ? 'Yes' : 'No' }}
+                                            @else
+                                                {{ $value }}
+                                            @endif
+                                        </span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($user->studentProfile->guardian_name))
+                    <div class="row mb-3 pt-3 border-top">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Guardian Details</p>
+                            <p class="mb-0 fw-medium">{{ $user->studentProfile->guardian_name }}</p>
+                            <small class="text-muted">{{ $user->studentProfile->guardian_phone }} | {{ $user->studentProfile->guardian_email ?? 'No email' }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Guardian Address</p>
+                            <p class="mb-0 fw-medium">{{ $user->studentProfile->guardian_address ?? 'N/A' }}</p>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($user->studentProfile->application_notes))
+                    <div class="row mb-3 pt-3 border-top">
+                        <div class="col-12">
+                            <p class="mb-1 text-muted small">Personal Statement / Application Notes</p>
+                            <p class="mb-0 text-muted" style="white-space: pre-wrap;">{{ $user->studentProfile->application_notes }}</p>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($user->studentProfile->documents))
+                    <div class="row pt-3 border-top">
+                        <div class="col-12">
+                            <p class="mb-2 text-muted small">Uploaded Supporting Documents</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($user->studentProfile->documents as $index => $doc)
+                                    <a href="{{ asset('storage/' . $doc) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-file-earmark-arrow-down me-1"></i> Document {{ $index + 1 }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
             @endif
 
             @if($user->role === 'faculty' && $user->facultyProfile)
@@ -358,6 +453,91 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row pt-3 border-top mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Specialization</p>
+                            <p class="fw-medium mb-0">{{ $user->facultyProfile->specialization ?? 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted small">Application Status</p>
+                            <p class="fw-medium mb-0">
+                                <span class="badge bg-info">{{ ucfirst($user->facultyProfile->application_status ?? 'Submitted') }}</span>
+                                <span class="badge bg-secondary">{{ ucfirst($user->facultyProfile->employment_status ?? 'Pending') }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    @if(!empty($user->facultyProfile->qualifications))
+                    <div class="row pt-3 border-top mb-3">
+                        <div class="col-12">
+                            <p class="mb-1 text-muted small">Qualifications & Degrees</p>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                @foreach($user->facultyProfile->qualifications as $key => $value)
+                                    @if($value)
+                                        <span class="badge bg-light text-dark border">
+                                            {{ str_replace('_', ' ', ucfirst($key)) }}: 
+                                            @if(is_array($value))
+                                                {{ implode(', ', $value) }}
+                                            @elseif(is_bool($value))
+                                                {{ $value ? 'Yes' : 'No' }}
+                                            @else
+                                                {{ $value }}
+                                            @endif
+                                        </span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($user->facultyProfile->experience))
+                    <div class="row pt-3 border-top mb-3">
+                        <div class="col-12">
+                            <p class="mb-1 text-muted small">Professional Experience & Research</p>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                @foreach($user->facultyProfile->experience as $key => $value)
+                                    @if($value)
+                                        <span class="badge bg-light text-dark border">
+                                            {{ str_replace('_', ' ', ucfirst($key)) }}: 
+                                            @if(is_array($value))
+                                                {{ implode(', ', $value) }}
+                                            @elseif(is_bool($value))
+                                                {{ $value ? 'Yes' : 'No' }}
+                                            @else
+                                                {{ $value }}
+                                            @endif
+                                        </span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($user->facultyProfile->application_notes))
+                    <div class="row pt-3 border-top mb-3">
+                        <div class="col-12">
+                            <p class="mb-1 text-muted small">Cover Letter / Application Notes</p>
+                            <p class="mb-0 text-muted" style="white-space: pre-wrap;">{{ $user->facultyProfile->application_notes }}</p>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(!empty($user->facultyProfile->documents))
+                    <div class="row pt-3 border-top">
+                        <div class="col-12">
+                            <p class="mb-2 text-muted small">Uploaded Supporting Documents</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($user->facultyProfile->documents as $index => $doc)
+                                    <a href="{{ asset('storage/' . $doc) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-file-earmark-arrow-down me-1"></i> Document {{ $index + 1 }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
             @endif

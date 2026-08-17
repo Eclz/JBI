@@ -46,6 +46,9 @@ use App\Http\Controllers\Admin\ProgramLevelController as AdminProgramLevelContro
 use App\Http\Controllers\Admin\ProgramChangeController as AdminProgramChangeController;
 use App\Http\Controllers\Admin\AcademicYearController as AdminAcademicYearController;
 use App\Http\Controllers\Admin\SemesterController as AdminSemesterController;
+use App\Http\Controllers\Admin\TimetableController as AdminTimetableController;
+use App\Http\Controllers\Admin\EVotingController as AdminEVotingController;
+use App\Http\Controllers\Admin\EvaluationSurveyController as AdminEvaluationSurveyController;
 
 
 
@@ -61,6 +64,10 @@ use App\Http\Controllers\Student\ExamController as StudentExamController;
 use App\Http\Controllers\Student\QuizController as StudentQuizController;
 use App\Http\Controllers\Student\ProgramChangeController as StudentProgramChangeController;
 use App\Http\Controllers\Student\LmsController as StudentLmsController;
+use App\Http\Controllers\Student\TimetableController as StudentTimetableController;
+use App\Http\Controllers\Student\EVotingController as StudentEVotingController;
+use App\Http\Controllers\Student\EvaluationSurveyController as StudentEvaluationSurveyController;
+use App\Http\Controllers\Student\ProgrammeCoursesController as StudentProgrammeCoursesController;
 use App\Http\Controllers\StudentsApplicationController;
 use App\Http\Controllers\Faculty\LmsController as FacultyLmsController;
 
@@ -97,11 +104,11 @@ Route::get('/receipts/verify', [ReceiptVerificationController::class, 'showForm'
 Route::post('/receipts/verify', [ReceiptVerificationController::class, 'verify'])->name('receipts.verify.submit');
 
 // Public Application Routes
-Route::get('/apply', [StudentsApplicationController::class, 'create'])->name('applications.create');
+Route::redirect('/apply', '/register')->name('applications.create');
 Route::post('/apply', [StudentsApplicationController::class, 'store'])->name('applications.store');
 Route::get('/application/success/{application}', [StudentsApplicationController::class, 'success'])->name('applications.success');
-Route::get('/application/payment/{token}', [StudentController::class, 'uploadPayment'])->name('applications.upload-payment');
-Route::post('/application/payment/{token}', [StudentController::class, 'storePayment'])->name('applications.store-payment');
+Route::get('/application/payment/{token}', [StudentsApplicationController::class, 'uploadPayment'])->name('applications.upload-payment');
+Route::post('/application/payment/{token}', [StudentsApplicationController::class, 'storePayment'])->name('applications.store-payment');
 Route::get('/application/payment-success/{token}', [StudentsApplicationController::class, 'paymentSuccess'])->name('applications.payment-success');
 
 // Authentication Routes
@@ -118,6 +125,13 @@ Route::middleware('guest')->group(function () {
     Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 });
 
+// Email Verification Routes
+Route::get('/email/verify/{id}/{hash}', [RegisterController::class, 'verifyEmail'])
+    ->middleware(['signed'])
+    ->name('verification.verify');
+Route::post('/email/resend', [RegisterController::class, 'resendVerification'])
+    ->name('verification.resend');
+
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
     // Logout
@@ -125,6 +139,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Regenerate payment reference
+    Route::post('/application/{application}/regenerate-payment-ref', [StudentsApplicationController::class, 'regeneratePaymentRef'])->name('applications.regenerate-payment-ref');
 
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -273,6 +290,35 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         });
     });
 
+    // Academic Faculties Management
+    Route::resource('faculties', \App\Http\Controllers\Admin\FacultyController::class);
+
+    // Comprehensive Bursar & Finance Hub (17 Sub-Modules)
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'dashboard'])->name('dashboard');
+        Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
+        Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store');
+        Route::get('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'budgets'])->name('budgets.index');
+        Route::post('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBudget'])->name('budgets.store');
+        Route::get('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'expenses'])->name('expenses.index');
+        Route::post('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeExpense'])->name('expenses.store');
+        Route::get('/payables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payables'])->name('payables.index');
+        Route::post('/payables/suppliers', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeSupplier'])->name('payables.suppliers.store');
+        Route::post('/payables/invoices', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeVendorInvoice'])->name('payables.invoices.store');
+        Route::get('/receivables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'receivables'])->name('receivables.index');
+        Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
+        Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate');
+        Route::get('/procurement', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'procurement'])->name('procurement.index');
+        Route::get('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'assets'])->name('assets.index');
+        Route::post('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeAsset'])->name('assets.store');
+        Route::get('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'banking'])->name('banking.index');
+        Route::post('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBankAccount'])->name('banking.store');
+        Route::get('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'grants'])->name('grants.index');
+        Route::post('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeGrant'])->name('grants.store');
+        Route::get('/reports', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'reports'])->name('reports.index');
+        Route::get('/audit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'audit'])->name('audit.index');
+    });
+
     // Department Management
     Route::resource('departments', DepartmentController::class);
 
@@ -287,12 +333,30 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/departments/{department}/toggle-status', [DepartmentController::class, 'toggleStatus'])->name('departments.toggle-status');
     Route::post('/departments/{department}/assign-head', [DepartmentController::class, 'assignHead'])->name('departments.assign-head');
 
+    // Admin Timetable Management
+    Route::resource('timetables', AdminTimetableController::class);
+
+    // Admin E-Voting Management
+    Route::get('/evoting', [AdminEVotingController::class, 'index'])->name('evoting.index');
+    Route::post('/evoting/session', [AdminEVotingController::class, 'storeSession'])->name('evoting.sessions.store');
+    Route::post('/evoting/session/{session}/vetting', [AdminEVotingController::class, 'updateSessionVetting'])->name('evoting.sessions.vetting');
+    Route::post('/evoting/session/{session}/toggle', [AdminEVotingController::class, 'toggleSessionStatus'])->name('evoting.sessions.toggle');
+    Route::post('/evoting/session/{session}/positions', [AdminEVotingController::class, 'storePosition'])->name('evoting.positions.store');
+    Route::post('/evoting/position/{position}/candidates', [AdminEVotingController::class, 'storeCandidate'])->name('evoting.candidates.store');
+    Route::post('/evoting/candidate/{candidate}/vet', [AdminEVotingController::class, 'vetCandidate'])->name('evoting.candidates.vet');
+    Route::get('/evoting/session/{session}/results', [AdminEVotingController::class, 'results'])->name('evoting.results');
+
+    // Admin Evaluation Surveys
+    Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class);
+
+
     // Application Management
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}', [AdminApplicationController::class, 'show'])->name('applications.show');
     Route::post('/applications/bulk-approve', [AdminApplicationController::class, 'bulkApprove'])->name('applications.bulk-approve');
     Route::post('/applications/{application}/approve', [AdminApplicationController::class, 'approve'])->name('applications.approve');
     Route::post('/applications/{application}/reject', [AdminApplicationController::class, 'reject'])->name('applications.reject');
+    Route::post('/applications/{application}/update-program', [AdminApplicationController::class, 'updateProgram'])->name('applications.update-program');
     // Payment verification route
     Route::post('/applications/{application}/verify-payment', [AdminApplicationController::class, 'verifyPayment'])->name('applications.verify-payment');
 
@@ -505,10 +569,15 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
 
     // Fee Management
     Route::get('/fees', [StudentFeeController::class, 'index'])->name('fees.index');
+    Route::get('/fees/structure', [StudentFeeController::class, 'structure'])->name('fees.structure');
+    Route::get('/ledger', [StudentFeeController::class, 'ledger'])->name('fees.ledger');
     Route::get('/fees/{fee}/pay', [StudentFeeController::class, 'pay'])->name('fees.pay');
     Route::post('/fees/{fee}/pay', [StudentFeeController::class, 'processPayment'])->name('fees.processPayment');
     Route::get('/fees/{fee}/receipt', [StudentFeeController::class, 'receipt'])->name('fees.receipt');
     Route::get('/fees/{fee}/payments/{payment}/receipt', [StudentFeeController::class, 'transactionReceipt'])->name('fees.transaction-receipt');
+    Route::post('/prn/generate', [StudentFeeController::class, 'generatePrn'])->name('fees.prn.generate');
+    Route::get('/prn/{prn}', [StudentFeeController::class, 'showPrn'])->name('fees.prn.show');
+    Route::post('/prn/{prn}/pay', [StudentFeeController::class, 'processPrnPayment'])->name('fees.prn.pay');
 
     // Attendance
     Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance.index');
@@ -523,10 +592,44 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::post('/exams/{exam}/autosave', [StudentExamController::class, 'autosave'])->name('exams.autosave');
     Route::get('/exams/{exam}/download-paper', [StudentExamController::class, 'downloadPaper'])->name('exams.download-paper');
     Route::get('/exams/{exam}/download-booklet', [StudentExamController::class, 'downloadAnswerBooklet'])->name('exams.download-booklet');
+
+    // Student Timetables
+    Route::get('/timetables/teaching', [StudentTimetableController::class, 'teaching'])->name('timetables.teaching');
+    Route::get('/timetables/tests', [StudentTimetableController::class, 'tests'])->name('timetables.tests');
+    Route::get('/timetables/exams', [StudentTimetableController::class, 'exams'])->name('timetables.exams');
+
+    // E-Voting
+    Route::get('/evoting', [StudentEVotingController::class, 'index'])->name('evoting.index');
+    Route::get('/evoting/announcements', [StudentEVotingController::class, 'announcements'])->name('evoting.announcements');
+    Route::get('/evoting/positions', [StudentEVotingController::class, 'positions'])->name('evoting.positions');
+    Route::post('/evoting/vote', [StudentEVotingController::class, 'vote'])->name('evoting.vote');
+    Route::post('/evoting/candidacy', [StudentEVotingController::class, 'applyCandidacy'])->name('evoting.candidacy.apply');
+
+    // Evaluation Surveys
+    Route::get('/evaluation-surveys', [StudentEvaluationSurveyController::class, 'index'])->name('evaluation-surveys.index');
+    Route::get('/evaluation-surveys/{survey}/course/{course}', [StudentEvaluationSurveyController::class, 'show'])->name('evaluation-surveys.show');
+    Route::post('/evaluation-surveys/{survey}/course/{course}', [StudentEvaluationSurveyController::class, 'store'])->name('evaluation-surveys.store');
+
+    // My Programme & Enrollment
+    Route::get('/my-programme', [StudentProgrammeCoursesController::class, 'myProgramme'])->name('my-programme');
+    Route::get('/enrollment', [StudentProgrammeCoursesController::class, 'showEnrollment'])->name('enrollment.index');
+    Route::post('/enrollment', [StudentProgrammeCoursesController::class, 'processEnrollment'])->name('enrollment.store');
+    Route::delete('/enrollment/unenroll/{course}', [StudentProgrammeCoursesController::class, 'unenroll'])->name('enrollment.unenroll');
+    Route::get('/admission-letter', [StudentDashboardController::class, 'showAdmissionLetter'])->name('admission-letter.show');
+    Route::match(['get', 'post'], '/dashboard/acknowledge', [StudentDashboardController::class, 'acknowledgeAdmission'])->name('dashboard.acknowledge');
 });
+
 
 // Shared routes (All authenticated users)
 Route::middleware(['auth'])->group(function () {
+    // Mailbox & Messaging
+    Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/{message}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
+
+    // Academic Calendar
+    Route::get('/academic-calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('academic-calendar.index');
+
     // General course browsing
     Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');

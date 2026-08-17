@@ -96,4 +96,23 @@ class AssignmentSubmission extends Model
             $this->days_late = $this->submitted_at->diffInDays($this->assignment->due_date);
         }
     }
+
+    /**
+     * Get the first file path from submitted_files
+     */
+    public function getFilePathAttribute()
+    {
+        if (is_array($this->submitted_files) && count($this->submitted_files) > 0) {
+            return $this->submitted_files[0];
+        }
+        return null;
+    }
+
+    /**
+     * Alias for file_path (used in download)
+     */
+    public function getAttachmentPathAttribute()
+    {
+        return $this->file_path;
+    }
 }

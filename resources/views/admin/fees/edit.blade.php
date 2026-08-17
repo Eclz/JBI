@@ -85,7 +85,7 @@
                             <div class="col-md-4">
                                 <label for="amount" class="form-label">Base Amount <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">{{ $currencyCode }}</span>
                                     <input type="number"
                                            class="form-control @error('amount') is-invalid @enderror"
                                            id="amount"
@@ -103,7 +103,7 @@
                             <div class="col-md-4">
                                 <label for="discount_amount" class="form-label">Discount Amount</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">{{ $currencyCode }}</span>
                                     <input type="number"
                                            class="form-control @error('discount_amount') is-invalid @enderror"
                                            id="discount_amount"
@@ -120,7 +120,7 @@
                             <div class="col-md-4">
                                 <label for="late_fee" class="form-label">Late Fee</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">{{ $currencyCode }}</span>
                                     <input type="number"
                                            class="form-control @error('late_fee') is-invalid @enderror"
                                            id="late_fee"

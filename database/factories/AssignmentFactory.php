@@ -64,7 +64,8 @@ class AssignmentFactory extends Factory
         // Generate realistic due dates
         $dueDate = fake()->dateTimeBetween('now', '+60 days');
         $availableFrom = fake()->dateTimeBetween('-30 days', $dueDate);
-        $availableUntil = fake()->optional(0.7)->dateTimeBetween($dueDate, '+7 days');
+        $dueDateCarbon = \Carbon\Carbon::instance($dueDate);
+        $availableUntil = fake()->optional(0.7)->dateTimeBetween($dueDateCarbon, $dueDateCarbon->copy()->addDays(7));
 
         $maxPoints = match($type) {
             'quiz' => fake()->randomElement([10, 15, 20, 25]),

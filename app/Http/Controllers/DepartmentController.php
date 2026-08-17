@@ -19,7 +19,8 @@ class DepartmentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Department::with(['faculty', 'headOfDepartment', 'facultyMembers.user', 'students.user', 'courses']);
+        $query = Department::with(['faculty', 'headOfDepartment', 'facultyMembers.user', 'students.user', 'courses'])
+            ->withCount(['courses', 'facultyMembers', 'students']);
 
         // Search functionality
         if ($request->filled('search')) {

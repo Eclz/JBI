@@ -83,7 +83,7 @@ class SystemController extends Controller
             'max_students_per_course' => 'nullable|integer|min:1',
             'academic_year_start' => 'nullable|date',
             'academic_year_end' => 'nullable|date|after:academic_year_start',
-            'default_currency' => 'nullable|string|max:3',
+            'default_currency' => 'nullable|string|max:5',
             'timezone' => 'nullable|string|max:50',
             'registration_fee_structure_id' => 'nullable|integer|exists:fee_structures,id',
             'registration_payment_days' => 'nullable|integer|min:1|max:365',

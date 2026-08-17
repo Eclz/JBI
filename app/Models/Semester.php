@@ -78,11 +78,58 @@ class Semester extends Model
     }
 
     /**
+     * Accessor for registration_start
+     * Returns explicit admin setting if present, otherwise defaults to semester start date
+     */
+    public function getRegistrationStartAttribute($value)
+    {
+        if (!empty($value)) {
+            return \Carbon\Carbon::parse($value);
+        }
+        return $this->start_date ? \Carbon\Carbon::parse($this->start_date) : null;
+    }
+
+    /**
+     * Accessor for registration_end
+     * Returns explicit admin setting if present, otherwise defaults to midweek date of semester
+     */
+    public function getRegistrationEndAttribute($value)
+    {
+        if (!empty($value)) {
+            return \Carbon\Carbon::parse($value);
+        }
+
+        if ($this->start_date && $this->end_date) {
+            $start = \Carbon\Carbon::parse($this->start_date);
+            $end = \Carbon\Carbon::parse($this->end_date);
+            $halfDays = (int) floor($start->diffInDays($end) / 2);
+            return $start->copy()->addDays($halfDays);
+        }
+
+        if ($this->start_date) {
+            return \Carbon\Carbon::parse($this->start_date)->addWeeks(6);
+        }
+
+        return null;
+    }
+
+    /**
      * Check if registration is open
      */
     public function getIsRegistrationOpenAttribute()
     {
-        $now = now()->toDateString();
-        return $now >= $this->registration_start && $now <= $this->registration_end;
+        $today = now()->startOfDay();
+        $start = $this->registration_start ? $this->registration_start->copy()->startOfDay() : null;
+        $end = $this->registration_end ? $this->registration_end->copy()->endOfDay() : null;
+
+        if ($start && $end) {
+            return $today->gte($start) && $today->lte($end);
+        }
+
+        if ($start) {
+            return $today->gte($start);
+        }
+
+        return $this->is_active ?? true;
     }
 }

@@ -109,19 +109,7 @@ class DashboardController extends Controller
                 return view('dashboard.faculty', $data);
 
             case 'student':
-                $studentId = $user->id;
-                $data['enrolledCourses'] = Course::whereHas('enrollments', function($query) use ($studentId) {
-                    $query->where('user_id', $studentId);
-                })->get();
-                $data['pendingAssignments'] = Assignment::whereHas('course.enrollments', function($query) use ($studentId) {
-                    $query->where('user_id', $studentId);
-                })->where('due_date', '>', now())->count();
-                $data['upcomingAssignments'] = Assignment::whereHas('course.enrollments', function($query) use ($studentId) {
-                    $query->where('user_id', $studentId);
-                })->where('due_date', '>', now())->orderBy('due_date')->take(5)->get();
-                $data['recentGrades'] = Grade::where('user_id', $studentId)->latest()->take(5)->get();
-                $data['attendanceRate'] = Attendance::where('user_id', $studentId)->where('status', 'present')->count() / max(1, Attendance::where('user_id', $studentId)->count()) * 100;
-                return view('dashboard.student', $data);
+                return redirect()->route('student.dashboard');
 
             default:
                 return view('dashboard', $data);

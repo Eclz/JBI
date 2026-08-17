@@ -365,13 +365,31 @@
             min-height: calc(100vh - var(--mobile-header-height));
         }
 
-        /* Footer Styles */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-area {
+            flex: 1 0 auto;
+        }
+
+        /* Fixed Sticky Bottom Footer Styles */
         .footer {
-            background-color: white;
+            margin-top: auto;
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: #ffffff;
             border-top: 1px solid #e9ecef;
             padding: 0.75rem 1.5rem;
             font-size: 0.875rem;
             color: #6c757d;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
         }
 
         /* Utility Classes */
@@ -553,11 +571,20 @@
                     </div>
 
                     <div class="ms-auto d-flex align-items-center gap-2">
-                        <!-- Enhanced search with icon -->
-                        <div class="search-wrapper d-none d-lg-block">
-                            <i class="bi bi-search search-icon"></i>
-                            <input type="search" class="form-control form-control-sm" placeholder="Search students, courses, staff...">
-                        </div>
+                        @if(Auth::check() && Auth::user()->isStudent())
+                            <!-- Student Programme and Status Banner -->
+                            <div class="d-none d-lg-flex align-items-center gap-2 bg-light px-3 py-1.5 rounded-pill border">
+                                <span class="badge bg-secondary text-uppercase px-2 py-1" style="font-size: 0.7rem;">PROGRAMME</span>
+                                <span class="fw-bold text-dark small text-uppercase me-1">{{ Auth::user()->studentProfile?->program ?? 'BACHELOR OF SCIENCE IN SOFTWARE ENGINEERING' }}</span>
+                                <span class="badge bg-primary px-2 py-1 text-uppercase" style="font-size: 0.7rem;">{{ strtoupper(Auth::user()->studentProfile?->status ?? 'ACTIVE') }}</span>
+                            </div>
+                        @else
+                            <!-- Enhanced search with icon for staff/admin -->
+                            <div class="search-wrapper d-none d-lg-block">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="search" class="form-control form-control-sm" placeholder="Search students, courses, staff...">
+                            </div>
+                        @endif
 
                         <!-- Quick action buttons for common tasks -->
                         <div class="quick-actions d-none d-xl-flex">

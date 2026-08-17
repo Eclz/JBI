@@ -51,6 +51,8 @@ body {
 .main-content {
   background: var(--jbi-light);
   min-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
 }
 
 .card {

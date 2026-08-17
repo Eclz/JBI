@@ -50,7 +50,7 @@
                                 <div class="mb-3">
                                     <label for="payment_amount" class="form-label">Payment Amount <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">{{ $currencyCode }}</span>
                                         <input type="number" class="form-control @error('payment_amount') is-invalid @enderror"
                                                name="payment_amount" id="payment_amount" step="0.01"
                                                min="0.01" max="{{ $fee->balance_amount }}"
