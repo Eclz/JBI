@@ -17,6 +17,7 @@ class StoreDepartmentRequest extends FormRequest
             'name' => 'required|string|max:255|unique:departments,name',
             'code' => 'required|string|max:10|unique:departments,code',
             'description' => 'nullable|string|max:1000',
+            'faculty_id' => 'nullable|exists:faculties,id',
             'head_of_department_id' => 'nullable|exists:users,id',
             'location' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',

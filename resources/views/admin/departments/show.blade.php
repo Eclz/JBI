@@ -116,14 +116,16 @@
                         {{ $department->code }}
                     </div>
 
-                    @if($department->faculty)
-                        <div class="mb-3">
-                            <strong>Faculty:</strong><br>
+                    <div class="mb-3">
+                        <strong>Faculty:</strong><br>
+                        @if($department->faculty)
                             <a href="{{ route('admin.faculties.show', $department->faculty) }}" class="text-decoration-none">
                                 {{ $department->faculty->name }}
                             </a>
-                        </div>
-                    @endif
+                        @else
+                            <span class="text-danger font-italic"><i class="fa fa-exclamation-triangle"></i> No faculty assigned</span>
+                        @endif
+                    </div>
 
                     @if($department->description)
                         <div class="mb-3">

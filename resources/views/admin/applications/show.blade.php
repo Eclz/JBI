@@ -74,7 +74,9 @@
                                                 @if(isset($programChoices) && count($programChoices) > 0)
                                                     @foreach($programChoices as $rankIndex => $choiceProg)
                                                         @php
-                                                            $isAssigned = ($application->program_id == $choiceProg->id) || ($application->program === $choiceProg->name);
+                                                            // FIX: compare by ID only — mixing ID and name comparisons is fragile
+                                                            // (case/whitespace mismatches, or coincidental name collisions).
+                                                            $isAssigned = $application->program_id == $choiceProg->id;
                                                             $rankLabel = match($rankIndex) {
                                                                 0 => '1st Choice (Primary)',
                                                                 1 => '2nd Choice',
@@ -114,10 +116,16 @@
                                                                         <i class="bi bi-check-circle-fill me-1"></i>ASSIGNED TO APPLICANT
                                                                     </span>
                                                                 @else
+                                                                    {{-- FIX: no raw string interpolated into onclick/confirm() anymore.
+                                                                         Programme name is passed via data-attribute and read safely in JS,
+                                                                         so an apostrophe in the name can no longer break out of the
+                                                                         inline JS string and kill the handler. --}}
                                                                     <form action="{{ route('admin.applications.update-program', $application->id) }}" method="POST" class="d-inline">
                                                                         @csrf
                                                                         <input type="hidden" name="program_id" value="{{ $choiceProg->id }}">
-                                                                        <button type="submit" class="btn btn-sm btn-outline-primary fw-bold" onclick="return confirm('Assign {{ $choiceProg->name }} to this applicant?')">
+                                                                        <button type="submit"
+                                                                                class="btn btn-sm btn-outline-primary fw-bold assign-btn"
+                                                                                data-program-name="{{ $choiceProg->name }}">
                                                                             <i class="bi bi-person-check me-1"></i>Select & Assign
                                                                         </button>
                                                                     </form>
@@ -222,11 +230,16 @@
                                     <div class="row g-3">
                                         @foreach($application->documents as $index => $document)
                                             @php
-                                                $fileUrl = asset('storage/' . $document);
-                                                $ext = strtolower(pathinfo($document, PATHINFO_EXTENSION));
+                                                // FIX: guard against $document being an array/object (e.g. metadata)
+                                                // instead of a plain path string — pathinfo() on a non-string
+                                                // throws a TypeError and 500s the whole page.
+                                                $docPath = is_array($document) ? ($document['path'] ?? null) : (is_string($document) ? $document : null);
+                                                $fileUrl = $docPath ? asset('storage/' . $docPath) : null;
+                                                $ext = $docPath ? strtolower(pathinfo($docPath, PATHINFO_EXTENSION)) : '';
                                                 $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                                                 $isPdf = $ext === 'pdf';
                                             @endphp
+                                            @if($docPath)
                                             <div class="col-md-6 col-lg-4">
                                                 <div class="card h-100 border p-3 text-center bg-light">
                                                     <div class="mb-2 fs-1 text-primary">
@@ -242,7 +255,10 @@
                                                     <small class="text-muted d-block mb-3 text-uppercase">{{ $ext ?: 'FILE' }} Document</small>
 
                                                     <div class="d-flex justify-content-center gap-2">
-                                                        <button type="button" class="btn btn-sm btn-primary" onclick="openAdminDocPreview('{{ $fileUrl }}', 'Document {{ $index + 1 }}', '{{ $ext }}')">
+                                                        <button type="button" class="btn btn-sm btn-primary preview-doc-btn"
+                                                                data-url="{{ $fileUrl }}"
+                                                                data-title="Document {{ $index + 1 }}"
+                                                                data-ext="{{ $ext }}">
                                                             <i class="bi bi-eye me-1"></i>Preview
                                                         </button>
                                                         <a href="{{ $fileUrl }}" target="_blank" download class="btn btn-sm btn-outline-secondary">
@@ -251,6 +267,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            @endif
                                         @endforeach
                                     </div>
                                 </div>
@@ -258,20 +275,47 @@
                             @endif
 
                             <style>
-                                #adminDocPreviewModal,
-                                #adminDocPreviewModal *,
-                                .modal-backdrop,
-                                .modal-backdrop.fade {
-                                    transition: none !important;
-                                    animation: none !important;
-                                    transform: none !important;
+                                /* FIX: replaced Bootstrap's JS-driven modal (bootstrap.Modal) with a plain
+                                   fixed-position overlay for the document preview. Bootstrap's modal engine
+                                   runs scrollbar-width measurement and dialog re-adjustment logic
+                                   (_adjustDialog) on resize/focus events, which — combined with the earlier
+                                   !important transition/transform overrides — caused the dialog to repeatedly
+                                   fight between its default top position and modal-dialog-centered's flex
+                                   centering, producing the top-then-middle flicker whenever focus or layout
+                                   changed near the modal (e.g. mouse movement over the iframe/image). A
+                                   custom overlay has no such lifecycle, so there's nothing left to flicker. */
+                                #adminDocPreviewBackdrop {
+                                    position: fixed;
+                                    inset: 0;
+                                    background: rgba(0, 0, 0, 0.5);
+                                    z-index: 1055;
+                                    display: none;
+                                }
+                                #adminDocPreviewBackdrop.show { display: block; }
+
+                                #adminDocPreviewModal {
+                                    position: fixed;
+                                    inset: 0;
+                                    z-index: 1060;
+                                    display: none;
+                                    align-items: center;
+                                    justify-content: center;
+                                    padding: 1.75rem 1rem;
+                                }
+                                #adminDocPreviewModal.show { display: flex; }
+
+                                #adminDocPreviewModal .modal-dialog {
+                                    width: 100%;
+                                    max-width: 1100px;
+                                    margin: 0;
                                 }
                             </style>
 
-                            <!-- Document Preview Modal (No transitions or animations) -->
-                            <div class="modal" id="adminDocPreviewModal" tabindex="-1" aria-hidden="true" style="transition: none !important;">
-                                <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px; margin: 1.75rem auto; transition: none !important; transform: none !important;">
-                                    <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 10px; transition: none !important; animation: none !important;">
+                            <!-- Document Preview Overlay (custom — no Bootstrap Modal JS, no reflow/flicker) -->
+                            <div id="adminDocPreviewBackdrop"></div>
+                            <div id="adminDocPreviewModal" tabindex="-1" aria-hidden="true" role="dialog" aria-modal="true">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 10px;">
                                         <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #0f2942 0%, #1e3a8a 100%);">
                                             <div class="d-flex align-items-center">
                                                 <i class="bi bi-file-earmark-pdf fs-4 me-2 text-warning"></i>
@@ -287,73 +331,158 @@
                                                 <a id="adminDocDownloadHeaderBtn" href="#" download class="btn btn-sm btn-warning fw-bold px-3 py-1.5 text-dark" style="border-radius: 6px;">
                                                     <i class="bi bi-download me-1"></i>Download
                                                 </a>
-                                                <button type="button" class="btn-close btn-close-white ms-2" onclick="closeAdminDocPreview()" aria-label="Close"></button>
+                                                <button type="button" class="btn-close btn-close-white ms-2" id="adminDocPreviewCloseBtn" aria-label="Close"></button>
                                             </div>
                                         </div>
                                         <div class="modal-body p-0 bg-light position-relative" style="height: 75vh; min-height: 580px; overflow: hidden; background-color: #f8fafc !important;">
                                             <div id="adminDocPreviewContainer" class="w-100 h-100 position-relative" style="overflow: hidden; background: #f8fafc;">
-                                                <div class="position-absolute top-50 start-50 translate-middle text-primary fw-bold">Loading document preview...</div>
+                                                <div class="position-absolute top-50 start-50 text-primary fw-bold">Loading document preview...</div>
                                             </div>
                                         </div>
                                         <div class="modal-footer bg-white py-2.5 px-4 d-flex justify-content-between align-items-center">
                                             <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Verified Applicant Document Record</small>
-                                            <button type="button" class="btn btn-secondary px-4 fw-bold" onclick="closeAdminDocPreview()" style="border-radius: 6px;">Close Preview</button>
+                                            <button type="button" class="btn btn-secondary px-4 fw-bold" id="adminDocPreviewCloseBtn2" style="border-radius: 6px;">Close Preview</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <script>
-                                let adminPreviewModalInstance = null;
-
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const modalEl = document.getElementById('adminDocPreviewModal');
-                                    if (modalEl) {
-                                        modalEl.addEventListener('hidden.bs.modal', function () {
-                                            const container = document.getElementById('adminDocPreviewContainer');
-                                            if (container) {
-                                                container.innerHTML = '<div class="position-absolute top-50 start-50 translate-middle text-primary fw-bold">Loading document preview...</div>';
-                                            }
-                                        });
-                                    }
-                                });
-
-                                function closeAdminDocPreview() {
-                                    const modalEl = document.getElementById('adminDocPreviewModal');
-                                    if (adminPreviewModalInstance) {
-                                        adminPreviewModalInstance.hide();
-                                    } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                                        const inst = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                                        inst.hide();
+                                // FIX: custom overlay show/hide — no bootstrap.Modal instance, no internal
+                                // resize/focus-driven dialog re-adjustment, so nothing recalculates position
+                                // on hover/focus and the top-then-middle flicker cannot occur.
+                                function resetAdminDocPreviewContainer() {
+                                    const container = document.getElementById('adminDocPreviewContainer');
+                                    if (container) {
+                                        container.innerHTML = '<div class="position-absolute top-50 start-50 text-primary fw-bold">Loading document preview...</div>';
                                     }
                                 }
 
+                                function closeAdminDocPreview() {
+                                    const modalEl = document.getElementById('adminDocPreviewModal');
+                                    const backdropEl = document.getElementById('adminDocPreviewBackdrop');
+                                    if (!modalEl || !modalEl.classList.contains('show')) {
+                                        return;
+                                    }
+                                    modalEl.classList.remove('show');
+                                    backdropEl.classList.remove('show');
+                                    document.body.style.overflow = '';
+                                    resetAdminDocPreviewContainer();
+                                }
+
                                 function openAdminDocPreview(url, title, ext) {
+                                    // FIX: guard against a missing/blank URL (e.g. a malformed document entry)
+                                    // instead of handing an empty src to <img>/<iframe>.
+                                    if (!url) {
+                                        return;
+                                    }
+
                                     document.getElementById('adminDocPreviewTitle').innerText = title || 'Document Preview';
                                     document.getElementById('adminDocPreviewSubtitle').innerText = 'Format: ' + (ext || 'Document').toUpperCase();
-                                    
+
                                     document.getElementById('adminDocOpenNewTabBtn').href = url;
                                     document.getElementById('adminDocDownloadHeaderBtn').href = url;
-                                    
+
                                     const container = document.getElementById('adminDocPreviewContainer');
                                     const cleanExt = (ext || '').toLowerCase().trim();
 
                                     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(cleanExt)) {
-                                        container.innerHTML = '<div class="w-100 h-100 d-flex align-items-center justify-content-center p-3" style="background: #0f172a;"><img src="' + url + '" class="img-fluid rounded shadow" style="max-height: 100%; max-width: 100%; object-fit: contain;"></div>';
+                                        const img = document.createElement('img');
+                                        img.src = url;
+                                        img.className = 'img-fluid rounded shadow';
+                                        img.style.maxHeight = '100%';
+                                        img.style.maxWidth = '100%';
+                                        img.style.objectFit = 'contain';
+
+                                        const wrap = document.createElement('div');
+                                        wrap.className = 'w-100 h-100 d-flex align-items-center justify-content-center p-3';
+                                        wrap.style.background = '#0f172a';
+                                        wrap.appendChild(img);
+
+                                        container.innerHTML = '';
+                                        container.appendChild(wrap);
                                     } else if (cleanExt === 'pdf') {
-                                        container.innerHTML = '<iframe src="' + url + '#toolbar=1&navpanes=0&scrollbar=1" class="w-100 h-100" style="min-height: 580px; border: none; display: block; width: 100%; height: 100%; background: #ffffff;"></iframe>';
+                                        const iframe = document.createElement('iframe');
+                                        iframe.src = url + '#toolbar=1&navpanes=0&scrollbar=1';
+                                        iframe.className = 'w-100 h-100';
+                                        iframe.style.minHeight = '580px';
+                                        iframe.style.border = 'none';
+                                        iframe.style.display = 'block';
+                                        iframe.style.width = '100%';
+                                        iframe.style.height = '100%';
+                                        iframe.style.background = '#ffffff';
+
+                                        container.innerHTML = '';
+                                        container.appendChild(iframe);
                                     } else {
                                         container.innerHTML = '<div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-5 text-center" style="background: #f8fafc;"><i class="bi bi-file-earmark-word fs-1 text-primary d-block mb-3"></i><h5 class="text-dark fw-bold mb-2">Preview Not Available Inline</h5><p class="text-muted fs-6 mb-4">Direct inline preview is not supported for <strong>' + cleanExt.toUpperCase() + '</strong> files.</p><div class="d-flex gap-2"><a href="' + url + '" target="_blank" class="btn btn-outline-primary px-4 py-2 fw-bold" style="border-radius: 6px;"><i class="bi bi-box-arrow-up-right me-2"></i>Open File</a><a href="' + url + '" download class="btn btn-primary px-4 py-2 fw-bold" style="border-radius: 6px;"><i class="bi bi-download me-2"></i>Download File</a></div></div>';
                                     }
 
                                     const modalEl = document.getElementById('adminDocPreviewModal');
-                                    if (!adminPreviewModalInstance) {
-                                        adminPreviewModalInstance = new bootstrap.Modal(modalEl, {
-                                            keyboard: true
-                                        });
+                                    const backdropEl = document.getElementById('adminDocPreviewBackdrop');
+
+                                    // FIX: guard against double-open (double-click) — no-op if already shown,
+                                    // instead of re-triggering any show logic.
+                                    if (modalEl.classList.contains('show')) {
+                                        return;
                                     }
-                                    adminPreviewModalInstance.show();
+                                    modalEl.classList.add('show');
+                                    backdropEl.classList.add('show');
+                                    document.body.style.overflow = 'hidden';
                                 }
+
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    // FIX: "portal" the modal + backdrop to be direct children of <body>.
+                                    // Root cause of the centering/flicker bug: position:fixed is anchored
+                                    // to the viewport ONLY if no ancestor has a transform/filter/
+                                    // perspective/will-change applied. This theme's sidebar applies a
+                                    // transform to a wrapping container on hover (the "sidebar-mini
+                                    // hover-expand" effect), which was silently turning our fixed modal
+                                    // into something anchored to that wrapper instead of the viewport —
+                                    // so it jumped position every time the sidebar hover state toggled.
+                                    // Moving these two elements to <body> removes them from that
+                                    // container entirely, so their fixed positioning is always relative
+                                    // to the real viewport regardless of sidebar hover state.
+                                    var previewModalEl = document.getElementById('adminDocPreviewModal');
+                                    var previewBackdropEl = document.getElementById('adminDocPreviewBackdrop');
+                                    if (previewModalEl && previewModalEl.parentElement !== document.body) {
+                                        document.body.appendChild(previewBackdropEl);
+                                        document.body.appendChild(previewModalEl);
+                                    }
+
+                                    // FIX: delegated, injection-safe handlers for "Select & Assign" and
+                                    // "Preview" buttons — replaces string-interpolated onclick="confirm(...)"
+                                    // calls that broke when a name/title contained an apostrophe or quote.
+                                    document.querySelectorAll('.assign-btn').forEach(function (btn) {
+                                        btn.addEventListener('click', function (e) {
+                                            const name = this.dataset.programName || 'this programme';
+                                            if (!confirm('Assign ' + name + ' to this applicant?')) {
+                                                e.preventDefault();
+                                            }
+                                        });
+                                    });
+
+                                    document.querySelectorAll('.preview-doc-btn').forEach(function (btn) {
+                                        btn.addEventListener('click', function () {
+                                            openAdminDocPreview(this.dataset.url, this.dataset.title, this.dataset.ext);
+                                        });
+                                    });
+
+                                    // Close handlers: header X button, footer Close button, backdrop click,
+                                    // and Escape key. None of these touch layout/position, so no flicker path.
+                                    const closeBtn1 = document.getElementById('adminDocPreviewCloseBtn');
+                                    const closeBtn2 = document.getElementById('adminDocPreviewCloseBtn2');
+                                    const backdropEl = document.getElementById('adminDocPreviewBackdrop');
+                                    if (closeBtn1) closeBtn1.addEventListener('click', closeAdminDocPreview);
+                                    if (closeBtn2) closeBtn2.addEventListener('click', closeAdminDocPreview);
+                                    if (backdropEl) backdropEl.addEventListener('click', closeAdminDocPreview);
+
+                                    document.addEventListener('keydown', function (e) {
+                                        if (e.key === 'Escape') {
+                                            closeAdminDocPreview();
+                                        }
+                                    });
+                                });
                             </script>
 
                             <!-- Payment Information -->
@@ -369,7 +498,10 @@
                                             $proofUrl = asset('storage/' . $application->payment_proof);
                                             $proofExt = strtolower(pathinfo($application->payment_proof, PATHINFO_EXTENSION));
                                         @endphp
-                                        <button type="button" class="btn btn-primary btn-sm me-2" onclick="openAdminDocPreview('{{ $proofUrl }}', 'Payment Proof Receipt', '{{ $proofExt }}')">
+                                        <button type="button" class="btn btn-primary btn-sm me-2 preview-doc-btn"
+                                                data-url="{{ $proofUrl }}"
+                                                data-title="Payment Proof Receipt"
+                                                data-ext="{{ $proofExt }}">
                                             <i class="bi bi-eye me-1"></i>Preview Payment Proof
                                         </button>
                                         <a href="{{ $proofUrl }}" target="_blank" class="btn btn-outline-secondary btn-sm">
@@ -462,7 +594,7 @@
                                                 Force approval if checklist is incomplete
                                             </label>
                                         </div>
-                                        <button type="submit" class="btn btn-success w-100" onclick="return confirm('Approve this application?')">
+                                        <button type="submit" class="btn btn-success w-100 confirm-submit" data-confirm="Approve this application?">
                                             <i class="bi bi-check-circle me-1"></i>Approve
                                         </button>
                                     </form>
@@ -473,7 +605,7 @@
                                             <label for="rejection_notes" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
                                             <textarea name="notes" id="rejection_notes" class="form-control" rows="3" required></textarea>
                                         </div>
-                                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Reject this application?')">
+                                        <button type="submit" class="btn btn-danger w-100 confirm-submit" data-confirm="Reject this application?">
                                             <i class="bi bi-x-circle me-1"></i>Reject
                                         </button>
                                     </form>
@@ -491,7 +623,7 @@
                                             <label for="verify_notes" class="form-label">Verification Notes (Optional)</label>
                                             <textarea name="notes" id="verify_notes" class="form-control" rows="3"></textarea>
                                         </div>
-                                        <button type="submit" class="btn btn-primary w-100" onclick="return confirm('Verify payment and send admission letter?')">
+                                        <button type="submit" class="btn btn-primary w-100 confirm-submit" data-confirm="Verify payment and send admission letter?">
                                             <i class="bi bi-check-circle me-1"></i>Verify Payment & Send Admission Letter
                                         </button>
                                     </form>
@@ -513,4 +645,19 @@
         </div>
     </div>
 </div>
+
+<script>
+    // FIX: these confirm() calls had no interpolated variables so they were not exploitable,
+    // but moved to delegated listeners for consistency with the fixes above and so future
+    // edits (e.g. adding the applicant's name to the message) stay injection-safe.
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.confirm-submit').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                if (!confirm(this.dataset.confirm || 'Are you sure?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
 @endsection
