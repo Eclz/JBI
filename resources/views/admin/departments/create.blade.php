@@ -63,6 +63,23 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="faculty_id">Faculty</label>
+                            <select class="form-control @error('faculty_id') is-invalid @enderror"
+                                    id="faculty_id" name="faculty_id">
+                                <option value="">Select Faculty (Optional)</option>
+                                @foreach($faculties as $fac)
+                                    <option value="{{ $fac->id }}" {{ old('faculty_id') == $fac->id ? 'selected' : '' }}>
+                                        {{ $fac->name }} ({{ $fac->code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('faculty_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">Associate this department with an academic Faculty</small>
+                        </div>
+
+                        <div class="form-group">
                             <label for="head_of_department_id">Head of Department</label>
                             <select class="form-control @error('head_of_department_id') is-invalid @enderror"
                                     id="head_of_department_id" name="head_of_department_id">

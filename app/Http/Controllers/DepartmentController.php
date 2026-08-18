@@ -37,7 +37,11 @@ class DepartmentController extends Controller
 
         // Faculty filter
         if ($request->filled('faculty')) {
-            $query->where('faculty_id', $request->faculty);
+            if ($request->faculty === 'none') {
+                $query->whereNull('faculty_id');
+            } else {
+                $query->where('faculty_id', $request->faculty);
+            }
         }
 
         // Status filter
@@ -50,11 +54,11 @@ class DepartmentController extends Controller
         }
 
         // Sorting
-        $sortBy = $request->get('sort', 'name');
+        $sortBy = $request->get('sort', $request->get('sort_by', 'name'));
         $sortOrder = $request->get('order', 'asc');
 
         if ($sortBy === 'faculty') {
-            $query->join('faculties', 'departments.faculty_id', '=', 'faculties.id')
+            $query->leftJoin('faculties', 'departments.faculty_id', '=', 'faculties.id')
                   ->orderBy('faculties.name', $sortOrder)
                   ->select('departments.*');
         } else {
@@ -72,6 +76,7 @@ class DepartmentController extends Controller
             'active' => Department::where('is_active', true)->count(),
             'inactive' => Department::where('is_active', false)->count(),
             'with_head' => Department::whereNotNull('head_of_department_id')->count(),
+            'without_faculty' => Department::whereNull('faculty_id')->count(),
         ];
 
         return view('admin.departments.index', compact('departments', 'faculties', 'stats'));

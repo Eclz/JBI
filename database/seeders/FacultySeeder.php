@@ -84,30 +84,35 @@ class FacultySeeder extends Seeder
             ],
         ];
 
+        $deptMapping = [
+            'FTM' => ['BIBL', 'THEO', 'HIST', 'MINI', 'LANG'],
+            'FLM' => ['LEAD', 'MGMT', 'GOV'],
+            'FSI' => ['STRAT', 'INNO', 'ENTR'],
+            'FOB' => ['BUS', 'ACCT', 'FIN', 'MKT', 'PROC'],
+            'FOT' => ['CS', 'SE', 'IT', 'AI', 'CYBER'],
+            'FOE' => ['CIV', 'ELEC', 'MECH', 'TELE'],
+            'FOS' => ['MATH', 'STAT', 'PHYS', 'CHEM', 'BIO'],
+            'FMM' => ['MUS', 'COMM', 'MEDIA', 'ARTS', 'FILM'],
+        ];
+
         foreach ($faculties as $fac) {
             $fac['dean_id'] = $deanId;
             $fac['is_active'] = true;
 
             $faculty = Faculty::updateOrCreate(['code' => $fac['code']], $fac);
 
-            // Assign departments to faculty by code matching
-            if ($fac['code'] === 'FOT') {
-                Department::where('code', 'LIKE', '%CS%')
-                    ->orWhere('name', 'LIKE', '%Computer%')
-                    ->orWhere('name', 'LIKE', '%Software%')
-                    ->update(['faculty_id' => $faculty->id]);
-            } elseif ($fac['code'] === 'FOB') {
-                Department::where('code', 'LIKE', '%BUS%')
-                    ->orWhere('name', 'LIKE', '%Business%')
-                    ->orWhere('name', 'LIKE', '%Accounting%')
-                    ->update(['faculty_id' => $faculty->id]);
+            if (isset($deptMapping[$fac['code']])) {
+                foreach ($deptMapping[$fac['code']] as $deptCode) {
+                    Department::where('code', 'LIKE', "%{$deptCode}%")
+                        ->update(['faculty_id' => $faculty->id]);
+                }
             }
         }
 
-        // Map any unassigned department to Faculty of Technology
-        $techFaculty = Faculty::where('code', 'FOT')->first();
-        if ($techFaculty) {
-            Department::whereNull('faculty_id')->update(['faculty_id' => $techFaculty->id]);
+        // Map any unassigned department to Faculty of Theology & Ministry as default
+        $ftmFaculty = Faculty::where('code', 'FTM')->first();
+        if ($ftmFaculty) {
+            Department::whereNull('faculty_id')->update(['faculty_id' => $ftmFaculty->id]);
         }
     }
 }

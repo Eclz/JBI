@@ -33,7 +33,7 @@ class DashboardController extends Controller
 
         $requestedAdmissionView = $request->query('view') === 'admission' || $request->query('view') === 'unadmitted';
         $isAdmitted = ($studentProfile && $studentProfile->status === 'active') || ($application && in_array($application->status, ['admitted', 'approved']));
-        $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null);
+        $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null) || ($studentProfile && $studentProfile->status === 'active' && !$application);
 
         // Check if student is not admitted, or has not yet acknowledged admission onboarding, or explicitly requested admission view
         if (!$studentProfile || $studentProfile->status !== 'active' || ($isAdmitted && !$hasAcknowledged) || $requestedAdmissionView) {

@@ -15,6 +15,20 @@
         </a>
     </div>
 
+    <!-- Faculty Warning Alert -->
+    @if(isset($stats['without_faculty']) && $stats['without_faculty'] > 0)
+        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+            <i class="fa fa-exclamation-triangle me-2"></i>
+            <strong>Attention:</strong> There {{ $stats['without_faculty'] == 1 ? 'is' : 'are' }} <strong>{{ $stats['without_faculty'] }}</strong> {{ Str::plural('department', $stats['without_faculty']) }} not assigned to any Faculty.
+            <a href="{{ route('admin.departments.index') }}?faculty=none" class="alert-link ml-2">
+                <i class="fa fa-filter"></i> Filter to view them
+            </a>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -90,7 +104,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.departments.index') }}">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="search">Search</label>
                             <input type="text" class="form-control" id="search" name="search"
@@ -98,6 +112,20 @@
                         </div>
                     </div>
                     <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="faculty">Faculty</label>
+                            <select class="form-control" id="faculty" name="faculty">
+                                <option value="">All Faculties</option>
+                                <option value="none" {{ request('faculty') === 'none' ? 'selected' : '' }}>[No Faculty Assigned]</option>
+                                @foreach($faculties as $fac)
+                                    <option value="{{ $fac->id }}" {{ request('faculty') == $fac->id ? 'selected' : '' }}>
+                                        {{ $fac->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="status">Status</label>
                             <select class="form-control" id="status" name="status">
@@ -107,12 +135,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="sort_by">Sort By</label>
                             <select class="form-control" id="sort_by" name="sort_by">
                                 <option value="name" {{ request('sort_by') === 'name' ? 'selected' : '' }}>Name</option>
                                 <option value="code" {{ request('sort_by') === 'code' ? 'selected' : '' }}>Code</option>
+                                <option value="faculty" {{ request('sort_by') === 'faculty' ? 'selected' : '' }}>Faculty</option>
                                 <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Created Date</option>
                             </select>
                         </div>
@@ -148,11 +177,12 @@
                             <tr>
                                 <th>Code</th>
                                 <th>Name</th>
+                                <th>Faculty</th>
                                 <th>Head of Department</th>
                                 <th>Location</th>
                                 <th>Contact</th>
                                 <th>Courses</th>
-                                <th>Faculty</th>
+                                <th>Staff</th>
                                 <th>Students</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -168,6 +198,13 @@
                                         <strong>{{ $department->name }}</strong>
                                         @if($department->description)
                                             <br><small class="text-muted">{{ Str::limit($department->description, 50) }}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($department->faculty)
+                                            <span class="badge bg-light text-dark border">{{ $department->faculty->name }}</span>
+                                        @else
+                                            <span class="badge bg-danger text-white"><i class="fa fa-exclamation-triangle"></i> No Faculty</span>
                                         @endif
                                     </td>
                                     <td>

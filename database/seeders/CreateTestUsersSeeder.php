@@ -29,6 +29,8 @@ class CreateTestUsersSeeder extends Seeder
             Department::firstOrCreate(['code' => $dept['code']], $dept);
         }
 
+        $this->call(FacultySeeder::class);
+
         $firstDepartment = Department::first();
 
         // Delete existing test users to avoid conflicts

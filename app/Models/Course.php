@@ -89,11 +89,6 @@ class Course extends Model
         return $this->attributes['year_of_study'] ?? 1;
     }
 
-    public function getSemesterAttribute()
-    {
-        return $this->attributes['semester_number'] ?? $this->attributes['semester_id'] ?? 1;
-    }
-
     /**
      * Get the department of the course
      */
