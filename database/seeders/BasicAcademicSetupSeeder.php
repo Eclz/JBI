@@ -25,6 +25,8 @@ class BasicAcademicSetupSeeder extends Seeder
             Department::firstOrCreate(['code' => $dept['code']], $dept);
         }
 
+        $this->call(FacultySeeder::class);
+
         // Create academic year
         $currentYear = date('Y');
         $nextYear = $currentYear + 1;

@@ -77,6 +77,9 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        // Seed Faculties and link departments
+        $this->call(FacultySeeder::class);
+
         // Create Admin Users
         User::factory()->admin()->create([
             'name' => 'System Administrator',
