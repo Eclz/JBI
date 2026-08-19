@@ -18,6 +18,7 @@
                 <div class="card-body border-bottom">
                     <form method="GET" action="{{ route('admin.applications.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="status" class="form-label">Search Here</label>
                             <input type="text" name="search" class="form-control" placeholder="Search by name, email, phone..." value="{{ request('search') }}">
                         </div>
                         <div class="col-md-3">
@@ -312,6 +313,30 @@ document.addEventListener('DOMContentLoaded', function () {
     selectAll?.addEventListener('change', function () {
         checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
     });
+
+    // Persist Only readiness-qualified state
+    const bulkOnlyReady = document.getElementById('bulkOnlyReady');
+    if (bulkOnlyReady) {
+        const savedState = sessionStorage.getItem('bulkOnlyReady');
+        if (savedState !== null) {
+            bulkOnlyReady.checked = savedState === 'true';
+        }
+        bulkOnlyReady.addEventListener('change', function () {
+            sessionStorage.setItem('bulkOnlyReady', this.checked);
+        });
+    }
+
+    // Persist Force incomplete state
+    const bulkForceApprove = document.getElementById('bulkForceApprove');
+    if (bulkForceApprove) {
+        const savedState = sessionStorage.getItem('bulkForceApprove');
+        if (savedState !== null) {
+            bulkForceApprove.checked = savedState === 'true';
+        }
+        bulkForceApprove.addEventListener('change', function () {
+            sessionStorage.setItem('bulkForceApprove', this.checked);
+        });
+    }
 });
 </script>
 @endsection

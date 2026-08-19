@@ -185,9 +185,9 @@
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label class="form-label small fw-medium">Full Name (ReadOnly)</label>
-                                            <input type="hidden" name="first_name" value="{{ $student->first_name }}">
-                                            <input type="hidden" name="last_name" value="{{ $student->last_name }}">
-                                            <input type="text" class="form-control form-control-sm bg-light" value="{{ $student->full_name }}" readonly>
+                                            <input type="hidden" name="first_name" value="{{ $student->first_name ?: (explode(' ', trim($student->name ?? ''))[0] ?? 'Applicant') }}">
+                                            <input type="hidden" name="last_name" value="{{ $student->last_name ?: (explode(' ', trim($student->name ?? ''), 2)[1] ?? 'Student') }}">
+                                            <input type="text" class="form-control form-control-sm bg-light" value="{{ $student->full_name ?: $student->name }}" readonly>
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label class="form-label small fw-medium">Email Address (ReadOnly)</label>
@@ -195,7 +195,7 @@
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label class="form-label small fw-medium">Phone Number (ReadOnly)</label>
-                                            <input type="text" class="form-control form-control-sm bg-light" name="phone" value="{{ $student->phone }}" readonly required>
+                                            <input type="text" class="form-control form-control-sm bg-light" name="phone" value="{{ $student->phone ?: '+1 (555) 000-0000' }}" readonly required>
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label for="date_of_birth" class="form-label small fw-medium">Date of Birth <span class="text-danger">*</span></label>
@@ -346,30 +346,30 @@
                                             <hr class="mt-0 mb-3">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="previous_school" class="form-label small fw-medium">Previous School/College <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm @error('previous_school') is-invalid @enderror" id="previous_school" name="previous_school" value="{{ old('previous_school') }}" required placeholder="e.g. Lincoln High School">
+                                            <label for="previous_school" class="form-label small fw-medium">Previous School/College (Optional)</label>
+                                            <input type="text" class="form-control form-control-sm @error('previous_school') is-invalid @enderror" id="previous_school" name="previous_school" value="{{ old('previous_school') }}" placeholder="e.g. Lincoln High School">
                                             @error('previous_school')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="previous_qualification" class="form-label small fw-medium">Previous Qualification <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm @error('previous_qualification') is-invalid @enderror" id="previous_qualification" name="previous_qualification" value="{{ old('previous_qualification') }}" required placeholder="e.g. High School Diploma">
+                                            <label for="previous_qualification" class="form-label small fw-medium">Previous Qualification (Optional)</label>
+                                            <input type="text" class="form-control form-control-sm @error('previous_qualification') is-invalid @enderror" id="previous_qualification" name="previous_qualification" value="{{ old('previous_qualification') }}" placeholder="e.g. High School Diploma">
                                             @error('previous_qualification')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="previous_gpa" class="form-label small fw-medium">Previous GPA (0-4 Scale) <span class="text-danger">*</span></label>
-                                            <input type="number" class="form-control form-control-sm @error('previous_gpa') is-invalid @enderror" id="previous_gpa" name="previous_gpa" value="{{ old('previous_gpa') }}" min="0" max="4" step="0.01" required placeholder="3.50">
+                                            <label for="previous_gpa" class="form-label small fw-medium">Previous GPA (0-4 Scale - Optional)</label>
+                                            <input type="number" class="form-control form-control-sm @error('previous_gpa') is-invalid @enderror" id="previous_gpa" name="previous_gpa" value="{{ old('previous_gpa') }}" min="0" max="4" step="0.01" placeholder="3.50">
                                             @error('previous_gpa')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-12">
-                                            <label for="documents" class="form-label small fw-medium">Supporting Documents (Transcripts, Certificates) <span class="text-danger">*</span></label>
-                                            <input type="file" class="form-control form-control-sm @error('documents') is-invalid @enderror" id="documents" name="documents[]" multiple required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="previewDocuments(this, '')">
-                                            <div class="form-text small">Upload multiple files. Accepted: PDF, DOC, DOCX, JPG, PNG. Max: 5MB per file.</div>
+                                            <label for="documents" class="form-label small fw-medium">Supporting Documents (Transcripts, Certificates - Optional)</label>
+                                            <input type="file" class="form-control form-control-sm @error('documents') is-invalid @enderror" id="documents" name="documents[]" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="previewDocuments(this, '')">
+                                            <div class="form-text small">Upload multiple files if available. Accepted: PDF, DOC, DOCX, JPG, PNG. Max: 5MB per file.</div>
                                             @error('documents')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror

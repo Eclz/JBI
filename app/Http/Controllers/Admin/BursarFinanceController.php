@@ -88,11 +88,13 @@ class BursarFinanceController extends Controller
 
         FinanceRevenue::create($validated);
 
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+
         FinanceAuditLog::create([
             'user_id' => auth()->id(),
             'action' => 'Create Revenue Record',
             'module' => 'Revenue Management',
-            'details' => "Recorded revenue {$validated['revenue_code']} of UGX " . number_format($validated['amount'], 2),
+            'details' => "Recorded revenue {$validated['revenue_code']} of {$currencyCode} " . number_format($validated['amount'], 2),
             'ip_address' => $request->ip(),
         ]);
 
@@ -333,6 +335,8 @@ class BursarFinanceController extends Controller
             'branch' => 'nullable|string',
             'current_balance' => 'required|numeric|min:0',
         ]);
+
+        $validated['currency'] = SystemSetting::getSetting('default_currency', 'USD');
 
         BankAccount::create($validated);
 

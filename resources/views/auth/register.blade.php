@@ -71,14 +71,24 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-sm-6">
                                     <label for="password" class="form-label small fw-medium">Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control form-control-sm @error('password') is-invalid @enderror" id="password" name="password" required>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-sm @error('password') is-invalid @enderror" id="password" name="password" required>
+                                        <button class="btn btn-outline-secondary btn-sm toggle-password" type="button" data-target="password" tabindex="-1">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                     @error('password')
-                                        <div class="invalid-feedback small">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block small">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="col-sm-6">
                                     <label for="password_confirmation" class="form-label small fw-medium">Confirm Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control form-control-sm" id="password_confirmation" name="password_confirmation" required>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-sm" id="password_confirmation" name="password_confirmation" required>
+                                        <button class="btn btn-outline-secondary btn-sm toggle-password" type="button" data-target="password_confirmation" tabindex="-1">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

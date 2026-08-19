@@ -107,15 +107,20 @@
 
                         <div>
                             <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                required
-                                autocomplete="current-password"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('password') border-red-300 @enderror"
-                                placeholder="Enter your password"
-                            >
+                            <div class="relative">
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    required
+                                    autocomplete="current-password"
+                                    class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('password') border-red-300 @enderror"
+                                    placeholder="Enter your password"
+                                >
+                                <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center toggle-password text-gray-500 hover:text-gray-700" data-target="password" tabindex="-1">
+                                    <i class="bi bi-eye text-lg"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

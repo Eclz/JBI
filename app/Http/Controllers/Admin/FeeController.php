@@ -687,6 +687,8 @@ class FeeController extends Controller
 
     public function sendReminders(Request $request)
     {
+        @set_time_limit(300);
+
         $request->validate([
             'reminder_type' => 'required|in:due_soon,overdue,all',
             'days_before_due' => 'nullable|integer|min:1|max:30',
@@ -714,19 +716,18 @@ class FeeController extends Controller
             $failedCount = 0;
 
             foreach ($feeRecords as $feeRecord) {
+                if (!$feeRecord->student || !$feeRecord->student->email) {
+                    $failedCount++;
+                    continue;
+                }
+
                 try {
                     // Send email reminder
                     Mail::to($feeRecord->student->email)
                         ->send(new \App\Mail\FeePaymentReminder($feeRecord));
 
                     $sentCount++;
-
-                    // Log the reminder
-                    // activity()
-                    //     ->performedOn($feeRecord)
-                    //     ->causedBy(auth()->user())
-                    //     ->log('Payment reminder sent');
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $failedCount++;
                     Log::error('Failed to send fee reminder: ' . $e->getMessage(), [
                         'fee_record_id' => $feeRecord->id,
@@ -737,12 +738,13 @@ class FeeController extends Controller
 
             $message = "Sent {$sentCount} payment reminder(s) successfully.";
             if ($failedCount > 0) {
-                $message .= " {$failedCount} failed.";
+                $message .= " {$failedCount} failed to send.";
             }
 
-            return back()->with('success', $message);
+            return back()->with($sentCount > 0 ? 'success' : 'warning', $message);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Error in sendReminders: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to send reminders: ' . $e->getMessage()]);
         }
     }

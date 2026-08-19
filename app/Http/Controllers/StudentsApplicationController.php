@@ -31,8 +31,20 @@ class StudentsApplicationController extends Controller
     {
         $email = $request->email;
         if (auth()->check()) {
-            $email = auth()->user()->email;
-            $request->merge(['email' => $email]);
+            $user = auth()->user();
+            $email = $user->email;
+            
+            $nameParts = explode(' ', trim($user->name ?? ''), 2);
+            $firstName = $request->first_name ?: ($user->first_name ?: ($nameParts[0] ?? 'Applicant'));
+            $lastName = $request->last_name ?: ($user->last_name ?: ($nameParts[1] ?? 'Student'));
+            $phone = $request->phone ?: ($user->phone ?: '+1 (555) 000-0000');
+
+            $request->merge([
+                'email' => $email,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'phone' => $phone,
+            ]);
         }
 
         $existingApp = null;
@@ -146,26 +158,30 @@ class StudentsApplicationController extends Controller
             }
 
 
-            $admins = User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                Notification::create([
-                    'user_id' => $admin->id,
-                    'type' => 'application',
-                    'title' => 'New Application Received',
-                    'message' => "New {$application->type} application from {$application->full_name}",
-                    'priority' => 'high',
-                    'action_url' => route('admin.applications.show', $application),
-                ]);
+            try {
+                $admins = User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    Notification::create([
+                        'user_id' => $admin->id,
+                        'type' => 'application',
+                        'title' => 'New Application Received',
+                        'message' => "New {$application->type} application from {$application->full_name}",
+                        'priority' => 'high',
+                        'action_url' => route('admin.applications.show', $application),
+                    ]);
 
-                Mail::to($admin->email)->queue(new NewApplicationNotification($application));
+                    @Mail::to($admin->email)->queue(new NewApplicationNotification($application));
+                }
+
+                @Mail::to($application->email)->queue(new ApplicationSubmitted($application));
+            } catch (\Throwable $mailEx) {
+                Log::warning('Application created, but notification mail dispatch failed: ' . $mailEx->getMessage());
             }
-
-            Mail::to($application->email)->queue(new ApplicationSubmitted($application));
 
             DB::commit();
 
             return redirect()->route('dashboard')
-                           ->with('success', 'Your application has been submitted successfully! Please submit your fee payment proof below.');
+                           ->with('success', 'Your application has been submitted successfully! Please proceed to the next step below.');
 
         } catch (\Exception $e) {
             DB::rollBack();

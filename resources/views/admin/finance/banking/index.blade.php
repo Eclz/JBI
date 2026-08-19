@@ -47,8 +47,8 @@
                                 <td class="fw-semibold">{{ $acc->account_name }}</td>
                                 <td class="font-monospace fw-bold text-primary">{{ $acc->account_number }}</td>
                                 <td class="small text-muted">{{ $acc->branch ?? 'Main Branch' }}</td>
-                                <td><span class="badge bg-secondary">{{ $acc->currency ?? 'UGX' }}</span></td>
-                                <td class="text-end pe-3 fw-bold text-success fs-6">{{ $acc->currency ?? 'UGX' }} {{ number_format($acc->current_balance, 2) }}</td>
+                                <td><span class="badge bg-secondary">{{ $acc->currency ?? $currencyCode }}</span></td>
+                                <td class="text-end pe-3 fw-bold text-success fs-6">{{ $acc->currency ?? $currencyCode }} {{ number_format($acc->current_balance, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -90,7 +90,7 @@
                         <input type="text" name="branch" class="form-control" placeholder="Kampala Main Branch">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Opening Balance (UGX) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold">Opening Balance ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" name="current_balance" class="form-control" required>
                     </div>
                 </div>

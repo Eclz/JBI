@@ -817,6 +817,39 @@
             }
         });
 
+        // Global Password Eye Toggle Handler
+        document.addEventListener('click', function(e) {
+            const toggleBtn = e.target.closest('.toggle-password');
+            if (toggleBtn) {
+                e.preventDefault();
+                const targetId = toggleBtn.getAttribute('data-target');
+                let input = null;
+
+                if (targetId) {
+                    input = document.getElementById(targetId);
+                } else {
+                    const parent = toggleBtn.closest('.input-group') || toggleBtn.closest('.relative');
+                    if (parent) {
+                        input = parent.querySelector('input[type="password"], input[type="text"]');
+                    }
+                }
+
+                if (input) {
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+
+                    const icon = toggleBtn.querySelector('i');
+                    if (icon) {
+                        if (icon.classList.contains('bi')) {
+                            icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                        } else {
+                            icon.className = isPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+                        }
+                    }
+                }
+            }
+        });
+
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
