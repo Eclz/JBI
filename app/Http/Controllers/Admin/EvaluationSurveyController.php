@@ -21,6 +21,10 @@ class EvaluationSurveyController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->input('academic_year_id') === '') {
+            $request->merge(['academic_year_id' => null]);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -28,7 +32,6 @@ class EvaluationSurveyController extends Controller
             'academic_year_id' => 'nullable|exists:academic_years,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
