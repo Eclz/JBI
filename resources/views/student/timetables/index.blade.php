@@ -76,13 +76,23 @@
                                                    substr($item->start_time, 0, 5) === substr($slotStart, 0, 5);
                                         })->first();
                                     @endphp
-                                    <td class="p-2" style="height: 48px;">
+                                    <td class="p-2" style="height: 75px;">
                                         @if($matching)
-                                            <div class="p-2 rounded bg-primary bg-opacity-10 border border-primary text-primary">
-                                                <div class="fw-bold text-uppercase small">{{ $matching->course?->code }}</div>
-                                                <div class="small text-truncate" style="max-width: 130px;">{{ $matching->course?->title }}</div>
-                                                <div class="badge bg-primary text-white mt-1" style="font-size: 0.65rem;">
-                                                    <i class="bi bi-geo-alt me-1"></i>{{ $matching->room_venue }}
+                                            @php
+                                                $lecturerName = $matching->faculty?->name ?? $matching->course?->instructor?->name ?? 'TBA';
+                                            @endphp
+                                            <div class="p-2 rounded-3 shadow-sm text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); min-height: 70px;">
+                                                <div class="fw-bold text-uppercase text-white" style="letter-spacing: 0.5px; font-size: 0.8rem; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                                                    {{ $matching->course?->code }}
+                                                </div>
+                                                <div class="text-white text-truncate fw-medium" style="max-width: 140px; font-size: 0.75rem; text-shadow: 0 1px 2px rgba(0,0,0,0.3);" title="{{ $matching->course?->title }}">
+                                                    {{ $matching->course?->title }}
+                                                </div>
+                                                <div class="text-white-50 text-truncate" style="max-width: 140px; font-size: 0.7rem;" title="Lecturer: {{ $lecturerName }}">
+                                                    <i class="bi bi-person-badge me-1"></i>{{ $lecturerName }}
+                                                </div>
+                                                <div class="badge bg-white text-dark mt-1 px-2 py-1 shadow-sm" style="font-size: 0.68rem; font-weight: 700;">
+                                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ $matching->room_venue }}
                                                 </div>
                                             </div>
                                         @else
