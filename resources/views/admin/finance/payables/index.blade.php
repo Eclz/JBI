@@ -191,7 +191,7 @@
                         <input type="text" name="invoice_number" class="form-control" placeholder="INV-2026-001" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Amount (UGX) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold">Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" name="amount" class="form-control" required>
                     </div>
                     <div class="mb-3">

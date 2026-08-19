@@ -362,133 +362,140 @@
         @if(auth()->user()->isStudent() && auth()->user()->isAdmitted())
         <li class="menu-header">Student</li>
 
-        <li class="menu-item {{ request()->routeIs('student.courses.*') && !request()->routeIs('student.courses.enrollments') ? 'active' : '' }}">
-            <a href="{{ route('student.courses.index') }}" class="menu-link">
-                <i class="bi bi-journal-text"></i>
-                <span>My Courses</span>
+        @php
+            $isAcademicsActive = request()->routeIs('student.courses.*') || 
+                                request()->routeIs('student.lms.*') || 
+                                request()->routeIs('student.assignments.*') || 
+                                request()->routeIs('student.program-changes.*') || 
+                                request()->routeIs('student.exams.*') || 
+                                request()->routeIs('student.attendance.*');
+        @endphp
+        {{-- Collapsible Academics Menu for Student --}}
+        <li class="menu-item-dropdown {{ $isAcademicsActive ? 'active' : '' }}">
+            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
+                <i class="bi bi-book"></i>
+                <span class="fw-bold text-uppercase">Academics</span>
+                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
             </a>
-        </li>
+            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isAcademicsActive ? 'block' : 'none' }};">
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.courses.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.courses.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-journal-text me-2" style="font-size: 1rem;"></i>
+                        <span>MY COURSES</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.lms.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.lms.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-play-circle me-2" style="font-size: 1rem;"></i>
+                        <span>MY LEARNING</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.assignments.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.assignments.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-file-earmark-text me-2" style="font-size: 1rem;"></i>
+                        <span>ASSIGNMENTS</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.program-changes.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-arrow-repeat me-2" style="font-size: 1rem;"></i>
+                        <span>PROGRAM CHANGE</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.exams.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.exams.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-pencil-square me-2" style="font-size: 1rem;"></i>
+                        <span>EXAMS</span>
+                        @php
+                            $activeExamCount = 0;
+                            try {
+                                $student = Auth::user();
+                                $enrolledCourseIds = $student->courseEnrollments()
+                                    ->where('status', 'enrolled')
+                                    ->pluck('course_id');
+                                $now = \Carbon\Carbon::now();
+                                $activeExams = \App\Models\Exam::whereIn('course_id', $enrolledCourseIds)
+                                    ->where('start_time', '<=', $now)
+                                    ->where('end_time', '>=', $now)
+                                    ->with(['attempts' => function ($query) use ($student) {
+                                        $query->where('user_id', $student->id);
+                                    }])
+                                    ->get();
 
-        <li class="menu-item {{ request()->routeIs('student.lms.*') ? 'active' : '' }}">
-            <a href="{{ route('student.lms.index') }}" class="menu-link">
-                <i class="bi bi-play-circle"></i>
-                <span>My Learning</span>
-            </a>
-        </li>
-
-        {{-- Updating assignment route link --}}
-        <li class="menu-item {{ request()->routeIs('student.assignments.*') ? 'active' : '' }}">
-            <a href="{{ route('student.assignments.index') }}" class="menu-link">
-                <i class="bi bi-file-earmark-text"></i>
-                <span>Assignments</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
-            <a href="{{ route('student.program-changes.index') }}" class="menu-link">
-                <i class="bi bi-arrow-repeat"></i>
-                <span>Program Change</span>
-            </a>
-        </li>
-
-        {{-- Adding exams menu item --}}
-        <li class="menu-item {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
-            <a href="{{ route('student.exams.index') }}" class="menu-link">
-                <i class="bi bi-pencil-square"></i>
-                <span>Exams</span>
-                @php
-                    $activeExamCount = 0;
-                    try {
-                        $student = Auth::user();
-                        $enrolledCourseIds = $student->courseEnrollments()
-                            ->where('status', 'enrolled')
-                            ->pluck('course_id');
-                        $now = \Carbon\Carbon::now();
-                        $activeExams = \App\Models\Exam::whereIn('course_id', $enrolledCourseIds)
-                            ->where('start_time', '<=', $now)
-                            ->where('end_time', '>=', $now)
-                            ->with(['attempts' => function ($query) use ($student) {
-                                $query->where('user_id', $student->id);
-                            }])
-                            ->get();
-
-                        $activeExamCount = $activeExams->filter(function ($exam) use ($now) {
-                            $attempt = $exam->attempts->first();
-                            if (!$attempt) {
-                                return true;
+                                $activeExamCount = $activeExams->filter(function ($exam) use ($now) {
+                                    $attempt = $exam->attempts->first();
+                                    if (!$attempt) return true;
+                                    if (in_array($attempt->status, ['submitted', 'graded'], true)) return false;
+                                    if (!$attempt->started_at) return true;
+                                    $byDuration = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
+                                    $deadline = $exam->end_time;
+                                    $effectiveEnd = $deadline && $deadline->lt($byDuration) ? $deadline : $byDuration;
+                                    return $effectiveEnd->gt($now);
+                                })->count();
+                            } catch (\Exception $e) {
+                                $activeExamCount = 0;
                             }
-                            if (in_array($attempt->status, ['submitted', 'graded'], true)) {
-                                return false;
-                            }
-                            if (!$attempt->started_at) {
-                                return true;
-                            }
-                            $byDuration = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
-                            $deadline = $exam->end_time;
-                            $effectiveEnd = $deadline && $deadline->lt($byDuration) ? $deadline : $byDuration;
-                            return $effectiveEnd->gt($now);
-                        })->count();
-                    } catch (\Exception $e) {
-                        $activeExamCount = 0;
-                    }
-                @endphp
-                @if($activeExamCount > 0)
-                    <span class="badge bg-danger rounded-pill ms-auto">{{ $activeExamCount }}</span>
-                @endif
-            </a>
+                        @endphp
+                        @if($activeExamCount > 0)
+                            <span class="badge bg-danger rounded-pill ms-auto">{{ $activeExamCount }}</span>
+                        @endif
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.attendance.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.attendance.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-calendar-check me-2" style="font-size: 1rem;"></i>
+                        <span>ATTENDANCE</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        {{-- Updating grades route link --}}
-        <li class="menu-item {{ request()->routeIs('student.grades.*') ? 'active' : '' }}">
-            <a href="{{ route('student.grades.index') }}" class="menu-link">
-                <i class="bi bi-award"></i>
-                <span>Grades</span>
-            </a>
-        </li>
-
-        {{-- Updating attendance route link --}}
-        <li class="menu-item {{ request()->routeIs('student.attendance.*') ? 'active' : '' }}">
-            <a href="{{ route('student.attendance.index') }}" class="menu-link">
-                <i class="bi bi-calendar-check"></i>
-                <span>Attendance</span>
-            </a>
-        </li>
-
-        {{-- My Programme & Enrollment --}}
-        <li class="menu-item {{ request()->routeIs('student.my-programme') ? 'active' : '' }}">
-            <a href="{{ route('student.my-programme') }}" class="menu-link">
+        @php
+            $isProgrammeActive = request()->routeIs('student.my-programme') || 
+                                 request()->routeIs('student.enrollment.*') || 
+                                 request()->routeIs('student.timetables.*') || 
+                                 request()->routeIs('academic-calendar.*');
+        @endphp
+        {{-- Collapsible Programme & Registration Menu for Student --}}
+        <li class="menu-item-dropdown {{ $isProgrammeActive ? 'active' : '' }}">
+            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
                 <i class="bi bi-journal-bookmark"></i>
-                <span>My Programme</span>
+                <span class="fw-bold text-uppercase">Programme & Registration</span>
+                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
             </a>
+            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isProgrammeActive ? 'block' : 'none' }};">
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.my-programme') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.my-programme') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-journal-bookmark me-2" style="font-size: 1rem;"></i>
+                        <span>MY PROGRAMME</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.enrollment.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.enrollment.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-person-plus-fill me-2" style="font-size: 1rem;"></i>
+                        <span>ENROLLMENT & REGISTRATION</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.timetables.teaching') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.timetables.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-calendar3 me-2" style="font-size: 1rem;"></i>
+                        <span>TIMETABLES</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('academic-calendar.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('academic-calendar.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-calendar-week me-2" style="font-size: 1rem;"></i>
+                        <span>ACADEMIC CALENDAR</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('student.enrollment.*') ? 'active' : '' }}">
-            <a href="{{ route('student.enrollment.index') }}" class="menu-link">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Enrollment & Registration</span>
-            </a>
-        </li>
-
-        {{-- Single Timetable Link --}}
-        <li class="menu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">
-            <a href="{{ route('student.timetables.teaching') }}" class="menu-link">
-                <i class="bi bi-calendar3"></i>
-                <span>Timetables</span>
-            </a>
-        </li>
-
-        {{-- Mailbox & Academic Calendar --}}
+        {{-- Mailbox --}}
         <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
             <a href="{{ route('messages.index') }}" class="menu-link">
                 <i class="bi bi-envelope-paper"></i>
                 <span>Mailbox</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
-            <a href="{{ route('academic-calendar.index') }}" class="menu-link">
-                <i class="bi bi-calendar-week"></i>
-                <span>Academic Calendar</span>
             </a>
         </li>
 
@@ -555,19 +562,6 @@
             <a href="{{ route('forums.index') }}" class="menu-link">
                 <i class="bi bi-chat-dots"></i>
                 <span>Forums</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-            <a href="{{ route('notifications.index') }}" class="menu-link">
-                <i class="bi bi-bell"></i>
-                <span>Notifications</span>
-                @php
-                    $unreadCount = Auth::check() ? Auth::user()->notifications()->where('is_read', false)->count() : 0;
-                @endphp
-                @if($unreadCount > 0)
-                    <span class="badge bg-danger rounded-pill ms-auto">{{ $unreadCount }}</span>
-                @endif
             </a>
         </li>
 

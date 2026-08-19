@@ -46,16 +46,16 @@
 
     <!-- Tab Contents -->
     <div class="tab-content" id="dashboard-tabs-content">
-        
+
         <!-- TAB 1: DASHBOARD -->
         <div class="tab-pane fade show active" id="main-dashboard" role="tabpanel" aria-labelledby="main-dashboard-tab">
-            
+
             <!-- Application Progress Stepper (5 Steps Flow) -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm py-4 px-3">
                         <div class="d-flex justify-content-around text-center flex-wrap">
-                            
+
                             <!-- Step 1: Account Created -->
                             <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 110px;">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white mb-2" style="width: 40px; height: 40px;">
@@ -185,9 +185,9 @@
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label class="form-label small fw-medium">Full Name (ReadOnly)</label>
-                                            <input type="hidden" name="first_name" value="{{ $student->first_name }}">
-                                            <input type="hidden" name="last_name" value="{{ $student->last_name }}">
-                                            <input type="text" class="form-control form-control-sm bg-light" value="{{ $student->full_name }}" readonly>
+                                            <input type="hidden" name="first_name" value="{{ $student->first_name ?: (explode(' ', trim($student->name ?? ''))[0] ?? 'Applicant') }}">
+                                            <input type="hidden" name="last_name" value="{{ $student->last_name ?: (explode(' ', trim($student->name ?? ''), 2)[1] ?? 'Student') }}">
+                                            <input type="text" class="form-control form-control-sm bg-light" value="{{ $student->full_name ?: $student->name }}" readonly>
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label class="form-label small fw-medium">Email Address (ReadOnly)</label>
@@ -195,7 +195,7 @@
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label class="form-label small fw-medium">Phone Number (ReadOnly)</label>
-                                            <input type="text" class="form-control form-control-sm bg-light" name="phone" value="{{ $student->phone }}" readonly required>
+                                            <input type="text" class="form-control form-control-sm bg-light" name="phone" value="{{ $student->phone ?: '+1 (555) 000-0000' }}" readonly required>
                                         </div>
                                         <div class="col-md-6 col-sm-6">
                                             <label for="date_of_birth" class="form-label small fw-medium">Date of Birth <span class="text-danger">*</span></label>
@@ -346,30 +346,30 @@
                                             <hr class="mt-0 mb-3">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="previous_school" class="form-label small fw-medium">Previous School/College <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm @error('previous_school') is-invalid @enderror" id="previous_school" name="previous_school" value="{{ old('previous_school') }}" required placeholder="e.g. Lincoln High School">
+                                            <label for="previous_school" class="form-label small fw-medium">Previous School/College (Optional)</label>
+                                            <input type="text" class="form-control form-control-sm @error('previous_school') is-invalid @enderror" id="previous_school" name="previous_school" value="{{ old('previous_school') }}" placeholder="e.g. Lincoln High School">
                                             @error('previous_school')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="previous_qualification" class="form-label small fw-medium">Previous Qualification <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm @error('previous_qualification') is-invalid @enderror" id="previous_qualification" name="previous_qualification" value="{{ old('previous_qualification') }}" required placeholder="e.g. High School Diploma">
+                                            <label for="previous_qualification" class="form-label small fw-medium">Previous Qualification (Optional)</label>
+                                            <input type="text" class="form-control form-control-sm @error('previous_qualification') is-invalid @enderror" id="previous_qualification" name="previous_qualification" value="{{ old('previous_qualification') }}" placeholder="e.g. High School Diploma">
                                             @error('previous_qualification')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="previous_gpa" class="form-label small fw-medium">Previous GPA (0-4 Scale) <span class="text-danger">*</span></label>
-                                            <input type="number" class="form-control form-control-sm @error('previous_gpa') is-invalid @enderror" id="previous_gpa" name="previous_gpa" value="{{ old('previous_gpa') }}" min="0" max="4" step="0.01" required placeholder="3.50">
+                                            <label for="previous_gpa" class="form-label small fw-medium">Previous GPA (0-4 Scale - Optional)</label>
+                                            <input type="number" class="form-control form-control-sm @error('previous_gpa') is-invalid @enderror" id="previous_gpa" name="previous_gpa" value="{{ old('previous_gpa') }}" min="0" max="4" step="0.01" placeholder="3.50">
                                             @error('previous_gpa')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-12">
-                                            <label for="documents" class="form-label small fw-medium">Supporting Documents (Transcripts, Certificates) <span class="text-danger">*</span></label>
-                                            <input type="file" class="form-control form-control-sm @error('documents') is-invalid @enderror" id="documents" name="documents[]" multiple required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="previewDocuments(this, '')">
-                                            <div class="form-text small">Upload multiple files. Accepted: PDF, DOC, DOCX, JPG, PNG. Max: 5MB per file.</div>
+                                            <label for="documents" class="form-label small fw-medium">Supporting Documents (Transcripts, Certificates - Optional)</label>
+                                            <input type="file" class="form-control form-control-sm @error('documents') is-invalid @enderror" id="documents" name="documents[]" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="previewDocuments(this, '')">
+                                            <div class="form-text small">Upload multiple files if available. Accepted: PDF, DOC, DOCX, JPG, PNG. Max: 5MB per file.</div>
                                             @error('documents')
                                                 <div class="invalid-feedback small">{{ $message }}</div>
                                             @enderror
@@ -746,7 +746,7 @@
                                 <p class="text-muted mx-auto" style="max-width: 480px;">
                                     We regret to inform you that your admission application <strong>#{{ $application->application_number }}</strong> was rejected.
                                 </p>
-                                
+
                                 @if($application->review_notes)
                                     <div class="bg-light border text-start p-3 mx-auto mb-4" style="border-radius: 8px; max-width: 500px;">
                                         <strong>Admissions Office Notes:</strong>
@@ -1295,15 +1295,15 @@ function switchToDashboardTab() {
 // Prevent duplicate program selections in choice dropdowns
 document.addEventListener('DOMContentLoaded', function() {
     const selectClasses = ['.program-choice-select'];
-    
+
     selectClasses.forEach(selector => {
         const selects = document.querySelectorAll(selector);
-        
+
         function enforceUniqueness() {
             const selectedValues = Array.from(selects)
                 .map(s => s.value)
                 .filter(val => val !== '');
-            
+
             selects.forEach(s => {
                 const currentValue = s.value;
                 Array.from(s.options).forEach(option => {
@@ -1320,7 +1320,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selects.forEach(select => {
             select.addEventListener('change', enforceUniqueness);
         });
-        
+
         enforceUniqueness();
     });
 });
@@ -1329,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function previewProfilePicture(input, suffix) {
     const previewCard = document.getElementById('profile-picture-preview-card' + suffix);
     const previewImg = document.getElementById('profile-picture-preview-img' + suffix);
-    
+
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -1347,7 +1347,7 @@ function removeProfilePicture(suffix) {
     const input = document.getElementById(suffix ? 'profile_picture_re' : 'profile_picture');
     const previewCard = document.getElementById('profile-picture-preview-card' + suffix);
     const previewImg = document.getElementById('profile-picture-preview-img' + suffix);
-    
+
     input.value = '';
     previewImg.src = '#';
     previewCard.classList.add('d-none');
@@ -1360,14 +1360,14 @@ let documentsFileListRe = new DataTransfer();
 function previewDocuments(input, suffix) {
     const container = document.getElementById(suffix ? 'documents-previews-container_re' : 'documents-previews-container');
     container.innerHTML = '';
-    
+
     if (!input.files || input.files.length === 0) {
         container.classList.add('d-none');
         return;
     }
 
     container.classList.remove('d-none');
-    
+
     if (suffix === '_re') {
         documentsFileListRe = new DataTransfer();
         for (let i = 0; i < input.files.length; i++) {
@@ -1386,21 +1386,21 @@ function previewDocuments(input, suffix) {
 function renderDocumentPreviews(suffix) {
     const container = document.getElementById(suffix ? 'documents-previews-container_re' : 'documents-previews-container');
     container.innerHTML = '';
-    
+
     const fileList = suffix === '_re' ? documentsFileListRe : documentsFileList;
     const files = fileList.files;
-    
+
     if (files.length === 0) {
         container.classList.add('d-none');
         return;
     }
-    
+
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const isImage = file.type.startsWith('image/');
         const col = document.createElement('div');
         col.className = 'col-sm-6 col-md-4 col-lg-3';
-        
+
         let previewHtml = '';
         if (isImage) {
             previewHtml = `<img src="${URL.createObjectURL(file)}" class="card-img-top border-bottom" style="height: 100px; object-fit: cover;">`;
@@ -1411,7 +1411,7 @@ function renderDocumentPreviews(suffix) {
                 </div>
             `;
         }
-        
+
         col.innerHTML = `
             <div class="card h-100 border overflow-hidden position-relative shadow-sm" style="border-radius: 8px;">
                 ${previewHtml}
@@ -1432,13 +1432,13 @@ function removeDocument(index, suffix) {
     const input = document.getElementById(suffix ? 'documents_re' : 'documents');
     const oldFileList = suffix === '_re' ? documentsFileListRe : documentsFileList;
     const newDT = new DataTransfer();
-    
+
     for (let i = 0; i < oldFileList.files.length; i++) {
         if (i !== index) {
             newDT.items.add(oldFileList.files[i]);
         }
     }
-    
+
     if (suffix === '_re') {
         documentsFileListRe = newDT;
         input.files = documentsFileListRe.files;
@@ -1446,7 +1446,7 @@ function removeDocument(index, suffix) {
         documentsFileList = newDT;
         input.files = documentsFileList.files;
     }
-    
+
     renderDocumentPreviews(suffix);
 }
 </script>

@@ -730,20 +730,6 @@
 
             <!-- Content Area for Authenticated Users -->
             <div class="content-area">
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
                 @yield('content')
             </div>
             @endauth
@@ -827,6 +813,39 @@
                 const searchInput = document.querySelector('.navbar .search-wrapper input');
                 if (searchInput) {
                     searchInput.focus();
+                }
+            }
+        });
+
+        // Global Password Eye Toggle Handler
+        document.addEventListener('click', function(e) {
+            const toggleBtn = e.target.closest('.toggle-password');
+            if (toggleBtn) {
+                e.preventDefault();
+                const targetId = toggleBtn.getAttribute('data-target');
+                let input = null;
+
+                if (targetId) {
+                    input = document.getElementById(targetId);
+                } else {
+                    const parent = toggleBtn.closest('.input-group') || toggleBtn.closest('.relative');
+                    if (parent) {
+                        input = parent.querySelector('input[type="password"], input[type="text"]');
+                    }
+                }
+
+                if (input) {
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+
+                    const icon = toggleBtn.querySelector('i');
+                    if (icon) {
+                        if (icon.classList.contains('bi')) {
+                            icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                        } else {
+                            icon.className = isPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+                        }
+                    }
                 }
             }
         });

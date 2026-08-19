@@ -18,7 +18,7 @@ class TimetableController extends Controller
         $yearOfStudy = $request->input('year', $studentProfile?->year_of_study ?? 1);
         $semesterNum = $request->input('semester', 1);
 
-        $query = Timetable::with(['course', 'faculty'])
+        $query = Timetable::with(['course.instructor', 'faculty'])
             ->where('type', $type);
 
         if ($programId) {

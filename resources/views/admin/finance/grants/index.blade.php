@@ -97,7 +97,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Total Grant Amount (UGX) <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Total Grant Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="total_grant_amount" class="form-control" required>
                         </div>
                         <div class="col-md-6">

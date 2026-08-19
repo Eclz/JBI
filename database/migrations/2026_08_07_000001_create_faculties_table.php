@@ -15,6 +15,7 @@ return new class extends Migration
 
         if (Schema::hasTable('departments') && Schema::hasColumn('departments', 'school_id')) {
             Schema::table('departments', function (Blueprint $table) {
+                $table->dropForeign(['school_id']);
                 $table->dropColumn('school_id');
             });
         }

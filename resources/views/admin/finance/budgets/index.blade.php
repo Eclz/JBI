@@ -109,7 +109,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Allocated Budget Amount (UGX) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold">Allocated Budget Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" name="allocated_amount" class="form-control" placeholder="250000000" required>
                     </div>
                 </div>

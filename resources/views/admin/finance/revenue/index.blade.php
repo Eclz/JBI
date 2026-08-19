@@ -112,7 +112,7 @@
                             <input type="text" name="title" class="form-control" placeholder="e.g. Auditorium Rental Income" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Amount (UGX) <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="amount" class="form-control" required>
                         </div>
                         <div class="col-md-6">

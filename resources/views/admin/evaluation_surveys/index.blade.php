@@ -21,6 +21,19 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -90,16 +103,28 @@
                             <option value="2">Semester 2 (End of Semester II)</option>
                         </select>
                     </div>
+                    @if(isset($academicYears) && $academicYears->count() > 0)
+                        <div class="mb-3">
+                            <label class="form-label">Academic Year (Optional)</label>
+                            <select name="academic_year_id" class="form-select">
+                                <option value="">Select Academic Year</option>
+                                @foreach($academicYears as $ay)
+                                    <option value="{{ $ay->id }}">{{ $ay->name ?? $ay->year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" rows="3" placeholder="End of semester student evaluation of course lecturers..."></textarea>
                     </div>
                     <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" name="is_active" id="surveyActiveCheck" checked>
+                        <input class="form-check-input" type="checkbox" name="is_active" id="surveyActiveCheck" value="1" checked>
                         <label class="form-check-label" for="surveyActiveCheck">Activate survey immediately</label>
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Survey</button>
                 </div>
             </form>

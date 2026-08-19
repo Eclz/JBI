@@ -114,7 +114,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Purchase Cost (UGX) <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Purchase Cost ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="purchase_cost" class="form-control" required>
                         </div>
                         <div class="col-md-6">
