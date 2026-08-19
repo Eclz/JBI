@@ -46,16 +46,16 @@
 
     <!-- Tab Contents -->
     <div class="tab-content" id="dashboard-tabs-content">
-        
+
         <!-- TAB 1: DASHBOARD -->
         <div class="tab-pane fade show active" id="main-dashboard" role="tabpanel" aria-labelledby="main-dashboard-tab">
-            
+
             <!-- Application Progress Stepper (5 Steps Flow) -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm py-4 px-3">
                         <div class="d-flex justify-content-around text-center flex-wrap">
-                            
+
                             <!-- Step 1: Account Created -->
                             <div class="d-flex flex-column align-items-center mb-3 mb-md-0" style="min-width: 110px;">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white mb-2" style="width: 40px; height: 40px;">
@@ -746,7 +746,7 @@
                                 <p class="text-muted mx-auto" style="max-width: 480px;">
                                     We regret to inform you that your admission application <strong>#{{ $application->application_number }}</strong> was rejected.
                                 </p>
-                                
+
                                 @if($application->review_notes)
                                     <div class="bg-light border text-start p-3 mx-auto mb-4" style="border-radius: 8px; max-width: 500px;">
                                         <strong>Admissions Office Notes:</strong>
@@ -1295,15 +1295,15 @@ function switchToDashboardTab() {
 // Prevent duplicate program selections in choice dropdowns
 document.addEventListener('DOMContentLoaded', function() {
     const selectClasses = ['.program-choice-select'];
-    
+
     selectClasses.forEach(selector => {
         const selects = document.querySelectorAll(selector);
-        
+
         function enforceUniqueness() {
             const selectedValues = Array.from(selects)
                 .map(s => s.value)
                 .filter(val => val !== '');
-            
+
             selects.forEach(s => {
                 const currentValue = s.value;
                 Array.from(s.options).forEach(option => {
@@ -1320,7 +1320,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selects.forEach(select => {
             select.addEventListener('change', enforceUniqueness);
         });
-        
+
         enforceUniqueness();
     });
 });
@@ -1329,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function previewProfilePicture(input, suffix) {
     const previewCard = document.getElementById('profile-picture-preview-card' + suffix);
     const previewImg = document.getElementById('profile-picture-preview-img' + suffix);
-    
+
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -1347,7 +1347,7 @@ function removeProfilePicture(suffix) {
     const input = document.getElementById(suffix ? 'profile_picture_re' : 'profile_picture');
     const previewCard = document.getElementById('profile-picture-preview-card' + suffix);
     const previewImg = document.getElementById('profile-picture-preview-img' + suffix);
-    
+
     input.value = '';
     previewImg.src = '#';
     previewCard.classList.add('d-none');
@@ -1360,14 +1360,14 @@ let documentsFileListRe = new DataTransfer();
 function previewDocuments(input, suffix) {
     const container = document.getElementById(suffix ? 'documents-previews-container_re' : 'documents-previews-container');
     container.innerHTML = '';
-    
+
     if (!input.files || input.files.length === 0) {
         container.classList.add('d-none');
         return;
     }
 
     container.classList.remove('d-none');
-    
+
     if (suffix === '_re') {
         documentsFileListRe = new DataTransfer();
         for (let i = 0; i < input.files.length; i++) {
@@ -1386,21 +1386,21 @@ function previewDocuments(input, suffix) {
 function renderDocumentPreviews(suffix) {
     const container = document.getElementById(suffix ? 'documents-previews-container_re' : 'documents-previews-container');
     container.innerHTML = '';
-    
+
     const fileList = suffix === '_re' ? documentsFileListRe : documentsFileList;
     const files = fileList.files;
-    
+
     if (files.length === 0) {
         container.classList.add('d-none');
         return;
     }
-    
+
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const isImage = file.type.startsWith('image/');
         const col = document.createElement('div');
         col.className = 'col-sm-6 col-md-4 col-lg-3';
-        
+
         let previewHtml = '';
         if (isImage) {
             previewHtml = `<img src="${URL.createObjectURL(file)}" class="card-img-top border-bottom" style="height: 100px; object-fit: cover;">`;
@@ -1411,7 +1411,7 @@ function renderDocumentPreviews(suffix) {
                 </div>
             `;
         }
-        
+
         col.innerHTML = `
             <div class="card h-100 border overflow-hidden position-relative shadow-sm" style="border-radius: 8px;">
                 ${previewHtml}
@@ -1432,13 +1432,13 @@ function removeDocument(index, suffix) {
     const input = document.getElementById(suffix ? 'documents_re' : 'documents');
     const oldFileList = suffix === '_re' ? documentsFileListRe : documentsFileList;
     const newDT = new DataTransfer();
-    
+
     for (let i = 0; i < oldFileList.files.length; i++) {
         if (i !== index) {
             newDT.items.add(oldFileList.files[i]);
         }
     }
-    
+
     if (suffix === '_re') {
         documentsFileListRe = newDT;
         input.files = documentsFileListRe.files;
@@ -1446,7 +1446,7 @@ function removeDocument(index, suffix) {
         documentsFileList = newDT;
         input.files = documentsFileList.files;
     }
-    
+
     renderDocumentPreviews(suffix);
 }
 </script>
