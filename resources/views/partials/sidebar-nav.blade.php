@@ -450,41 +450,52 @@
             </ul>
         </li>
 
-        {{-- My Programme & Enrollment --}}
-        <li class="menu-item {{ request()->routeIs('student.my-programme') ? 'active' : '' }}">
-            <a href="{{ route('student.my-programme') }}" class="menu-link">
+        @php
+            $isProgrammeActive = request()->routeIs('student.my-programme') || 
+                                 request()->routeIs('student.enrollment.*') || 
+                                 request()->routeIs('student.timetables.*') || 
+                                 request()->routeIs('academic-calendar.*');
+        @endphp
+        {{-- Collapsible Programme & Registration Menu for Student --}}
+        <li class="menu-item-dropdown {{ $isProgrammeActive ? 'active' : '' }}">
+            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
                 <i class="bi bi-journal-bookmark"></i>
-                <span>My Programme</span>
+                <span class="fw-bold text-uppercase">Programme & Registration</span>
+                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
             </a>
+            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isProgrammeActive ? 'block' : 'none' }};">
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.my-programme') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.my-programme') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-journal-bookmark me-2" style="font-size: 1rem;"></i>
+                        <span>MY PROGRAMME</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.enrollment.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.enrollment.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-person-plus-fill me-2" style="font-size: 1rem;"></i>
+                        <span>ENROLLMENT & REGISTRATION</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('student.timetables.teaching') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.timetables.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-calendar3 me-2" style="font-size: 1rem;"></i>
+                        <span>TIMETABLES</span>
+                    </a>
+                </li>
+                <li class="submenu-item py-1">
+                    <a href="{{ route('academic-calendar.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('academic-calendar.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
+                        <i class="bi bi-calendar-week me-2" style="font-size: 1rem;"></i>
+                        <span>ACADEMIC CALENDAR</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('student.enrollment.*') ? 'active' : '' }}">
-            <a href="{{ route('student.enrollment.index') }}" class="menu-link">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Enrollment & Registration</span>
-            </a>
-        </li>
-
-        {{-- Single Timetable Link --}}
-        <li class="menu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">
-            <a href="{{ route('student.timetables.teaching') }}" class="menu-link">
-                <i class="bi bi-calendar3"></i>
-                <span>Timetables</span>
-            </a>
-        </li>
-
-        {{-- Mailbox & Academic Calendar --}}
+        {{-- Mailbox --}}
         <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
             <a href="{{ route('messages.index') }}" class="menu-link">
                 <i class="bi bi-envelope-paper"></i>
                 <span>Mailbox</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
-            <a href="{{ route('academic-calendar.index') }}" class="menu-link">
-                <i class="bi bi-calendar-week"></i>
-                <span>Academic Calendar</span>
             </a>
         </li>
 
@@ -551,19 +562,6 @@
             <a href="{{ route('forums.index') }}" class="menu-link">
                 <i class="bi bi-chat-dots"></i>
                 <span>Forums</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-            <a href="{{ route('notifications.index') }}" class="menu-link">
-                <i class="bi bi-bell"></i>
-                <span>Notifications</span>
-                @php
-                    $unreadCount = Auth::check() ? Auth::user()->notifications()->where('is_read', false)->count() : 0;
-                @endphp
-                @if($unreadCount > 0)
-                    <span class="badge bg-danger rounded-pill ms-auto">{{ $unreadCount }}</span>
-                @endif
             </a>
         </li>
 
