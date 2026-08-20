@@ -378,7 +378,7 @@
                                         </div>
                                         <div class="col-12">
                                             <label for="application_notes" class="form-label small fw-medium">Personal Statement / Cover Note</label>
-                                            <textarea class="form-control form-control-sm" id="application_notes" name="application_notes" rows="4" placeholder="Briefly describe your objectives..."></textarea>
+                                            <textarea class="form-control form-control-sm" id="application_notes" name="application_notes" rows="4" placeholder="Briefly describe your objectives...">{{ old('application_notes') }}</textarea>
                                         </div>
                                     </div>
 

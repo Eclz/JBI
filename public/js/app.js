@@ -70,12 +70,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Auto-hide alerts after 5 seconds
+  // Auto-hide success alerts after 5 seconds
   setTimeout(() => {
-    const alerts = document.querySelectorAll(".alert")
+    const alerts = document.querySelectorAll(".alert.alert-dismissible.alert-success, .alert.auto-dismiss")
     alerts.forEach((alert) => {
-      if (bootstrap) {
-        const bsAlert = new bootstrap.Alert(alert)
+      if (bootstrap && bootstrap.Alert) {
+        const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert)
         bsAlert.close()
       }
     })

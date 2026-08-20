@@ -113,7 +113,7 @@
         <li class="menu-item {{ request()->routeIs('admin.faculty-staff.*') ? 'active' : '' }}">
             <a href="{{ route('admin.faculty-staff.index') }}" class="menu-link">
                 <i class="bi bi-person-badge"></i>
-                <span>Faculty Management</span>
+                <span>Faculty Staff Management</span>
             </a>
         </li>
 
@@ -363,11 +363,11 @@
         <li class="menu-header">Student</li>
 
         @php
-            $isAcademicsActive = request()->routeIs('student.courses.*') || 
-                                request()->routeIs('student.lms.*') || 
-                                request()->routeIs('student.assignments.*') || 
-                                request()->routeIs('student.program-changes.*') || 
-                                request()->routeIs('student.exams.*') || 
+            $isAcademicsActive = request()->routeIs('student.courses.*') ||
+                                request()->routeIs('student.lms.*') ||
+                                request()->routeIs('student.assignments.*') ||
+                                request()->routeIs('student.program-changes.*') ||
+                                request()->routeIs('student.exams.*') ||
                                 request()->routeIs('student.attendance.*');
         @endphp
         {{-- Collapsible Academics Menu for Student --}}
@@ -451,9 +451,9 @@
         </li>
 
         @php
-            $isProgrammeActive = request()->routeIs('student.my-programme') || 
-                                 request()->routeIs('student.enrollment.*') || 
-                                 request()->routeIs('student.timetables.*') || 
+            $isProgrammeActive = request()->routeIs('student.my-programme') ||
+                                 request()->routeIs('student.enrollment.*') ||
+                                 request()->routeIs('student.timetables.*') ||
                                  request()->routeIs('academic-calendar.*');
         @endphp
         {{-- Collapsible Programme & Registration Menu for Student --}}
@@ -1050,7 +1050,7 @@ function toggleDropdownMenu(btn) {
     const parent = btn.parentElement;
     const submenu = parent.querySelector('.submenu-list');
     const chevron = btn.querySelector('.dropdown-chevron');
-    
+
     if (submenu.style.display === 'none' || submenu.style.display === '') {
         submenu.style.display = 'block';
         chevron.classList.replace('bi-chevron-down', 'bi-chevron-up');

@@ -851,10 +851,12 @@
         });
 
         setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
+            const alerts = document.querySelectorAll('.alert.alert-dismissible.alert-success, .alert.auto-dismiss');
             alerts.forEach(function(alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+                if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                    const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
             });
         }, 5000);
     </script>

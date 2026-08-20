@@ -65,7 +65,13 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="badge bg-info">{{ ucfirst($structure->type) }}</span>
+                                                @if($structure->type === 'retake')
+                                                    <span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat me-1"></i>Retake Fee</span>
+                                                @elseif($structure->type === 'missed_paper')
+                                                    <span class="badge bg-danger text-white"><i class="bi bi-file-earmark-x me-1"></i>Missed Paper Fee</span>
+                                                @else
+                                                    <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $structure->type)) }}</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 <strong>{{ $currencyCode }} {{ number_format($structure->amount, 2) }}</strong>

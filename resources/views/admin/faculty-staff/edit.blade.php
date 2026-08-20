@@ -317,6 +317,45 @@
                             </div>
                         </div>
 
+                        <!-- Course Assignments -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-journal-bookmark me-2"></i>Course & Teaching Assignments</h5>
+                                <p class="text-muted small mb-3">Select the courses assigned to this faculty member. You can assign courses across departments and faculties.</p>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                @if(isset($courses) && $courses->count() > 0)
+                                    <div class="card bg-light border p-3" style="max-height: 280px; overflow-y: auto;">
+                                        <div class="row g-2">
+                                            @foreach($courses as $c)
+                                                @php
+                                                    $isAssigned = in_array($c->id, old('assigned_courses', $assignedCourseIds ?? []));
+                                                    $isAssignedOther = $c->instructor_id && $c->instructor_id !== $facultyStaff->id;
+                                                @endphp
+                                                <div class="col-md-6">
+                                                    <div class="form-check p-2 bg-white rounded border shadow-sm h-100">
+                                                        <input class="form-check-input ms-0 me-2" type="checkbox" name="assigned_courses[]" value="{{ $c->id }}" id="course_{{ $c->id }}" {{ $isAssigned ? 'checked' : '' }}>
+                                                        <label class="form-check-label small fw-semibold" for="course_{{ $c->id }}">
+                                                            {{ $c->name }} <span class="badge bg-secondary ms-1">{{ $c->code }}</span>
+                                                            @if($c->department)
+                                                                <span class="text-muted d-block font-monospace" style="font-size: 0.72rem;">{{ $c->department->name }}</span>
+                                                            @endif
+                                                            @if($isAssignedOther && $c->instructor)
+                                                                <span class="badge bg-warning text-dark d-inline-block mt-1" style="font-size: 0.65rem;">Currently: {{ $c->instructor->name }}</span>
+                                                            @endif
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="alert alert-info small mb-0">No courses available in the system. Create courses in Course Management first.</div>
+                                @endif
+                            </div>
+                        </div>
+
                         <!-- Security -->
                         <div class="row mb-4">
                             <div class="col-12">

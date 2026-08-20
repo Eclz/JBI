@@ -311,8 +311,10 @@ class FacultyStaffController extends Controller
 
         $faculties = Faculty::where('is_active', true)->orderBy('name')->get();
         $departments = Department::where('is_active', true)->with('faculty')->orderBy('name')->get();
+        $courses = \App\Models\Course::with(['department', 'semester'])->orderBy('name')->get();
+        $assignedCourseIds = $facultyStaff->taughtCourses->pluck('id')->toArray();
 
-        return view('admin.faculty-staff.edit', compact('facultyStaff', 'faculties', 'departments'));
+        return view('admin.faculty-staff.edit', compact('facultyStaff', 'faculties', 'departments', 'courses', 'assignedCourseIds'));
     }
 
     /**
@@ -358,6 +360,8 @@ class FacultyStaffController extends Controller
             'research_interests' => 'nullable|string|max:500',
             'password' => 'nullable|min:8|confirmed',
             'is_active' => 'boolean',
+            'assigned_courses' => 'nullable|array',
+            'assigned_courses.*' => 'exists:courses,id',
         ]);
 
         DB::beginTransaction();
@@ -428,6 +432,15 @@ class FacultyStaffController extends Controller
                     'research_interests' => $request->research_interests ? array_map('trim', explode(',', $request->research_interests)) : [],
                 ],
             ]);
+
+            // Sync assigned courses
+            if ($request->has('assigned_courses')) {
+                $assignedIds = array_filter($request->input('assigned_courses', []));
+                \App\Models\Course::whereIn('id', $assignedIds)->update(['instructor_id' => $facultyStaff->id]);
+                \App\Models\Course::where('instructor_id', $facultyStaff->id)
+                    ->whereNotIn('id', $assignedIds)
+                    ->update(['instructor_id' => null]);
+            }
 
             DB::commit();
 
