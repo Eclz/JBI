@@ -183,7 +183,7 @@
                                 <select class="form-select @error('employment_status') is-invalid @enderror" id="employment_status" name="employment_status" required>
                                     <option value="">Select Employment Status</option>
                                     <option value="active" {{ old('employment_status', $facultyStaff->facultyProfile?->employment_status) == 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ old('employment_status', $facultyStaff->facultyProfile?->employment_status) == 'inactive' ? 'selected' : ''  $facultyStaff->facultyProfile?->employment_status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                    <option value="inactive" {{ old('employment_status', $facultyStaff->facultyProfile?->employment_status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                     <option value="on_leave" {{ old('employment_status', $facultyStaff->facultyProfile?->employment_status) == 'on_leave' ? 'selected' : '' }}>On Leave</option>
                                     <option value="terminated" {{ old('employment_status', $facultyStaff->facultyProfile?->employment_status) == 'terminated' ? 'selected' : '' }}>Terminated</option>
                                 </select>
