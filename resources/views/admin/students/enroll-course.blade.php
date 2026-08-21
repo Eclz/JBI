@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="row">
-        <div class="col-lg-10 mx-auto">
+        <div class="col-lg-12 mx-auto">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="h3 mb-0 text-primary fw-bold"><i class="bi bi-journal-plus me-2"></i>Admin Course Assignment & Seat Management</h2>

@@ -46,7 +46,7 @@ class StoreStudentProfileRequest extends FormRequest
             'admission_number' => [
                 'required',
                 'string',
-                'regex:/^JBI\d{8}$/',
+                'regex:/^[A-Z]{2,5}\d{8}$/',
                 Rule::unique('student_profiles', 'admission_number')->ignore($studentProfileId),
             ],
             'admission_date' => [
@@ -215,7 +215,7 @@ class StoreStudentProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'admission_number.regex' => 'Admission number must be in format JBI followed by 8 digits (e.g., JBI20240001).',
+            'admission_number.regex' => 'Admission number must follow the format: Prefix + Year + 4-digit sequence (e.g., JBI20260001 or CSC20260001).',
             'guardian_name.regex' => 'Guardian name may only contain letters, spaces, dots, hyphens, and apostrophes.',
             'guardian_phone.regex' => 'Please provide a valid guardian phone number.',
             'actual_graduation_date.required_if' => 'Graduation date is required for graduated students.',
