@@ -27,6 +27,7 @@ return [
         'exams' => 'Exams & Quizzes',
         'reports' => 'Reports',
         'settings' => 'System Settings',
+        'evoting' => 'E-Voting & Student Leadership',
     ],
 
     'defaults' => [

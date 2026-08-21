@@ -271,6 +271,16 @@ class User extends Authenticatable
     const ROLE_PARENT = 'parent';
 
     /**
+     * Check if user is Super Administrator (unrestricted system access)
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin'
+            || $this->roleCatalog?->slug === 'super_administrator'
+            || ($this->role === self::ROLE_ADMIN && !$this->role_id);
+    }
+
+    /**
      * Check if user has a specific role.
      */
     public function hasRole(string $role): bool
@@ -282,11 +292,37 @@ class User extends Authenticatable
 
     public function hasPermission(string $module, string $action): bool
     {
-        if ($this->isAdmin()) {
+        if ($this->isSuperAdmin()) {
             return true;
         }
 
         return $this->roleCatalog?->hasPermission($module, $action) ?? false;
+    }
+
+    public function commissionMemberships(): HasMany
+    {
+        return $this->hasMany(ElectoralCommissionMember::class);
+    }
+
+    public function candidacies(): HasMany
+    {
+        return $this->hasMany(VotingCandidate::class);
+    }
+
+    public function isElectoralCommissioner(?VotingSession $session = null): bool
+    {
+        if ($this->isAdmin() || $this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($session) {
+            return $this->commissionMemberships()
+                ->where('voting_session_id', $session->id)
+                ->where('is_active', true)
+                ->exists();
+        }
+
+        return $this->commissionMemberships()->where('is_active', true)->exists();
     }
 
     public function getRoleNameAttribute(): string

@@ -335,15 +335,32 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Admin Timetable Management
     Route::resource('timetables', AdminTimetableController::class);
 
-    // Admin E-Voting Management
-    Route::get('/evoting', [AdminEVotingController::class, 'index'])->name('evoting.index');
-    Route::post('/evoting/session', [AdminEVotingController::class, 'storeSession'])->name('evoting.sessions.store');
-    Route::post('/evoting/session/{session}/vetting', [AdminEVotingController::class, 'updateSessionVetting'])->name('evoting.sessions.vetting');
-    Route::post('/evoting/session/{session}/toggle', [AdminEVotingController::class, 'toggleSessionStatus'])->name('evoting.sessions.toggle');
-    Route::post('/evoting/session/{session}/positions', [AdminEVotingController::class, 'storePosition'])->name('evoting.positions.store');
-    Route::post('/evoting/position/{position}/candidates', [AdminEVotingController::class, 'storeCandidate'])->name('evoting.candidates.store');
-    Route::post('/evoting/candidate/{candidate}/vet', [AdminEVotingController::class, 'vetCandidate'])->name('evoting.candidates.vet');
-    Route::get('/evoting/session/{session}/results', [AdminEVotingController::class, 'results'])->name('evoting.results');
+    // Admin E-Voting & Student Leadership Management
+    Route::prefix('evoting')->name('evoting.')->group(function () {
+        Route::get('/', [AdminEVotingController::class, 'index'])->name('index');
+        Route::post('/sessions', [AdminEVotingController::class, 'storeSession'])->name('sessions.store');
+        Route::get('/sessions/{session}', [AdminEVotingController::class, 'show'])->name('show');
+        Route::put('/sessions/{session}', [AdminEVotingController::class, 'updateSession'])->name('sessions.update');
+        Route::post('/sessions/{session}/status', [AdminEVotingController::class, 'updateSessionStatus'])->name('sessions.status');
+        Route::delete('/sessions/{session}', [AdminEVotingController::class, 'destroySession'])->name('sessions.destroy');
+        Route::post('/sessions/{session}/publish', [AdminEVotingController::class, 'publishResults'])->name('sessions.publish');
+        Route::get('/sessions/{session}/results', [AdminEVotingController::class, 'results'])->name('results');
+
+        // Electoral Commission
+        Route::post('/sessions/{session}/commission', [AdminEVotingController::class, 'storeCommissionMember'])->name('commission.store');
+        Route::delete('/sessions/{session}/commission/{member}', [AdminEVotingController::class, 'destroyCommissionMember'])->name('commission.destroy');
+
+        // Positions
+        Route::post('/sessions/{session}/positions', [AdminEVotingController::class, 'storePosition'])->name('positions.store');
+        Route::put('/positions/{position}', [AdminEVotingController::class, 'updatePosition'])->name('positions.update');
+        Route::delete('/positions/{position}', [AdminEVotingController::class, 'destroyPosition'])->name('positions.destroy');
+
+        // Candidate Vetting
+        Route::post('/candidates/{candidate}/vet', [AdminEVotingController::class, 'vetCandidate'])->name('candidates.vet');
+
+        // Elected Student Leaders
+        Route::get('/leaders', [AdminEVotingController::class, 'leadersIndex'])->name('leaders');
+    });
 
     // Admin Evaluation Surveys
     Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class);
@@ -597,12 +614,17 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/timetables/tests', [StudentTimetableController::class, 'tests'])->name('timetables.tests');
     Route::get('/timetables/exams', [StudentTimetableController::class, 'exams'])->name('timetables.exams');
 
-    // E-Voting
-    Route::get('/evoting', [StudentEVotingController::class, 'index'])->name('evoting.index');
-    Route::get('/evoting/announcements', [StudentEVotingController::class, 'announcements'])->name('evoting.announcements');
-    Route::get('/evoting/positions', [StudentEVotingController::class, 'positions'])->name('evoting.positions');
-    Route::post('/evoting/vote', [StudentEVotingController::class, 'vote'])->name('evoting.vote');
-    Route::post('/evoting/candidacy', [StudentEVotingController::class, 'applyCandidacy'])->name('evoting.candidacy.apply');
+    // E-Voting & Student Leadership
+    Route::prefix('evoting')->name('evoting.')->group(function () {
+        Route::get('/', [StudentEVotingController::class, 'index'])->name('index');
+        Route::get('/sessions/{session}/apply', [StudentEVotingController::class, 'apply'])->name('apply');
+        Route::post('/sessions/{session}/apply', [StudentEVotingController::class, 'storeApplication'])->name('apply.store');
+        Route::get('/my-applications', [StudentEVotingController::class, 'myApplications'])->name('my-applications');
+        Route::get('/sessions/{session}/ballot', [StudentEVotingController::class, 'ballot'])->name('ballot');
+        Route::post('/sessions/{session}/vote', [StudentEVotingController::class, 'castVote'])->name('vote');
+        Route::get('/sessions/{session}/results', [StudentEVotingController::class, 'results'])->name('results');
+        Route::get('/leaders', [StudentEVotingController::class, 'leaders'])->name('leaders');
+    });
 
     // Evaluation Surveys
     Route::get('/evaluation-surveys', [StudentEvaluationSurveyController::class, 'index'])->name('evaluation-surveys.index');
