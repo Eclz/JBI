@@ -466,15 +466,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmPasswordField = document.getElementById('password_confirmation');
 
     function validatePasswordMatch() {
-        if (passwordField.value !== confirmPasswordField.value) {
-            confirmPasswordField.setCustomValidity('Passwords do not match');
+        if (!passwordField || !confirmPasswordField) return;
+        const passVal = passwordField.value.trim();
+        const confVal = confirmPasswordField.value.trim();
+        if (passVal !== '' || confVal !== '') {
+            if (passVal !== confVal) {
+                confirmPasswordField.setCustomValidity('Passwords do not match');
+            } else {
+                confirmPasswordField.setCustomValidity('');
+            }
         } else {
             confirmPasswordField.setCustomValidity('');
         }
     }
 
-    passwordField.addEventListener('input', validatePasswordMatch);
-    confirmPasswordField.addEventListener('input', validatePasswordMatch);
+    if (passwordField && confirmPasswordField) {
+        passwordField.addEventListener('input', validatePasswordMatch);
+        confirmPasswordField.addEventListener('input', validatePasswordMatch);
+    }
 });
 </script>
 @endpush

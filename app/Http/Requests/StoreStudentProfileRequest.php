@@ -154,11 +154,12 @@ class StoreStudentProfileRequest extends FormRequest
             'guardian_phone' => [
                 'nullable',
                 'string',
-                'regex:/^[\+]?[1-9][\d]{0,15}$/',
+                'max:30',
+                'regex:/^[0-9\-\+\s\(\)\.]{7,25}$/',
             ],
             'guardian_email' => [
                 'nullable',
-                'email:rfc,dns',
+                'email:rfc',
                 'max:255',
             ],
             'guardian_address' => [
