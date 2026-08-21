@@ -224,7 +224,7 @@
                                 <label for="highest_degree" class="form-label">Highest Degree <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('highest_degree') is-invalid @enderror"
                                        id="highest_degree" name="highest_degree"
-                                       value="{{ old('highest_degree', $facultyStaff->facultyProfile?->qualifications['highest_degree'] ?? '') }}" required
+                                       value="{{ old('highest_degree', data_get($facultyStaff->facultyProfile, 'qualifications.highest_degree', $facultyStaff->facultyProfile?->qualification ?? '')) }}" required
                                        placeholder="e.g., Ph.D., Master's, Bachelor's">
                                 @error('highest_degree')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -235,7 +235,7 @@
                                 <label for="degree_institution" class="form-label">Institution <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('degree_institution') is-invalid @enderror"
                                        id="degree_institution" name="degree_institution"
-                                       value="{{ old('degree_institution', $facultyStaff->facultyProfile?->qualifications['institution'] ?? '') }}" required
+                                       value="{{ old('degree_institution', data_get($facultyStaff->facultyProfile, 'qualifications.institution', '')) }}" required
                                        placeholder="e.g., Harvard University">
                                 @error('degree_institution')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -246,7 +246,7 @@
                                 <label for="degree_year" class="form-label">Graduation Year <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('degree_year') is-invalid @enderror"
                                        id="degree_year" name="degree_year"
-                                       value="{{ old('degree_year', $facultyStaff->facultyProfile?->qualifications['graduation_year'] ?? '') }}"
+                                       value="{{ old('degree_year', data_get($facultyStaff->facultyProfile, 'qualifications.graduation_year', '')) }}"
                                        min="1970" max="{{ date('Y') }}" required>
                                 @error('degree_year')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -255,9 +255,13 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="certifications" class="form-label">Certifications</label>
+                                @php
+                                    $certs = data_get($facultyStaff->facultyProfile, 'qualifications.certifications', []);
+                                    $certsValue = is_array($certs) ? implode(', ', $certs) : (is_string($certs) ? $certs : '');
+                                @endphp
                                 <input type="text" class="form-control @error('certifications') is-invalid @enderror"
                                        id="certifications" name="certifications"
-                                       value="{{ old('certifications', is_array($facultyStaff->facultyProfile?->qualifications['certifications'] ?? []) ? implode(', ', $facultyStaff->facultyProfile->qualifications['certifications']) : '') }}"
+                                       value="{{ old('certifications', $certsValue) }}"
                                        placeholder="Comma-separated list of certifications">
                                 @error('certifications')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -267,9 +271,13 @@
 
                             <div class="col-12 mb-3">
                                 <label for="research_interests" class="form-label">Research Interests</label>
+                                @php
+                                    $interests = data_get($facultyStaff->facultyProfile, 'experience.research_interests', []);
+                                    $interestsValue = is_array($interests) ? implode(', ', $interests) : (is_string($interests) ? $interests : '');
+                                @endphp
                                 <input type="text" class="form-control @error('research_interests') is-invalid @enderror"
                                        id="research_interests" name="research_interests"
-                                       value="{{ old('research_interests', is_array($facultyStaff->facultyProfile?->experience['research_interests'] ?? []) ? implode(', ', $facultyStaff->facultyProfile->experience['research_interests']) : '') }}"
+                                       value="{{ old('research_interests', $interestsValue) }}"
                                        placeholder="Comma-separated list of research interests">
                                 @error('research_interests')
                                     <div class="invalid-feedback">{{ $message }}</div>
