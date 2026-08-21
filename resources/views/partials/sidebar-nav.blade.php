@@ -35,9 +35,7 @@
 
     @auth
     <ul class="sidebar-menu">
-        <li class="menu-header">Main Navigation</li>
-
-        {{-- Show role-specific dashboard links (Anchor Point, always top-level) --}}
+        {{-- Dashboard (Anchor Point, pinned at top, no section label) --}}
         @if(auth()->user()->isAdmin())
         <li class="menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link">
@@ -418,42 +416,51 @@
                                 request()->routeIs('student.program-changes.*') ||
                                 request()->routeIs('student.exams.*') ||
                                 request()->routeIs('student.attendance.*');
+
+            $isProgrammeActive = request()->routeIs('student.my-programme') ||
+                                 request()->routeIs('student.enrollment.*') ||
+                                 request()->routeIs('student.timetables.*') ||
+                                 request()->routeIs('academic-calendar.*');
+
+            $isPaymentsActive = request()->routeIs('student.fees.*');
         @endphp
-        <li class="menu-item-dropdown {{ $isAcademicsActive ? 'active' : '' }}">
-            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
-                <i class="bi bi-book"></i>
-                <span class="fw-bold text-uppercase">Academics</span>
-                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
-            </a>
-            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isAcademicsActive ? 'block' : 'none' }};">
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.courses.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.courses.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-journal-text me-2" style="font-size: 1rem;"></i>
-                        <span>MY COURSES</span>
+
+        {{-- 1. Academics (collapsible) --}}
+        <li class="sidebar-group {{ $isAcademicsActive ? 'has-active-child' : '' }}" data-group-id="student-academics">
+            <button type="button" class="sidebar-group-toggle {{ $isAcademicsActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'student-academics')">
+                <i class="bi bi-book group-icon"></i>
+                <span class="group-title">Academics</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isAcademicsActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('student.courses.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.courses.index') }}" class="submenu-link">
+                        <i class="bi bi-journal-text"></i>
+                        <span>My Courses</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.lms.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.lms.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-play-circle me-2" style="font-size: 1rem;"></i>
-                        <span>MY LEARNING</span>
+                <li class="submenu-item {{ request()->routeIs('student.lms.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.lms.index') }}" class="submenu-link">
+                        <i class="bi bi-play-circle"></i>
+                        <span>My Learning</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.assignments.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.assignments.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-file-earmark-text me-2" style="font-size: 1rem;"></i>
-                        <span>ASSIGNMENTS</span>
+                <li class="submenu-item {{ request()->routeIs('student.assignments.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.assignments.index') }}" class="submenu-link">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Assignments</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.program-changes.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-arrow-repeat me-2" style="font-size: 1rem;"></i>
-                        <span>PROGRAM CHANGE</span>
+                <li class="submenu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Program Change</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.exams.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.exams.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-pencil-square me-2" style="font-size: 1rem;"></i>
-                        <span>EXAMS</span>
+                <li class="submenu-item {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.exams.index') }}" class="submenu-link">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Exams</span>
                         @php
                             $activeExamCount = 0;
                             try {
@@ -489,56 +496,80 @@
                         @endif
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.attendance.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.attendance.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-calendar-check me-2" style="font-size: 1rem;"></i>
-                        <span>ATTENDANCE</span>
+                <li class="submenu-item {{ request()->routeIs('student.attendance.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.attendance.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Attendance</span>
                     </a>
                 </li>
             </ul>
         </li>
 
-        @php
-            $isProgrammeActive = request()->routeIs('student.my-programme') ||
-                                 request()->routeIs('student.enrollment.*') ||
-                                 request()->routeIs('student.timetables.*') ||
-                                 request()->routeIs('academic-calendar.*');
-        @endphp
-        <li class="menu-item-dropdown {{ $isProgrammeActive ? 'active' : '' }}">
-            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
-                <i class="bi bi-journal-bookmark"></i>
-                <span class="fw-bold text-uppercase">Programme & Registration</span>
-                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
-            </a>
-            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isProgrammeActive ? 'block' : 'none' }};">
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.my-programme') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.my-programme') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-journal-bookmark me-2" style="font-size: 1rem;"></i>
-                        <span>MY PROGRAMME</span>
+        {{-- 2. Programme & Registration (collapsible) --}}
+        <li class="sidebar-group {{ $isProgrammeActive ? 'has-active-child' : '' }}" data-group-id="student-programme">
+            <button type="button" class="sidebar-group-toggle {{ $isProgrammeActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'student-programme')">
+                <i class="bi bi-journal-bookmark group-icon"></i>
+                <span class="group-title">Programme & Registration</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isProgrammeActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('student.my-programme') ? 'active' : '' }}">
+                    <a href="{{ route('student.my-programme') }}" class="submenu-link">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>My Programme</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.enrollment.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.enrollment.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-person-plus-fill me-2" style="font-size: 1rem;"></i>
-                        <span>ENROLLMENT & REGISTRATION</span>
+                <li class="submenu-item {{ request()->routeIs('student.enrollment.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.enrollment.index') }}" class="submenu-link">
+                        <i class="bi bi-person-plus-fill"></i>
+                        <span>Enrollment & Registration</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.timetables.teaching') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.timetables.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-calendar3 me-2" style="font-size: 1rem;"></i>
-                        <span>TIMETABLES</span>
+                <li class="submenu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.timetables.teaching') }}" class="submenu-link">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Timetables</span>
                     </a>
                 </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('academic-calendar.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('academic-calendar.*') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-calendar-week me-2" style="font-size: 1rem;"></i>
-                        <span>ACADEMIC CALENDAR</span>
+                <li class="submenu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
+                    <a href="{{ route('academic-calendar.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar-week"></i>
+                        <span>Academic Calendar</span>
                     </a>
                 </li>
             </ul>
         </li>
 
-        {{-- Mailbox --}}
+        {{-- 3. Payments (collapsible) --}}
+        <li class="sidebar-group {{ $isPaymentsActive ? 'has-active-child' : '' }}" data-group-id="student-payments">
+            <button type="button" class="sidebar-group-toggle {{ $isPaymentsActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'student-payments')">
+                <i class="bi bi-cash-coin group-icon"></i>
+                <span class="group-title">Payments</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isPaymentsActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('student.fees.index') ? 'active' : '' }}">
+                    <a href="{{ route('student.fees.index') }}" class="submenu-link">
+                        <i class="bi bi-paperclip"></i>
+                        <span>My Bills/Invoices</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('student.fees.ledger') ? 'active' : '' }}">
+                    <a href="{{ route('student.fees.ledger') }}" class="submenu-link">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>My Transactions & Ledger</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('student.fees.structure') ? 'active' : '' }}">
+                    <a href="{{ route('student.fees.structure') }}" class="submenu-link">
+                        <i class="bi bi-file-earmark-richtext"></i>
+                        <span>My Fees Structure</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        {{-- 4. Mailbox (flat) --}}
         <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
             <a href="{{ route('messages.index') }}" class="menu-link">
                 <i class="bi bi-envelope-paper"></i>
@@ -546,38 +577,7 @@
             </a>
         </li>
 
-        @php
-            $isPaymentsActive = request()->routeIs('student.fees.*');
-        @endphp
-        <li class="menu-item-dropdown {{ $isPaymentsActive ? 'active' : '' }}">
-            <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
-                <i class="bi bi-cash-coin"></i>
-                <span class="fw-bold text-uppercase">Payments</span>
-                <i class="bi bi-chevron-down ms-auto dropdown-chevron" style="font-size: 0.8rem;"></i>
-            </a>
-            <ul class="submenu-list" style="list-style: none; padding-left: 2rem; margin: 0; display: {{ $isPaymentsActive ? 'block' : 'none' }};">
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.fees.index') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.index') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-paperclip me-2" style="font-size: 1rem;"></i>
-                        <span>MY BILLS/INVOICES</span>
-                    </a>
-                </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.fees.ledger') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.ledger') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-file-earmark-check me-2" style="font-size: 1rem;"></i>
-                        <span>MY TRANSACTIONS & LEDGER</span>
-                    </a>
-                </li>
-                <li class="submenu-item py-1">
-                    <a href="{{ route('student.fees.structure') }}" class="submenu-link d-flex align-items-center py-2 text-decoration-none" style="font-size: 0.825rem; font-weight: 600; color: {{ request()->routeIs('student.fees.structure') ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}; transition: color 0.2s;">
-                        <i class="bi bi-file-earmark-richtext me-2" style="font-size: 1rem;"></i>
-                        <span>MY FEES STRUCTURE</span>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
-        {{-- E-Voting --}}
+        {{-- 5. E-Voting (flat) --}}
         <li class="menu-item {{ request()->routeIs('student.evoting.*') ? 'active' : '' }}">
             <a href="{{ route('student.evoting.index') }}" class="menu-link">
                 <i class="bi bi-check2-square"></i>
@@ -585,7 +585,7 @@
             </a>
         </li>
 
-        {{-- Evaluation Survey --}}
+        {{-- 6. Evaluation Survey (flat) --}}
         <li class="menu-item {{ request()->routeIs('student.evaluation-surveys.*') ? 'active' : '' }}">
             <a href="{{ route('student.evaluation-surveys.index') }}" class="menu-link">
                 <i class="bi bi-clipboard2-check"></i>
