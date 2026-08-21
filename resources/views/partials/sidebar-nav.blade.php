@@ -37,9 +37,9 @@
     <ul class="sidebar-menu">
         <li class="menu-header">Main Navigation</li>
 
-        {{-- Show role-specific dashboard links --}}
+        {{-- Show role-specific dashboard links (Anchor Point, always top-level) --}}
         @if(auth()->user()->isAdmin())
-        <li class="menu-item {{ request()->routeIs('dashboard') || request()->routeIs('dashboard') ? 'active' : '' }}">
+        <li class="menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
@@ -68,236 +68,287 @@
         </li>
         @endif
 
+        {{-- ==================== ADMIN 5 COLLAPSIBLE GROUPS ==================== --}}
         @if(auth()->user()->isAdmin())
-        <li class="menu-header">Administration</li>
+        @php
+            // Group 1: Administration
+            $isAdminActive = request()->routeIs('admin.users.*') ||
+                             request()->routeIs('admin.roles.*') ||
+                             request()->routeIs('admin.settings*');
 
-        <li class="menu-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.users.index') }}" class="menu-link">
-                <i class="bi bi-people"></i>
-                <span>User Management</span>
-            </a>
+            // Group 2: Admissions & People
+            $isAdmissionsActive = request()->routeIs('admin.applications.*') ||
+                                  request()->routeIs('admin.students.*') ||
+                                  request()->routeIs('admin.faculty-staff.*');
+
+            // Group 3: Academic Structure
+            $isAcademicActive = request()->routeIs('admin.courses.*') ||
+                                request()->routeIs('admin.programs.*') ||
+                                request()->routeIs('admin.program-levels.*') ||
+                                request()->routeIs('admin.program-changes.*') ||
+                                request()->routeIs('admin.faculties.*') ||
+                                request()->routeIs('admin.departments.*') ||
+                                request()->routeIs('admin.academic-years.*') ||
+                                request()->routeIs('admin.semesters.*');
+
+            // Group 4: Finance & Governance
+            $isFinanceActive = request()->routeIs('admin.finance.*') ||
+                               request()->routeIs('admin.fees.*') ||
+                               request()->routeIs('admin.reports.*');
+
+            // Group 5: Operations & Engagement
+            $isOperationsActive = request()->routeIs('admin.timetables.*') ||
+                                  request()->routeIs('admin.evoting.*') ||
+                                  request()->routeIs('admin.evaluation-surveys.*');
+        @endphp
+
+        {{-- Group 1: Administration (collapsible) --}}
+        <li class="sidebar-group {{ $isAdminActive ? 'has-active-child' : '' }}" data-group-id="admin-administration">
+            <button type="button" class="sidebar-group-toggle {{ $isAdminActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-administration')">
+                <i class="bi bi-shield-shaded group-icon"></i>
+                <span class="group-title">Administration</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isAdminActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.users.index') }}" class="submenu-link">
+                        <i class="bi bi-people"></i>
+                        <span>User Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.roles.index') }}" class="submenu-link">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Roles & Permissions</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.settings') }}" class="submenu-link">
+                        <i class="bi bi-sliders"></i>
+                        <span>System Settings</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.roles.index') }}" class="menu-link">
-                <i class="bi bi-shield-lock"></i>
-                <span>Roles & Permissions</span>
-            </a>
+        {{-- Group 2: Admissions & People (collapsible) --}}
+        <li class="sidebar-group {{ $isAdmissionsActive ? 'has-active-child' : '' }}" data-group-id="admin-admissions">
+            <button type="button" class="sidebar-group-toggle {{ $isAdmissionsActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-admissions')">
+                <i class="bi bi-people-fill group-icon"></i>
+                <span class="group-title">Admissions & People</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isAdmissionsActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('admin.applications.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.applications.index') }}" class="submenu-link">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Applications</span>
+                        @php
+                            try {
+                                $pendingApplicationsCount = \App\Models\Application::where('status', 'pending')->count();
+                                if ($pendingApplicationsCount > 0) {
+                                    echo '<span class="badge bg-danger rounded-pill ms-auto">' . $pendingApplicationsCount . '</span>';
+                                }
+                            } catch (\Exception $e) {}
+                        @endphp
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.students.index') }}" class="submenu-link">
+                        <i class="bi bi-mortarboard"></i>
+                        <span>Student Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.faculty-staff.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.faculty-staff.index') }}" class="submenu-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Faculty Staff Management</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.applications.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.applications.index') }}" class="menu-link">
-                <i class="bi bi-file-earmark-check"></i>
-                <span>Applications</span>
-                @php
-                    try {
-                        $pendingApplicationsCount = \App\Models\Application::where('status', 'pending')->count();
-
-                        if ($pendingApplicationsCount > 0) {
-                            echo '<span class="badge bg-danger rounded-pill ms-auto">' . $pendingApplicationsCount . '</span>';
-                        }
-                    } catch (\Exception $e) {
-                        // Silently fail if there's a database error
-                    }
-                @endphp
-            </a>
+        {{-- Group 3: Academic Structure (collapsible) --}}
+        <li class="sidebar-group {{ $isAcademicActive ? 'has-active-child' : '' }}" data-group-id="admin-academics">
+            <button type="button" class="sidebar-group-toggle {{ $isAcademicActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-academics')">
+                <i class="bi bi-diagram-3-fill group-icon"></i>
+                <span class="group-title">Academic Structure</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isAcademicActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.courses.index') }}" class="submenu-link">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Course Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.programs.index') }}" class="submenu-link">
+                        <i class="bi bi-collection"></i>
+                        <span>Program Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.program-levels.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.program-levels.index') }}" class="submenu-link">
+                        <i class="bi bi-layers"></i>
+                        <span>Program Levels</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.program-changes.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.program-changes.index') }}" class="submenu-link">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Program Change Requests</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.faculties.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.faculties.index') }}" class="submenu-link">
+                        <i class="bi bi-buildings"></i>
+                        <span>Faculties Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.departments.index') }}" class="submenu-link">
+                        <i class="bi bi-building"></i>
+                        <span>Department Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.academic-years.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Academic Years</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.semesters.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.semesters.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar2"></i>
+                        <span>Semesters</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.students.index') }}" class="menu-link">
-                <i class="bi bi-mortarboard"></i>
-                <span>Student Management</span>
-            </a>
+        {{-- Group 4: Finance & Governance (collapsible) --}}
+        <li class="sidebar-group {{ $isFinanceActive ? 'has-active-child' : '' }}" data-group-id="admin-finance">
+            <button type="button" class="sidebar-group-toggle {{ $isFinanceActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-finance')">
+                <i class="bi bi-bank group-icon"></i>
+                <span class="group-title">Finance & Governance</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isFinanceActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.dashboard') }}" class="submenu-link fw-semibold text-primary-light">
+                        <i class="bi bi-speedometer"></i>
+                        <span>Finance & Bursar Hub</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.fees.structures.index') }}" class="submenu-link">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                        <span>Fee Structures</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.fees.index') }}" class="submenu-link">
+                        <i class="bi bi-receipt"></i>
+                        <span>Student Fee Records</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.revenue.index') }}" class="submenu-link">
+                        <i class="bi bi-currency-exchange"></i>
+                        <span>Revenue & Income</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.budgets.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.budgets.index') }}" class="submenu-link">
+                        <i class="bi bi-pie-chart"></i>
+                        <span>Department Budgets</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.expenses.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.expenses.index') }}" class="submenu-link">
+                        <i class="bi bi-cart-check"></i>
+                        <span>Expenditures</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.payables.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.payables.index') }}" class="submenu-link">
+                        <i class="bi bi-truck"></i>
+                        <span>Accounts Payable</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.receivables.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.receivables.index') }}" class="submenu-link">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <span>Accounts Receivable</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.payroll.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.payroll.index') }}" class="submenu-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Payroll Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.assets.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.assets.index') }}" class="submenu-link">
+                        <i class="bi bi-qr-code-scan"></i>
+                        <span>Asset Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.banking.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.banking.index') }}" class="submenu-link">
+                        <i class="bi bi-piggy-bank"></i>
+                        <span>Banking & Cash</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.finance.reports.index') }}" class="submenu-link">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Financial Statements</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.reports.index') }}" class="submenu-link">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('admin.faculty-staff.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.faculty-staff.index') }}" class="menu-link">
-                <i class="bi bi-person-badge"></i>
-                <span>Faculty Staff Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.courses.index') }}" class="menu-link">
-                <i class="bi bi-journal-bookmark"></i>
-                <span>Course Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.faculties.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.faculties.index') }}" class="menu-link">
-                <i class="bi bi-buildings"></i>
-                <span>Faculties Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.departments.index') }}" class="menu-link">
-                <i class="bi bi-building"></i>
-                <span>Department Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.programs.index') }}" class="menu-link">
-                <i class="bi bi-journal-bookmark"></i>
-                <span>Program Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.program-levels.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.program-levels.index') }}" class="menu-link">
-                <i class="bi bi-layers"></i>
-                <span>Program Levels</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.program-changes.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.program-changes.index') }}" class="menu-link">
-                <i class="bi bi-arrow-repeat"></i>
-                <span>Program Change Requests</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.academic-years.index') }}" class="menu-link">
-                <i class="bi bi-calendar3"></i>
-                <span>Academic Years</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.semesters.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.semesters.index') }}" class="menu-link">
-                <i class="bi bi-calendar2"></i>
-                <span>Semesters</span>
-            </a>
-        </li>
-
-        <li class="menu-header">Finance & Governance</li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.*') || request()->routeIs('admin.fees.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.dashboard') }}" class="menu-link fw-bold text-primary">
-                <i class="bi bi-bank"></i>
-                <span>Finance & Bursar Hub</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.fees.structures.index') }}" class="menu-link ps-4">
-                <i class="bi bi-file-earmark-spreadsheet"></i>
-                <span>Fee Structures</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
-            <a href="{{ route('admin.fees.index') }}" class="menu-link ps-4">
-                <i class="bi bi-receipt"></i>
-                <span>Student Fee Records</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.revenue.index') }}" class="menu-link ps-4">
-                <i class="bi bi-currency-exchange"></i>
-                <span>Revenue & Income</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.budgets.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.budgets.index') }}" class="menu-link ps-4">
-                <i class="bi bi-pie-chart"></i>
-                <span>Department Budgets</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.expenses.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.expenses.index') }}" class="menu-link ps-4">
-                <i class="bi bi-cart-check"></i>
-                <span>Expenditures</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.payables.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.payables.index') }}" class="menu-link ps-4">
-                <i class="bi bi-truck"></i>
-                <span>Accounts Payable</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.receivables.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.receivables.index') }}" class="menu-link ps-4">
-                <i class="bi bi-person-lines-fill"></i>
-                <span>Accounts Receivable</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.payroll.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.payroll.index') }}" class="menu-link ps-4">
-                <i class="bi bi-person-badge"></i>
-                <span>Payroll Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.assets.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.assets.index') }}" class="menu-link ps-4">
-                <i class="bi bi-qr-code-scan"></i>
-                <span>Asset Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.banking.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.banking.index') }}" class="menu-link ps-4">
-                <i class="bi bi-piggy-bank"></i>
-                <span>Banking & Cash</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.finance.reports.index') }}" class="menu-link ps-4">
-                <i class="bi bi-journal-text"></i>
-                <span>Financial Statements</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.reports.index') }}" class="menu-link">
-                <i class="bi bi-file-earmark-bar-graph"></i>
-                <span>Reports</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.settings') }}" class="menu-link">
-                <i class="bi bi-gear"></i>
-                <span>System Settings</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.timetables.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.timetables.index') }}" class="menu-link">
-                <i class="bi bi-calendar3"></i>
-                <span>Timetable Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.evoting.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.evoting.index') }}" class="menu-link">
-                <i class="bi bi-check2-square"></i>
-                <span>E-Voting Management</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('admin.evaluation-surveys.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.evaluation-surveys.index') }}" class="menu-link">
-                <i class="bi bi-clipboard2-check"></i>
-                <span>Evaluation Surveys</span>
-            </a>
+        {{-- Group 5: Operations & Engagement (collapsible) --}}
+        <li class="sidebar-group {{ $isOperationsActive ? 'has-active-child' : '' }}" data-group-id="admin-operations">
+            <button type="button" class="sidebar-group-toggle {{ $isOperationsActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-operations')">
+                <i class="bi bi-kanban group-icon"></i>
+                <span class="group-title">Operations & Engagement</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isOperationsActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('admin.timetables.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.timetables.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Timetable Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.evoting.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.evoting.index') }}" class="submenu-link">
+                        <i class="bi bi-check2-square"></i>
+                        <span>E-Voting Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('admin.evaluation-surveys.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.evaluation-surveys.index') }}" class="submenu-link">
+                        <i class="bi bi-clipboard2-check"></i>
+                        <span>Evaluation Surveys</span>
+                    </a>
+                </li>
+            </ul>
         </li>
         @endif
 
-
+        {{-- ==================== FACULTY NAVIGATION ==================== --}}
         @if(auth()->user()->isFaculty())
-        <li class="menu-header">FACULTY</li>
+        <li class="menu-header">Faculty</li>
 
         <li class="menu-item {{ request()->routeIs('faculty.courses.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.courses.index') }}" class="menu-link">
@@ -313,7 +364,6 @@
             </a>
         </li>
 
-        {{-- Added Assignments menu item --}}
         <li class="menu-item {{ request()->routeIs('faculty.assignments.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.assignments.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-text"></i>
@@ -321,7 +371,6 @@
             </a>
         </li>
 
-        {{-- Added Exams menu item --}}
         <li class="menu-item {{ request()->routeIs('faculty.exams.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.exams.index') }}" class="menu-link">
                 <i class="bi bi-pencil-square"></i>
@@ -329,7 +378,6 @@
             </a>
         </li>
 
-        {{-- Added Quizzes menu item --}}
         <li class="menu-item {{ request()->routeIs('faculty.quizzes.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.quizzes.index') }}" class="menu-link">
                 <i class="bi bi-clipboard-check"></i>
@@ -359,6 +407,7 @@
         </li>
         @endif
 
+        {{-- ==================== STUDENT NAVIGATION ==================== --}}
         @if(auth()->user()->isStudent() && auth()->user()->isAdmitted())
         <li class="menu-header">Student</li>
 
@@ -370,7 +419,6 @@
                                 request()->routeIs('student.exams.*') ||
                                 request()->routeIs('student.attendance.*');
         @endphp
-        {{-- Collapsible Academics Menu for Student --}}
         <li class="menu-item-dropdown {{ $isAcademicsActive ? 'active' : '' }}">
             <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
                 <i class="bi bi-book"></i>
@@ -456,7 +504,6 @@
                                  request()->routeIs('student.timetables.*') ||
                                  request()->routeIs('academic-calendar.*');
         @endphp
-        {{-- Collapsible Programme & Registration Menu for Student --}}
         <li class="menu-item-dropdown {{ $isProgrammeActive ? 'active' : '' }}">
             <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
                 <i class="bi bi-journal-bookmark"></i>
@@ -502,7 +549,6 @@
         @php
             $isPaymentsActive = request()->routeIs('student.fees.*');
         @endphp
-        {{-- Collapsible Payments Menu for Student --}}
         <li class="menu-item-dropdown {{ $isPaymentsActive ? 'active' : '' }}">
             <a href="javascript:void(0);" class="menu-link dropdown-toggle-btn d-flex align-items-center" onclick="toggleDropdownMenu(this)">
                 <i class="bi bi-cash-coin"></i>
@@ -548,7 +594,7 @@
         </li>
         @endif
 
-
+        {{-- ==================== COMMON (PINNED AT BOTTOM) ==================== --}}
         <li class="menu-header">Common</li>
 
         <li class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
@@ -565,7 +611,7 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('help.*') ? 'active' : '' }}">
+        <li class="menu-item {{ request()->routeIs('support.*') || request()->routeIs('help.*') ? 'active' : '' }}">
             <a href="{{ route('support.index') }}" class="menu-link">
                 <i class="bi bi-question-circle"></i>
                 <span>Help & Support</span>
@@ -627,7 +673,7 @@
 </form>
 
 <style>
-/* Sidebar Styles */
+/* Sidebar Wrapper & Core Layout */
 .sidebar-wrapper {
     height: 100%;
     width: 100%;
@@ -718,12 +764,12 @@
 }
 
 .menu-header {
-    padding: 0.75rem 1rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.85rem 1rem 0.4rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.5);
-    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 700;
 }
 
 .menu-item {
@@ -733,21 +779,21 @@
 .menu-link {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    padding: 0.7rem 1rem;
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: none;
     transition: all 0.2s ease;
 }
 
 .menu-link:hover {
     color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .menu-item.active .menu-link {
     color: #ffffff;
     background-color: #3a7bd5;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .menu-link i {
@@ -755,6 +801,120 @@
     font-size: 1.1rem;
     width: 20px;
     text-align: center;
+}
+
+/* Collapsible Groups Styling */
+.sidebar-group {
+    position: relative;
+    margin-bottom: 2px;
+}
+
+.sidebar-group-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 1rem;
+    color: rgba(255, 255, 255, 0.75);
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-group-toggle:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Parent Header Highlight when Child Route Active */
+.sidebar-group-toggle.has-active-child {
+    color: #ffffff;
+    background: rgba(58, 123, 213, 0.16);
+    border-left-color: #3a7bd5;
+    font-weight: 600;
+}
+
+.sidebar-group-toggle .group-icon {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s ease;
+}
+
+.sidebar-group-toggle.has-active-child .group-icon,
+.sidebar-group-toggle:hover .group-icon {
+    color: #60a5fa;
+}
+
+.sidebar-group-toggle .group-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-group-toggle .group-chevron {
+    font-size: 0.75rem;
+    transition: transform 0.25s ease;
+    opacity: 0.7;
+}
+
+.sidebar-group-toggle.is-open .group-chevron {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+
+.sidebar-group-menu {
+    list-style: none;
+    padding: 0.25rem 0 0.5rem 0;
+    margin: 0 0 0 1.25rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.submenu-item {
+    position: relative;
+}
+
+.submenu-link {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.825rem;
+    font-weight: 500;
+    border-radius: 4px;
+    margin: 1px 0.5rem 1px 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.submenu-link i {
+    margin-right: 0.65rem;
+    font-size: 0.95rem;
+    width: 18px;
+    text-align: center;
+    opacity: 0.85;
+}
+
+.submenu-link:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.submenu-item.active .submenu-link {
+    color: #ffffff;
+    background-color: #3a7bd5;
+    font-weight: 600;
+}
+
+.text-primary-light {
+    color: #93c5fd !important;
 }
 
 .badge {
@@ -780,7 +940,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Mobile Responsiveness - Enhanced for Guest Users */
+/* Mobile Responsiveness */
 @media (max-width: 767.98px) {
     .sidebar-wrapper {
         position: fixed;
@@ -798,7 +958,6 @@
         transform: translateX(0);
     }
 
-    /* Mobile overlay for closing sidebar */
     .sidebar-overlay {
         position: fixed;
         top: 0;
@@ -817,7 +976,6 @@
         opacity: 1;
     }
 
-    /* Guest menu specific mobile styles */
     .guest-menu .menu-link {
         padding: 1rem 1.5rem;
         font-size: 1rem;
@@ -828,7 +986,6 @@
         border-bottom: none;
     }
 
-    /* Mobile toggle button enhancement */
     .sidebar-toggle {
         padding: 0.5rem;
         border-radius: 4px;
@@ -839,7 +996,6 @@
         background-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* Ensure proper spacing on mobile */
     .user-profile {
         padding: 1.5rem 1rem;
     }
@@ -932,7 +1088,6 @@
     padding: 0.375rem 0.75rem;
 }
 
-/* Adjust main content for mobile nav */
 @media (max-width: 767.98px) {
     body.guest-user {
         padding-top: 60px;
@@ -943,109 +1098,39 @@
         height: calc(100vh - 60px);
     }
 }
-
-/* Submenu hover styles */
-.submenu-link:hover {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-}
-.submenu-link {
-    padding-left: 0.5rem;
-}
 </style>
 
 <script>
-// Enhanced mobile sidebar functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-    const sidebar = document.querySelector('.sidebar-wrapper');
-    let sidebarOverlay = document.querySelector('.sidebar-overlay');
+// Toggle Admin Collapsible Groups
+function toggleSidebarGroup(button, groupId) {
+    const parentGroup = button.closest('.sidebar-group');
+    const submenu = parentGroup.querySelector('.sidebar-group-menu');
+    const isOpen = button.classList.contains('is-open');
 
-    // Create overlay if it doesn't exist (for guest users)
-    if (!sidebarOverlay) {
-        sidebarOverlay = document.createElement('div');
-        sidebarOverlay.className = 'sidebar-overlay';
-        document.body.appendChild(sidebarOverlay);
-    }
-
-    // Toggle sidebar function
-    function toggleSidebar() {
-        const isOpen = sidebar.classList.contains('show');
-
-        if (isOpen) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
-    }
-
-    function openSidebar() {
-        sidebar.classList.add('show');
-        sidebarOverlay.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-
-        if (sidebarToggleBtn) {
-            sidebarToggleBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
-        }
-    }
-
-    function closeSidebar() {
-        sidebar.classList.remove('show');
-        sidebarOverlay.classList.remove('show');
-        document.body.style.overflow = ''; // Restore scrolling
-
-        if (sidebarToggleBtn) {
-            sidebarToggleBtn.innerHTML = '<i class="bi bi-list"></i>';
-        }
-    }
-
-    // Toggle button event listener
-    if (sidebarToggleBtn) {
-        sidebarToggleBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleSidebar();
-        });
-    }
-
-    // Overlay click to close
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
-            closeSidebar();
-        });
-    }
-
-    // Close sidebar when clicking menu links on mobile (for guest users)
-    const menuLinks = document.querySelectorAll('.sidebar-menu .menu-link');
-    menuLinks.forEach(function(link) {
-        link.addEventListener('click', function() {
-            if (window.innerWidth < 768) {
-                setTimeout(closeSidebar, 150); // Small delay for better UX
+    // Close other collapsible groups (Single-group open UX rule)
+    document.querySelectorAll('.sidebar-group').forEach(group => {
+        if (group !== parentGroup) {
+            const btn = group.querySelector('.sidebar-group-toggle');
+            const menu = group.querySelector('.sidebar-group-menu');
+            if (btn && menu) {
+                btn.classList.remove('is-open');
+                menu.style.display = 'none';
             }
-        });
-    });
-
-    // Handle window resize
-    window.addEventListener('resize', function() {
-        if (window.innerWidth >= 768) {
-            closeSidebar();
         }
     });
 
-    // Handle escape key to close sidebar
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar.classList.contains('show')) {
-            closeSidebar();
-        }
-    });
+    if (isOpen) {
+        button.classList.remove('is-open');
+        submenu.style.display = 'none';
+        localStorage.setItem('jbi_sidebar_active_group', '');
+    } else {
+        button.classList.add('is-open');
+        submenu.style.display = 'block';
+        localStorage.setItem('jbi_sidebar_active_group', groupId);
+    }
+}
 
-    // Prevent sidebar from closing when clicking inside it
-    sidebar.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-});
-
+// Student Dropdown Menu toggle
 function toggleDropdownMenu(btn) {
     const parent = btn.parentElement;
     const submenu = parent.querySelector('.submenu-list');
@@ -1059,4 +1144,112 @@ function toggleDropdownMenu(btn) {
         chevron.classList.replace('bi-chevron-up', 'bi-chevron-down');
     }
 }
+
+// Enhanced mobile sidebar & persistence functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Restore collapsible group persistence
+    const activeGroupWithChild = document.querySelector('.sidebar-group.has-active-child');
+    if (activeGroupWithChild) {
+        // Current active page belongs to this group -> auto expand
+        const btn = activeGroupWithChild.querySelector('.sidebar-group-toggle');
+        const menu = activeGroupWithChild.querySelector('.sidebar-group-menu');
+        if (btn && menu) {
+            btn.classList.add('is-open');
+            menu.style.display = 'block';
+        }
+    } else {
+        // Restore manual user toggle from localStorage
+        const savedGroupId = localStorage.getItem('jbi_sidebar_active_group');
+        if (savedGroupId) {
+            const savedGroup = document.querySelector(`.sidebar-group[data-group-id="${savedGroupId}"]`);
+            if (savedGroup) {
+                const btn = savedGroup.querySelector('.sidebar-group-toggle');
+                const menu = savedGroup.querySelector('.sidebar-group-menu');
+                if (btn && menu) {
+                    btn.classList.add('is-open');
+                    menu.style.display = 'block';
+                }
+            }
+        }
+    }
+
+    // Mobile Sidebar Elements
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const sidebar = document.querySelector('.sidebar-wrapper');
+    let sidebarOverlay = document.querySelector('.sidebar-overlay');
+
+    if (!sidebarOverlay) {
+        sidebarOverlay = document.createElement('div');
+        sidebarOverlay.className = 'sidebar-overlay';
+        document.body.appendChild(sidebarOverlay);
+    }
+
+    function toggleSidebar() {
+        const isOpen = sidebar.classList.contains('show');
+        if (isOpen) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    }
+
+    function openSidebar() {
+        sidebar.classList.add('show');
+        sidebarOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+        }
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('show');
+        sidebarOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.innerHTML = '<i class="bi bi-list"></i>';
+        }
+    }
+
+    if (sidebarToggleBtn) {
+        sidebarToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSidebar();
+        });
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
+            closeSidebar();
+        });
+    }
+
+    const menuLinks = document.querySelectorAll('.sidebar-menu a:not(.sidebar-group-toggle):not(.dropdown-toggle-btn)');
+    menuLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth < 768) {
+                setTimeout(closeSidebar, 150);
+            }
+        });
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+            closeSidebar();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+            closeSidebar();
+        }
+    });
+
+    sidebar.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+});
 </script>
