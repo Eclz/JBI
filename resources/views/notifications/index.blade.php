@@ -30,53 +30,85 @@
             @if($notifications->count() > 0)
                 <div class="list-group list-group-flush">
                     @foreach($notifications as $notification)
-                        <div class="list-group-item list-group-item-action {{ $notification->read_at ? '' : 'bg-light' }}">
+                        @php
+                            $isUnread = !$notification->is_read && !$notification->read_at;
+                            $title = $notification->title ?? ($notification->data['title'] ?? 'Notification');
+                            $message = $notification->message ?? ($notification->data['message'] ?? '');
+                            $type = $notification->type ?? ($notification->data['type'] ?? 'general');
+                            $actionUrl = $notification->action_url ?? ($notification->data['action_url'] ?? null);
+                        @endphp
+                        <div class="list-group-item list-group-item-action {{ $isUnread ? 'bg-light' : '' }} p-3">
                             <div class="d-flex w-100 justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-start">
-                                        <div class="notification-icon me-3">
-                                            @if(isset($notification->data['type']))
-                                                @switch($notification->data['type'])
-                                                    @case('assignment')
-                                                        <i class="bi bi-file-earmark-text text-primary" style="font-size: 1.5rem;"></i>
-                                                        @break
-                                                    @case('grade')
-                                                        <i class="bi bi-star text-warning" style="font-size: 1.5rem;"></i>
-                                                        @break
-                                                    @case('message')
-                                                        <i class="bi bi-envelope text-info" style="font-size: 1.5rem;"></i>
-                                                        @break
-                                                    @default
-                                                        <i class="bi bi-info-circle text-secondary" style="font-size: 1.5rem;"></i>
-                                                @endswitch
+                                        <div class="notification-icon me-3 flex-shrink-0">
+                                            @if($notification->priority === 'urgent')
+                                                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-exclamation-octagon fs-5"></i>
+                                                </div>
+                                            @elseif($notification->priority === 'high' || $type === 'application')
+                                                <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-bell-fill fs-5"></i>
+                                                </div>
+                                            @elseif($type === 'payment')
+                                                <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-credit-card-fill fs-5"></i>
+                                                </div>
+                                            @elseif($type === 'grade_posted' || $type === 'grade')
+                                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-trophy-fill fs-5"></i>
+                                                </div>
+                                            @elseif($type === 'assignment_due' || $type === 'assignment')
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-file-earmark-text-fill fs-5"></i>
+                                                </div>
+                                            @elseif($type === 'announcement')
+                                                <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-megaphone-fill fs-5"></i>
+                                                </div>
                                             @else
-                                                <i class="bi bi-bell text-primary" style="font-size: 1.5rem;"></i>
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                                    <i class="bi bi-bell-fill fs-5"></i>
+                                                </div>
                                             @endif
                                         </div>
                                         <div>
-                                            <h6 class="mb-1">
-                                                {{ $notification->data['title'] ?? 'Notification' }}
-                                                @if(!$notification->read_at)
-                                                    <span class="badge bg-primary ms-2">New</span>
+                                            <h6 class="mb-1 fw-bold text-dark">
+                                                @if($actionUrl)
+                                                    <a href="{{ $actionUrl }}" class="text-decoration-none text-dark hover-primary">
+                                                        {{ $title }}
+                                                    </a>
+                                                @else
+                                                    {{ $title }}
+                                                @endif
+                                                @if($isUnread)
+                                                    <span class="badge bg-primary ms-2 rounded-pill" style="font-size: 0.65rem;">New</span>
                                                 @endif
                                             </h6>
-                                            <p class="mb-1">{{ $notification->data['message'] ?? 'You have a new notification' }}</p>
-                                            <small class="text-muted">
-                                                <i class="bi bi-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}
-                                            </small>
+                                            <p class="mb-1 text-secondary" style="font-size: 0.9rem;">{{ $message }}</p>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}
+                                                </small>
+                                                @if($actionUrl)
+                                                    <a href="{{ $actionUrl }}" class="small text-primary text-decoration-none fw-medium">
+                                                        View details <i class="bi bi-arrow-right"></i>
+                                                    </a>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="ms-3">
-                                    @if(!$notification->read_at)
-                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('{{ $notification->id }}')">
-                                            <i class="bi bi-check"></i>
+                                <div class="ms-3 d-flex align-items-center gap-1">
+                                    @if($isUnread)
+                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('{{ $notification->id }}')" title="Mark as read">
+                                            <i class="bi bi-check2"></i>
                                         </button>
                                     @endif
                                     <form action="{{ route('notifications.destroy', $notification) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this notification?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this notification?')" title="Delete notification">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -93,7 +125,7 @@
             @endif
         </div>
         @if($notifications->hasPages())
-            <div class="card-footer">
+            <div class="card-footer bg-white border-top">
                 {{ $notifications->links() }}
             </div>
         @endif

@@ -89,7 +89,8 @@ abstract class BaseFormRequest extends FormRequest
         }
         
         $rules[] = 'string';
-        $rules[] = 'regex:/^[\+]?[1-9][\d]{0,15}$/';
+        $rules[] = 'max:30';
+        $rules[] = 'regex:/^[0-9\-\+\s\(\)\.]{7,25}$/';
         
         return $rules;
     }

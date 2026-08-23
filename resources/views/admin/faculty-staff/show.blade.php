@@ -256,9 +256,14 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="card-title mb-0">
-                        <i class="fa fa-chalkboard-teacher"></i> Teaching Information
+                        <i class="fa fa-chalkboard-teacher me-1"></i> Teaching Information
                     </h6>
-                    <small class="text-muted">Current Semester: {{ $teachingStats['current_semester_courses'] }} courses</small>
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted d-none d-md-inline">Current Semester: {{ $teachingStats['current_semester_courses'] }} courses</small>
+                        <a href="{{ route('admin.faculty-staff.edit', $facultyStaff) }}" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 0.78rem;">
+                            <i class="fa fa-tasks me-1"></i>Assign Courses
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if($facultyStaff->taughtCourses && $facultyStaff->taughtCourses->count() > 0)

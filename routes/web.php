@@ -216,13 +216,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/faculty-staff', [AdminFacultyStaffController::class, 'index'])->name('faculty-staff.index');
     Route::get('/faculty-staff/create', [AdminFacultyStaffController::class, 'create'])->name('faculty-staff.create');
     Route::post('/faculty-staff', [AdminFacultyStaffController::class, 'store'])->name('faculty-staff.store');
-    Route::get('/faculty-staff/{faculty}', [AdminFacultyStaffController::class, 'show'])->name('faculty-staff.show');
-    Route::get('/faculty-staff/{faculty}/edit', [AdminFacultyStaffController::class, 'edit'])->name('faculty-staff.edit');
-    Route::put('/faculty-staff/{faculty}', [AdminFacultyStaffController::class, 'update'])->name('faculty-staff.update');
-    Route::delete('/faculty-staff/{faculty}', [AdminFacultyStaffController::class, 'destroy'])->name('faculty-staff.destroy');
-    Route::post('/faculty-staff/{faculty}/toggle-status', [AdminFacultyStaffController::class, 'toggleStatus'])->name('faculty-staff.toggle-status');
-    Route::get('/faculty-staff/{faculty}/courses', [AdminFacultyStaffController::class, 'courses'])->name('faculty-staff.courses');
-    Route::post('/faculty-staff/{faculty}/assign-course', [AdminFacultyStaffController::class, 'assignCourse'])->name('faculty-staff.assign-course');
+    Route::get('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'show'])->name('faculty-staff.show');
+    Route::get('/faculty-staff/{facultyStaff}/edit', [AdminFacultyStaffController::class, 'edit'])->name('faculty-staff.edit');
+    Route::put('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'update'])->name('faculty-staff.update');
+    Route::delete('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'destroy'])->name('faculty-staff.destroy');
+    Route::post('/faculty-staff/{facultyStaff}/toggle-status', [AdminFacultyStaffController::class, 'toggleStatus'])->name('faculty-staff.toggle-status');
+    Route::get('/faculty-staff/{facultyStaff}/courses', [AdminFacultyStaffController::class, 'courses'])->name('faculty-staff.courses');
+    Route::post('/faculty-staff/{facultyStaff}/assign-course', [AdminFacultyStaffController::class, 'assignCourse'])->name('faculty-staff.assign-course');
 
     // Course Management
     Route::resource('courses', AdminCourseController::class);

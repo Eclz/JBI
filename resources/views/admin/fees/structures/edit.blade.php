@@ -61,6 +61,8 @@
                                                 <option value="">Select Fee Type</option>
                                                 <option value="tuition" {{ old('type', $feeStructure->type) == 'tuition' ? 'selected' : '' }}>Tuition</option>
                                                 <option value="registration" {{ old('type', $feeStructure->type) == 'registration' ? 'selected' : '' }}>Registration</option>
+                                                <option value="retake" {{ old('type', $feeStructure->type) == 'retake' ? 'selected' : '' }}>Course Retake Fee</option>
+                                                <option value="missed_paper" {{ old('type', $feeStructure->type) == 'missed_paper' ? 'selected' : '' }}>Missed Paper Exam Fee</option>
                                                 <option value="library" {{ old('type', $feeStructure->type) == 'library' ? 'selected' : '' }}>Library</option>
                                                 <option value="laboratory" {{ old('type', $feeStructure->type) == 'laboratory' ? 'selected' : '' }}>Laboratory</option>
                                                 <option value="technology" {{ old('type', $feeStructure->type) == 'technology' ? 'selected' : '' }}>Technology</option>
@@ -178,8 +180,8 @@
                                         <div class="mb-3">
                                             <label for="late_fee_days" class="form-label">Late Fee Grace Period (Days)</label>
                                             <input type="number" class="form-control @error('late_fee_days') is-invalid @enderror"
-                                                   id="late_fee_days" name="late_fee_days" value="{{ old('late_fee_days', $feeStructure->late_fee_days) }}"
-                                                   min="1" max="365">
+                                                   id="late_fee_days" name="late_fee_days" value="{{ old('late_fee_days', $feeStructure->late_fee_days ?? 0) }}"
+                                                   min="0" max="365">
                                             <div class="form-text">Number of days after due date before late fee applies</div>
                                             @error('late_fee_days')
                                                 <div class="invalid-feedback">{{ $message }}</div>

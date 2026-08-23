@@ -781,7 +781,7 @@ class FeeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:tuition,registration,library,laboratory,technology,activity,other',
+            'type' => 'required|in:tuition,registration,library,laboratory,technology,activity,retake,missed_paper,other',
             'amount' => 'required|numeric|min:0',
             'frequency' => 'required|in:one_time,semester,monthly,annual',
             'academic_year_id' => 'required|exists:academic_years,id',
@@ -790,7 +790,7 @@ class FeeController extends Controller
             'is_mandatory' => 'boolean',
             'due_date' => 'nullable|date',
             'late_fee_amount' => 'nullable|numeric|min:0',
-            'late_fee_days' => 'nullable|integer|min:1',
+            'late_fee_days' => 'nullable|integer|min:0',
         ]);
 
 
@@ -835,7 +835,7 @@ class FeeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:tuition,registration,library,laboratory,technology,activity,other',
+            'type' => 'required|in:tuition,registration,library,laboratory,technology,activity,retake,missed_paper,other',
             'amount' => 'required|numeric|min:0',
             'frequency' => 'required|in:one_time,semester,monthly,annual',
             'academic_year_id' => 'required|exists:academic_years,id',
@@ -844,7 +844,7 @@ class FeeController extends Controller
             'is_mandatory' => 'boolean',
             'due_date' => 'nullable|date',
             'late_fee_amount' => 'nullable|numeric|min:0',
-            'late_fee_days' => 'nullable|integer|min:1',
+            'late_fee_days' => 'nullable|integer|min:0',
         ]);
 
         try {

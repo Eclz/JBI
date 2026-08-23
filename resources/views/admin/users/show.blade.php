@@ -347,7 +347,7 @@
                             </p>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3 pt-3 border-top">
                         <div class="col-md-6">
                             <p class="mb-1 text-muted small">Previous School / Institution</p>
@@ -367,7 +367,7 @@
                                 @foreach($user->studentProfile->qualifications as $key => $value)
                                     @if($value)
                                         <span class="badge bg-light text-dark border">
-                                            {{ str_replace('_', ' ', ucfirst($key)) }}: 
+                                            {{ str_replace('_', ' ', ucfirst($key)) }}:
                                             @if(is_array($value))
                                                 {{ implode(', ', $value) }}
                                             @elseif(is_bool($value))
@@ -420,6 +420,17 @@
                         </div>
                     </div>
                     @endif
+                </div>
+            </div>
+            @elseif($user->role === 'student')
+            <div class="card shadow-sm border-0 text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-mortarboard text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 mb-1">No academic profile yet</h5>
+                    <p class="text-muted mb-4">This student doesn't have an academic profile on record, so there's nothing to show here.</p>
+                    <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Set up academic profile
+                    </a>
                 </div>
             </div>
             @endif
@@ -475,7 +486,7 @@
                                 @foreach($user->facultyProfile->qualifications as $key => $value)
                                     @if($value)
                                         <span class="badge bg-light text-dark border">
-                                            {{ str_replace('_', ' ', ucfirst($key)) }}: 
+                                            {{ str_replace('_', ' ', ucfirst($key)) }}:
                                             @if(is_array($value))
                                                 {{ implode(', ', $value) }}
                                             @elseif(is_bool($value))
@@ -499,7 +510,7 @@
                                 @foreach($user->facultyProfile->experience as $key => $value)
                                     @if($value)
                                         <span class="badge bg-light text-dark border">
-                                            {{ str_replace('_', ' ', ucfirst($key)) }}: 
+                                            {{ str_replace('_', ' ', ucfirst($key)) }}:
                                             @if(is_array($value))
                                                 {{ implode(', ', $value) }}
                                             @elseif(is_bool($value))
@@ -538,6 +549,17 @@
                         </div>
                     </div>
                     @endif
+                </div>
+            </div>
+            @elseif($user->role === 'faculty')
+            <div class="card shadow-sm border-0 text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-person-badge text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 mb-1">No faculty profile yet</h5>
+                    <p class="text-muted mb-4">This user doesn't have a faculty profile on record, so there's nothing to show here.</p>
+                    <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Set up faculty profile
+                    </a>
                 </div>
             </div>
             @endif

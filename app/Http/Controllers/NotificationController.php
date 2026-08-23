@@ -9,7 +9,9 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Auth::user()->notifications()->paginate(20);
+        $notifications = Auth::user()->notifications()
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return view('notifications.index', compact('notifications'));
     }
@@ -18,9 +20,15 @@ class NotificationController extends Controller
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
 
-        // Mark as read when viewed
-        if ($notification->unread()) {
-            $notification->markAsRead();
+        if (!$notification->is_read) {
+            $notification->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+        }
+
+        if ($notification->action_url) {
+            return redirect($notification->action_url);
         }
 
         return view('notifications.show', compact('notification'));
@@ -29,14 +37,20 @@ class NotificationController extends Controller
     public function markAsRead($id)
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
-        $notification->markAsRead();
+        $notification->update([
+            'is_read' => true,
+            'read_at' => now(),
+        ]);
 
         return response()->json(['success' => true]);
     }
 
     public function markAllAsRead()
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        Auth::user()->notifications()->where('is_read', false)->update([
+            'is_read' => true,
+            'read_at' => now(),
+        ]);
 
         return response()->json(['success' => true]);
     }

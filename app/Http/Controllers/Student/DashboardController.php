@@ -27,7 +27,10 @@ class DashboardController extends Controller
         // Get student profile with department
         $studentProfile = $student->studentProfile()->with('department')->first();
 
-        $application = \App\Models\Application::where('email', $student->email)
+        $studentEmail = $student->email;
+        $application = \App\Models\Application::where(function($q) use ($studentEmail) {
+                $q->where('email', $studentEmail)->orWhere('email', strtolower(trim($studentEmail)));
+            })
             ->orderBy('created_at', 'desc')
             ->first();
 

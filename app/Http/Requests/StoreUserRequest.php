@@ -29,22 +29,19 @@ class StoreUserRequest extends FormRequest
                 'string',
                 'min:2',
                 'max:255',
-                'regex:/^[a-zA-Z\s\.\-\']+$/', // Only letters, spaces, dots, hyphens, apostrophes
             ],
             'email' => [
                 'required',
                 'string',
-                'email:rfc,dns',
+                'email:rfc',
                 'max:255',
                 'unique:users,email',
-                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
             ],
             'password' => [
                 'required',
                 'string',
                 'min:8',
                 'max:255',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
                 'confirmed',
             ],
             'role' => [
@@ -58,22 +55,19 @@ class StoreUserRequest extends FormRequest
             ],
             'student_id' => [
                 'nullable',
-                'nullable',
                 'string',
-                'regex:/^JBI\d{4,6}$/',
                 'unique:users,student_id',
             ],
             'employee_id' => [
                 'nullable',
-                'nullable',
                 'string',
-                'regex:/^JBI\d{3,5}$/',
                 'unique:users,employee_id',
             ],
             'phone' => [
                 'nullable',
                 'string',
-                'regex:/^[\+]?[1-9][\d]{0,15}$/',
+                'max:30',
+                'regex:/^[0-9\-\+\s\(\)\.]{7,25}$/',
             ],
             'address' => [
                 'nullable',
@@ -95,12 +89,12 @@ class StoreUserRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z\s\.\-\']+$/',
             ],
             'emergency_phone' => [
                 'nullable',
                 'string',
-                'regex:/^[\+]?[1-9][\d]{0,15}$/',
+                'max:30',
+                'regex:/^[0-9\-\+\s\(\)\.]{7,25}$/',
             ],
             'profile_picture' => [
                 'nullable',

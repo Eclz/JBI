@@ -9,6 +9,7 @@ use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\CourseEnrollment;
 use App\Models\FeeRecord;
+use App\Models\FeeStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -92,7 +93,17 @@ class ProgrammeCoursesController extends Controller
             ->where('user_id', $user->id)
             ->get();
 
-        return view('student.enrollment.index', compact('user', 'studentProfile', 'academicYears', 'semesters', 'availableCourses', 'currentEnrollments'));
+        // Fetch configured fee structures for retake and missed paper
+        $retakeStructure = FeeStructure::where('type', 'retake')->where('is_active', true)->orderBy('created_at', 'desc')->first();
+        $missedPaperStructure = FeeStructure::where('type', 'missed_paper')->where('is_active', true)->orderBy('created_at', 'desc')->first();
+        $retakeFeeAmount = $retakeStructure ? (float)$retakeStructure->amount : 150000;
+        $missedPaperFeeAmount = $missedPaperStructure ? (float)$missedPaperStructure->amount : 100000;
+
+        return view('student.enrollment.index', compact(
+            'user', 'studentProfile', 'academicYears', 'semesters', 
+            'availableCourses', 'currentEnrollments',
+            'retakeFeeAmount', 'missedPaperFeeAmount'
+        ));
     }
 
     public function processEnrollment(Request $request)
@@ -137,9 +148,27 @@ class ProgrammeCoursesController extends Controller
 
             // Generate invoice if retake or missed paper
             if ($type === 'retake') {
-                $amount = 150000; // Retake Fee UGX 150,000
+                $structure = FeeStructure::where('type', 'retake')
+                    ->where('is_active', true)
+                    ->when($request->academic_year_id, function($q, $ay) {
+                        $q->orderByRaw("academic_year_id = ? DESC", [$ay]);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if (!$structure) {
+                    $structure = FeeStructure::firstOrCreate(
+                        ['name' => 'Course Retake Fee', 'type' => 'retake'],
+                        ['amount' => 150000, 'frequency' => 'one_time', 'academic_year_id' => $request->academic_year_id, 'is_active' => true]
+                    );
+                }
+
+                $amount = (float)$structure->amount;
+                $dueDate = $structure->due_date ?: now()->addDays(30);
+
                 FeeRecord::create([
                     'user_id' => $user->id,
+                    'fee_structure_id' => $structure->id,
                     'invoice_number' => 'INV-RET-' . strtoupper(Str::random(6)),
                     'amount' => $amount,
                     'total_amount' => $amount,
@@ -147,14 +176,32 @@ class ProgrammeCoursesController extends Controller
                     'paid_amount' => 0,
                     'type' => 'retake_fee',
                     'status' => 'unpaid',
-                    'due_date' => now()->addDays(30),
+                    'due_date' => $dueDate,
                     'payment_notes' => "Automatic Retake Fee Invoice for course: {$course->code} - {$course->title}",
                 ]);
                 $invoicesGenerated++;
             } elseif ($type === 'missed_paper') {
-                $amount = 100000; // Missed Paper Fee UGX 100,000
+                $structure = FeeStructure::where('type', 'missed_paper')
+                    ->where('is_active', true)
+                    ->when($request->academic_year_id, function($q, $ay) {
+                        $q->orderByRaw("academic_year_id = ? DESC", [$ay]);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if (!$structure) {
+                    $structure = FeeStructure::firstOrCreate(
+                        ['name' => 'Missed Paper Examination Fee', 'type' => 'missed_paper'],
+                        ['amount' => 100000, 'frequency' => 'one_time', 'academic_year_id' => $request->academic_year_id, 'is_active' => true]
+                    );
+                }
+
+                $amount = (float)$structure->amount;
+                $dueDate = $structure->due_date ?: now()->addDays(30);
+
                 FeeRecord::create([
                     'user_id' => $user->id,
+                    'fee_structure_id' => $structure->id,
                     'invoice_number' => 'INV-MIS-' . strtoupper(Str::random(6)),
                     'amount' => $amount,
                     'total_amount' => $amount,
@@ -162,7 +209,7 @@ class ProgrammeCoursesController extends Controller
                     'paid_amount' => 0,
                     'type' => 'missed_paper_fee',
                     'status' => 'unpaid',
-                    'due_date' => now()->addDays(30),
+                    'due_date' => $dueDate,
                     'payment_notes' => "Automatic Missed Paper Examination Fee Invoice for course: {$course->code} - {$course->title}",
                 ]);
                 $invoicesGenerated++;

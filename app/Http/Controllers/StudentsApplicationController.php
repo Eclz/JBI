@@ -49,8 +49,14 @@ class StudentsApplicationController extends Controller
 
         $existingApp = null;
         if ($email) {
-            Application::where('email', $email)->where('status', 'rejected')->delete();
-            $existingApp = Application::where('email', $email)->first();
+            $normalizedEmail = strtolower(trim($email));
+            Application::where(function($q) use ($email, $normalizedEmail) {
+                $q->where('email', $email)->orWhere('email', $normalizedEmail);
+            })->where('status', 'rejected')->delete();
+
+            $existingApp = Application::where(function($q) use ($email, $normalizedEmail) {
+                $q->where('email', $email)->orWhere('email', $normalizedEmail);
+            })->first();
         }
 
         $emailRule = $existingApp ? 'required|email|unique:applications,email,' . $existingApp->id : 'required|email|unique:applications,email';
@@ -78,10 +84,11 @@ class StudentsApplicationController extends Controller
             'highest_degree' => 'nullable|string|max:255',
             'specialization' => 'nullable|string|max:255',
             'years_of_experience' => 'nullable|integer|min:0',
-            'documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
             'emergency_contact_name' => 'required_if:type,student|string|max:255',
             'emergency_contact_phone' => 'required_if:type,student|string|max:20',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'application_notes' => 'nullable|string|max:2000',
         ]);
 
         DB::beginTransaction();
@@ -144,8 +151,13 @@ class StudentsApplicationController extends Controller
                 'program_id_3',
                 'program_id_4',
                 'program_id_5',
-                'program_id_6'
+                'program_id_6',
+                'application_notes',
             ])->toArray();
+
+            if (!empty($validated['application_notes'])) {
+                $applicationData['review_notes'] = $validated['application_notes'];
+            }
 
             if ($existingApp) {
                 $applicationData['status'] = 'pending';
@@ -156,7 +168,6 @@ class StudentsApplicationController extends Controller
                 $applicationData['payment_ref'] = Application::generatePaymentRef();
                 $application = Application::create($applicationData);
             }
-
 
             try {
                 $admins = User::where('role', 'admin')->get();
@@ -175,7 +186,7 @@ class StudentsApplicationController extends Controller
 
                 @Mail::to($application->email)->queue(new ApplicationSubmitted($application));
             } catch (\Throwable $mailEx) {
-                Log::warning('Application created, but notification mail dispatch failed: ' . $mailEx->getMessage());
+                \Illuminate\Support\Facades\Log::warning('Application created, but notification mail dispatch failed: ' . $mailEx->getMessage());
             }
 
             DB::commit();
@@ -185,7 +196,8 @@ class StudentsApplicationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->withErrors(['error' => 'Failed to submit application. Please try again.']);
+            \Illuminate\Support\Facades\Log::error('Application submission failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withInput()->withErrors(['error' => 'Failed to submit application: ' . $e->getMessage()]);
         }
     }
 

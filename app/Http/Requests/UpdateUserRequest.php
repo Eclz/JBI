@@ -22,6 +22,7 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->route('user');
+        $userId = $user instanceof \App\Models\User ? $user->id : ($user ?? $this->id ?? null);
 
         return [
             'name' => [
@@ -30,23 +31,20 @@ class UpdateUserRequest extends FormRequest
                 'string',
                 'min:2',
                 'max:255',
-                'regex:/^[a-zA-Z\s\.\-\']+$/',
             ],
             'email' => [
                 'sometimes',
                 'required',
                 'string',
-                'email:rfc,dns',
+                'email:rfc',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
+                Rule::unique('users', 'email')->ignore($userId),
             ],
             'password' => [
-                'sometimes',
                 'nullable',
                 'string',
                 'min:8',
                 'max:255',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
                 'confirmed',
             ],
             'role' => [
@@ -60,22 +58,19 @@ class UpdateUserRequest extends FormRequest
             ],
             'student_id' => [
                 'nullable',
-                'nullable',
                 'string',
-                'regex:/^JBI\d{4,6}$/',
-                Rule::unique('users', 'student_id')->ignore($user->id),
+                Rule::unique('users', 'student_id')->ignore($userId),
             ],
             'employee_id' => [
                 'nullable',
-                'nullable',
                 'string',
-                'regex:/^JBI\d{3,5}$/',
-                Rule::unique('users', 'employee_id')->ignore($user->id),
+                Rule::unique('users', 'employee_id')->ignore($userId),
             ],
             'phone' => [
                 'nullable',
                 'string',
-                'regex:/^[\+]?[1-9][\d]{0,15}$/',
+                'max:30',
+                'regex:/^[0-9\-\+\s\(\)\.]{7,25}$/',
             ],
             'address' => [
                 'nullable',
@@ -97,12 +92,12 @@ class UpdateUserRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z\s\.\-\']+$/',
             ],
             'emergency_phone' => [
                 'nullable',
                 'string',
-                'regex:/^[\+]?[1-9][\d]{0,15}$/',
+                'max:30',
+                'regex:/^[0-9\-\+\s\(\)\.]{7,25}$/',
             ],
             'profile_picture' => [
                 'nullable',
@@ -128,10 +123,8 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.regex' => 'The name may only contain letters, spaces, dots, hyphens, and apostrophes.',
-            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
-            'student_id.regex' => 'Student ID must be in format JBI followed by 4-6 digits.',
-            'employee_id.regex' => 'Employee ID must be in format JBI followed by 3-5 digits.',
+            'phone.regex' => 'Please provide a valid phone number.',
+            'emergency_phone.regex' => 'Please provide a valid emergency contact phone number.',
         ];
     }
 }

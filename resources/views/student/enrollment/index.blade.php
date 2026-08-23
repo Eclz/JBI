@@ -145,8 +145,8 @@
                                             <td>
                                                 <select name="enrollment_types[{{ $c->id }}]" class="form-select form-select-sm">
                                                     <option value="normal" selected>Normal (First Time - Free)</option>
-                                                    <option value="retake">Retake Course ({{ $currencyCode }} 150,000 Invoice)</option>
-                                                    <option value="missed_paper">Missed Paper Exam ({{ $currencyCode }} 100,000 Invoice)</option>
+                                                    <option value="retake">Retake Course ({{ $currencyCode }} {{ number_format($retakeFeeAmount ?? 150000) }} Invoice)</option>
+                                                    <option value="missed_paper">Missed Paper Exam ({{ $currencyCode }} {{ number_format($missedPaperFeeAmount ?? 100000) }} Invoice)</option>
                                                 </select>
                                             </td>
                                         </tr>

@@ -42,7 +42,15 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Type:</strong></td>
-                                    <td><span class="badge bg-info">{{ ucfirst($feeStructure->type) }}</span></td>
+                                    <td>
+                                        @if($feeStructure->type === 'retake')
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat me-1"></i>Retake Fee</span>
+                                        @elseif($feeStructure->type === 'missed_paper')
+                                            <span class="badge bg-danger text-white"><i class="bi bi-file-earmark-x me-1"></i>Missed Paper Fee</span>
+                                        @else
+                                            <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $feeStructure->type)) }}</span>
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Amount:</strong></td>
