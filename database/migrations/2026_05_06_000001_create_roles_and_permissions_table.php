@@ -39,7 +39,10 @@ return new class extends Migration
             'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
             'lecturer' => $this->matrix(['courses', 'attendance', 'grades', 'lms', 'exams'], ['view', 'create', 'edit']),
             'finance_officer' => $this->matrix(['fees', 'students', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
-            'admissions_officer' => $this->matrix(['applications', 'students', 'fees', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
+            'admissions_officer' => array_merge_recursive(
+                $this->matrix(['applications', 'students', 'fees', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
+                $this->matrix(['courses', 'programs', 'departments'], ['view'])
+            ),
             'student' => $this->matrix(['courses', 'fees', 'attendance', 'grades', 'lms', 'exams'], ['view']),
             'parent_guardian' => $this->matrix(['fees', 'attendance', 'grades', 'reports'], ['view']),
         ];
