@@ -33,8 +33,8 @@
             <div class="absolute inset-0 bg-black opacity-20"></div>
             <div class="relative z-10 flex flex-col justify-center items-center text-white p-12">
                 <div class="text-center mb-8">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI Logo" class="h-32 w-auto mx-auto mb-6">
-                    <h1 class="text-4xl font-bold mb-4">Johnson Bible Institute</h1>
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="h-32 w-auto mx-auto mb-6">
+                    <h1 class="text-4xl font-bold mb-4">JBI University</h1>
                     <p class="text-xl text-blue-100">Endless possibilities, unlimited imagination...</p>
                 </div>
 
@@ -57,7 +57,7 @@
             <div class="w-full max-w-md">
                 <!-- Mobile Logo -->
                 <div class="lg:hidden text-center mb-8">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI Logo" class="h-20 w-auto mx-auto mb-4">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="h-20 w-auto mx-auto mb-4">
                     <h1 class="text-2xl font-bold text-gray-900">JBI University</h1>
                 </div>
 
@@ -171,7 +171,7 @@
                 </div>
 
                 <div class="mt-8 text-center text-xs text-gray-500">
-                    <p>&copy; {{ date('Y') }} Johnson Bible Institute. All rights reserved.</p>
+                    <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
                 </div>
             </div>
         </div>

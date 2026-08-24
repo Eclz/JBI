@@ -45,7 +45,7 @@
                     <div class="mb-3">
                         <label class="form-label">Contact Email <span class="text-danger">*</span></label>
                         <input type="email" name="app_email" class="form-control @error('app_email') is-invalid @enderror"
-                               value="{{ old('app_email', $settings->get('app_email')->value ?? 'info@jbiuniversity.edu') }}" required>
+                               value="{{ old('app_email', $settings->get('app_email')->value ?? 'info@jbiuniversity.com') }}" required>
                         @error('app_email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

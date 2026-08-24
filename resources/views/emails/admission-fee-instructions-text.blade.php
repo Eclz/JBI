@@ -18,7 +18,7 @@ After making payment, upload your payment proof here:
 {{ route('applications.upload-payment', $application->application_number) }}
 
 For assistance:
-Email: finance@jbiuniversity.edu
+Email: info@jbiuniversity.com
 Phone: +256-123-456-789
 
 Best regards,

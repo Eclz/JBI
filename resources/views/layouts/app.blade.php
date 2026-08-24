@@ -495,7 +495,7 @@
                 </button>
 
                 <div class="mobile-nav-brand">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University" class="mobile-logo">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="mobile-logo">
                     <a href="{{ url('/') }}" class="mobile-brand-text">JBI University</a>
                 </div>
 
@@ -516,7 +516,7 @@
             @auth
             <div class="p-3 border-bottom border-secondary">
                 <div class="d-flex align-items-center">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University" height="30" class="me-2">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" height="30" class="me-2">
                     <div>
                         <h5 class="mb-0 fw-bold">JBI</h5>
                         <div class="small">University</div>

@@ -28,7 +28,7 @@
                         <h5 class="fw-bold text-primary mb-1">{{ $message->subject }}</h5>
                         <small class="text-muted">
                             From: <strong>{{ $message->sender?->full_name ?? 'System Notification' }}</strong> 
-                            ({{ $message->sender?->email ?? 'system@jbi.ac.ug' }}) 
+                            ({{ $message->sender?->email ?? 'info@jbiuniversity.com' }})
                             • {{ $message->created_at->format('M d, Y h:i A') }}
                         </small>
                     </div>

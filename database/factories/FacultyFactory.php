@@ -41,8 +41,7 @@ class FacultyFactory extends Factory
             'dean_id' => null, // Will be set or remains null
             'location' => $this->faker->randomElement(['Building A', 'Building B', 'Building C', 'Main Campus', 'North Wing', 'South Wing']) . ' - Floor ' . $this->faker->numberBetween(1, 5),
             'phone' => $this->faker->phoneNumber(),
-            'email' => strtolower($code) . '@jbi.edu',
-            'website' => 'https://' . strtolower($code) . '.jbi.edu',
+            'email' => strtolower($code) . '@jbiuniversity.com',
             'is_active' => true,
         ];
     }

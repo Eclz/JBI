@@ -162,6 +162,22 @@ All test accounts use the password `password123`:
 
 These credentials are for local testing only. Never deploy them to production.
 
+## Demo environment reset
+
+The demo reset command deletes all application records, rebuilds the schema, and loads a small representative dataset with the four operator accounts above:
+
+```bash
+DEMO_RESET_ALLOWED=true php artisan demo:reset
+```
+
+For automated deployments, use `--force` only after creating and validating a database backup:
+
+```bash
+DEMO_RESET_ALLOWED=true php artisan demo:reset --force
+```
+
+The command refuses to run unless `DEMO_RESET_ALLOWED=true`. Never enable it on a production system that contains real user data.
+
 ## Email configuration
 
 Email is written to the application log by default. To send real password-reset, application, and admission messages, configure the `MAIL_*` values in `.env`. For example:

@@ -12,7 +12,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('faculty_profiles', function (Blueprint $table) {
+        $hasEmploymentStatusIndex = Schema::hasIndex(
+            'faculty_profiles',
+            'faculty_profiles_employment_status_idx'
+        );
+        $hasApplicationStatusIndex = Schema::hasIndex(
+            'faculty_profiles',
+            'faculty_profiles_application_status_idx'
+        );
+        $hasDepartmentEmploymentIndex = Schema::hasIndex(
+            'faculty_profiles',
+            'faculty_profiles_dept_employment_idx'
+        );
+
+        Schema::table('faculty_profiles', function (Blueprint $table) use (
+            $hasEmploymentStatusIndex,
+            $hasApplicationStatusIndex,
+            $hasDepartmentEmploymentIndex
+        ) {
             // Add employee_id if it doesn't exist
             if (!Schema::hasColumn('faculty_profiles', 'employee_id')) {
                 $table->string('employee_id')->unique()->nullable()->after('user_id');
@@ -78,23 +95,17 @@ return new class extends Migration
                 $table->text('notes')->nullable()->after('application_notes');
             }
 
-            // Add indexes for performance, with try-catch to avoid duplicate index errors
-            try {
+            // Add performance indexes only when they do not already exist.
+            if (!$hasEmploymentStatusIndex) {
                 $table->index(['employment_status'], 'faculty_profiles_employment_status_idx');
-            } catch (\Exception $e) {
-                // Log or ignore duplicate index error
             }
 
-            try {
+            if (!$hasApplicationStatusIndex) {
                 $table->index(['application_status'], 'faculty_profiles_application_status_idx');
-            } catch (\Exception $e) {
-                // Log or ignore duplicate index error
             }
 
-            try {
+            if (!$hasDepartmentEmploymentIndex) {
                 $table->index(['department_id', 'employment_status'], 'faculty_profiles_dept_employment_idx');
-            } catch (\Exception $e) {
-                // Log or ignore duplicate index error
             }
         });
     }

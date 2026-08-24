@@ -83,14 +83,14 @@ class DatabaseSeeder extends Seeder
         // Create Admin Users
         User::factory()->admin()->create([
             'name' => 'System Administrator',
-            'email' => 'admin@jbi.edu',
+            'email' => 'admin@jbiuniversity.com',
             'employee_id' => 'JBI001',
             'preferences' => json_encode(['theme' => 'dark', 'notifications' => true]),
         ]);
 
         User::factory()->admin()->create([
             'name' => 'Academic Administrator',
-            'email' => 'academic@jbi.edu',
+            'email' => 'academic@jbiuniversity.com',
             'employee_id' => 'JBI002',
             'preferences' => json_encode(['theme' => 'light', 'notifications' => true]),
         ]);
@@ -275,10 +275,10 @@ class DatabaseSeeder extends Seeder
 
         // Create System Settings
         $settings = [
-            ['key' => 'institution_name', 'value' => 'Johnson Bible Institute', 'group' => 'general'],
-            ['key' => 'institution_address', 'value' => '7900 Johnson Drive, Knoxville, TN 37998', 'group' => 'general'],
-            ['key' => 'institution_phone', 'value' => '+1-865-573-4517', 'group' => 'general'],
-            ['key' => 'institution_email', 'value' => 'admin@jbi.edu', 'group' => 'general'],
+            ['key' => 'institution_name', 'value' => 'JBI University', 'group' => 'general'],
+            ['key' => 'institution_address', 'value' => 'South Africa', 'group' => 'general'],
+            ['key' => 'institution_phone', 'value' => '+27 68 443 8415', 'group' => 'general'],
+            ['key' => 'institution_email', 'value' => 'info@jbiuniversity.com', 'group' => 'general'],
             ['key' => 'academic_year_start_month', 'value' => '8', 'group' => 'academic'],
             ['key' => 'default_semester_credits', 'value' => '15', 'group' => 'academic'],
             ['key' => 'max_course_enrollment', 'value' => '30', 'group' => 'academic'],
@@ -287,7 +287,7 @@ class DatabaseSeeder extends Seeder
             ['key' => 'email_notifications', 'value' => 'true', 'type' => 'boolean', 'group' => 'notifications'],
             ['key' => 'sms_notifications', 'value' => 'false', 'type' => 'boolean', 'group' => 'notifications'],
             ['key' => 'default_timezone', 'value' => 'Africa/Johannesburg', 'group' => 'general'],
-            ['key' => 'academic_calendar_url', 'value' => 'https://jbi.edu/calendar', 'group' => 'academic'],
+            ['key' => 'academic_calendar_url', 'value' => 'https://jbiuniversity.com/', 'group' => 'academic'],
         ];
 
         foreach ($settings as $setting) {

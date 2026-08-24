@@ -39,7 +39,7 @@
             <div class="card border-0 shadow-lg rounded-3 overflow-hidden" id="prn-slip-card">
                 <!-- Slip Header -->
                 <div class="card-header bg-primary text-white p-4 text-center">
-                    <img src="/logo.png" alt="University Logo" style="height: 55px; width: auto;" class="mb-2 mx-auto d-block filter-invert" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=JBI+University&background=ffffff&color=0d6efd&size=100';">
+                    <img src="{{ asset('images/jbi-logo-white.webp') }}" alt="JBI University Logo" style="height: 55px; width: auto;" class="mb-2 mx-auto d-block">
                     <h4 class="fw-bold mb-1 text-uppercase">JBI UNIVERSITY ACADEMIC PORTAL</h4>
                     <p class="mb-0 small text-white-50 text-uppercase fw-semibold" style="letter-spacing: 1px;">OFFICIAL PAYMENT REFERENCE SLIP</p>
                 </div>

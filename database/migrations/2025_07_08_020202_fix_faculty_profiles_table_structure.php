@@ -82,6 +82,7 @@ return new class extends Migration
             if (!Schema::hasColumn('faculty_profiles', 'notes')) {
                 $table->text('notes')->nullable()->after('application_notes');
             }
+            // Performance indexes are created by the preceding migration.
         });
     }
 

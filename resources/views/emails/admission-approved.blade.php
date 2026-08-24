@@ -151,8 +151,8 @@
 
         <p>If you encounter any issues logging in or have questions about your admission, please contact:</p>
         <ul>
-            <li><strong>Email:</strong> <a href="mailto:support@jbiuniversity.edu">support@jbiuniversity.edu</a></li>
-            <li><strong>Phone:</strong> (555) 123-4567</li>
+            <li><strong>Email:</strong> <a href="mailto:info@jbiuniversity.com">info@jbiuniversity.com</a></li>
+            <li><strong>WhatsApp:</strong> +27 68 443 8415</li>
             <li><strong>Office Hours:</strong> Monday - Friday, 8:00 AM - 5:00 PM</li>
         </ul>
 
@@ -163,8 +163,8 @@
 
         <div class="footer">
             <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
-            <p>JBI University | 91 Progress Road Lindhaven | Roodeport South Africa</p>
-            <p>Phone: +27 67 965 3866 | Email: admin@johnsonbibleinstitute.com</p>
+            <p>JBI University | South Africa | www.jbiuniversity.com</p>
+            <p>WhatsApp: +27 68 443 8415 | Email: info@jbiuniversity.com</p>
         </div>
     </div>
 </body>

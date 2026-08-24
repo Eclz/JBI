@@ -116,7 +116,7 @@
                     <!-- Right Side - Info Panel -->
                     <div class="col-md-5 d-none d-md-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #1a2236 100%);">
                         <div class="text-center p-5">
-                            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/JBI-Logo-oWxd478x1NMPMmr2woHizWQC9aCVG2.webp" alt="JBI Logo" class="mb-4" style="height: 100px;">
+                            <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="mb-4" style="height: 100px;">
                             <h4 class="fw-bold mb-2">Welcome to JBI</h4>
                             <p class="text-white-50 small mb-4">Begin your student admission process directly from within your dashboard.</p>
 

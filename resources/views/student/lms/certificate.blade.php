@@ -14,7 +14,7 @@
 
     <div class="card border-0 shadow-sm">
         <div class="card-body p-5 text-center">
-            <img src="{{ asset('images/jbi.png') }}" alt="University Logo" style="height: 72px;" class="mb-3">
+            <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" style="height: 72px;" class="mb-3">
             <h3 class="mb-1">JBI University</h3>
             <p class="text-muted mb-4">Certificate of Completion</p>
 

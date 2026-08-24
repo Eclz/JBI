@@ -23,6 +23,11 @@ class ViewServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Console commands such as migrate must not require an initialized database.
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
         try {
             View::share('departments', Department::where('is_active', true)->get());
             View::share('currencyCode', SystemSetting::getSetting('default_currency', 'USD'));

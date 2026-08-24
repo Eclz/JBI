@@ -189,8 +189,8 @@
 
         <p>If you have any questions about this payment or your account, please contact:</p>
         <ul>
-            <li><strong>Email:</strong> finance@jbiuniversity.edu</li>
-            <li><strong>Phone:</strong> +1 (555) 123-4567</li>
+            <li><strong>Email:</strong> info@jbiuniversity.com</li>
+            <li><strong>WhatsApp:</strong> +27 68 443 8415</li>
             <li><strong>Office:</strong> Finance Department, Main Building, Room 205</li>
         </ul>
 

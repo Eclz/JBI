@@ -207,7 +207,7 @@
     <nav class="navbar navbar-expand-lg guest-navbar">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
-                <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University Logo">
+                <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo">
                 <span>JBI University</span>
             </a>
 
@@ -296,8 +296,9 @@
                 <div class="col-md-4">
                     <h6 class="text-white mb-3">Contact</h6>
                     <p class="small mb-1"><i class="bi bi-envelope me-2"></i> admission@jbiuniversity.com</p>
-                    <p class="small mb-1"><i class="bi bi-telephone me-2"></i>+27 67 965 3866</p>
-                    <p class="small mb-0"><i class="bi bi-geo-alt me-2"></i>91 Progress Road Lindhaven Roodeport South Africa</p>
+                    <p class="small mb-1"><i class="bi bi-envelope me-2"></i> info@jbiuniversity.com</p>
+                    <p class="small mb-1"><i class="bi bi-whatsapp me-2"></i>+27 68 443 8415</p>
+                    <p class="small mb-0"><i class="bi bi-geo-alt me-2"></i>South Africa</p>
                 </div>
             </div>
             <hr class="my-3 border-secondary">

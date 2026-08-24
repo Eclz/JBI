@@ -182,7 +182,7 @@ class StoreUserRequest extends FormRequest
             // Validate email domain for institutional emails
             if ($this->email && in_array($this->role, ['faculty', 'admin'])) {
                 $domain = substr(strrchr($this->email, "@"), 1);
-                if (!in_array($domain, ['jbi.edu', 'johnsonbible.edu'])) {
+                if (!in_array($domain, ['jbiuniversity.com'])) {
                     $validator->errors()->add('email', 'Faculty and admin users must use institutional email addresses.');
                 }
             }

@@ -597,7 +597,7 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <a href="mailto:admissions@jbi.ac.ug" class="btn btn-outline-danger fw-bold px-4 py-2" style="border-radius: 8px;">
+                                    <a href="mailto:admission@jbiuniversity.com" class="btn btn-outline-danger fw-bold px-4 py-2" style="border-radius: 8px;">
                                         <i class="bi bi-envelope-fill me-2"></i>Contact Admissions Board Support
                                     </a>
                                 </div>

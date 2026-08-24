@@ -1,7 +1,7 @@
 <div class="sidebar-wrapper">
     <div class="sidebar-header">
         <div class="logo-container">
-            <img src="{{ asset('images/jbi.png') }}" alt="JBI University" class="logo-img">
+            <img src="{{ asset('images/jbi-logo-white.webp') }}" alt="JBI University" class="logo-img">
             {{-- <span class="logo-text">JBI University</span> --}}
         </div>
         <button id="sidebar-toggle-btn" class="sidebar-toggle d-md-none">
