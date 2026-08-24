@@ -308,7 +308,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="program_filter" class="form-label text-dark fw-semibold">Filter by Programme</label>
-                        <select class="form-select" id="program_filter">
+                        <select class="form-select select2" id="program_filter" data-placeholder="Choose a Programme">
                             <option value="">All Programmes</option>
                             @foreach($programs as $program)
                                 <option value="{{ $program->id }}">{{ $program->name }}</option>
@@ -385,8 +385,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Filter students by program
-        programFilter.addEventListener('change', function() {
+        // Filter students by program using jQuery's change event (triggered by Select2)
+        $(programFilter).on('change', function() {
             const selectedProgramId = this.value;
             let visibleCount = 0;
 

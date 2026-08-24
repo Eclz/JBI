@@ -101,7 +101,7 @@
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-7">
                                     <label for="course_id" class="form-label fw-bold">Select Active Course & Check Available Slots <span class="text-danger">*</span></label>
-                                    <select name="course_id" id="course_id" class="form-select form-select-lg @error('course_id') is-invalid @enderror" required>
+                                    <select name="course_id" id="course_id" class="form-select select2 form-select-lg @error('course_id') is-invalid @enderror" required>
                                         <option value="">-- Choose Course (Slots Available) --</option>
                                         @foreach($availableCourses as $course)
                                             @php
