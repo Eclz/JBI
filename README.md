@@ -178,6 +178,23 @@ DEMO_RESET_ALLOWED=true php artisan demo:reset --force
 
 The command refuses to run unless `DEMO_RESET_ALLOWED=true`. Never enable it on a production system that contains real user data.
 
+For an isolated demo deployment, use a separate database or a dedicated table prefix and application URL:
+
+```env
+APP_DATA_MODE=demo
+APP_URL=https://portal.jbiuniversity.com/demo
+DB_PREFIX=demo_
+DEMO_RESET_ALLOWED=true
+```
+
+The production deployment must use `APP_DATA_MODE=production`, an empty `DB_PREFIX`, and `DEMO_RESET_ALLOWED=false`.
+
+To initialize an empty production database with only essential academic structure and the administrator account, run:
+
+```bash
+php artisan migrate:fresh --force --seeder=Database\\Seeders\\ProductionDatabaseSeeder
+```
+
 ## Email configuration
 
 Email is written to the application log by default. To send real password-reset, application, and admission messages, configure the `MAIL_*` values in `.env`. For example:

@@ -56,6 +56,12 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ config('app.production_url') }}">Production</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ config('app.demo_url') }}">Demo/Test</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#about">About</a>
                     </li>
                     <li class="nav-item">

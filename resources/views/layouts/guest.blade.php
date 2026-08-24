@@ -303,7 +303,15 @@
             </div>
             <hr class="my-3 border-secondary">
             <div class="text-center small">
-                <p class="mb-0">&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
+                <p class="mb-1">&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
+                <p class="mb-0">
+                    <span class="badge {{ config('app.data_mode') === 'demo' ? 'bg-warning text-dark' : 'bg-success' }}">
+                        {{ config('app.data_mode') === 'demo' ? 'Demo Data' : 'Production Data' }}
+                    </span>
+                    <a class="ms-2" href="{{ config('app.production_url') }}">Production</a>
+                    <span class="mx-1">|</span>
+                    <a href="{{ config('app.demo_url') }}">Demo/Test</a>
+                </p>
             </div>
         </div>
     </footer>

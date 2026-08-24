@@ -762,7 +762,17 @@
             <!-- Footer -->
             <footer class="footer">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>&copy; {{ date('Y') }} JBI University. All rights reserved.</div>
+                    <div>
+                        &copy; {{ date('Y') }} JBI University. All rights reserved.
+                        <span class="badge {{ config('app.data_mode') === 'demo' ? 'bg-warning text-dark' : 'bg-success' }} ms-2">
+                            {{ config('app.data_mode') === 'demo' ? 'Demo Data' : 'Production Data' }}
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ config('app.production_url') }}" class="text-decoration-none small">Production</a>
+                        <span class="text-muted">|</span>
+                        <a href="{{ config('app.demo_url') }}" class="text-decoration-none small">Demo/Test</a>
+                    </div>
                     <div class="d-flex align-items-center">
                         <span class="me-3">Version 1.0.0</span>
                         @guest

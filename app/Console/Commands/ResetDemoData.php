@@ -15,6 +15,12 @@ class ResetDemoData extends Command
 
     public function handle(): int
     {
+        if (config('app.data_mode') !== 'demo') {
+            $this->error('Demo reset is available only when APP_DATA_MODE=demo.');
+
+            return self::FAILURE;
+        }
+
         if (! config('app.demo_reset_allowed', false)) {
             $this->error('Demo reset is disabled. Set DEMO_RESET_ALLOWED=true for an approved demo environment.');
 
