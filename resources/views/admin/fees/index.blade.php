@@ -10,18 +10,24 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Fee Management</h4>
                     <div>
+                        @if(auth()->user()->hasPermission('fees', 'create'))
                         <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#generateInvoicesModal">
                             <i class="fas fa-file-invoice"></i> Generate Invoices
                         </button>
+                        @endif
+                        @if(auth()->user()->hasPermission('fees', 'edit'))
                         <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#sendRemindersModal">
                             <i class="fas fa-bell"></i> Send Reminders
                         </button>
+                        @endif
+                        @if(auth()->user()->hasPermission('fees', 'create'))
                         <a href="{{ route('admin.fees.structures.create') }}" class="btn btn-success me-2">
                             <i class="fas fa-plus"></i> Add Fee Structure
                         </a>
                         <a href="{{ route('admin.fees.records.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Fee Record
                         </a>
+                        @endif
                     </div>
                 </div>
                 <div class="card-body">
@@ -89,6 +95,7 @@
                                 Fee Records
                             </button>
                         </li>
+                        @if(optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="structures-tab" data-bs-toggle="tab"
                                     data-bs-target="#structures" type="button" role="tab">
@@ -101,6 +108,7 @@
                                 Reports
                             </button>
                         </li>
+                        @endif
                     </ul>
 
                     <div class="tab-content" id="feesTabContent">
@@ -141,11 +149,13 @@
                                             <button type="submit" class="btn btn-primary me-2">Filter</button>
                                             <a href="{{ route('admin.fees.index') }}" class="btn btn-outline-secondary">Reset</a>
                                         </div>
-                                        <div class="col-md-1">
-                                            <button type="button" class="btn btn-outline-success" onclick="exportFeeRecords()">
-                                                <i class="fas fa-download"></i>
-                                            </button>
-                                        </div>
+                                         @if(auth()->user()->hasPermission('fees', 'export'))
+                                         <div class="col-md-1">
+                                             <button type="button" class="btn btn-outline-success" onclick="exportFeeRecords()">
+                                                 <i class="fas fa-download"></i>
+                                             </button>
+                                         </div>
+                                         @endif
                                     </div>
                                 </form>
 
@@ -212,28 +222,30 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="{{ route('admin.fees.records.show', $record) }}"
-                                                           class="btn btn-sm btn-outline-info" title="View">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        @if($record->status != 'paid')
-                                                        <a href="{{ route('admin.fees.records.payment', $record) }}"
-                                                           class="btn btn-sm btn-outline-success" title="Record Payment">
-                                                            <i class="fas fa-dollar-sign"></i>
-                                                        </a>
-                                                        @endif
-                                                        <a href="{{ route('admin.fees.records.edit', $record) }}"
-                                                           class="btn btn-sm btn-outline-primary" title="Edit">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        @if($record->paid_amount == 0)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                                onclick="confirmDelete({{ $record->id }})" title="Delete">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                        @endif
-                                                    </div>
+                                                     <div class="btn-group" role="group">
+                                                         <a href="{{ route('admin.fees.records.show', $record) }}"
+                                                            class="btn btn-sm btn-outline-info" title="View">
+                                                             <i class="fas fa-eye"></i>
+                                                         </a>
+                                                         @if($record->status != 'paid' && auth()->user()->hasPermission('fees', 'create'))
+                                                         <a href="{{ route('admin.fees.records.payment', $record) }}"
+                                                            class="btn btn-sm btn-outline-success" title="Record Payment">
+                                                             <i class="fas fa-dollar-sign"></i>
+                                                         </a>
+                                                         @endif
+                                                         @if(auth()->user()->hasPermission('fees', 'edit'))
+                                                         <a href="{{ route('admin.fees.records.edit', $record) }}"
+                                                            class="btn btn-sm btn-outline-primary" title="Edit">
+                                                             <i class="fas fa-edit"></i>
+                                                         </a>
+                                                         @endif
+                                                         @if($record->paid_amount == 0 && auth()->user()->hasPermission('fees', 'delete'))
+                                                         <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                 onclick="confirmDelete({{ $record->id }})" title="Delete">
+                                                             <i class="fas fa-trash"></i>
+                                                         </button>
+                                                         @endif
+                                                     </div>
                                                 </td>
                                             </tr>
                                             @empty

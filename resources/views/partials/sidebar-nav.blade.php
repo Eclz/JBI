@@ -111,6 +111,7 @@
 
             $canViewFees = auth()->user()->hasPermission('fees', 'view');
             $canViewReports = auth()->user()->hasPermission('reports', 'view');
+            $canViewBursarHub = $canViewFees && (optional(auth()->user()->roleCatalog)->code !== 'admissions_officer');
             $canViewFinanceGroup = $canViewFees || $canViewReports;
 
             // Group 5: Operations & Engagement
@@ -283,8 +284,8 @@
                 <span class="group-title">Finance & Governance</span>
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
-            <ul class="sidebar-group-menu" style="{{ $isFinanceActive ? 'display: block;' : 'display: none;' }}">
-                @if($canViewFees)
+             <ul class="sidebar-group-menu" style="{{ $isFinanceActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewBursarHub)
                 <li class="submenu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.dashboard') }}" class="submenu-link fw-semibold text-primary-light">
                         <i class="bi bi-speedometer"></i>
@@ -297,12 +298,16 @@
                         <span>Fee Structures</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewFees)
                 <li class="submenu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.index') }}" class="submenu-link">
                         <i class="bi bi-receipt"></i>
                         <span>Student Fee Records</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewBursarHub)
                 <li class="submenu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.revenue.index') }}" class="submenu-link">
                         <i class="bi bi-currency-exchange"></i>
@@ -352,13 +357,15 @@
                     </a>
                 </li>
                 @endif
-                @if($canViewReports)
+                @if($canViewReports && optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
                 <li class="submenu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.reports.index') }}" class="submenu-link">
                         <i class="bi bi-journal-text"></i>
                         <span>Financial Statements</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewReports)
                 <li class="submenu-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.reports.index') }}" class="submenu-link">
                         <i class="bi bi-file-earmark-bar-graph"></i>

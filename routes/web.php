@@ -269,49 +269,49 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Fee Management
-    Route::prefix('fees')->name('fees.')->group(function () {
+    Route::prefix('fees')->name('fees.')->middleware('permission:fees,view')->group(function () {
         // Main fees index route
         Route::get('/', [AdminFeeController::class, 'index'])->name('index');
 
         // Fee Records Management
         Route::prefix('records')->name('records.')->group(function () {
             Route::get('/', [AdminFeeController::class, 'index'])->name('index');
-            Route::get('/create', [AdminFeeController::class, 'create'])->name('create');
-            Route::post('/', [AdminFeeController::class, 'store'])->name('store');
+            Route::get('/create', [AdminFeeController::class, 'create'])->name('create')->middleware('permission:fees,create');
+            Route::post('/', [AdminFeeController::class, 'store'])->name('store')->middleware('permission:fees,create');
             Route::get('/{fee}', [AdminFeeController::class, 'show'])->name('show');
             Route::get('/{fee}/demand-notice', [AdminFeeController::class, 'demandNotice'])->name('demand-notice');
             Route::get('/{fee}/receipt', [AdminFeeController::class, 'receipt'])->name('receipt');
-            Route::get('/{fee}/edit', [AdminFeeController::class, 'edit'])->name('edit');
-            Route::put('/{fee}', [AdminFeeController::class, 'update'])->name('update');
-            Route::delete('/{fee}', [AdminFeeController::class, 'destroy'])->name('destroy');
-            Route::get('/{fee}/payment', [AdminFeeController::class, 'showPayment'])->name('payment');
-            Route::post('/{fee}/payment', [AdminFeeController::class, 'processPayment'])->name('process-payment');
-            Route::post('/generate-invoices', [AdminFeeController::class, 'generateInvoices'])->name('generate-invoices');
-            Route::post('/send-reminders', [AdminFeeController::class, 'sendReminders'])->name('send-reminders');
-            Route::get('/export', [AdminFeeController::class, 'export'])->name('export');
+            Route::get('/{fee}/edit', [AdminFeeController::class, 'edit'])->name('edit')->middleware('permission:fees,edit');
+            Route::put('/{fee}', [AdminFeeController::class, 'update'])->name('update')->middleware('permission:fees,edit');
+            Route::delete('/{fee}', [AdminFeeController::class, 'destroy'])->name('destroy')->middleware('permission:fees,delete');
+            Route::get('/{fee}/payment', [AdminFeeController::class, 'showPayment'])->name('payment')->middleware('permission:fees,create');
+            Route::post('/{fee}/payment', [AdminFeeController::class, 'processPayment'])->name('process-payment')->middleware('permission:fees,create');
+            Route::post('/generate-invoices', [AdminFeeController::class, 'generateInvoices'])->name('generate-invoices')->middleware('permission:fees,create');
+            Route::post('/send-reminders', [AdminFeeController::class, 'sendReminders'])->name('send-reminders')->middleware('permission:fees,edit');
+            Route::get('/export', [AdminFeeController::class, 'export'])->name('export')->middleware('permission:fees,export');
         });
 
         Route::prefix('payments')->name('payments.')->group(function () {
-            Route::post('/{payment}/approve', [AdminFeeController::class, 'approvePayment'])->name('approve');
+            Route::post('/{payment}/approve', [AdminFeeController::class, 'approvePayment'])->name('approve')->middleware('permission:fees,approve');
             Route::get('/{payment}/receipt', [AdminFeeController::class, 'transactionReceipt'])->name('receipt');
         });
 
         // Fee Structures Management
         Route::prefix('structures')->name('structures.')->group(function () {
             Route::get('/', [AdminFeeController::class, 'structures'])->name('index');
-            Route::get('/create', [AdminFeeController::class, 'createStructure'])->name('create');
-            Route::post('/', [AdminFeeController::class, 'storeStructure'])->name('store');
+            Route::get('/create', [AdminFeeController::class, 'createStructure'])->name('create')->middleware('permission:fees,create');
+            Route::post('/', [AdminFeeController::class, 'storeStructure'])->name('store')->middleware('permission:fees,create');
             Route::get('/{feeStructure}', [AdminFeeController::class, 'showStructure'])->name('show');
-            Route::get('/{feeStructure}/edit', [AdminFeeController::class, 'editStructure'])->name('edit');
-            Route::put('/{feeStructure}', [AdminFeeController::class, 'updateStructure'])->name('update');
-            Route::delete('/{feeStructure}', [AdminFeeController::class, 'destroyStructure'])->name('destroy');
+            Route::get('/{feeStructure}/edit', [AdminFeeController::class, 'editStructure'])->name('edit')->middleware('permission:fees,edit');
+            Route::put('/{feeStructure}', [AdminFeeController::class, 'updateStructure'])->name('update')->middleware('permission:fees,edit');
+            Route::delete('/{feeStructure}', [AdminFeeController::class, 'destroyStructure'])->name('destroy')->middleware('permission:fees,delete');
         });
     });
 
     // Academic Faculties Management (already defined above via AdminFacultyController)
 
     // Comprehensive Bursar & Finance Hub (17 Sub-Modules)
-    Route::prefix('finance')->name('finance.')->group(function () {
+    Route::prefix('finance')->name('finance.')->middleware('permission:reports,view')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'dashboard'])->name('dashboard');
         Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
         Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store');
