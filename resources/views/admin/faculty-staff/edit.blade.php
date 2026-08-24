@@ -341,7 +341,7 @@
                                                     $isAssigned = in_array($c->id, old('assigned_courses', $assignedCourseIds ?? []));
                                                     $isAssignedOther = $c->instructor_id && $c->instructor_id !== $facultyStaff->id;
                                                 @endphp
-                                                <div class="col-md-6">
+                                                <div class="col-md-6 course-assignment-item" data-department-id="{{ $c->department_id }}">
                                                     <div class="form-check p-2 bg-white rounded border shadow-sm h-100">
                                                         <input class="form-check-input ms-0 me-2" type="checkbox" name="assigned_courses[]" value="{{ $c->id }}" id="course_{{ $c->id }}" {{ $isAssigned ? 'checked' : '' }}>
                                                         <label class="form-check-label small fw-semibold" for="course_{{ $c->id }}">
@@ -458,6 +458,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     departmentSelect.appendChild(option);
                 @endforeach
             }
+            // Trigger Select2 update and change event
+            $(departmentSelect).trigger('change');
+        });
+    }
+
+    // Filter courses based on department selection
+    const courseItems = $('.course-assignment-item');
+    if (departmentSelect && courseItems.length) {
+        function filterCoursesByDepartment(departmentId) {
+            courseItems.each(function() {
+                const itemDeptId = $(this).data('department-id');
+                if (!departmentId || itemDeptId == departmentId) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+
+        // Initialize filter on load (wrapped in a small timeout to let select2 finish rendering)
+        setTimeout(function() {
+            filterCoursesByDepartment($(departmentSelect).val());
+        }, 100);
+
+        // Update filter on change
+        $(departmentSelect).on('change', function() {
+            filterCoursesByDepartment($(this).val());
         });
     }
 

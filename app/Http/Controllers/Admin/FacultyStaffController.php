@@ -333,7 +333,7 @@ class FacultyStaffController extends Controller
         }
 
         // Validate the request
-        $request->validate([
+        $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $facultyStaff->id,
@@ -358,11 +358,16 @@ class FacultyStaffController extends Controller
             'personal_website' => 'nullable|url|max:255',
             'certifications' => 'nullable|string|max:500',
             'research_interests' => 'nullable|string|max:500',
-            'password' => 'nullable|min:8|confirmed',
             'is_active' => 'boolean',
             'assigned_courses' => 'nullable|array',
             'assigned_courses.*' => 'exists:courses,id',
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|min:8|confirmed';
+        }
+
+        $request->validate($rules);
 
         DB::beginTransaction();
 
