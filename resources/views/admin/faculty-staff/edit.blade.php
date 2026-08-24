@@ -429,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (facultySelect && departmentSelect) {
         facultySelect.addEventListener('change', function() {
             const facultyId = this.value;
+            let option;
 
             // Reset department options
             departmentSelect.innerHTML = '<option value="">Select Department</option>';
@@ -437,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Filter departments by selected faculty
                 @foreach($departments as $department)
                     if ('{{ $department->faculty_id }}' === facultyId) {
-                        const option = document.createElement('option');
+                        option = document.createElement('option');
                         option.value = '{{ $department->id }}';
                         option.textContent = '{{ $department->name }}';
                         if ('{{ old('department_id', $facultyStaff->facultyProfile?->department_id) }}' === '{{ $department->id }}') {
@@ -449,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Show all departments
                 @foreach($departments as $department)
-                    const option = document.createElement('option');
+                    option = document.createElement('option');
                     option.value = '{{ $department->id }}';
                     option.textContent = '{{ $department->name }}';
                     if ('{{ old('department_id', $facultyStaff->facultyProfile?->department_id) }}' === '{{ $department->id }}') {
