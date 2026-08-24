@@ -23,9 +23,15 @@ class UserController extends Controller
         $users = User::with(['roleCatalog', 'studentProfile.department', 'facultyProfile.department'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
                       ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('role', 'like', "%{$search}%")
+                      ->orWhereHas('roleCatalog', function ($roleQuery) use ($search) {
+                          $roleQuery->where('name', 'like', "%{$search}%")
+                                   ->orWhere('slug', 'like', "%{$search}%");
+                      });
                 });
             })
             ->when(request('role'), function ($query, $role) {
