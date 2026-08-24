@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="row">
-        <div class="col-lg-10 mx-auto">
+        <div class="col-lg-12 mx-auto">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="h3 mb-0 text-primary fw-bold"><i class="bi bi-journal-plus me-2"></i>Admin Course Assignment & Seat Management</h2>
@@ -101,7 +101,7 @@
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-7">
                                     <label for="course_id" class="form-label fw-bold">Select Active Course & Check Available Slots <span class="text-danger">*</span></label>
-                                    <select name="course_id" id="course_id" class="form-select form-select-lg @error('course_id') is-invalid @enderror" required>
+                                    <select name="course_id" id="course_id" class="form-select select2 form-select-lg @error('course_id') is-invalid @enderror" required>
                                         <option value="">-- Choose Course (Slots Available) --</option>
                                         @foreach($availableCourses as $course)
                                             @php

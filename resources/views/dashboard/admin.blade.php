@@ -34,7 +34,7 @@
                             </small>
                         </div>
                         <div class="bg-primary bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-people text-primary fs-3"></i>
+                            <i class="bi bi-people text-white fs-3"></i>
                         </div>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                             </small>
                         </div>
                         <div class="bg-warning bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-cash-stack text-warning fs-3"></i>
+                            <i class="bi bi-cash-stack text-white fs-3"></i>
                         </div>
                     </div>
                 </div>

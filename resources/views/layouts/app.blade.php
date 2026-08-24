@@ -21,6 +21,10 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
     <!-- Custom CSS -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
@@ -527,7 +531,7 @@
                     </div>
                     <div>
                         <div class="fw-medium">{{ Auth::user()->first_name ?? 'System' }} {{ Auth::user()->last_name ?? 'Administrator' }}</div>
-                        <div class="small text-light">{{ ucfirst(Auth::user()->role ?? 'Admin') }}</div>
+                        <div class="small text-light">{{ Auth::user()->role_name }}</div>
                     </div>
                 </div>
             </div>
@@ -689,7 +693,7 @@
                                 @endif
                                 <div class="d-none d-lg-block text-start">
                                     <div class="fw-medium small">{{ Auth::user()->full_name }}</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">{{ ucfirst(Auth::user()->role) }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ Auth::user()->role_name }}</div>
                                 </div>
                                 <i class="bi bi-chevron-down small"></i>
                             </button>
@@ -697,7 +701,7 @@
                                 <div class="px-3 py-2 border-bottom">
                                     <div class="fw-medium">{{ Auth::user()->full_name }}</div>
                                     <div class="small text-muted">{{ Auth::user()->email }}</div>
-                                    <span class="badge bg-primary mt-1">{{ ucfirst(Auth::user()->role) }}</span>
+                                    <span class="badge bg-primary mt-1">{{ Auth::user()->role_name }}</span>
                                 </div>
                                 <a class="dropdown-item" href="{{ route('profile.show') }}">
                                     <i class="bi bi-person me-2"></i>My Profile
@@ -778,10 +782,27 @@
         @csrf
     </form>
 
+    <!-- jQuery (Needed for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        $(document).ready(function() {
+            // Global Select2 initialization
+            $('.select2').each(function() {
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    placeholder: $(this).data('placeholder') || 'Select an option',
+                    allowClear: $(this).prop('required') ? false : true,
+                    dropdownParent: $(this).closest('.modal').length ? $(this).closest('.modal') : $(document.body)
+                });
+            });
+        });
 
         function markAllAsRead(event) {
             event.preventDefault();

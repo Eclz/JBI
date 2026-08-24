@@ -225,8 +225,8 @@ class ApplicationController extends Controller
 
         $application = Application::findOrFail($id);
 
-        if ($application->status !== 'pending') {
-            return redirect()->back()->with('error', 'This application has already been processed.');
+        if (in_array($application->status, ['rejected', 'admitted'])) {
+            return redirect()->back()->with('error', 'This application has already been processed as ' . $application->status . '.');
         }
 
         DB::beginTransaction();
@@ -237,6 +237,20 @@ class ApplicationController extends Controller
                 'reviewed_by' => auth()->id(),
                 'review_notes' => $request->notes,
             ]);
+
+            $user = User::where('email', $application->email)->first();
+            if ($user) {
+                if ($user->studentProfile) {
+                    $user->studentProfile->update(['status' => 'dropped', 'application_status' => 'rejected']);
+                }
+                Notification::create([
+                    'user_id' => $user->id,
+                    'type' => 'danger',
+                    'title' => 'Application Status Update',
+                    'message' => 'Your application has not been accepted. Reason: ' . $request->notes,
+                    'priority' => 'high',
+                ]);
+            }
 
             DB::commit();
 
@@ -256,42 +270,35 @@ class ApplicationController extends Controller
 
         $application = Application::findOrFail($id);
 
-        if ($application->status !== 'approved' || !$application->payment_proof) {
-            return redirect()->back()->with('error', 'Payment proof not submitted or application not approved.');
+        if (!$application->payment_proof && $application->payment_status !== 'uploaded') {
+            return redirect()->back()->with('error', 'No payment proof has been uploaded for this application yet.');
         }
 
         DB::beginTransaction();
         try {
-            $departmentId = null;
-            $program = null;
-            if ($application->program_id) {
-                $program = Program::with('department')->find($application->program_id);
-            } elseif ($application->program) {
-                $program = Program::with('department')
-                    ->where('name', $application->program)
-                    ->first();
-            }
-            if ($program?->department) {
-                $departmentId = $program->department->id;
-            }
-
             $application->update([
-                'review_notes' => $request->notes,
                 'payment_status' => 'verified',
                 'payment_verified_at' => now(),
                 'payment_verified_by' => auth()->id(),
+                'review_notes' => $request->notes ?: $application->review_notes,
             ]);
 
-            $studentUser = $this->createStudentAccount($application, $departmentId);
-
-            if ($studentUser) {
-                AdmissionWorkflow::activateStudent($studentUser, $application, auth()->id());
+            // Notify applicant
+            $user = User::where('email', $application->email)->first();
+            if ($user) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'type' => 'payment',
+                    'title' => 'Admission Fee Payment Verified',
+                    'message' => 'Your payment receipt has been verified by the admissions office. You can now proceed to admission.',
+                    'priority' => 'high',
+                ]);
             }
 
             DB::commit();
 
             return redirect()->back()
-                           ->with('success', 'Payment verified successfully. Admission letter sent to applicant.');
+                           ->with('success', 'Payment verified and confirmed successfully! You can now proceed to Approve & Admit the applicant.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Failed to verify payment: ' . $e->getMessage());
@@ -400,41 +407,44 @@ class ApplicationController extends Controller
 
         DB::beginTransaction();
         try {
+            $departmentId = null;
+            $program = null;
+            if ($application->program_id) {
+                $program = Program::with('department')->find($application->program_id);
+            } elseif ($application->program) {
+                $program = Program::with('department')
+                    ->where('name', $application->program)
+                    ->first();
+            }
+            if ($program?->department) {
+                $departmentId = $program->department->id;
+            }
+
             $application->update([
-                'status' => 'approved',
+                'status' => 'admitted',
                 'reviewed_at' => now(),
                 'reviewed_by' => auth()->id(),
-                'review_notes' => $notes,
-                'payment_status' => $application->payment_proof ? 'uploaded' : ($application->payment_status ?? 'pending'),
+                'review_notes' => $notes ?: $application->review_notes,
+                'payment_status' => 'verified',
+                'payment_verified_at' => $application->payment_verified_at ?: now(),
+                'payment_verified_by' => $application->payment_verified_by ?: auth()->id(),
+                'admitted_at' => now(),
             ]);
 
             $studentUser = null;
             if ($application->type === 'student') {
-                $studentUser = $this->createStudentAccount($application);
+                $studentUser = $this->createStudentAccount($application, $departmentId);
             }
 
-            try {
-                Mail::to($application->email)->send(new AdmissionFeeInstructions($application));
-                $successMessage = 'Application approved successfully. Payment instructions sent to ' . $application->email;
-            } catch (\Exception $mailError) {
-                Log::error('Failed to send admission fee email', [
-                    'error' => $mailError->getMessage(),
-                    'application_id' => $application->id,
-                ]);
-                $successMessage = 'Application approved successfully. However, email failed to send to ' . $application->email;
+            if ($studentUser) {
+                AdmissionWorkflow::activateStudent($studentUser, $application, auth()->id());
             }
 
             DB::commit();
 
-            if ($studentUser) {
-                Notification::create([
-                    'user_id' => $studentUser->id,
-                    'title' => 'Application Approved',
-                    'message' => 'Your application was approved. Please pay the registration fee to activate your account.',
-                    'type' => 'success',
-                    'priority' => 'high',
-                ]);
-            }
+            $freshApp = $application->fresh();
+            $studentNumber = $freshApp->student_number ?? $studentUser?->student_id;
+            $successMessage = "Application approved and student admitted successfully! Student Number: {$studentNumber} issued and official Admission Letter delivered.";
 
             return ['ok' => true, 'message' => $successMessage];
         } catch (\Exception $e) {

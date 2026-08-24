@@ -13,12 +13,14 @@
                     <p class="text-muted mb-0">Manage student records and academic information</p>
                 </div>
                 <div class="d-flex gap-2">
+                    @if(auth()->user()->hasPermission('students', 'create'))
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="bi bi-upload"></i> Import Students
                     </button>
                     <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i> Add New Student
                     </a>
+                    @endif
                 </div>
             </div>
 
@@ -81,7 +83,7 @@
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0">
                                     <div class="bg-warning bg-opacity-10 rounded-3 p-3">
-                                        <i class="fa fa-building text-warning fs-4"></i>
+                                        <i class="fa fa-building text-white fs-4"></i>
                                     </div>
                                 </div>
                                 <div class="flex-grow-1 ms-3">
@@ -330,10 +332,12 @@
                                                class="btn btn-sm btn-outline-info" title="View Details">
                                                 <i class="bi bi-eye"></i>
                                             </a>
+                                            @if(auth()->user()->hasPermission('students', 'edit'))
                                             <a href="{{ route('admin.students.edit', $student) }}"
                                                class="btn btn-sm btn-outline-primary" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
+                                            @endif
                                             <div class="btn-group" role="group">
                                                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                                         data-bs-toggle="dropdown" title="More Actions">
@@ -355,12 +359,15 @@
                                                             <i class="bi bi-credit-card me-2"></i>Fee Records
                                                         </a>
                                                     </li>
+                                                    @if(auth()->user()->hasPermission('enrollments', 'create'))
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.enroll-course', $student) }}">
                                                             <i class="bi bi-plus-circle me-2"></i>Enroll Course
                                                         </a>
                                                     </li>
+                                                    @endif
+                                                    @if(auth()->user()->hasPermission('students', 'delete'))
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <button type="button" class="dropdown-item text-danger"
@@ -368,6 +375,7 @@
                                                             <i class="bi bi-trash me-2"></i>Delete
                                                         </button>
                                                     </li>
+                                                    @endif
                                                 </ul>
                                             </div>
                                         </div>
@@ -380,9 +388,11 @@
                                             <i class="bi bi-people fs-1 text-muted mb-3"></i>
                                             <h5 class="text-muted">No students found</h5>
                                             <p class="text-muted mb-3">Get started by adding your first student</p>
+                                            @if(auth()->user()->hasPermission('students', 'create'))
                                             <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
                                                 <i class="bi bi-plus-lg"></i> Add Student
                                             </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

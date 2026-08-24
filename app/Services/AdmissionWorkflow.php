@@ -35,7 +35,7 @@ class AdmissionWorkflow
             $profile->admission_number = self::generateAdmissionNumber($departmentCode);
         }
 
-        $registrationNumber = sprintf('%s-%s-%04d', $departmentCode, now()->year, self::nextSequence('registration'));
+        $studentNumber = self::generateStudentNumber($departmentCode);
 
         if (!$profile->registration_fee_paid_at) {
             $profile->registration_fee_paid_at = now();
@@ -44,22 +44,24 @@ class AdmissionWorkflow
             $days = (int) \App\Models\SystemSetting::getSetting('tuition_payment_days', 30);
             $profile->tuition_deadline_at = $profile->registration_fee_paid_at->copy()->addDays($days);
         }
+        $profile->student_id = $studentNumber;
         $profile->status = 'active';
         $profile->application_status = 'approved';
         $profile->save();
 
         $user->update([
             'is_active' => true,
-            'student_id' => $registrationNumber,
+            'student_id' => $studentNumber,
         ]);
 
         if ($application) {
             $application->update([
                 'status' => 'admitted',
-                'payment_verified_at' => now(),
-                'payment_verified_by' => $processedBy,
+                'payment_status' => 'verified',
+                'payment_verified_at' => $application->payment_verified_at ?: now(),
+                'payment_verified_by' => $application->payment_verified_by ?: $processedBy,
                 'admission_number' => $profile->admission_number,
-                'student_number' => $registrationNumber,
+                'student_number' => $studentNumber,
                 'admitted_at' => now(),
             ]);
         }
@@ -67,20 +69,24 @@ class AdmissionWorkflow
         Notification::create([
             'user_id' => $user->id,
             'type' => 'success',
-            'title' => 'Admission Activated',
-            'message' => 'Your registration fee was approved and your admission is now active.',
+            'title' => 'Admission Approved & Student Number Issued',
+            'message' => "Congratulations! You have been officially admitted. Your Student Number is {$studentNumber} and Admission Number is {$profile->admission_number}.",
             'priority' => 'high',
         ]);
 
         if ($application) {
-            Mail::to($application->email)->send(new AdmissionLetter($application));
+            try {
+                Mail::to($application->email)->send(new AdmissionLetter($application));
+            } catch (\Throwable $mailErr) {
+                \Illuminate\Support\Facades\Log::error('Admission letter email failed: ' . $mailErr->getMessage());
+            }
 
             // Deliver Admission Letter directly to Student's Mailbox
             \App\Models\Message::create([
                 'sender_id' => $processedBy ?: (\App\Models\User::where('role', 'admin')->first()?->id ?: $user->id),
                 'receiver_id' => $user->id,
-                'subject' => 'Official JBI University Letter of Admission - Reg No: ' . $registrationNumber,
-                'body' => "Dear {$user->first_name},\n\nCongratulations! We are pleased to inform you that you have been granted official admission to JBI University for the programme: " . ($application->programRecord->name ?? $application->program) . ".\n\nYour Admission Registration Number is: {$registrationNumber}.\n\nYou can view and download your official Letter of Admission directly in your portal.",
+                'subject' => 'Official JBI University Letter of Admission - Student No: ' . $studentNumber,
+                'body' => "Dear {$user->first_name},\n\nCongratulations! We are pleased to inform you that you have been granted official admission to JBI University for the programme: " . ($application->programRecord->name ?? $application->program) . ".\n\nYour Official Student Number is: {$studentNumber}\nYour Admission Number is: {$profile->admission_number}\n\nYou can view and download your official Letter of Admission directly in your portal.",
                 'type' => 'system',
                 'is_read' => false,
                 'related_link' => route('student.admission-letter.show'),
@@ -97,26 +103,55 @@ class AdmissionWorkflow
         }
     }
 
-    private static function generateAdmissionNumber(string $departmentCode): string
+    public static function generateAdmissionNumber(string $departmentCode): string
     {
         $prefix = strtoupper(substr($departmentCode, 0, 3));
         $year = now()->year;
 
-        $lastNumber = StudentProfile::where('admission_number', 'like', "{$prefix}{$year}%")
-            ->orderBy('admission_number', 'desc')
-            ->first();
+        $profiles = StudentProfile::where('admission_number', 'like', "{$prefix}{$year}%")
+            ->pluck('admission_number');
 
-        $lastSequence = $lastNumber ? intval(substr($lastNumber->admission_number, -4)) : 0;
-        $newSequence = $lastSequence + 1;
+        $applications = Application::where('admission_number', 'like', "{$prefix}{$year}%")
+            ->pluck('admission_number');
 
+        $allNumbers = $profiles->concat($applications);
+
+        $maxSequence = 0;
+        foreach ($allNumbers as $adm) {
+            if ($adm && preg_match('/^' . preg_quote($prefix . $year, '/') . '(\d+)$/', $adm, $matches)) {
+                $seq = intval($matches[1]);
+                if ($seq > $maxSequence) {
+                    $maxSequence = $seq;
+                }
+            }
+        }
+
+        $newSequence = $maxSequence + 1;
         return $prefix . $year . str_pad((string) $newSequence, 4, '0', STR_PAD_LEFT);
     }
 
-    private static function nextSequence(string $key): int
+    public static function generateStudentNumber(?string $departmentCode = null): string
     {
         $year = now()->year;
-        $count = StudentProfile::whereYear('created_at', $year)->count();
+        
+        // Find highest sequence among STU{$year}xxxx numbers
+        $existingUsers = User::where('student_id', 'like', "STU{$year}%")->pluck('student_id');
+        $existingProfiles = StudentProfile::where('student_id', 'like', "STU{$year}%")->pluck('student_id');
+        $existingApps = Application::where('student_number', 'like', "STU{$year}%")->pluck('student_number');
 
-        return $count + 1;
+        $all = $existingUsers->concat($existingProfiles)->concat($existingApps)->filter();
+
+        $maxSeq = 0;
+        foreach ($all as $num) {
+            if (preg_match('/^STU' . $year . '(\d+)$/', $num, $matches)) {
+                $seq = intval($matches[1]);
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        $newSequence = $maxSeq + 1;
+        return sprintf('STU%s%04d', $year, $newSequence);
     }
 }

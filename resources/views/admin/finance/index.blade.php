@@ -46,7 +46,7 @@
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-muted text-uppercase fw-bold small" style="font-size: 0.75rem;">Outstanding Fee Balances</span>
-                        <div class="p-2 rounded bg-danger bg-opacity-10 text-danger">
+                        <div class="p-2 rounded bg-danger bg-opacity-10 text-white">
                             <i class="bi bi-exclamation-triangle fs-4"></i>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-muted text-uppercase fw-bold small" style="font-size: 0.75rem;">Operational Expenditures</span>
-                        <div class="p-2 rounded bg-warning bg-opacity-10 text-warning">
+                        <div class="p-2 rounded bg-warning bg-opacity-10 text-white">
                             <i class="bi bi-wallet2 fs-4"></i>
                         </div>
                     </div>

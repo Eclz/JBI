@@ -149,8 +149,8 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text">
-                                    Format: JBI + Year + 4-digit sequence (e.g., JBI20240001)
-                                    <br><small class="text-muted">Click the refresh button to generate a new number or edit button to modify manually.</small>
+                                    Format: Prefix + Year + 4-digit sequence (e.g., JBI{{ date('Y') }}0001 or CSC{{ date('Y') }}0001)
+                                    <br><small class="text-muted">Auto preset sequentially. Click the refresh button to regenerate or edit button to modify manually.</small>
                                 </div>
                             </div>
 
@@ -265,40 +265,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const admissionNumberInput = document.getElementById('admission_number');
     const generateBtn = document.getElementById('generateAdmissionNumber');
     const editBtn = document.getElementById('editAdmissionNumber');
+    const departmentSelect = document.getElementById('department_id');
 
     // Generate new admission number
-    generateBtn.addEventListener('click', function() {
-        this.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+    if (generateBtn && admissionNumberInput) {
+        generateBtn.addEventListener('click', function() {
+            this.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+            const deptId = departmentSelect ? departmentSelect.value : '';
 
-        fetch('{{ route("admin.students.next-admission-number") }}')
-            .then(response => response.json())
-            .then(data => {
-                admissionNumberInput.value = data.admission_number;
-                this.innerHTML = '<i class="fa fa-sync-alt"></i>';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                this.innerHTML = '<i class="fa fa-sync-alt"></i>';
-                alert('Failed to generate admission number. Please try again.');
-            });
-    });
+            fetch('{{ route("admin.students.next-admission-number") }}' + (deptId ? '?department_id=' + deptId : ''))
+                .then(response => response.json())
+                .then(data => {
+                    admissionNumberInput.value = data.admission_number;
+                    this.innerHTML = '<i class="fa fa-sync-alt"></i>';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.innerHTML = '<i class="fa fa-sync-alt"></i>';
+                    alert('Failed to generate admission number. Please try again.');
+                });
+        });
+    }
 
     // Toggle edit mode for admission number
-    editBtn.addEventListener('click', function() {
-        if (admissionNumberInput.readOnly) {
-            admissionNumberInput.readOnly = false;
-            admissionNumberInput.focus();
-            admissionNumberInput.select();
-            this.innerHTML = '<i class="fa fa-lock"></i>';
-            this.title = 'Lock Admission Number';
-            admissionNumberInput.classList.add('border-warning');
-        } else {
-            admissionNumberInput.readOnly = true;
-            this.innerHTML = '<i class="fa fa-edit"></i>';
-            this.title = 'Edit Admission Number';
-            admissionNumberInput.classList.remove('border-warning');
-        }
-    });
+    if (editBtn && admissionNumberInput) {
+        editBtn.addEventListener('click', function() {
+            if (admissionNumberInput.readOnly) {
+                admissionNumberInput.readOnly = false;
+                admissionNumberInput.focus();
+                admissionNumberInput.select();
+                this.innerHTML = '<i class="fa fa-lock"></i>';
+                this.title = 'Lock Admission Number';
+                admissionNumberInput.classList.add('border-warning');
+            } else {
+                admissionNumberInput.readOnly = true;
+                this.innerHTML = '<i class="fa fa-edit"></i>';
+                this.title = 'Edit Admission Number';
+                admissionNumberInput.classList.remove('border-warning');
+            }
+        });
+    }
 });
 </script>
 @endsection
@@ -308,8 +314,9 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function () {
     const departmentSelect = document.getElementById('department_id');
     const programSelect = document.getElementById('program_id');
+    const admissionNumberInput = document.getElementById('admission_number');
 
-    const updatePrograms = () => {
+    const updateProgramsAndAdmissionNo = () => {
         const departmentId = departmentSelect.value;
         let hasVisible = false;
 
@@ -346,10 +353,22 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!hasVisible) {
             programSelect.value = '';
         }
+
+        // Auto update admission number prefix if department changes and field is readOnly (not manually typed)
+        if (departmentId && admissionNumberInput && admissionNumberInput.readOnly) {
+            fetch('{{ route("admin.students.next-admission-number") }}?department_id=' + departmentId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.admission_number) {
+                        admissionNumberInput.value = data.admission_number;
+                    }
+                })
+                .catch(e => console.error(e));
+        }
     };
 
-    departmentSelect.addEventListener('change', updatePrograms);
-    updatePrograms();
+    departmentSelect.addEventListener('change', updateProgramsAndAdmissionNo);
+    updateProgramsAndAdmissionNo();
 });
 </script>
 @endpush

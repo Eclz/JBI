@@ -188,19 +188,37 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('roles', AdminRoleController::class)->except(['show']);
 
     // Student Management
-    Route::get('/students/next-admission-number', [AdminStudentController::class, 'getNextAdmissionNumber'])->name('students.next-admission-number');
-    Route::get('/students/export', [AdminStudentController::class, 'export'])->name('students.export');
-    Route::post('/students/bulk-import', [AdminStudentController::class, 'bulkImport'])->name('students.bulk-import');
+    Route::middleware('permission:students,view')->group(function () {
+        Route::get('/students', [AdminStudentController::class, 'index'])->name('students.index');
+        Route::get('/students/{student}', [AdminStudentController::class, 'show'])->name('students.show');
+        Route::get('/students/{student}/academic-record', [AdminStudentController::class, 'academicRecord'])->name('students.academic-record');
+        Route::get('/students/{student}/attendance', [AdminStudentController::class, 'attendance'])->name('students.attendance');
+        Route::get('/students/{student}/fees', [AdminStudentController::class, 'fees'])->name('students.fees');
+    });
 
-    Route::resource('students', AdminStudentController::class);
-    Route::get('/students/{student}/academic-record', [AdminStudentController::class, 'academicRecord'])->name('students.academic-record');
-    Route::get('/students/{student}/attendance', [AdminStudentController::class, 'attendance'])->name('students.attendance');
-    Route::get('/students/{student}/fees', [AdminStudentController::class, 'fees'])->name('students.fees');
-    Route::get('/students/{student}/enroll-course', [AdminStudentController::class, 'showEnrollCourse'])->name('students.enroll-course');
-    Route::post('/students/{student}/enroll-course', [AdminStudentController::class, 'enrollCourse'])->name('students.enroll-course.store');
-    Route::delete('/students/{student}/enrollments/{enrollment}', [AdminStudentController::class, 'removeEnrollment'])->name('students.remove-enrollment');
-    Route::post('/students/{student}/notes', [AdminStudentController::class, 'addNote'])->name('students.notes.add');
-    Route::post('/students/{student}/toggle-status', [AdminStudentController::class, 'toggleStatus'])->name('students.toggle-status');
+    Route::middleware('permission:students,create')->group(function () {
+        Route::get('/students/create', [AdminStudentController::class, 'create'])->name('students.create');
+        Route::post('/students', [AdminStudentController::class, 'store'])->name('students.store');
+        Route::get('/students/next-admission-number', [AdminStudentController::class, 'getNextAdmissionNumber'])->name('students.next-admission-number');
+        Route::post('/students/bulk-import', [AdminStudentController::class, 'bulkImport'])->name('students.bulk-import');
+    });
+
+    Route::middleware('permission:students,edit')->group(function () {
+        Route::get('/students/{student}/edit', [AdminStudentController::class, 'edit'])->name('students.edit');
+        Route::put('/students/{student}', [AdminStudentController::class, 'update'])->name('students.update');
+        Route::post('/students/{student}/notes', [AdminStudentController::class, 'addNote'])->name('students.notes.add');
+        Route::post('/students/{student}/toggle-status', [AdminStudentController::class, 'toggleStatus'])->name('students.toggle-status');
+    });
+
+    Route::middleware('permission:students,delete')->group(function () {
+        Route::delete('/students/{student}', [AdminStudentController::class, 'destroy'])->name('students.destroy');
+    });
+
+    Route::get('/students/export', [AdminStudentController::class, 'export'])->name('students.export')->middleware('permission:students,export');
+
+    Route::get('/students/{student}/enroll-course', [AdminStudentController::class, 'showEnrollCourse'])->name('students.enroll-course')->middleware('permission:enrollments,create');
+    Route::post('/students/{student}/enroll-course', [AdminStudentController::class, 'enrollCourse'])->name('students.enroll-course.store')->middleware('permission:enrollments,create');
+    Route::delete('/students/{student}/enrollments/{enrollment}', [AdminStudentController::class, 'removeEnrollment'])->name('students.remove-enrollment')->middleware('permission:enrollments,delete');
 
     // Faculty Management (Academic Divisions)
     Route::get('/faculties', [AdminFacultyController::class, 'index'])->name('faculties.index');
@@ -233,67 +251,67 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/courses/{course}/assignments', [AdminCourseController::class, 'assignments'])->name('courses.assignments');
     Route::get('/courses/{course}/grades', [AdminCourseController::class, 'grades'])->name('courses.grades');
     Route::post('/courses/{course}/toggle-status', [AdminCourseController::class, 'toggleStatus'])->name('courses.toggle-status');
-    Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student');
-    Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student');
+    Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:enrollments,create');
+    Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:enrollments,delete');
 
     // Enrollment Management
-    Route::prefix('enrollments')->name('enrollments.')->group(function () {
+    Route::prefix('enrollments')->name('enrollments.')->middleware('permission:enrollments,view')->group(function () {
         Route::get('/', [EnrollmentController::class, 'index'])->name('index');
-        Route::get('/create', [EnrollmentController::class, 'create'])->name('create');
-        Route::post('/', [EnrollmentController::class, 'store'])->name('store');
+        Route::get('/create', [EnrollmentController::class, 'create'])->name('create')->middleware('permission:enrollments,create');
+        Route::post('/', [EnrollmentController::class, 'store'])->name('store')->middleware('permission:enrollments,create');
         Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
-        Route::get('/{enrollment}/edit', [EnrollmentController::class, 'edit'])->name('edit');
-        Route::put('/{enrollment}', [EnrollmentController::class, 'update'])->name('update');
-        Route::delete('/{enrollment}', [EnrollmentController::class, 'destroy'])->name('destroy');
-        Route::post('/{enrollment}/approve', [EnrollmentController::class, 'approve'])->name('approve');
-        Route::post('/{enrollment}/reject', [EnrollmentController::class, 'reject'])->name('reject');
-        Route::post('/bulk-enroll', [EnrollmentController::class, 'bulkEnroll'])->name('bulk-enroll');
+        Route::get('/{enrollment}/edit', [EnrollmentController::class, 'edit'])->name('edit')->middleware('permission:enrollments,edit');
+        Route::put('/{enrollment}', [EnrollmentController::class, 'update'])->name('update')->middleware('permission:enrollments,edit');
+        Route::delete('/{enrollment}', [EnrollmentController::class, 'destroy'])->name('destroy')->middleware('permission:enrollments,delete');
+        Route::post('/{enrollment}/approve', [EnrollmentController::class, 'approve'])->name('approve')->middleware('permission:enrollments,approve');
+        Route::post('/{enrollment}/reject', [EnrollmentController::class, 'reject'])->name('reject')->middleware('permission:enrollments,approve');
+        Route::post('/bulk-enroll', [EnrollmentController::class, 'bulkEnroll'])->name('bulk-enroll')->middleware('permission:enrollments,create');
     });
 
     // Fee Management
-    Route::prefix('fees')->name('fees.')->group(function () {
+    Route::prefix('fees')->name('fees.')->middleware('permission:fees,view')->group(function () {
         // Main fees index route
         Route::get('/', [AdminFeeController::class, 'index'])->name('index');
 
         // Fee Records Management
         Route::prefix('records')->name('records.')->group(function () {
             Route::get('/', [AdminFeeController::class, 'index'])->name('index');
-            Route::get('/create', [AdminFeeController::class, 'create'])->name('create');
-            Route::post('/', [AdminFeeController::class, 'store'])->name('store');
+            Route::get('/create', [AdminFeeController::class, 'create'])->name('create')->middleware('permission:fees,create');
+            Route::post('/', [AdminFeeController::class, 'store'])->name('store')->middleware('permission:fees,create');
             Route::get('/{fee}', [AdminFeeController::class, 'show'])->name('show');
             Route::get('/{fee}/demand-notice', [AdminFeeController::class, 'demandNotice'])->name('demand-notice');
             Route::get('/{fee}/receipt', [AdminFeeController::class, 'receipt'])->name('receipt');
-            Route::get('/{fee}/edit', [AdminFeeController::class, 'edit'])->name('edit');
-            Route::put('/{fee}', [AdminFeeController::class, 'update'])->name('update');
-            Route::delete('/{fee}', [AdminFeeController::class, 'destroy'])->name('destroy');
-            Route::get('/{fee}/payment', [AdminFeeController::class, 'showPayment'])->name('payment');
-            Route::post('/{fee}/payment', [AdminFeeController::class, 'processPayment'])->name('process-payment');
-            Route::post('/generate-invoices', [AdminFeeController::class, 'generateInvoices'])->name('generate-invoices');
-            Route::post('/send-reminders', [AdminFeeController::class, 'sendReminders'])->name('send-reminders');
-            Route::get('/export', [AdminFeeController::class, 'export'])->name('export');
+            Route::get('/{fee}/edit', [AdminFeeController::class, 'edit'])->name('edit')->middleware('permission:fees,edit');
+            Route::put('/{fee}', [AdminFeeController::class, 'update'])->name('update')->middleware('permission:fees,edit');
+            Route::delete('/{fee}', [AdminFeeController::class, 'destroy'])->name('destroy')->middleware('permission:fees,delete');
+            Route::get('/{fee}/payment', [AdminFeeController::class, 'showPayment'])->name('payment')->middleware('permission:fees,create');
+            Route::post('/{fee}/payment', [AdminFeeController::class, 'processPayment'])->name('process-payment')->middleware('permission:fees,create');
+            Route::post('/generate-invoices', [AdminFeeController::class, 'generateInvoices'])->name('generate-invoices')->middleware('permission:fees,create');
+            Route::post('/send-reminders', [AdminFeeController::class, 'sendReminders'])->name('send-reminders')->middleware('permission:fees,edit');
+            Route::get('/export', [AdminFeeController::class, 'export'])->name('export')->middleware('permission:fees,export');
         });
 
         Route::prefix('payments')->name('payments.')->group(function () {
-            Route::post('/{payment}/approve', [AdminFeeController::class, 'approvePayment'])->name('approve');
+            Route::post('/{payment}/approve', [AdminFeeController::class, 'approvePayment'])->name('approve')->middleware('permission:fees,approve');
             Route::get('/{payment}/receipt', [AdminFeeController::class, 'transactionReceipt'])->name('receipt');
         });
 
         // Fee Structures Management
         Route::prefix('structures')->name('structures.')->group(function () {
             Route::get('/', [AdminFeeController::class, 'structures'])->name('index');
-            Route::get('/create', [AdminFeeController::class, 'createStructure'])->name('create');
-            Route::post('/', [AdminFeeController::class, 'storeStructure'])->name('store');
+            Route::get('/create', [AdminFeeController::class, 'createStructure'])->name('create')->middleware('permission:fees,create');
+            Route::post('/', [AdminFeeController::class, 'storeStructure'])->name('store')->middleware('permission:fees,create');
             Route::get('/{feeStructure}', [AdminFeeController::class, 'showStructure'])->name('show');
-            Route::get('/{feeStructure}/edit', [AdminFeeController::class, 'editStructure'])->name('edit');
-            Route::put('/{feeStructure}', [AdminFeeController::class, 'updateStructure'])->name('update');
-            Route::delete('/{feeStructure}', [AdminFeeController::class, 'destroyStructure'])->name('destroy');
+            Route::get('/{feeStructure}/edit', [AdminFeeController::class, 'editStructure'])->name('edit')->middleware('permission:fees,edit');
+            Route::put('/{feeStructure}', [AdminFeeController::class, 'updateStructure'])->name('update')->middleware('permission:fees,edit');
+            Route::delete('/{feeStructure}', [AdminFeeController::class, 'destroyStructure'])->name('destroy')->middleware('permission:fees,delete');
         });
     });
 
     // Academic Faculties Management (already defined above via AdminFacultyController)
 
     // Comprehensive Bursar & Finance Hub (17 Sub-Modules)
-    Route::prefix('finance')->name('finance.')->group(function () {
+    Route::prefix('finance')->name('finance.')->middleware('permission:reports,view')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'dashboard'])->name('dashboard');
         Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
         Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store');
@@ -335,15 +353,32 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Admin Timetable Management
     Route::resource('timetables', AdminTimetableController::class);
 
-    // Admin E-Voting Management
-    Route::get('/evoting', [AdminEVotingController::class, 'index'])->name('evoting.index');
-    Route::post('/evoting/session', [AdminEVotingController::class, 'storeSession'])->name('evoting.sessions.store');
-    Route::post('/evoting/session/{session}/vetting', [AdminEVotingController::class, 'updateSessionVetting'])->name('evoting.sessions.vetting');
-    Route::post('/evoting/session/{session}/toggle', [AdminEVotingController::class, 'toggleSessionStatus'])->name('evoting.sessions.toggle');
-    Route::post('/evoting/session/{session}/positions', [AdminEVotingController::class, 'storePosition'])->name('evoting.positions.store');
-    Route::post('/evoting/position/{position}/candidates', [AdminEVotingController::class, 'storeCandidate'])->name('evoting.candidates.store');
-    Route::post('/evoting/candidate/{candidate}/vet', [AdminEVotingController::class, 'vetCandidate'])->name('evoting.candidates.vet');
-    Route::get('/evoting/session/{session}/results', [AdminEVotingController::class, 'results'])->name('evoting.results');
+    // Admin E-Voting & Student Leadership Management
+    Route::prefix('evoting')->name('evoting.')->group(function () {
+        Route::get('/', [AdminEVotingController::class, 'index'])->name('index');
+        Route::post('/sessions', [AdminEVotingController::class, 'storeSession'])->name('sessions.store');
+        Route::get('/sessions/{session}', [AdminEVotingController::class, 'show'])->name('show');
+        Route::put('/sessions/{session}', [AdminEVotingController::class, 'updateSession'])->name('sessions.update');
+        Route::post('/sessions/{session}/status', [AdminEVotingController::class, 'updateSessionStatus'])->name('sessions.status');
+        Route::delete('/sessions/{session}', [AdminEVotingController::class, 'destroySession'])->name('sessions.destroy');
+        Route::post('/sessions/{session}/publish', [AdminEVotingController::class, 'publishResults'])->name('sessions.publish');
+        Route::get('/sessions/{session}/results', [AdminEVotingController::class, 'results'])->name('results');
+
+        // Electoral Commission
+        Route::post('/sessions/{session}/commission', [AdminEVotingController::class, 'storeCommissionMember'])->name('commission.store');
+        Route::delete('/sessions/{session}/commission/{member}', [AdminEVotingController::class, 'destroyCommissionMember'])->name('commission.destroy');
+
+        // Positions
+        Route::post('/sessions/{session}/positions', [AdminEVotingController::class, 'storePosition'])->name('positions.store');
+        Route::put('/positions/{position}', [AdminEVotingController::class, 'updatePosition'])->name('positions.update');
+        Route::delete('/positions/{position}', [AdminEVotingController::class, 'destroyPosition'])->name('positions.destroy');
+
+        // Candidate Vetting
+        Route::post('/candidates/{candidate}/vet', [AdminEVotingController::class, 'vetCandidate'])->name('candidates.vet');
+
+        // Elected Student Leaders
+        Route::get('/leaders', [AdminEVotingController::class, 'leadersIndex'])->name('leaders');
+    });
 
     // Admin Evaluation Surveys
     Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class);
@@ -450,6 +485,8 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     Route::get('/courses', [FacultyCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{course}', [FacultyCourseController::class, 'show'])->name('courses.show');
     Route::put('/courses/{course}', [FacultyCourseController::class, 'update'])->name('courses.update');
+    Route::post('/courses/{course}/enroll-student', [FacultyCourseController::class, 'enrollStudent'])->name('courses.enroll-student');
+    Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [FacultyCourseController::class, 'dropStudent'])->name('courses.drop-student');
 
     // Material Management
     Route::get('/courses/{course}/materials', [FacultyMaterialController::class, 'index'])->name('courses.materials.index');
@@ -597,12 +634,17 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/timetables/tests', [StudentTimetableController::class, 'tests'])->name('timetables.tests');
     Route::get('/timetables/exams', [StudentTimetableController::class, 'exams'])->name('timetables.exams');
 
-    // E-Voting
-    Route::get('/evoting', [StudentEVotingController::class, 'index'])->name('evoting.index');
-    Route::get('/evoting/announcements', [StudentEVotingController::class, 'announcements'])->name('evoting.announcements');
-    Route::get('/evoting/positions', [StudentEVotingController::class, 'positions'])->name('evoting.positions');
-    Route::post('/evoting/vote', [StudentEVotingController::class, 'vote'])->name('evoting.vote');
-    Route::post('/evoting/candidacy', [StudentEVotingController::class, 'applyCandidacy'])->name('evoting.candidacy.apply');
+    // E-Voting & Student Leadership
+    Route::prefix('evoting')->name('evoting.')->group(function () {
+        Route::get('/', [StudentEVotingController::class, 'index'])->name('index');
+        Route::get('/sessions/{session}/apply', [StudentEVotingController::class, 'apply'])->name('apply');
+        Route::post('/sessions/{session}/apply', [StudentEVotingController::class, 'storeApplication'])->name('apply.store');
+        Route::get('/my-applications', [StudentEVotingController::class, 'myApplications'])->name('my-applications');
+        Route::get('/sessions/{session}/ballot', [StudentEVotingController::class, 'ballot'])->name('ballot');
+        Route::post('/sessions/{session}/vote', [StudentEVotingController::class, 'castVote'])->name('vote');
+        Route::get('/sessions/{session}/results', [StudentEVotingController::class, 'results'])->name('results');
+        Route::get('/leaders', [StudentEVotingController::class, 'leaders'])->name('leaders');
+    });
 
     // Evaluation Surveys
     Route::get('/evaluation-surveys', [StudentEvaluationSurveyController::class, 'index'])->name('evaluation-surveys.index');

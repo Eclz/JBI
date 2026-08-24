@@ -7,8 +7,12 @@ use App\Models\VotingSession;
 use App\Models\VotingPosition;
 use App\Models\VotingCandidate;
 use App\Models\Vote;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class EVotingController extends Controller
 {
@@ -16,114 +20,338 @@ class EVotingController extends Controller
     {
         $user = Auth::user();
         $studentProfile = $user->studentProfile;
-        $currentSem = $studentProfile?->current_semester ?? 1;
+        $facultyId = $studentProfile?->department?->faculty_id;
 
-        // Active session matching semester or any active session
-        $sessions = VotingSession::with(['positions.candidates.votes'])
-            ->where('is_active', true)
+        // Ongoing, application-open, or upcoming elections
+        $sessions = VotingSession::with([
+            'academicYear',
+            'positions.faculty',
+            'positions.approvedCandidates',
+            'votes'
+        ])
+        ->where('is_active', true)
+        ->orderByDesc('created_at')
+        ->get();
+
+        // User's applications
+        $myApplications = VotingCandidate::where('user_id', $user->id)
+            ->with(['position.session', 'position.faculty'])
+            ->orderByDesc('created_at')
             ->get();
 
-        $activeSession = $sessions->firstWhere('target_semester', $currentSem) ?? $sessions->first();
-
-        // Get user's existing votes
+        // User's cast votes
         $userVotes = Vote::where('user_id', $user->id)
             ->pluck('voting_candidate_id', 'voting_position_id')
             ->toArray();
 
-        return view('student.evoting.index', compact('sessions', 'activeSession', 'userVotes', 'currentSem'));
+        // Elected Student Leaders
+        $electedLeaders = VotingCandidate::where('candidate_status', 'elected_student_leader')
+            ->with(['position.session', 'position.faculty', 'user.studentProfile.department.faculty'])
+            ->orderBy('position_id')
+            ->get();
+
+        return view('student.evoting.index', compact(
+            'sessions',
+            'myApplications',
+            'userVotes',
+            'electedLeaders',
+            'studentProfile',
+            'facultyId'
+        ));
     }
 
-    public function announcements()
+    public function apply(VotingSession $session)
     {
-        $sessions = VotingSession::where('is_active', true)->orderBy('created_at', 'desc')->get();
-        return view('student.evoting.announcements', compact('sessions'));
-    }
-
-    public function positions()
-    {
-        $sessions = VotingSession::with(['positions.candidates'])->where('is_active', true)->get();
-        return view('student.evoting.positions', compact('sessions'));
-    }
-
-    public function vote(Request $request)
-    {
-        $request->validate([
-            'voting_session_id' => 'required|exists:voting_sessions,id',
-            'voting_position_id' => 'required|exists:voting_positions,id',
-            'voting_candidate_id' => 'required|exists:voting_candidates,id',
-        ]);
-
         $user = Auth::user();
+        $studentProfile = $user->studentProfile;
 
-        // Check if user already voted for this position
-        $existingVote = Vote::where('voting_session_id', $request->voting_session_id)
-            ->where('voting_position_id', $request->voting_position_id)
+        if (!$studentProfile || $studentProfile->status !== 'active') {
+            return redirect()->route('student.evoting.index')
+                ->with('error', 'Only fully active students can submit applications for student leadership positions.');
+        }
+
+        $facultyId = $studentProfile->department?->faculty_id;
+
+        // Load positions available to this student: university-wide OR matching student's faculty
+        $eligiblePositions = $session->positions()
+            ->where(function ($q) use ($facultyId) {
+                $q->where('scope', 'university_wide');
+                if ($facultyId) {
+                    $q->orWhere('faculty_id', $facultyId);
+                }
+            })
+            ->with('faculty')
+            ->orderBy('display_order')
+            ->get();
+
+        $existingApplications = VotingCandidate::where('voting_session_id', $session->id)
             ->where('user_id', $user->id)
-            ->first();
+            ->pluck('voting_position_id')
+            ->toArray();
 
-        if ($existingVote) {
-            return back()->with('error', 'You have already voted for this position!');
-        }
-
-        Vote::create([
-            'voting_session_id' => $request->voting_session_id,
-            'voting_position_id' => $request->voting_position_id,
-            'voting_candidate_id' => $request->voting_candidate_id,
-            'user_id' => $user->id,
-            'ip_address' => $request->ip(),
-        ]);
-
-        return back()->with('success', 'Your vote has been cast successfully!');
+        return view('student.evoting.apply', compact('session', 'eligiblePositions', 'studentProfile', 'existingApplications'));
     }
 
-    public function applyCandidacy(Request $request)
+    public function storeApplication(Request $request, VotingSession $session)
     {
         $user = Auth::user();
-        $profile = $user->studentProfile;
+        $studentProfile = $user->studentProfile;
 
-        if (!$profile || $profile->status !== 'active') {
-            return back()->with('error', 'Only active students can apply for election candidacy.');
+        if (!$studentProfile || $studentProfile->status !== 'active') {
+            return back()->with('error', 'Only active students are eligible to apply.');
         }
 
-        $request->validate([
+        // Check if application period is open
+        if (!$session->is_application_open && $session->status !== 'applications_open') {
+            return back()->with('error', 'The candidate application window is currently closed for this election season.');
+        }
+
+        $validated = $request->validate([
             'voting_position_id' => 'required|exists:voting_positions,id',
-            'manifesto' => 'required|string|max:2000',
+            'slogan' => 'nullable|string|max:255',
+            'manifesto' => 'required|string|max:5000',
             'party_affiliation' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'cgpa' => 'nullable|numeric|min:0|max:5',
+            'year_of_study' => 'nullable|integer|min:1|max:7',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:3072',
+            'documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
-        $position = VotingPosition::with('session')->findOrFail($request->voting_position_id);
-        $session = $position->session;
+        $position = VotingPosition::where('voting_session_id', $session->id)
+            ->findOrFail($validated['voting_position_id']);
 
-        // Check if vetting period is open
-        if (!$session || !$session->is_vetting_open) {
-            return back()->with('error', 'Candidacy application & vetting window is currently closed for this election session.');
+        // Check faculty restriction
+        if ($position->scope === 'faculty_specific' && $position->faculty_id) {
+            $studentFacultyId = $studentProfile->department?->faculty_id;
+            if ((int) $position->faculty_id !== (int) $studentFacultyId) {
+                return back()->with('error', 'You can only apply for positions within your own faculty or university-wide positions.');
+            }
         }
 
-        // Check if student already applied for this position
-        $existing = VotingCandidate::where('voting_position_id', $position->id)
+        // Check duplicate application
+        $exists = VotingCandidate::where('voting_position_id', $position->id)
             ->where('user_id', $user->id)
-            ->first();
+            ->exists();
 
-        if ($existing) {
-            return back()->with('error', 'You have already submitted a candidacy application for this post.');
+        if ($exists) {
+            return back()->with('error', 'You have already submitted an application for this position.');
         }
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('evoting/candidates', 'public');
+        } elseif ($user->profile_picture) {
+            $photoPath = $user->profile_picture;
         }
 
-        VotingCandidate::create([
+        $documents = [];
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $doc) {
+                $documents[] = [
+                    'name' => $doc->getClientOriginalName(),
+                    'path' => $doc->store('evoting/documents/' . $session->id, 'public'),
+                ];
+            }
+        }
+
+        $candidate = VotingCandidate::create([
+            'voting_session_id' => $session->id,
             'voting_position_id' => $position->id,
             'user_id' => $user->id,
-            'name' => $user->full_name,
+            'name' => $user->name,
+            'slogan' => $validated['slogan'] ?? null,
+            'manifesto' => $validated['manifesto'],
+            'party_affiliation' => $validated['party_affiliation'] ?? null,
             'photo' => $photoPath,
-            'manifesto' => $request->manifesto,
-            'party_affiliation' => $request->party_affiliation ?? 'Independent',
+            'cgpa' => $validated['cgpa'] ?? null,
+            'year_of_study' => $validated['year_of_study'] ?? ($studentProfile->year_of_study ?? 1),
+            'faculty_id' => $studentProfile->department?->faculty_id,
+            'supporting_documents' => $documents,
+            'application_status' => 'submitted',
+            'candidate_status' => 'applicant',
             'status' => 'pending',
         ]);
 
-        return back()->with('success', 'Your candidacy application for ' . $position->title . ' has been submitted successfully and is pending vetting approval!');
+        // Notify Admins & Electoral Commission
+        $commissionUsers = $session->commissionMembers()->with('user')->get();
+        foreach ($commissionUsers as $commMember) {
+            if ($commMember->user) {
+                Notification::create([
+                    'user_id' => $commMember->user->id,
+                    'type' => 'info',
+                    'title' => 'New Candidate Application Submitted',
+                    'message' => "{$user->name} applied for {$position->title} in {$session->title}. Ready for vetting.",
+                    'priority' => 'high',
+                ]);
+            }
+        }
+
+        return redirect()->route('student.evoting.my-applications')
+            ->with('success', 'Your candidacy application has been submitted successfully! The Electoral Commission will review and vet your application.');
+    }
+
+    public function myApplications()
+    {
+        $user = Auth::user();
+        $applications = VotingCandidate::where('user_id', $user->id)
+            ->with(['position.session', 'position.faculty', 'vetter'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('student.evoting.my-applications', compact('applications'));
+    }
+
+    public function ballot(VotingSession $session)
+    {
+        $user = Auth::user();
+
+        // Enforce student role
+        if ($user->role !== 'student') {
+            return redirect()->route('dashboard')->with('error', 'Only registered students are eligible to vote in student elections.');
+        }
+
+        $studentProfile = $user->studentProfile;
+        $facultyId = $studentProfile?->department?->faculty_id;
+
+        // Check if voting is open
+        if (!$session->is_voting_open) {
+            return redirect()->route('student.evoting.index')
+                ->with('error', 'Voting is not currently open for this election session.');
+        }
+
+        // Load positions available to this student: university_wide or student's faculty
+        $positions = $session->positions()
+            ->where(function ($q) use ($facultyId) {
+                $q->where('scope', 'university_wide');
+                if ($facultyId) {
+                    $q->orWhere('faculty_id', $facultyId);
+                }
+            })
+            ->with([
+                'faculty',
+                'approvedCandidates' => function ($q) {
+                    $q->with('user');
+                }
+            ])
+            ->orderBy('display_order')
+            ->get();
+
+        // Get student's cast votes in this session
+        $myVotes = Vote::where('voting_session_id', $session->id)
+            ->where('user_id', $user->id)
+            ->pluck('voting_candidate_id', 'voting_position_id')
+            ->toArray();
+
+        return view('student.evoting.ballot', compact('session', 'positions', 'myVotes', 'studentProfile'));
+    }
+
+    public function castVote(Request $request, VotingSession $session)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'student') {
+            return response()->json(['success' => false, 'message' => 'Only students are permitted to cast votes.'], 403);
+        }
+
+        if (!$session->is_voting_open) {
+            return response()->json(['success' => false, 'message' => 'Voting session is closed or not active.'], 422);
+        }
+
+        $validated = $request->validate([
+            'voting_position_id' => 'required|exists:voting_positions,id',
+            'voting_candidate_id' => 'required|exists:voting_candidates,id',
+        ]);
+
+        $position = VotingPosition::where('voting_session_id', $session->id)
+            ->findOrFail($validated['voting_position_id']);
+
+        // Check faculty restriction
+        $studentProfile = $user->studentProfile;
+        $studentFacultyId = $studentProfile?->department?->faculty_id;
+
+        if ($position->scope === 'faculty_specific' && $position->faculty_id) {
+            if ((int) $position->faculty_id !== (int) $studentFacultyId) {
+                return response()->json(['success' => false, 'message' => 'You are not eligible to vote for this faculty-specific position.'], 403);
+            }
+        }
+
+        // Verify candidate belongs to position and is approved
+        $candidate = VotingCandidate::where('voting_position_id', $position->id)
+            ->where(function ($q) {
+                $q->where('candidate_status', 'approved_candidate')
+                  ->orWhere('candidate_status', 'elected_student_leader')
+                  ->orWhere('application_status', 'vetted_approved')
+                  ->orWhere('status', 'approved');
+            })
+            ->findOrFail($validated['voting_candidate_id']);
+
+        // Prevent duplicate vote
+        $alreadyVoted = Vote::where('voting_session_id', $session->id)
+            ->where('voting_position_id', $position->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($alreadyVoted) {
+            return response()->json(['success' => false, 'message' => 'You have already cast your vote for this position.'], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $verificationHash = hash('sha256', $user->id . '-' . $position->id . '-' . $candidate->id . '-' . now()->timestamp . '-' . Str::random(8));
+
+            Vote::create([
+                'voting_session_id' => $session->id,
+                'voting_position_id' => $position->id,
+                'voting_candidate_id' => $candidate->id,
+                'user_id' => $user->id,
+                'ip_address' => $request->ip(),
+            ]);
+
+            $candidate->increment('votes_count');
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Your vote for {$position->title} has been securely recorded!",
+                'position_id' => $position->id,
+                'candidate_name' => $candidate->name,
+                'token' => substr($verificationHash, 0, 16),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Failed to cast vote: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function results(VotingSession $session)
+    {
+        if (!$session->is_results_published && !Auth::user()->isAdmin() && !Auth::user()->isElectoralCommissioner($session)) {
+            return redirect()->route('student.evoting.index')
+                ->with('error', 'Election results have not yet been published by the Electoral Commission.');
+        }
+
+        $session->load([
+            'academicYear',
+            'positions.faculty',
+            'positions.candidates.votes',
+            'positions.candidates.user',
+            'votes',
+        ]);
+
+        $totalEligibleStudents = User::where('role', 'student')->where('is_active', true)->count();
+        $totalVotersCount = $session->votes()->distinct('user_id')->count('user_id');
+
+        return view('student.evoting.results', compact('session', 'totalEligibleStudents', 'totalVotersCount'));
+    }
+
+    public function leaders()
+    {
+        $leaders = VotingCandidate::where('candidate_status', 'elected_student_leader')
+            ->with(['position.session.academicYear', 'position.faculty', 'user.studentProfile.department.faculty'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return view('student.evoting.leaders', compact('leaders'));
     }
 }

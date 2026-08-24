@@ -119,6 +119,9 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Enrolled Students</h5>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">
+                                <i class="bi bi-plus-circle me-1"></i> Enroll Student
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -142,7 +145,14 @@
                                             <td><span class="badge bg-success">{{ ucfirst($enrollment->status) }}</span></td>
                                             <td>{{ $enrollment->created_at->format('M d, Y') }}</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-primary">View Profile</button>
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-outline-primary">View Profile</button>
+                                                    <form action="{{ route('faculty.courses.drop-student', [$course, $enrollment]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to drop this student from this course?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Drop</button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                         @empty
@@ -285,6 +295,65 @@
     </div>
 </div>
 
+<!-- Enroll Student Modal -->
+<div class="modal fade" id="enrollStudentModal" tabindex="-1" aria-labelledby="enrollStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ route('faculty.courses.enroll-student', $course) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="enrollStudentModalLabel">Enroll Students</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="program_filter" class="form-label text-dark fw-semibold">Filter by Programme</label>
+                        <select class="form-select select2" id="program_filter" data-placeholder="Choose a Programme">
+                            <option value="">All Programmes</option>
+                            @foreach($programs as $program)
+                                <option value="{{ $program->id }}">{{ $program->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-dark fw-semibold">Select Student(s)</label>
+                        <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto; background-color: #f8f9fa;">
+                            <div class="form-check mb-2 pb-2 border-bottom">
+                                <input class="form-check-input" type="checkbox" id="selectAllStudents">
+                                <label class="form-check-label fw-bold text-dark" for="selectAllStudents">
+                                    Select All / None (Visible)
+                                </label>
+                            </div>
+                            <div id="modalStudentsList">
+                                @forelse($availableStudents as $student)
+                                    <div class="form-check student-checkbox-item py-1" data-program-id="{{ $student->studentProfile->program_id ?? '' }}">
+                                        <input class="form-check-input student-select-checkbox" type="checkbox" name="student_ids[]" value="{{ $student->id }}" id="student_chk_{{ $student->id }}">
+                                        <label class="form-check-label text-dark" for="student_chk_{{ $student->id }}">
+                                            {{ $student->name }} ({{ $student->studentProfile->student_id ?? $student->email }})
+                                        </label>
+                                    </div>
+                                @empty
+                                    <div class="text-center text-muted py-3">
+                                        No students available for enrollment.
+                                    </div>
+                                @endforelse
+                                <div id="noStudentsFilteredMessage" class="text-center text-muted py-3" style="display: none;">
+                                    No students found matching the selected programme.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Enroll Selected</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const triggerTabList = document.querySelectorAll('#courseTab button')
@@ -295,6 +364,57 @@ document.addEventListener('DOMContentLoaded', function() {
             tabTrigger.show()
         })
     })
+
+    // Filter and select logic in the Enroll Student Modal
+    const programFilter = document.getElementById('program_filter');
+    const selectAllCheckbox = document.getElementById('selectAllStudents');
+    const studentItems = document.querySelectorAll('.student-checkbox-item');
+    const noStudentsFilteredMessage = document.getElementById('noStudentsFilteredMessage');
+
+    if (programFilter && selectAllCheckbox) {
+        // Toggle all visible checkboxes
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            studentItems.forEach(item => {
+                if (item.style.display !== 'none') {
+                    const checkbox = item.querySelector('.student-select-checkbox');
+                    if (checkbox) {
+                        checkbox.checked = isChecked;
+                    }
+                }
+            });
+        });
+
+        // Filter students by program using jQuery's change event (triggered by Select2)
+        $(programFilter).on('change', function() {
+            const selectedProgramId = this.value;
+            let visibleCount = 0;
+
+            studentItems.forEach(item => {
+                const programId = item.getAttribute('data-program-id');
+                const checkbox = item.querySelector('.student-select-checkbox');
+                
+                if (selectedProgramId === "" || programId === selectedProgramId) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                    if (checkbox) {
+                        checkbox.checked = false; // uncheck hidden ones so they aren't accidentally enrolled
+                    }
+                }
+            });
+
+            // Update select all state when filter changes
+            selectAllCheckbox.checked = false;
+
+            if (visibleCount === 0 && studentItems.length > 0) {
+                noStudentsFilteredMessage.style.display = 'block';
+            } else {
+                noStudentsFilteredMessage.style.display = 'none';
+            }
+        });
+    }
 })
 </script>
 @endsection

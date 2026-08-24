@@ -486,34 +486,54 @@
                             </script>
 
                             <!-- Payment Information -->
-                            @if($application->status === 'approved' || $application->status === 'admitted')
-                            <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Payment Information</h5>
+                            @if($application->payment_proof || $application->payment_status || $application->status === 'admitted')
+                            <div class="card mb-3 border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom border-primary border-2 py-3">
+                                    <h5 class="mb-0 text-primary fw-bold"><i class="bi bi-credit-card me-2"></i>Admission Fee Payment Information</h5>
                                 </div>
                                 <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                        <div>
+                                            <strong>Payment Status:</strong>
+                                            @if($application->payment_status === 'verified' || $application->payment_verified_at)
+                                                <span class="badge bg-success ms-1"><i class="bi bi-check-circle me-1"></i>Payment Verified</span>
+                                            @elseif($application->payment_proof || $application->payment_status === 'uploaded')
+                                                <span class="badge bg-info ms-1"><i class="bi bi-file-earmark-check me-1"></i>Proof Uploaded - Awaiting Confirmation</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark ms-1"><i class="bi bi-clock me-1"></i>Payment Pending</span>
+                                            @endif
+                                        </div>
+                                        @if($application->payment_ref)
+                                            <div class="small text-muted"><strong>Ref:</strong> <code>{{ $application->payment_ref }}</code></div>
+                                        @endif
+                                    </div>
+
                                     @if($application->payment_proof)
-                                        <p><strong>Payment Proof:</strong> <span class="badge bg-success">Submitted</span></p>
                                         @php
                                             $proofUrl = asset('storage/' . $application->payment_proof);
                                             $proofExt = strtolower(pathinfo($application->payment_proof, PATHINFO_EXTENSION));
                                         @endphp
-                                        <button type="button" class="btn btn-primary btn-sm me-2 preview-doc-btn"
-                                                data-url="{{ $proofUrl }}"
-                                                data-title="Payment Proof Receipt"
-                                                data-ext="{{ $proofExt }}">
-                                            <i class="bi bi-eye me-1"></i>Preview Payment Proof
-                                        </button>
-                                        <a href="{{ $proofUrl }}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                                            <i class="bi bi-download me-1"></i>Download
-                                        </a>
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <button type="button" class="btn btn-primary btn-sm preview-doc-btn"
+                                                    data-url="{{ $proofUrl }}"
+                                                    data-title="Admission Fee Payment Proof"
+                                                    data-ext="{{ $proofExt }}">
+                                                <i class="bi bi-eye me-1"></i>Preview Payment Receipt
+                                            </button>
+                                            <a href="{{ $proofUrl }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                        </div>
                                         @if($application->payment_verified_at)
-                                            <p class="mt-2"><strong>Verified At:</strong> {{ $application->payment_verified_at->format('M d, Y H:i') }}</p>
-                                        @else
-                                            <span class="badge bg-warning ms-2">Pending Verification</span>
+                                            <div class="small text-success mt-2">
+                                                <i class="bi bi-check2-all me-1"></i>Verified on {{ $application->payment_verified_at->format('M d, Y H:i') }}
+                                                @if($application->verifier)
+                                                    by {{ $application->verifier->name }}
+                                                @endif
+                                            </div>
                                         @endif
                                     @else
-                                        <p class="text-muted">Payment proof not yet submitted</p>
+                                        <p class="text-muted small mb-0">Payment receipt has not been submitted by applicant yet.</p>
                                     @endif
                                 </div>
                             </div>
@@ -526,7 +546,7 @@
                                     <h5 class="mb-0"><i class="bi bi-sticky me-2"></i>Reviewer Notes</h5>
                                 </div>
                                 <div class="card-body">
-                                    <p>{{ $application->review_notes }}</p>
+                                    <p class="mb-0">{{ $application->review_notes }}</p>
                                 </div>
                             </div>
                             @endif
@@ -576,57 +596,72 @@
                             </div>
 
                             <!-- Actions -->
-                            @if($application->status === 'pending')
+                            @if(!in_array($application->status, ['admitted', 'rejected']))
                             <div class="card mb-3">
                                 <div class="card-header bg-light">
-                                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Actions</h5>
+                                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Admission Review & Actions</h5>
                                 </div>
                                 <div class="card-body">
+                                    {{-- 1. Verify Payment Form (if proof is uploaded but not yet verified) --}}
+                                    @if($application->payment_proof && !$application->payment_verified_at)
+                                    <form action="{{ route('admin.applications.verify-payment', $application->id) }}" method="POST" class="mb-3 pb-3 border-bottom">
+                                        @csrf
+                                        <label class="form-label fw-bold text-primary small">Step 1: Confirm Payment</label>
+                                        <button type="submit" class="btn btn-info text-white w-100 confirm-submit" data-confirm="Confirm and verify applicant payment proof?">
+                                            <i class="bi bi-check2-square me-1"></i>Verify & Confirm Payment
+                                        </button>
+                                    </form>
+                                    @endif
+
+                                    {{-- 2. Approve & Admit Student Form --}}
                                     <form action="{{ route('admin.applications.approve', $application->id) }}" method="POST" class="mb-3">
                                         @csrf
-                                        <div class="mb-3">
-                                            <label for="approval_notes" class="form-label">Approval Notes (Optional)</label>
-                                            <textarea name="notes" id="approval_notes" class="form-control" rows="3"></textarea>
+                                        <div class="mb-2">
+                                            <label for="approval_notes" class="form-label fw-bold small text-success">
+                                                {{ $application->payment_verified_at ? 'Final Step: Approve & Admit Student' : 'Approve & Admit Student' }}
+                                            </label>
+                                            <textarea name="notes" id="approval_notes" class="form-control form-control-sm" rows="2" placeholder="Approval notes (optional)"></textarea>
                                         </div>
-                                        <div class="form-check mb-3">
+                                        <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" name="force_approve" id="force_approve" value="1">
-                                            <label class="form-check-label" for="force_approve">
+                                            <label class="form-check-label small text-muted" for="force_approve">
                                                 Force approval if checklist is incomplete
                                             </label>
                                         </div>
-                                        <button type="submit" class="btn btn-success w-100 confirm-submit" data-confirm="Approve this application?">
-                                            <i class="bi bi-check-circle me-1"></i>Approve
+                                        <button type="submit" class="btn btn-success w-100 confirm-submit" data-confirm="Approve and officially admit this student? Official Student Number will be issued.">
+                                            <i class="bi bi-person-check-fill me-1"></i>Approve & Admit Student
                                         </button>
+                                        <div class="form-text small mt-1">
+                                            Issues official Student Number, activates portal account, and sends Admission Letter.
+                                        </div>
                                     </form>
 
+                                    {{-- 3. Reject Application Form --}}
                                     <form action="{{ route('admin.applications.reject', $application->id) }}" method="POST">
                                         @csrf
-                                        <div class="mb-3">
-                                            <label for="rejection_notes" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
-                                            <textarea name="notes" id="rejection_notes" class="form-control" rows="3" required></textarea>
+                                        <div class="mb-2">
+                                            <label for="rejection_notes" class="form-label fw-bold small text-danger">Reject Application <span class="text-danger">*</span></label>
+                                            <textarea name="notes" id="rejection_notes" class="form-control form-control-sm" rows="2" placeholder="Provide rejection reason..." required></textarea>
                                         </div>
-                                        <button type="submit" class="btn btn-danger w-100 confirm-submit" data-confirm="Reject this application?">
-                                            <i class="bi bi-x-circle me-1"></i>Reject
+                                        <button type="submit" class="btn btn-outline-danger w-100 confirm-submit" data-confirm="Reject this application?">
+                                            <i class="bi bi-x-circle me-1"></i>Reject Application
                                         </button>
                                     </form>
                                 </div>
                             </div>
-                            @elseif($application->status === 'approved' && $application->payment_proof && !$application->payment_verified_at)
+                            @else
                             <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Verify Payment</h5>
-                                </div>
-                                <div class="card-body">
-                                    <form action="{{ route('admin.applications.verify-payment', $application->id) }}" method="POST">
-                                        @csrf
-                                        <div class="mb-3">
-                                            <label for="verify_notes" class="form-label">Verification Notes (Optional)</label>
-                                            <textarea name="notes" id="verify_notes" class="form-control" rows="3"></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary w-100 confirm-submit" data-confirm="Verify payment and send admission letter?">
-                                            <i class="bi bi-check-circle me-1"></i>Verify Payment & Send Admission Letter
-                                        </button>
-                                    </form>
+                                <div class="card-body text-center">
+                                    @if($application->status === 'admitted')
+                                        <span class="badge bg-success fs-6 py-2 px-3 mb-2 d-inline-block">
+                                            <i class="bi bi-check-circle me-1"></i>Officially Admitted
+                                        </span>
+                                        <p class="small text-muted mb-0">Student Number: <strong>{{ $application->student_number }}</strong></p>
+                                    @elseif($application->status === 'rejected')
+                                        <span class="badge bg-danger fs-6 py-2 px-3 mb-2 d-inline-block">
+                                            <i class="bi bi-x-circle me-1"></i>Application Rejected
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                             @endif

@@ -137,7 +137,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="department_id" class="form-label">Department <span class="text-danger">*</span></label>
-                                <select class="form-select @error('department_id') is-invalid @enderror" id="department_id" name="department_id" required>
+                                <select class="form-select select2 @error('department_id') is-invalid @enderror" id="department_id" name="department_id" required>
                                     <option value="">Select Department</option>
                                     @foreach($departments as $department)
                                         <option value="{{ $department->id }}"
@@ -341,7 +341,7 @@
                                                     $isAssigned = in_array($c->id, old('assigned_courses', $assignedCourseIds ?? []));
                                                     $isAssignedOther = $c->instructor_id && $c->instructor_id !== $facultyStaff->id;
                                                 @endphp
-                                                <div class="col-md-6">
+                                                <div class="col-md-6 course-assignment-item" data-department-id="{{ $c->department_id }}">
                                                     <div class="form-check p-2 bg-white rounded border shadow-sm h-100">
                                                         <input class="form-check-input ms-0 me-2" type="checkbox" name="assigned_courses[]" value="{{ $c->id }}" id="course_{{ $c->id }}" {{ $isAssigned ? 'checked' : '' }}>
                                                         <label class="form-check-label small fw-semibold" for="course_{{ $c->id }}">
@@ -429,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (facultySelect && departmentSelect) {
         facultySelect.addEventListener('change', function() {
             const facultyId = this.value;
+            let option;
 
             // Reset department options
             departmentSelect.innerHTML = '<option value="">Select Department</option>';
@@ -437,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Filter departments by selected faculty
                 @foreach($departments as $department)
                     if ('{{ $department->faculty_id }}' === facultyId) {
-                        const option = document.createElement('option');
+                        option = document.createElement('option');
                         option.value = '{{ $department->id }}';
                         option.textContent = '{{ $department->name }}';
                         if ('{{ old('department_id', $facultyStaff->facultyProfile?->department_id) }}' === '{{ $department->id }}') {
@@ -449,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Show all departments
                 @foreach($departments as $department)
-                    const option = document.createElement('option');
+                    option = document.createElement('option');
                     option.value = '{{ $department->id }}';
                     option.textContent = '{{ $department->name }}';
                     if ('{{ old('department_id', $facultyStaff->facultyProfile?->department_id) }}' === '{{ $department->id }}') {
@@ -458,6 +459,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     departmentSelect.appendChild(option);
                 @endforeach
             }
+            // Trigger Select2 update and change event
+            $(departmentSelect).trigger('change');
+        });
+    }
+
+    // Filter courses based on department selection
+    const courseItems = $('.course-assignment-item');
+    if (departmentSelect && courseItems.length) {
+        function filterCoursesByDepartment(departmentId) {
+            courseItems.each(function() {
+                const itemDeptId = $(this).data('department-id');
+                if (!departmentId || itemDeptId == departmentId) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+
+        // Initialize filter on load (wrapped in a small timeout to let select2 finish rendering)
+        setTimeout(function() {
+            filterCoursesByDepartment($(departmentSelect).val());
+        }, 100);
+
+        // Update filter on change
+        $(departmentSelect).on('change', function() {
+            filterCoursesByDepartment($(this).val());
         });
     }
 

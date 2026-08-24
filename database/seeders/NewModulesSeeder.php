@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Models\VotingSession;
 use App\Models\VotingPosition;
 use App\Models\VotingCandidate;
+use App\Models\ElectoralCommissionMember;
+use App\Models\Faculty;
 use App\Models\EvaluationSurvey;
 use App\Models\EvaluationQuestion;
 
@@ -84,63 +86,194 @@ class NewModulesSeeder extends Seeder
         }
 
         // 2. Seed E-Voting Session (Semester 2 Elections)
+        $facultyMember = User::where('role', 'faculty')->first();
+        $adminUser = User::where('role', 'admin')->first();
+        $studentUser = User::where('role', 'student')->first();
+        $firstFaculty = Faculty::first();
+
         $votingSession = VotingSession::updateOrCreate(
-            ['title' => 'Guild Student Leaders Elections 2026/2027'],
+            ['title' => 'Guild Student Leaders & Cabinet Elections 2026/2027'],
             [
-                'description' => 'Official Annual Guild Student Leadership Elections conducted in Semester 2.',
+                'description' => 'Official Annual Guild Student Leadership & Faculty Representatives Elections for the 2026/2027 Academic Year.',
                 'target_semester' => 2,
                 'academic_year_id' => $academicYear?->id,
+                'status' => 'voting_open',
+                'application_start_at' => now()->subDays(14),
+                'application_end_at' => now()->subDays(7),
+                'vetting_start_at' => now()->subDays(6),
+                'vetting_end_at' => now()->subDays(2),
                 'start_time' => now()->subDays(1),
                 'end_time' => now()->addDays(7),
                 'is_active' => true,
+                'created_by' => $adminUser?->id,
             ]
         );
 
+        // Commission Members
+        if ($adminUser) {
+            ElectoralCommissionMember::updateOrCreate(
+                ['voting_session_id' => $votingSession->id, 'user_id' => $adminUser->id],
+                ['role_title' => 'Electoral Commission Chairperson', 'appointed_at' => now()->subDays(15), 'is_active' => true]
+            );
+        }
+        if ($facultyMember) {
+            ElectoralCommissionMember::updateOrCreate(
+                ['voting_session_id' => $votingSession->id, 'user_id' => $facultyMember->id],
+                ['role_title' => 'Chief Returning Officer', 'appointed_at' => now()->subDays(15), 'is_active' => true]
+            );
+        }
+
+        // Positions: University-Wide
         $pos1 = VotingPosition::updateOrCreate(
             ['voting_session_id' => $votingSession->id, 'title' => 'Guild President'],
-            ['description' => 'Head of the Student Guild Representative Council', 'display_order' => 1]
+            [
+                'description' => 'Head of the Student Guild Representative Council',
+                'scope' => 'university_wide',
+                'max_votes_per_voter' => 1,
+                'display_order' => 1,
+                'requirements' => 'Minimum CGPA 3.0, Year 2 or 3, No disciplinary infractions.',
+            ]
         );
 
         $pos2 = VotingPosition::updateOrCreate(
             ['voting_session_id' => $votingSession->id, 'title' => 'Vice Guild President'],
-            ['description' => 'Deputy Head of the Student Guild Council', 'display_order' => 2]
+            [
+                'description' => 'Deputy Head of the Student Guild Council',
+                'scope' => 'university_wide',
+                'max_votes_per_voter' => 1,
+                'display_order' => 2,
+                'requirements' => 'Minimum CGPA 2.8, Year 2 or 3.',
+            ]
         );
 
         $pos3 = VotingPosition::updateOrCreate(
-            ['voting_session_id' => $votingSession->id, 'title' => 'Minister of Sports & Recreation'],
-            ['description' => 'Oversees student sports, games, and recreational activities', 'display_order' => 3]
+            ['voting_session_id' => $votingSession->id, 'title' => 'Minister of Sports & Social Affairs'],
+            [
+                'description' => 'Oversees student sports, games, and recreational activities across the university',
+                'scope' => 'university_wide',
+                'max_votes_per_voter' => 1,
+                'display_order' => 3,
+                'requirements' => 'Demonstrated sports & leadership experience.',
+            ]
         );
 
-        // Candidates
+        // Position: Faculty Specific (if faculty exists)
+        if ($firstFaculty) {
+            $pos4 = VotingPosition::updateOrCreate(
+                ['voting_session_id' => $votingSession->id, 'title' => 'Faculty Representative Council (FRC) Chairperson - ' . $firstFaculty->name],
+                [
+                    'description' => 'Represents all students in the Faculty of ' . $firstFaculty->name,
+                    'scope' => 'faculty_specific',
+                    'faculty_id' => $firstFaculty->id,
+                    'max_votes_per_voter' => 1,
+                    'display_order' => 4,
+                    'requirements' => 'Must be a fully registered student in ' . $firstFaculty->name,
+                ]
+            );
+
+            VotingCandidate::updateOrCreate(
+                ['voting_position_id' => $pos4->id, 'name' => 'Ssemwogerere David'],
+                [
+                    'voting_session_id' => $votingSession->id,
+                    'user_id' => $studentUser?->id,
+                    'slogan' => 'Innovation & Faculty Unity',
+                    'party_affiliation' => 'Faculty Action Group',
+                    'cgpa' => 3.85,
+                    'year_of_study' => 2,
+                    'faculty_id' => $firstFaculty->id,
+                    'application_status' => 'vetted_approved',
+                    'candidate_status' => 'approved_candidate',
+                    'status' => 'approved',
+                    'vetting_score' => 94.0,
+                    'vetted_at' => now()->subDays(3),
+                    'vetted_by' => $adminUser?->id,
+                    'vetting_notes' => 'Exceptional academic standing and clear faculty representation agenda.',
+                    'manifesto' => 'Bridging the gap between faculty staff and students, advocating for modern lab equipment and accessible learning resources.',
+                ]
+            );
+        }
+
+        // Candidates for Guild President
         VotingCandidate::updateOrCreate(
             ['voting_position_id' => $pos1->id, 'name' => 'Tendo Jeconiah Caleb'],
             [
+                'voting_session_id' => $votingSession->id,
+                'user_id' => $studentUser?->id,
+                'slogan' => 'Inclusivity, Innovation & Student Welfare',
                 'party_affiliation' => 'Progressive Alliance (PA)',
-                'manifesto' => 'Transforming student welfare, modernizing campus Wi-Fi, and enhancing academic resources for all software engineering students.',
+                'cgpa' => 3.92,
+                'year_of_study' => 3,
+                'faculty_id' => $firstFaculty?->id,
+                'application_status' => 'vetted_approved',
+                'candidate_status' => 'approved_candidate',
+                'status' => 'approved',
+                'vetting_score' => 96.5,
+                'vetted_at' => now()->subDays(3),
+                'vetted_by' => $adminUser?->id,
+                'vetting_notes' => 'Passed all academic and ethical vetting criteria with distinction.',
+                'manifesto' => 'Transforming student welfare, modernizing campus Wi-Fi infrastructure, 24/7 library power backup, and enhancing academic resources for all students.',
             ]
         );
 
         VotingCandidate::updateOrCreate(
             ['voting_position_id' => $pos1->id, 'name' => 'Akello Mary Patricia'],
             [
+                'voting_session_id' => $votingSession->id,
+                'slogan' => 'Students First, Action Always',
                 'party_affiliation' => 'Students First Movement',
-                'manifesto' => 'Advocating for transparent fees structures, 24/7 library access, and expanded internship placement support.',
+                'cgpa' => 3.78,
+                'year_of_study' => 2,
+                'faculty_id' => $firstFaculty?->id,
+                'application_status' => 'vetted_approved',
+                'candidate_status' => 'approved_candidate',
+                'status' => 'approved',
+                'vetting_score' => 91.0,
+                'vetted_at' => now()->subDays(3),
+                'vetted_by' => $adminUser?->id,
+                'vetting_notes' => 'Vetted and cleared for ballot.',
+                'manifesto' => 'Advocating for transparent fees structures, expanded internship placement partnerships, and university healthcare emergency funds.',
             ]
         );
 
+        // Candidates for Vice President
         VotingCandidate::updateOrCreate(
             ['voting_position_id' => $pos2->id, 'name' => 'Kato Emmanuel'],
             [
+                'voting_session_id' => $votingSession->id,
+                'slogan' => 'Wellness & Academic Excellence',
                 'party_affiliation' => 'Progressive Alliance (PA)',
-                'manifesto' => 'Dedicated to student healthcare improvement and mental health wellness programs.',
+                'cgpa' => 3.65,
+                'year_of_study' => 2,
+                'faculty_id' => $firstFaculty?->id,
+                'application_status' => 'vetted_approved',
+                'candidate_status' => 'approved_candidate',
+                'status' => 'approved',
+                'vetting_score' => 88.0,
+                'vetted_at' => now()->subDays(3),
+                'vetted_by' => $adminUser?->id,
+                'vetting_notes' => 'Cleared by Electoral Commission.',
+                'manifesto' => 'Dedicated to student healthcare improvement, mental health wellness programs, and hostel security.',
             ]
         );
 
+        // Candidates for Sports Minister
         VotingCandidate::updateOrCreate(
             ['voting_position_id' => $pos3->id, 'name' => 'Mukasa Brian'],
             [
+                'voting_session_id' => $votingSession->id,
+                'slogan' => 'Revitalizing Campus Sports & Talents',
                 'party_affiliation' => 'Independent',
-                'manifesto' => 'Revitalizing intra-university football, basketball leagues, and e-sports tournaments.',
+                'cgpa' => 3.40,
+                'year_of_study' => 2,
+                'faculty_id' => $firstFaculty?->id,
+                'application_status' => 'vetted_approved',
+                'candidate_status' => 'approved_candidate',
+                'status' => 'approved',
+                'vetting_score' => 89.0,
+                'vetted_at' => now()->subDays(3),
+                'vetted_by' => $adminUser?->id,
+                'vetting_notes' => 'Strong sports background and clear vision.',
+                'manifesto' => 'Organizing inter-faculty sports galas, securing sponsorships for university teams, and revitalizing campus recreation facilities.',
             ]
         );
 

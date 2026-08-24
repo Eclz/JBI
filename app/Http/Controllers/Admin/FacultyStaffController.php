@@ -333,7 +333,7 @@ class FacultyStaffController extends Controller
         }
 
         // Validate the request
-        $request->validate([
+        $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $facultyStaff->id,
@@ -358,11 +358,29 @@ class FacultyStaffController extends Controller
             'personal_website' => 'nullable|url|max:255',
             'certifications' => 'nullable|string|max:500',
             'research_interests' => 'nullable|string|max:500',
-            'password' => 'nullable|min:8|confirmed',
             'is_active' => 'boolean',
             'assigned_courses' => 'nullable|array',
             'assigned_courses.*' => 'exists:courses,id',
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|min:8|confirmed';
+        }
+
+        $request->merge([
+            'is_active' => $request->has('is_active'),
         ]);
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            \Illuminate\Support\Facades\Log::error('FacultyStaff update validation failed', [
+                'user_id' => $facultyStaff->id,
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->except(['password', 'profile_picture'])
+            ]);
+            return back()->withErrors($validator)->withInput();
+        }
 
         DB::beginTransaction();
 
@@ -434,13 +452,11 @@ class FacultyStaffController extends Controller
             ]);
 
             // Sync assigned courses
-            if ($request->has('assigned_courses')) {
-                $assignedIds = array_filter($request->input('assigned_courses', []));
-                \App\Models\Course::whereIn('id', $assignedIds)->update(['instructor_id' => $facultyStaff->id]);
-                \App\Models\Course::where('instructor_id', $facultyStaff->id)
-                    ->whereNotIn('id', $assignedIds)
-                    ->update(['instructor_id' => null]);
-            }
+            $assignedIds = array_filter($request->input('assigned_courses', []));
+            \App\Models\Course::whereIn('id', $assignedIds)->update(['instructor_id' => $facultyStaff->id]);
+            \App\Models\Course::where('instructor_id', $facultyStaff->id)
+                ->whereNotIn('id', $assignedIds)
+                ->update(['instructor_id' => null]);
 
             DB::commit();
 

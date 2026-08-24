@@ -110,14 +110,28 @@
                         <div class="col-md-6">
                             <h5 class="mb-3">Academic Information</h5>
 
+                            @php
+                                $existingAdm = $student->studentProfile?->admission_number ?? '';
+                                $hasValidFormat = !empty($existingAdm) && preg_match('/^[A-Z]{2,5}\d{8}$/i', $existingAdm);
+                                $presetAdmissionNumber = $hasValidFormat ? $existingAdm : ($nextAdmissionNumber ?? $existingAdm);
+                            @endphp
                             <div class="mb-3">
                                 <label for="admission_number" class="form-label">Admission Number *</label>
-                                <input type="text" class="form-control @error('admission_number') is-invalid @enderror"
-                                       id="admission_number" name="admission_number"
-                                       value="{{ old('admission_number', $student->studentProfile?->admission_number ?? '') }}" required>
+                                <div class="input-group">
+                                    <input type="text" class="form-control @error('admission_number') is-invalid @enderror"
+                                           id="admission_number" name="admission_number"
+                                           value="{{ old('admission_number', $presetAdmissionNumber) }}" required>
+                                    <button type="button" class="btn btn-outline-secondary" id="generateAdmissionNumber"
+                                            title="Generate Next Admission Number">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
                                 @error('admission_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">
+                                    Format: Prefix + Year + 4-digit sequence (e.g., JBI{{ date('Y') }}0001 or CSC{{ date('Y') }}0001)
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -283,6 +297,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     departmentSelect.addEventListener('change', updatePrograms);
     updatePrograms();
+
+    // Admission Number Generation Button
+    const admissionNumberInput = document.getElementById('admission_number');
+    const generateBtn = document.getElementById('generateAdmissionNumber');
+
+    if (generateBtn && admissionNumberInput) {
+        generateBtn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon) icon.className = 'fa fa-spinner fa-spin';
+            const deptId = departmentSelect ? departmentSelect.value : '';
+
+            fetch('{{ route("admin.students.next-admission-number") }}' + (deptId ? '?department_id=' + deptId : ''))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.admission_number) {
+                        admissionNumberInput.value = data.admission_number;
+                    }
+                    if (icon) icon.className = 'bi bi-arrow-clockwise';
+                })
+                .catch(error => {
+                    console.error('Error generating admission number:', error);
+                    if (icon) icon.className = 'bi bi-arrow-clockwise';
+                });
+        });
+    }
 });
 </script>
 @endpush

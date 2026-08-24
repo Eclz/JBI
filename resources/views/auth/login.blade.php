@@ -6,9 +6,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login - JBI University Management</title>
 
-    <!-- Fonts -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -175,5 +176,34 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.toggle-password').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.dataset.target || 'password';
+                    const input = document.getElementById(targetId) || this.closest('.relative')?.querySelector('input');
+                    const icon = this.querySelector('i');
+
+                    if (input) {
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            if (icon) {
+                                icon.classList.remove('bi-eye');
+                                icon.classList.add('bi-eye-slash');
+                            }
+                        } else {
+                            input.type = 'password';
+                            if (icon) {
+                                icon.classList.remove('bi-eye-slash');
+                                icon.classList.add('bi-eye');
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

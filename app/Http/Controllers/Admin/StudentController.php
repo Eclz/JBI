@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\Application;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StudentController extends Controller
@@ -204,8 +205,9 @@ class StudentController extends Controller
             $programsQuery->where('is_active', true);
         }
         $programs = $programsQuery->get();
+        $nextAdmissionNumber = $this->generateAdmissionNumber($student->studentProfile?->department_id);
 
-        return view('admin.students.edit', compact('student', 'departments', 'programs'));
+        return view('admin.students.edit', compact('student', 'departments', 'programs', 'nextAdmissionNumber'));
     }
 
     public function update(StoreStudentProfileRequest $request, User $student)
@@ -495,21 +497,29 @@ class StudentController extends Controller
 
     private function generateAdmissionNumber($departmentId = null)
     {
-        $department = Department::find($departmentId);
         $year = date('Y');
-        $prefix = $department ? strtoupper(substr($department->code, 0, 3)) : 'JBI';
+        $department = $departmentId ? Department::find($departmentId) : null;
+        $prefix = $department && !empty($department->code) ? strtoupper(substr($department->code, 0, 3)) : 'JBI';
 
-        $lastNumber = StudentProfile::where('admission_number', 'like', "{$prefix}{$year}%")
-            ->orderBy('admission_number', 'desc')
-            ->first();
+        $profiles = StudentProfile::where('admission_number', 'like', "{$prefix}{$year}%")
+            ->pluck('admission_number');
 
-        if ($lastNumber) {
-            $lastSequence = intval(substr($lastNumber->admission_number, -4));
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
+        $applications = Application::where('admission_number', 'like', "{$prefix}{$year}%")
+            ->pluck('admission_number');
+
+        $allNumbers = $profiles->concat($applications);
+
+        $maxSequence = 0;
+        foreach ($allNumbers as $adm) {
+            if ($adm && preg_match('/^' . preg_quote($prefix . $year, '/') . '(\d+)$/', $adm, $matches)) {
+                $seq = intval($matches[1]);
+                if ($seq > $maxSequence) {
+                    $maxSequence = $seq;
+                }
+            }
         }
 
+        $newSequence = $maxSequence + 1;
         return $prefix . $year . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
     }
 

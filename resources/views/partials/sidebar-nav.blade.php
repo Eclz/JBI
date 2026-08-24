@@ -16,7 +16,7 @@
         </div>
         <div class="user-info">
             <h6 class="user-name">{{ auth()->user()->full_name }}</h6>
-            <span class="user-role">{{ ucfirst(auth()->user()->role) }}</span>
+            <span class="user-role">{{ auth()->user()->role_name }}</span>
         </div>
     </div>
     @endauth
@@ -74,10 +74,20 @@
                              request()->routeIs('admin.roles.*') ||
                              request()->routeIs('admin.settings*');
 
+            $canViewUsers = auth()->user()->hasPermission('users', 'view');
+            $canViewRoles = auth()->user()->hasPermission('roles', 'view');
+            $canViewSettings = auth()->user()->hasPermission('settings', 'view');
+            $canViewAdminGroup = $canViewUsers || $canViewRoles || $canViewSettings;
+
             // Group 2: Admissions & People
             $isAdmissionsActive = request()->routeIs('admin.applications.*') ||
                                   request()->routeIs('admin.students.*') ||
                                   request()->routeIs('admin.faculty-staff.*');
+
+            $canViewApplications = auth()->user()->hasPermission('applications', 'view');
+            $canViewStudents = auth()->user()->hasPermission('students', 'view');
+            $canViewFacultyStaff = auth()->user()->hasPermission('faculty', 'view');
+            $canViewAdmissionsGroup = $canViewApplications || $canViewStudents || $canViewFacultyStaff;
 
             // Group 3: Academic Structure
             $isAcademicActive = request()->routeIs('admin.courses.*') ||
@@ -89,17 +99,33 @@
                                 request()->routeIs('admin.academic-years.*') ||
                                 request()->routeIs('admin.semesters.*');
 
+            $canViewCourses = auth()->user()->hasPermission('courses', 'view');
+            $canViewPrograms = auth()->user()->hasPermission('programs', 'view');
+            $canViewDepartments = auth()->user()->hasPermission('departments', 'view');
+            $canViewAcademicActive = $canViewCourses || $canViewPrograms || $canViewDepartments;
+
             // Group 4: Finance & Governance
             $isFinanceActive = request()->routeIs('admin.finance.*') ||
                                request()->routeIs('admin.fees.*') ||
                                request()->routeIs('admin.reports.*');
 
+            $canViewFees = auth()->user()->hasPermission('fees', 'view');
+            $canViewReports = auth()->user()->hasPermission('reports', 'view');
+            $canViewBursarHub = $canViewFees && (optional(auth()->user()->roleCatalog)->code !== 'admissions_officer');
+            $canViewFinanceGroup = $canViewFees || $canViewReports;
+
             // Group 5: Operations & Engagement
             $isOperationsActive = request()->routeIs('admin.timetables.*') ||
                                   request()->routeIs('admin.evoting.*') ||
                                   request()->routeIs('admin.evaluation-surveys.*');
+
+            $canViewTimetables = auth()->user()->hasPermission('courses', 'view');
+            $canViewEvoting = auth()->user()->hasPermission('evoting', 'view');
+            $canViewSurveys = auth()->user()->hasPermission('courses', 'view') || auth()->user()->hasPermission('settings', 'view');
+            $canViewOperationsGroup = $canViewTimetables || $canViewEvoting || $canViewSurveys;
         @endphp
 
+        @if($canViewAdminGroup)
         {{-- Group 1: Administration (collapsible) --}}
         <li class="sidebar-group {{ $isAdminActive ? 'has-active-child' : '' }}" data-group-id="admin-administration">
             <button type="button" class="sidebar-group-toggle {{ $isAdminActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-administration')">
@@ -108,27 +134,35 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ $isAdminActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewUsers)
                 <li class="submenu-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.users.index') }}" class="submenu-link">
                         <i class="bi bi-people"></i>
                         <span>User Management</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewRoles)
                 <li class="submenu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.roles.index') }}" class="submenu-link">
                         <i class="bi bi-shield-lock"></i>
                         <span>Roles & Permissions</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewSettings)
                 <li class="submenu-item {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
                     <a href="{{ route('admin.settings') }}" class="submenu-link">
                         <i class="bi bi-sliders"></i>
                         <span>System Settings</span>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
+        @endif
 
+        @if($canViewAdmissionsGroup)
         {{-- Group 2: Admissions & People (collapsible) --}}
         <li class="sidebar-group {{ $isAdmissionsActive ? 'has-active-child' : '' }}" data-group-id="admin-admissions">
             <button type="button" class="sidebar-group-toggle {{ $isAdmissionsActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-admissions')">
@@ -137,6 +171,7 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ $isAdmissionsActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewApplications)
                 <li class="submenu-item {{ request()->routeIs('admin.applications.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.applications.index') }}" class="submenu-link">
                         <i class="bi bi-file-earmark-check"></i>
@@ -151,21 +186,28 @@
                         @endphp
                     </a>
                 </li>
+                @endif
+                @if($canViewStudents)
                 <li class="submenu-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.students.index') }}" class="submenu-link">
                         <i class="bi bi-mortarboard"></i>
                         <span>Student Management</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewFacultyStaff)
                 <li class="submenu-item {{ request()->routeIs('admin.faculty-staff.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.faculty-staff.index') }}" class="submenu-link">
                         <i class="bi bi-person-badge"></i>
                         <span>Faculty Staff Management</span>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
+        @endif
 
+        @if($canViewAcademicActive)
         {{-- Group 3: Academic Structure (collapsible) --}}
         <li class="sidebar-group {{ $isAcademicActive ? 'has-active-child' : '' }}" data-group-id="admin-academics">
             <button type="button" class="sidebar-group-toggle {{ $isAcademicActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-academics')">
@@ -174,12 +216,15 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ $isAcademicActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewCourses)
                 <li class="submenu-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.courses.index') }}" class="submenu-link">
                         <i class="bi bi-journal-bookmark"></i>
                         <span>Course Management</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewPrograms)
                 <li class="submenu-item {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.programs.index') }}" class="submenu-link">
                         <i class="bi bi-collection"></i>
@@ -198,6 +243,8 @@
                         <span>Program Change Requests</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewDepartments)
                 <li class="submenu-item {{ request()->routeIs('admin.faculties.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.faculties.index') }}" class="submenu-link">
                         <i class="bi bi-buildings"></i>
@@ -210,6 +257,8 @@
                         <span>Department Management</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewPrograms)
                 <li class="submenu-item {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.academic-years.index') }}" class="submenu-link">
                         <i class="bi bi-calendar3"></i>
@@ -222,9 +271,12 @@
                         <span>Semesters</span>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
+        @endif
 
+        @if($canViewFinanceGroup)
         {{-- Group 4: Finance & Governance (collapsible) --}}
         <li class="sidebar-group {{ $isFinanceActive ? 'has-active-child' : '' }}" data-group-id="admin-finance">
             <button type="button" class="sidebar-group-toggle {{ $isFinanceActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-finance')">
@@ -232,7 +284,8 @@
                 <span class="group-title">Finance & Governance</span>
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
-            <ul class="sidebar-group-menu" style="{{ $isFinanceActive ? 'display: block;' : 'display: none;' }}">
+             <ul class="sidebar-group-menu" style="{{ $isFinanceActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewBursarHub)
                 <li class="submenu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.dashboard') }}" class="submenu-link fw-semibold text-primary-light">
                         <i class="bi bi-speedometer"></i>
@@ -245,12 +298,16 @@
                         <span>Fee Structures</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewFees)
                 <li class="submenu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.index') }}" class="submenu-link">
                         <i class="bi bi-receipt"></i>
                         <span>Student Fee Records</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewBursarHub)
                 <li class="submenu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.revenue.index') }}" class="submenu-link">
                         <i class="bi bi-currency-exchange"></i>
@@ -299,21 +356,28 @@
                         <span>Banking & Cash</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewReports && optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
                 <li class="submenu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.reports.index') }}" class="submenu-link">
                         <i class="bi bi-journal-text"></i>
                         <span>Financial Statements</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewReports)
                 <li class="submenu-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.reports.index') }}" class="submenu-link">
                         <i class="bi bi-file-earmark-bar-graph"></i>
                         <span>Reports</span>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
+        @endif
 
+        @if($canViewOperationsGroup)
         {{-- Group 5: Operations & Engagement (collapsible) --}}
         <li class="sidebar-group {{ $isOperationsActive ? 'has-active-child' : '' }}" data-group-id="admin-operations">
             <button type="button" class="sidebar-group-toggle {{ $isOperationsActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'admin-operations')">
@@ -322,26 +386,33 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ $isOperationsActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewTimetables)
                 <li class="submenu-item {{ request()->routeIs('admin.timetables.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.timetables.index') }}" class="submenu-link">
                         <i class="bi bi-calendar3"></i>
                         <span>Timetable Management</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewEvoting)
                 <li class="submenu-item {{ request()->routeIs('admin.evoting.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.evoting.index') }}" class="submenu-link">
                         <i class="bi bi-check2-square"></i>
                         <span>E-Voting Management</span>
                     </a>
                 </li>
+                @endif
+                @if($canViewSurveys)
                 <li class="submenu-item {{ request()->routeIs('admin.evaluation-surveys.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.evaluation-surveys.index') }}" class="submenu-link">
                         <i class="bi bi-clipboard2-check"></i>
                         <span>Evaluation Surveys</span>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
+        @endif
         @endif
 
         {{-- ==================== FACULTY NAVIGATION ==================== --}}
