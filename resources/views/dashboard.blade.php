@@ -112,7 +112,7 @@
                                             </p>
                                         </div>
                                         <div class="col-md-6">
-                                            <p><strong>User Role:</strong> {{ ucfirst(Auth::user()->role) }}</p>
+                                            <p><strong>User Role:</strong> {{ Auth::user()->role_name }}</p>
                                             <p><strong>Last Login:</strong> {{ Auth::user()->last_login ? Auth::user()->last_login->diffForHumans() : 'First login' }}</p>
                                         </div>
                                     </div>

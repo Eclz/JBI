@@ -34,7 +34,23 @@ class CourseController extends Controller
             'materials'
         ]);
 
-        return view('faculty.courses.show', compact('course'));
+        // Get available students for enrollment (not already enrolled)
+        $availableStudents = \App\Models\User::where('role', 'student')
+            ->where('is_active', true)
+            ->whereNotIn('id', function($query) use ($course) {
+                $query->select('user_id')
+                      ->from('course_enrollments')
+                      ->where('course_id', $course->id)
+                      ->where('status', '!=', 'dropped');
+            })
+            ->with('studentProfile')
+            ->orderBy('name')
+            ->get();
+
+        // Get active programs to filter students
+        $programs = \App\Models\Program::where('is_active', true)->orderBy('name')->get();
+
+        return view('faculty.courses.show', compact('course', 'availableStudents', 'programs'));
     }
 
     public function students(Course $course)
@@ -47,5 +63,51 @@ class CourseController extends Controller
             ->paginate(20);
 
         return view('faculty.courses.students', compact('course', 'students'));
+    }
+
+    public function enrollStudent(Request $request, Course $course)
+    {
+        $this->authorize('view', $course);
+
+        $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:users,id',
+        ]);
+
+        $enrolledCount = 0;
+        foreach ($request->student_ids as $studentId) {
+            // Check if student is already enrolled
+            if ($course->enrollments()->where('user_id', $studentId)->where('status', '!=', 'dropped')->exists()) {
+                continue;
+            }
+
+            \App\Models\CourseEnrollment::create([
+                'user_id' => $studentId,
+                'course_id' => $course->id,
+                'enrollment_date' => now(),
+                'status' => 'enrolled',
+            ]);
+            $enrolledCount++;
+        }
+
+        if ($enrolledCount === 0) {
+            return back()->with('info', 'No new students were enrolled (they may already be enrolled).');
+        }
+
+        return back()->with('success', "{$enrolledCount} student(s) enrolled successfully.");
+    }
+
+    public function dropStudent(Course $course, \App\Models\CourseEnrollment $enrollment)
+    {
+        $this->authorize('view', $course);
+
+        // Ensure the enrollment belongs to this course
+        if ($enrollment->course_id !== $course->id) {
+            return back()->withErrors(['error' => 'Invalid enrollment for this course.']);
+        }
+
+        $enrollment->update(['status' => 'dropped']);
+
+        return back()->with('success', 'Student dropped from course successfully.');
     }
 }

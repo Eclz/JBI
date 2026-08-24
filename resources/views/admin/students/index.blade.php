@@ -81,7 +81,7 @@
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0">
                                     <div class="bg-warning bg-opacity-10 rounded-3 p-3">
-                                        <i class="fa fa-building text-warning fs-4"></i>
+                                        <i class="fa fa-building text-white fs-4"></i>
                                     </div>
                                 </div>
                                 <div class="flex-grow-1 ms-3">

@@ -527,7 +527,7 @@
                     </div>
                     <div>
                         <div class="fw-medium">{{ Auth::user()->first_name ?? 'System' }} {{ Auth::user()->last_name ?? 'Administrator' }}</div>
-                        <div class="small text-light">{{ ucfirst(Auth::user()->role ?? 'Admin') }}</div>
+                        <div class="small text-light">{{ Auth::user()->role_name }}</div>
                     </div>
                 </div>
             </div>
@@ -689,7 +689,7 @@
                                 @endif
                                 <div class="d-none d-lg-block text-start">
                                     <div class="fw-medium small">{{ Auth::user()->full_name }}</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">{{ ucfirst(Auth::user()->role) }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ Auth::user()->role_name }}</div>
                                 </div>
                                 <i class="bi bi-chevron-down small"></i>
                             </button>
@@ -697,7 +697,7 @@
                                 <div class="px-3 py-2 border-bottom">
                                     <div class="fw-medium">{{ Auth::user()->full_name }}</div>
                                     <div class="small text-muted">{{ Auth::user()->email }}</div>
-                                    <span class="badge bg-primary mt-1">{{ ucfirst(Auth::user()->role) }}</span>
+                                    <span class="badge bg-primary mt-1">{{ Auth::user()->role_name }}</span>
                                 </div>
                                 <a class="dropdown-item" href="{{ route('profile.show') }}">
                                     <i class="bi bi-person me-2"></i>My Profile
