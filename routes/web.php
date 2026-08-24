@@ -188,19 +188,37 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('roles', AdminRoleController::class)->except(['show']);
 
     // Student Management
-    Route::get('/students/next-admission-number', [AdminStudentController::class, 'getNextAdmissionNumber'])->name('students.next-admission-number');
-    Route::get('/students/export', [AdminStudentController::class, 'export'])->name('students.export');
-    Route::post('/students/bulk-import', [AdminStudentController::class, 'bulkImport'])->name('students.bulk-import');
+    Route::middleware('permission:students,view')->group(function () {
+        Route::get('/students', [AdminStudentController::class, 'index'])->name('students.index');
+        Route::get('/students/{student}', [AdminStudentController::class, 'show'])->name('students.show');
+        Route::get('/students/{student}/academic-record', [AdminStudentController::class, 'academicRecord'])->name('students.academic-record');
+        Route::get('/students/{student}/attendance', [AdminStudentController::class, 'attendance'])->name('students.attendance');
+        Route::get('/students/{student}/fees', [AdminStudentController::class, 'fees'])->name('students.fees');
+    });
 
-    Route::resource('students', AdminStudentController::class);
-    Route::get('/students/{student}/academic-record', [AdminStudentController::class, 'academicRecord'])->name('students.academic-record');
-    Route::get('/students/{student}/attendance', [AdminStudentController::class, 'attendance'])->name('students.attendance');
-    Route::get('/students/{student}/fees', [AdminStudentController::class, 'fees'])->name('students.fees');
+    Route::middleware('permission:students,create')->group(function () {
+        Route::get('/students/create', [AdminStudentController::class, 'create'])->name('students.create');
+        Route::post('/students', [AdminStudentController::class, 'store'])->name('students.store');
+        Route::get('/students/next-admission-number', [AdminStudentController::class, 'getNextAdmissionNumber'])->name('students.next-admission-number');
+        Route::post('/students/bulk-import', [AdminStudentController::class, 'bulkImport'])->name('students.bulk-import');
+    });
+
+    Route::middleware('permission:students,edit')->group(function () {
+        Route::get('/students/{student}/edit', [AdminStudentController::class, 'edit'])->name('students.edit');
+        Route::put('/students/{student}', [AdminStudentController::class, 'update'])->name('students.update');
+        Route::post('/students/{student}/notes', [AdminStudentController::class, 'addNote'])->name('students.notes.add');
+        Route::post('/students/{student}/toggle-status', [AdminStudentController::class, 'toggleStatus'])->name('students.toggle-status');
+    });
+
+    Route::middleware('permission:students,delete')->group(function () {
+        Route::delete('/students/{student}', [AdminStudentController::class, 'destroy'])->name('students.destroy');
+    });
+
+    Route::get('/students/export', [AdminStudentController::class, 'export'])->name('students.export')->middleware('permission:students,export');
+
     Route::get('/students/{student}/enroll-course', [AdminStudentController::class, 'showEnrollCourse'])->name('students.enroll-course')->middleware('permission:enrollments,create');
     Route::post('/students/{student}/enroll-course', [AdminStudentController::class, 'enrollCourse'])->name('students.enroll-course.store')->middleware('permission:enrollments,create');
     Route::delete('/students/{student}/enrollments/{enrollment}', [AdminStudentController::class, 'removeEnrollment'])->name('students.remove-enrollment')->middleware('permission:enrollments,delete');
-    Route::post('/students/{student}/notes', [AdminStudentController::class, 'addNote'])->name('students.notes.add');
-    Route::post('/students/{student}/toggle-status', [AdminStudentController::class, 'toggleStatus'])->name('students.toggle-status');
 
     // Faculty Management (Academic Divisions)
     Route::get('/faculties', [AdminFacultyController::class, 'index'])->name('faculties.index');

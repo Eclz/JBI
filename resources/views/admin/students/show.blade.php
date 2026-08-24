@@ -15,12 +15,16 @@
                     </nav>
                 </div>
                 <div>
+                    @if(auth()->user()->hasPermission('students', 'edit'))
                     <a href="{{ route('admin.students.edit', $student) }}" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Edit Student
                     </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('enrollments', 'create'))
                     <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-success">
                         <i class="fas fa-plus"></i> Enroll in Course
                     </a>
+                    @endif
                 </div>
             </div>
 
