@@ -19,10 +19,15 @@
         </div>
     @endif
 
+    @php
+        $showRevenueCard = auth()->user()->hasPermission('fees', 'view') && optional(auth()->user()->roleCatalog)->code !== 'admissions_officer';
+        $cardColClass = $showRevenueCard ? 'col-xl-3 col-md-6' : 'col-xl-4 col-md-4';
+    @endphp
+
     {{-- Key Statistics Cards --}}
     <div class="row g-4 mb-4">
         {{-- Students Card --}}
-        <div class="col-xl-3 col-md-6">
+        <div class="{{ $cardColClass }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -42,7 +47,7 @@
         </div>
 
         {{-- Faculty Card --}}
-        <div class="col-xl-3 col-md-6">
+        <div class="{{ $cardColClass }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -62,7 +67,7 @@
         </div>
 
         {{-- Courses Card --}}
-        <div class="col-xl-3 col-md-6">
+        <div class="{{ $cardColClass }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -81,8 +86,9 @@
             </div>
         </div>
 
+        @if($showRevenueCard)
         {{-- Revenue Card --}}
-        <div class="col-xl-3 col-md-6">
+        <div class="{{ $cardColClass }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -100,11 +106,12 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- Secondary Statistics --}}
     <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -118,7 +125,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -132,21 +139,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <p class="text-muted mb-1">Average GPA</p>
-                            <h4 class="mb-0">{{ number_format($averageGPA, 2) }}</h4>
-                        </div>
-                        <i class="bi bi-graph-up text-info fs-2"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -163,27 +156,28 @@
 
     {{-- Monthly Performance --}}
     <div class="row g-4 mb-4">
-        <div class="col-lg-8">
+        <div class="{{ $showRevenueCard ? 'col-lg-8' : 'col-12' }}">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 py-3">
                     <h5 class="mb-0">This Month's Performance</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="{{ $showRevenueCard ? 'col-md-4' : 'col-md-6' }}">
                             <div class="border rounded p-3 text-center">
                                 <i class="bi bi-people-fill text-primary fs-2 mb-2"></i>
                                 <h3 class="mb-1">{{ $monthlyNewStudents }}</h3>
                                 <p class="text-muted mb-0 small">New Students</p>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="{{ $showRevenueCard ? 'col-md-4' : 'col-md-6' }}">
                             <div class="border rounded p-3 text-center">
                                 <i class="bi bi-clipboard-check-fill text-success fs-2 mb-2"></i>
                                 <h3 class="mb-1">{{ $monthlyEnrollments }}</h3>
                                 <p class="text-muted mb-0 small">New Enrollments</p>
                             </div>
                         </div>
+                        @if($showRevenueCard)
                         <div class="col-md-4">
                             <div class="border rounded p-3 text-center">
                                 <i class="bi bi-currency-dollar text-warning fs-2 mb-2"></i>
@@ -191,11 +185,13 @@
                                 <p class="text-muted mb-0 small">Revenue Collected</p>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
 
+        @if($showRevenueCard)
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 py-3">
@@ -226,12 +222,13 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- Recent Activity --}}
     <div class="row g-4">
         {{-- Recent Enrollments --}}
-        <div class="col-lg-6">
+        <div class="{{ $showRevenueCard ? 'col-lg-6' : 'col-12' }}">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -274,6 +271,7 @@
             </div>
         </div>
 
+        @if($showRevenueCard)
         {{-- Recent Payments --}}
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm">
@@ -315,6 +313,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- Quick Actions --}}
@@ -325,27 +324,53 @@
                     <h5 class="mb-0">Quick Actions</h5>
                 </div>
                 <div class="card-body">
+                    @php
+                        $actionCount = 0;
+                        if (auth()->user()->hasPermission('students', 'create')) $actionCount++;
+                        if (auth()->user()->hasPermission('faculty', 'create')) $actionCount++;
+                        if (auth()->user()->hasPermission('courses', 'create')) $actionCount++;
+                        if (auth()->user()->hasPermission('reports', 'view')) $actionCount++;
+                        
+                        $colClass = $actionCount > 0 ? 'col-md-' . (12 / $actionCount) : 'col-12';
+                    @endphp
                     <div class="row g-3">
-                        <div class="col-md-3">
+                        @if(auth()->user()->hasPermission('students', 'create'))
+                        <div class="{{ $colClass }}">
                             <a href="{{ route('admin.students.create') }}" class="btn btn-outline-primary w-100">
                                 <i class="bi bi-person-plus me-2"></i>Add Student
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        @endif
+
+                        @if(auth()->user()->hasPermission('faculty', 'create'))
+                        <div class="{{ $colClass }}">
                             <a href="{{ route('admin.faculty-staff.create') }}" class="btn btn-outline-success w-100">
                                 <i class="bi bi-person-badge me-2"></i>Add Faculty
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        @endif
+
+                        @if(auth()->user()->hasPermission('courses', 'create'))
+                        <div class="{{ $colClass }}">
                             <a href="{{ route('admin.courses.create') }}" class="btn btn-outline-info w-100">
                                 <i class="bi bi-book me-2"></i>Add Course
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        @endif
+
+                        @if(auth()->user()->hasPermission('reports', 'view'))
+                        <div class="{{ $colClass }}">
                             <a href="{{ route('admin.reports.index') }}" class="btn btn-outline-warning w-100">
                                 <i class="bi bi-file-earmark-bar-graph me-2"></i>View Reports
                             </a>
                         </div>
+                        @endif
+
+                        @if($actionCount == 0)
+                        <div class="col-12 text-center text-muted">
+                            No quick actions available.
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
