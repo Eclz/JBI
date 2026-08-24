@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Database\Seeders\DemoDatabaseSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 
 class ResetDemoData extends Command
 {
@@ -37,10 +38,37 @@ class ResetDemoData extends Command
 
         $this->warn('Resetting the database and creating the approved demo dataset...');
 
-        $exitCode = Artisan::call('migrate:fresh', [
-            '--force' => true,
-            '--seeder' => DemoDatabaseSeeder::class,
-        ]);
+        $connection = config('database.default');
+        $prefix = (string) config("database.connections.{$connection}.prefix", '');
+
+        if ($prefix !== '') {
+            Schema::disableForeignKeyConstraints();
+
+            try {
+                foreach (Schema::getTableListing() as $table) {
+                    $physicalTable = str_contains($table, '.')
+                        ? substr($table, strrpos($table, '.') + 1)
+                        : $table;
+
+                    if (str_starts_with($physicalTable, $prefix)) {
+                        Schema::drop(substr($physicalTable, strlen($prefix)));
+                    }
+                }
+            } finally {
+                Schema::enableForeignKeyConstraints();
+            }
+
+            $exitCode = Artisan::call('migrate', [
+                '--force' => true,
+                '--seed' => true,
+                '--seeder' => DemoDatabaseSeeder::class,
+            ]);
+        } else {
+            $exitCode = Artisan::call('migrate:fresh', [
+                '--force' => true,
+                '--seeder' => DemoDatabaseSeeder::class,
+            ]);
+        }
 
         $this->output->write(Artisan::output());
 

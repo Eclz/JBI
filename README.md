@@ -189,6 +189,8 @@ DEMO_RESET_ALLOWED=true
 
 The production deployment must use `APP_DATA_MODE=production`, an empty `DB_PREFIX`, and `DEMO_RESET_ALLOWED=false`.
 
+When `DB_PREFIX` is set, `demo:reset` deletes only tables beginning with that prefix. It never runs the database-wide fresh migration used by an isolated demo database.
+
 To initialize an empty production database with only essential academic structure and the administrator account, run:
 
 ```bash
