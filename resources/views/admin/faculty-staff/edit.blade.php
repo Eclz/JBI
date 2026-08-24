@@ -470,7 +470,8 @@ document.addEventListener('DOMContentLoaded', function() {
         function filterCoursesByDepartment(departmentId) {
             courseItems.each(function() {
                 const itemDeptId = $(this).data('department-id');
-                if (!departmentId || itemDeptId == departmentId) {
+                const isChecked = $(this).find('input[type="checkbox"]').is(':checked');
+                if (!departmentId || itemDeptId == departmentId || isChecked) {
                     $(this).show();
                 } else {
                     $(this).hide();
