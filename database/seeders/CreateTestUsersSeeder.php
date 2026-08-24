@@ -76,6 +76,7 @@ class CreateTestUsersSeeder extends Seeder
             'user_id' => $faculty->id,
             'department_id' => $firstDepartment->id,
             'position' => 'Professor',
+            'qualification' => 'Doctor of Theology',
             'hire_date' => now()->subYears(5),
             'employment_status' => 'active',
             'office_location' => 'Faculty Building, Room 201',
