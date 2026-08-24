@@ -77,6 +77,8 @@ use App\Http\Controllers\Faculty\LmsController as FacultyLmsController;
 |--------------------------------------------------------------------------
 */
 
+Route::prefix(config('app.data_mode') === 'demo' ? 'demo' : '')->group(function () {
+
 // Public routes
 Route::get('/', function () {
     return view('welcome');
@@ -682,4 +684,6 @@ Route::middleware(['auth'])->group(function () {
     // Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+});
+
 });
