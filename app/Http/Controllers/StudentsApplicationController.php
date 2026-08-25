@@ -30,7 +30,7 @@ class StudentsApplicationController extends Controller
 
     public function store(Request $request)
     {
-        if (!SystemSetting::registrationWindow()['isOpen']) {
+        if (!SystemSetting::admissionWindow()['isOpen']) {
             return back()->withErrors(['application' => 'Applications are currently closed. Your information was not submitted.']);
         }
 

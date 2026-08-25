@@ -25,13 +25,13 @@
                             </div>
                         @endif
 
-                        @if(!($registrationWindow['isOpen'] ?? true))
+                        @if(!($admissionWindow['isOpen'] ?? true))
                             <div class="alert alert-warning">
-                                <h6 class="alert-heading"><i class="bi bi-calendar-x me-2"></i>Registration is currently closed</h6>
-                                @if(($registrationWindow['status'] ?? '') === 'scheduled' && $registrationWindow['start'])
-                                    <p class="mb-0">Registration opens {{ $registrationWindow['start']->format('d M Y, H:i') }} {{ $registrationWindow['timezone'] }}.</p>
-                                @elseif(($registrationWindow['status'] ?? '') === 'closed' && $registrationWindow['end'])
-                                    <p class="mb-0">The registration window closed {{ $registrationWindow['end']->format('d M Y, H:i') }} {{ $registrationWindow['timezone'] }}.</p>
+                                <h6 class="alert-heading"><i class="bi bi-calendar-x me-2"></i>Admissions are currently closed</h6>
+                                @if(($admissionWindow['status'] ?? '') === 'scheduled' && $admissionWindow['start'])
+                                    <p class="mb-0">Applications open {{ $admissionWindow['start']->format('d M Y, H:i') }} {{ $admissionWindow['timezone'] }}.</p>
+                                @elseif(($admissionWindow['status'] ?? '') === 'closed' && $admissionWindow['end'])
+                                    <p class="mb-0">The admission application window closed {{ $admissionWindow['end']->format('d M Y, H:i') }} {{ $admissionWindow['timezone'] }}.</p>
                                 @else
                                     <p class="mb-0">Please contact the admissions office for the next registration period.</p>
                                 @endif
@@ -113,7 +113,7 @@
                             </div>
 
                             <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;" {{ !($registrationWindow['isOpen'] ?? true) ? 'disabled' : '' }}>
+                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;" {{ !($admissionWindow['isOpen'] ?? true) ? 'disabled' : '' }}>
                                     <i class="bi bi-person-plus-fill me-2"></i>Register Account
                                 </button>
                             </div>

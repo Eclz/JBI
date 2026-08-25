@@ -36,13 +36,13 @@ class RegisterController extends Controller
 
     public function showRegistrationForm()
     {
-        return view('auth.register', ['registrationWindow' => SystemSetting::registrationWindow()]);
+        return view('auth.register', ['admissionWindow' => SystemSetting::admissionWindow()]);
     }
 
     public function register(Request $request)
     {
-        if (!SystemSetting::registrationWindow()['isOpen']) {
-            return back()->withErrors(['registration' => 'Registration is currently closed. Please check the published opening dates or contact admissions.']);
+        if (!SystemSetting::admissionWindow()['isOpen']) {
+            return back()->withErrors(['admission' => 'Admissions are currently closed. Please check the published opening dates or contact the admissions office.']);
         }
 
         // Custom validation

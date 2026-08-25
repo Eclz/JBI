@@ -37,13 +37,13 @@ class AppServiceProvider extends ServiceProvider
             View::share('currencyCode', $currencyCode);
             View::share('systemCurrency', $currencyCode);
             View::share('acceptedCurrencies', $acceptedCurrencies ?: [$currencyCode]);
-            View::share('registrationWindow', \App\Models\SystemSetting::registrationWindow());
+            View::share('admissionWindow', \App\Models\SystemSetting::admissionWindow());
             View::share('departments', Department::all());
         } catch (\Throwable $e) {
             View::share('currencyCode', 'USD');
             View::share('systemCurrency', 'USD');
             View::share('acceptedCurrencies', ['USD']);
-            View::share('registrationWindow', [
+            View::share('admissionWindow', [
                 'isOpen' => true,
                 'status' => 'open',
                 'start' => null,

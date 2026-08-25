@@ -19,6 +19,52 @@
     </div>
 @endif
 
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }}">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-person-lines-fill fs-2 text-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }}"></i>
+                <div>
+                    <div class="small text-muted">Admission applications</div>
+                    <div class="fw-bold text-capitalize">{{ $admissionWindow['status'] }}</div>
+                    <div class="small">Prospective students applying to JBI</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        @php($courseRegistrationOpen = $currentSemester?->is_registration_open ?? false)
+        <div class="card h-100 border-{{ $courseRegistrationOpen ? 'success' : 'secondary' }}">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-journal-check fs-2 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }}"></i>
+                <div>
+                    <div class="small text-muted">Semester registration</div>
+                    <div class="fw-bold">{{ $courseRegistrationOpen ? 'Open' : 'Closed' }}</div>
+                    <div class="small">Admitted students enrolling in courses</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-primary">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-clock-history fs-2 text-primary"></i>
+                <div>
+                    <div class="small text-muted">System time</div>
+                    <div class="fw-bold">{{ $admissionWindow['now']->format('d M Y, H:i') }}</div>
+                    <div class="small">South African Standard Time</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-light border mb-4">
+    <strong>Admission</strong> is the application and approval process for prospective students.
+    <strong>Registration</strong> happens after admission, when students pay required fees and enrol in semester courses.
+    Semester registration dates are managed under <a href="{{ route('admin.semesters.index') }}">Semesters</a>.
+</div>
+
 <form action="{{ route('admin.settings.update') }}" method="POST">
     @csrf
     @method('PUT')
@@ -132,29 +178,31 @@
                         <small class="d-block text-muted">System will be unavailable to users when enabled</small>
                     </div>
 
+                    <hr class="my-4">
+                    <h6 class="text-primary mb-3"><i class="bi bi-person-lines-fill me-2"></i>Admission Application Window</h6>
                     <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" name="registration_enabled" id="registration_enabled" value="1"
-                               {{ filter_var(old('registration_enabled', $settings->get('registration_enabled')->value ?? true), FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="registration_enabled">
-                            Allow User Registration
+                        <input class="form-check-input" type="checkbox" name="admission_enabled" id="admission_enabled" value="1"
+                               {{ filter_var(old('admission_enabled', $settings->get('admission_enabled')->value ?? $settings->get('registration_enabled')->value ?? true), FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold" for="admission_enabled">
+                            Accept New Admission Applications
                         </label>
-                        <small class="d-block text-muted">Users can self-register for accounts</small>
+                        <small class="d-block text-muted">Allows prospective students to create an applicant account and submit an application.</small>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Registration Opens</label>
-                            <input type="datetime-local" name="registration_open_at" class="form-control"
-                                   value="{{ old('registration_open_at', $settings->get('registration_open_at')->value ?? '') }}">
+                            <label class="form-label">Applications Open</label>
+                            <input type="datetime-local" name="admission_open_at" class="form-control"
+                                   value="{{ old('admission_open_at', $settings->get('admission_open_at')->value ?? $settings->get('registration_open_at')->value ?? '') }}">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Registration Closes</label>
-                            <input type="datetime-local" name="registration_close_at" class="form-control"
-                                   value="{{ old('registration_close_at', $settings->get('registration_close_at')->value ?? '') }}">
+                            <label class="form-label">Applications Close</label>
+                            <input type="datetime-local" name="admission_close_at" class="form-control"
+                                   value="{{ old('admission_close_at', $settings->get('admission_close_at')->value ?? $settings->get('registration_close_at')->value ?? '') }}">
                         </div>
                     </div>
                     <div class="alert alert-info py-2 small">
-                        Registration and new admission submissions are accepted only while enabled and within this window. Existing applicants remain available to administrators after closing.
+                        New applicant accounts and applications are accepted only within this window. Closing admissions does not remove existing applications or prevent administrators from reviewing them.
                     </div>
                 </div>
             </div>

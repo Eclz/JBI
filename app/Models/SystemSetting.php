@@ -65,13 +65,16 @@ class SystemSetting extends Model
         return $setting ? $setting->typed_value : $default;
     }
 
-    public static function registrationWindow(): array
+    public static function admissionWindow(): array
     {
         $timezone = static::getSetting('timezone', config('app.timezone'));
         $now = Carbon::now($timezone);
-        $enabled = filter_var(static::getSetting('registration_enabled', true), FILTER_VALIDATE_BOOLEAN);
-        $startValue = static::getSetting('registration_open_at');
-        $endValue = static::getSetting('registration_close_at');
+        $enabled = filter_var(
+            static::getSetting('admission_enabled', static::getSetting('registration_enabled', true)),
+            FILTER_VALIDATE_BOOLEAN
+        );
+        $startValue = static::getSetting('admission_open_at', static::getSetting('registration_open_at'));
+        $endValue = static::getSetting('admission_close_at', static::getSetting('registration_close_at'));
         $start = $startValue ? Carbon::parse($startValue, $timezone) : null;
         $end = $endValue ? Carbon::parse($endValue, $timezone) : null;
 
@@ -89,5 +92,13 @@ class SystemSetting extends Model
         }
 
         return compact('isOpen', 'status', 'start', 'end', 'timezone', 'now');
+    }
+
+    /**
+     * Backward-compatible alias for older callers.
+     */
+    public static function registrationWindow(): array
+    {
+        return static::admissionWindow();
     }
 }

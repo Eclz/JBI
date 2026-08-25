@@ -38,9 +38,9 @@ class ProductionDatabaseSeeder extends Seeder
             'operating_region' => 'southern_africa',
             'default_currency' => 'ZAR',
             'accepted_currencies' => json_encode(['ZAR', 'USD', 'EUR', 'GBP']),
-            'registration_enabled' => 'false',
-            'registration_open_at' => '',
-            'registration_close_at' => '',
+            'admission_enabled' => 'false',
+            'admission_open_at' => '',
+            'admission_close_at' => '',
             'demo_mode' => 'false',
         ] as $key => $value) {
             SystemSetting::updateOrCreate(
