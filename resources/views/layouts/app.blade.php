@@ -584,10 +584,17 @@
                             </div>
                         @else
                             <!-- Enhanced search with icon for staff/admin -->
+                            @if(Auth::user()->isAdmin() && Auth::user()->hasPermission('users', 'view'))
+                            <form action="{{ route('admin.users.index') }}" method="GET" class="search-wrapper d-none d-lg-block">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="search" name="search" class="form-control form-control-sm" placeholder="Search students, courses, staff..." value="{{ request('search') }}">
+                            </form>
+                            @else
                             <div class="search-wrapper d-none d-lg-block">
                                 <i class="bi bi-search search-icon"></i>
                                 <input type="search" class="form-control form-control-sm" placeholder="Search students, courses, staff...">
                             </div>
+                            @endif
                         @endif
 
                         <!-- Quick action buttons for common tasks -->

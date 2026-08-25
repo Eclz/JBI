@@ -109,10 +109,20 @@
                                request()->routeIs('admin.fees.*') ||
                                request()->routeIs('admin.reports.*');
 
-            $canViewFees = auth()->user()->hasPermission('fees', 'view');
-            $canViewReports = auth()->user()->hasPermission('reports', 'view');
-            $canViewBursarHub = $canViewFees && (optional(auth()->user()->roleCatalog)->code !== 'admissions_officer');
-            $canViewFinanceGroup = $canViewFees || $canViewReports;
+             $canViewFees = auth()->user()->hasPermission('fees', 'view');
+             $canViewReports = auth()->user()->hasPermission('reports', 'view');
+             $canViewFinanceGroup = $canViewFees || 
+                                    $canViewReports || 
+                                    auth()->user()->hasPermission('finance_hub', 'view') || 
+                                    auth()->user()->hasPermission('revenue', 'view') || 
+                                    auth()->user()->hasPermission('budgets', 'view') || 
+                                    auth()->user()->hasPermission('expenses', 'view') || 
+                                    auth()->user()->hasPermission('payables', 'view') || 
+                                    auth()->user()->hasPermission('receivables', 'view') || 
+                                    auth()->user()->hasPermission('payroll', 'view') || 
+                                    auth()->user()->hasPermission('assets', 'view') || 
+                                    auth()->user()->hasPermission('banking', 'view') || 
+                                    auth()->user()->hasPermission('financial_statements', 'view');
 
             // Group 5: Operations & Engagement
             $isOperationsActive = request()->routeIs('admin.timetables.*') ||
@@ -285,13 +295,15 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
              <ul class="sidebar-group-menu" style="{{ $isFinanceActive ? 'display: block;' : 'display: none;' }}">
-                @if($canViewBursarHub)
+                @if(auth()->user()->hasPermission('finance_hub', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.dashboard') }}" class="submenu-link fw-semibold text-primary-light">
                         <i class="bi bi-speedometer"></i>
                         <span>Finance & Bursar Hub</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('fees', 'view') && optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
                 <li class="submenu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.structures.index') }}" class="submenu-link">
                         <i class="bi bi-file-earmark-spreadsheet"></i>
@@ -299,7 +311,7 @@
                     </a>
                 </li>
                 @endif
-                @if($canViewFees)
+                @if(auth()->user()->hasPermission('fees', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.index') }}" class="submenu-link">
                         <i class="bi bi-receipt"></i>
@@ -307,49 +319,63 @@
                     </a>
                 </li>
                 @endif
-                @if($canViewBursarHub)
+                @if(auth()->user()->hasPermission('revenue', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.revenue.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.revenue.index') }}" class="submenu-link">
                         <i class="bi bi-currency-exchange"></i>
                         <span>Revenue & Income</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('budgets', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.budgets.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.budgets.index') }}" class="submenu-link">
                         <i class="bi bi-pie-chart"></i>
                         <span>Department Budgets</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('expenses', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.expenses.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.expenses.index') }}" class="submenu-link">
                         <i class="bi bi-cart-check"></i>
                         <span>Expenditures</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('payables', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.payables.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.payables.index') }}" class="submenu-link">
                         <i class="bi bi-truck"></i>
                         <span>Accounts Payable</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('receivables', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.receivables.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.receivables.index') }}" class="submenu-link">
                         <i class="bi bi-person-lines-fill"></i>
                         <span>Accounts Receivable</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('payroll', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.payroll.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.payroll.index') }}" class="submenu-link">
                         <i class="bi bi-person-badge"></i>
                         <span>Payroll Management</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('assets', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.assets.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.assets.index') }}" class="submenu-link">
                         <i class="bi bi-qr-code-scan"></i>
                         <span>Asset Management</span>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('banking', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.banking.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.banking.index') }}" class="submenu-link">
                         <i class="bi bi-piggy-bank"></i>
@@ -357,7 +383,7 @@
                     </a>
                 </li>
                 @endif
-                @if($canViewReports && optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
+                @if(auth()->user()->hasPermission('financial_statements', 'view'))
                 <li class="submenu-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.finance.reports.index') }}" class="submenu-link">
                         <i class="bi bi-journal-text"></i>
