@@ -105,7 +105,7 @@ class SyncJbiAcademicCatalog extends Command
                 }
             }
 
-            $this->syncAdmissionFees($levels, $academicYear, $source, $session);
+            $this->syncAdmissionFees($levels, $academicYear, $session);
         });
 
         $this->info('JBI academic catalog synchronized successfully. Existing matching records were updated, not duplicated.');
@@ -189,14 +189,14 @@ class SyncJbiAcademicCatalog extends Command
         );
     }
 
-    private function syncAdmissionFees(array $levels, AcademicYear $year, string $source, string $session): void
+    private function syncAdmissionFees(array $levels, AcademicYear $year, string $session): void
     {
-        $amounts = ['CERT' => [5000, 300], 'ADVDIP' => [5000, 300], 'DIP' => [10000, 600], 'BACH' => [10000, 600], 'MASTER' => [25000, 1500], 'PHD' => [40000, 2400]];
-        foreach ($amounts as $code => [$zar, $usd]) {
-            foreach ([['ZAR', 'local', $zar], ['USD', 'international', $usd]] as [$currency, $region, $amount]) {
+        $amounts = ['CERT' => 60, 'ADVDIP' => 80, 'DIP' => 60, 'BACH' => 80, 'MASTER' => 100, 'PHD' => 100];
+        foreach ($amounts as $code => $amount) {
+            foreach (['local', 'international'] as $region) {
                 FeeStructure::updateOrCreate(
-                    ['program_level_id' => $levels[$code]->id, 'academic_year_id' => $year->id, 'currency' => $currency, 'student_region' => $region, 'type' => 'registration', 'program_id' => null],
-                    ['name' => $levels[$code]->name.' Admission & Registration Fee ('.$currency.')', 'description' => 'Non-refundable, payable once at enrolment.', 'amount' => $amount, 'total_amount' => $amount, 'academic_session' => $session, 'source_url' => $source, 'frequency' => 'one_time', 'applicable_to' => ['roles' => ['student'], 'program_level_ids' => [$levels[$code]->id], 'student_region' => $region], 'is_mandatory' => true, 'is_active' => true]
+                    ['program_level_id' => $levels[$code]->id, 'academic_year_id' => $year->id, 'student_region' => $region, 'type' => 'registration', 'program_id' => null],
+                    ['name' => $levels[$code]->name.' Admission & Registration Fee (USD)', 'description' => 'Approved one-time, non-refundable admission and registration fee.', 'currency' => 'USD', 'amount' => $amount, 'total_amount' => $amount, 'total_amount_max' => $amount, 'academic_session' => $session, 'source_url' => null, 'frequency' => 'one_time', 'applicable_to' => ['roles' => ['student'], 'program_level_ids' => [$levels[$code]->id], 'student_region' => $region], 'is_mandatory' => true, 'is_active' => true]
                 );
             }
         }
