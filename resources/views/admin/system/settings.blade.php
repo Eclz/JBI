@@ -33,7 +33,9 @@
         </div>
     </div>
     <div class="col-md-4">
-        @php($courseRegistrationOpen = $currentSemester?->is_registration_open ?? false)
+        @php
+            $courseRegistrationOpen = $currentSemester?->is_registration_open ?? false;
+        @endphp
         <div class="card h-100 border-{{ $courseRegistrationOpen ? 'success' : 'secondary' }}">
             <div class="card-body d-flex align-items-center gap-3">
                 <i class="bi bi-journal-check fs-2 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }}"></i>
