@@ -41,16 +41,7 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
-    /*
-    | Demo reset is deliberately opt-in because it destroys all application data.
-    */
-    'demo_reset_allowed' => (bool) env('DEMO_RESET_ALLOWED', false),
-
-    'data_mode' => env('APP_DATA_MODE', 'production'),
-
     'production_url' => env('PRODUCTION_APP_URL', 'https://portal.jbiuniversity.com'),
-
-    'demo_url' => env('DEMO_APP_URL', 'https://portal.jbiuniversity.com/demo'),
 
     /*
     |--------------------------------------------------------------------------

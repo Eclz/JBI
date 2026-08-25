@@ -162,35 +162,6 @@ All test accounts use the password `password123`:
 
 These credentials are for local testing only. Never deploy them to production.
 
-## Demo environment reset
-
-The demo reset command deletes all application records, rebuilds the schema, and loads a small representative dataset with the four operator accounts above:
-
-```bash
-DEMO_RESET_ALLOWED=true php artisan demo:reset
-```
-
-For automated deployments, use `--force` only after creating and validating a database backup:
-
-```bash
-DEMO_RESET_ALLOWED=true php artisan demo:reset --force
-```
-
-The command refuses to run unless `DEMO_RESET_ALLOWED=true`. Never enable it on a production system that contains real user data.
-
-For an isolated demo deployment, use a separate database or a dedicated table prefix and application URL:
-
-```env
-APP_DATA_MODE=demo
-APP_URL=https://portal.jbiuniversity.com/demo
-DB_PREFIX=demo_
-DEMO_RESET_ALLOWED=true
-```
-
-The production deployment must use `APP_DATA_MODE=production`, an empty `DB_PREFIX`, and `DEMO_RESET_ALLOWED=false`.
-
-When `DB_PREFIX` is set, `demo:reset` deletes only tables beginning with that prefix. It never runs the database-wide fresh migration used by an isolated demo database.
-
 To initialize an empty production database with only essential academic structure and the administrator account, run:
 
 ```bash

@@ -78,8 +78,6 @@ use App\Http\Controllers\Faculty\LmsController as FacultyLmsController;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix(config('app.data_mode') === 'demo' ? 'demo' : '')->group(function () {
-
 // Public routes
 Route::get('/', function () {
     return view('welcome');
@@ -89,7 +87,6 @@ Route::get('generate', function (){
     \Illuminate\Support\Facades\Artisan::call('storage:link');
     echo 'ok';
 });
-
 
 
 Route::get('/clear', function() {
@@ -712,6 +709,4 @@ Route::middleware(['auth'])->group(function () {
     // Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
-});
-
 });
