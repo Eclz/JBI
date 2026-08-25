@@ -49,6 +49,7 @@ use App\Http\Controllers\Admin\SemesterController as AdminSemesterController;
 use App\Http\Controllers\Admin\TimetableController as AdminTimetableController;
 use App\Http\Controllers\Admin\EVotingController as AdminEVotingController;
 use App\Http\Controllers\Admin\EvaluationSurveyController as AdminEvaluationSurveyController;
+use App\Http\Controllers\Admin\AcademicSetupController as AdminAcademicSetupController;
 
 
 
@@ -365,6 +366,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Department Management
+    Route::get('/academic-setup', [AdminAcademicSetupController::class, 'index'])->name('academic-setup.index');
     Route::resource('departments', DepartmentController::class);
 
     Route::resource('program-levels', AdminProgramLevelController::class)->except(['show']);

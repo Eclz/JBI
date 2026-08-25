@@ -27,7 +27,8 @@ class ProgramLevelController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $programLevels = $query->orderBy('name')->paginate(20)->withQueryString();
+        $programLevels = $query->orderByRaw("CASE code WHEN 'CERT' THEN 1 WHEN 'DIP' THEN 2 WHEN 'ADVDIP' THEN 3 WHEN 'BACH' THEN 4 WHEN 'MASTER' THEN 5 WHEN 'PHD' THEN 6 ELSE 99 END")
+            ->orderBy('name')->paginate(20)->withQueryString();
 
         return view('admin.program-levels.index', compact('programLevels'));
     }

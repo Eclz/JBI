@@ -70,7 +70,7 @@ class FeeController extends Controller
             ->paginate(20);
 
         // Get fee structures
-        $feeStructures = FeeStructure::with(['academicYear', 'semester'])
+        $feeStructures = FeeStructure::with(['academicYear', 'semester', 'program', 'programLevel'])
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
             ->get();

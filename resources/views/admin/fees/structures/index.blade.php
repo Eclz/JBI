@@ -43,7 +43,7 @@
                                 <thead>
                                     <tr>
                                         <th>Name</th>
-                                        <th>Type</th>
+                                        <th>Programme / Level</th>
                                         <th>Amount</th>
                                         <th>Frequency</th>
                                         <th>Academic Year</th>
@@ -56,6 +56,10 @@
                                 <tbody>
                                     @foreach($feeStructures as $structure)
                                         <tr>
+                                            <td>
+                                                <strong>{{ $structure->program->name ?? 'All programmes' }}</strong>
+                                                <br><small class="text-muted">{{ $structure->programLevel->name ?? 'General' }} · {{ ucfirst($structure->student_region ?? 'local') }}</small>
+                                            </td>
                                             <td>
                                                 <div>
                                                     <strong>{{ $structure->name }}</strong>
@@ -74,7 +78,10 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <strong>{{ $currencyCode }} {{ number_format($structure->amount, 2) }}</strong>
+                                                <strong>{{ $structure->currency ?? $currencyCode }} {{ number_format($structure->amount, 2) }}</strong>
+                                                @if($structure->total_amount)
+                                                    <br><small class="text-muted">Total: {{ $structure->currency ?? $currencyCode }} {{ number_format($structure->total_amount, 2) }}@if($structure->total_amount_max && $structure->total_amount_max != $structure->total_amount)–{{ number_format($structure->total_amount_max, 2) }}@endif</small>
+                                                @endif
                                                 @if($structure->late_fee_amount > 0)
                                                     <br><small class="text-warning">Late Fee: {{ $currencyCode }} {{ number_format($structure->late_fee_amount, 2) }}</small>
                                                 @endif
