@@ -46,7 +46,7 @@ class DepartmentFactory extends Factory
             'head_of_department_id' => null, // Will be set after faculty users are created
             'location' => $this->faker->randomElement(['Building A', 'Building B', 'Building C', 'Main Campus', 'North Wing', 'South Wing']) . ' - Floor ' . $this->faker->numberBetween(1, 5),
             'phone' => $this->faker->phoneNumber(),
-            'email' => strtolower(str_replace(' ', '', $name)) . '@jbi.edu',
+            'email' => strtolower(str_replace(' ', '', $name)) . '@jbiuniversity.com',
             'is_active' => $this->faker->boolean(90), // 90% chance of being active
         ];
     }

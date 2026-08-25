@@ -25,7 +25,7 @@
     <!-- Official Header Banner (Prints beautifully) -->
     <div class="card border-0 shadow-sm mb-4 bg-white">
         <div class="card-body p-4 text-center border-bottom border-primary border-3">
-            <h3 class="fw-bold text-dark mb-1">JOHNSON BIBLE INSTITUTE / JBI UNIVERSITY</h3>
+            <h3 class="fw-bold text-dark mb-1">JBI UNIVERSITY</h3>
             <h5 class="text-primary fw-bold mb-2">OFFICIAL ELECTORAL COMMISSION RESULTS DECLARATION</h5>
             <h6 class="text-dark fw-bold mb-3">{{ strtoupper($session->title) }}</h6>
             <div class="d-flex justify-content-center gap-3 flex-wrap small text-muted">

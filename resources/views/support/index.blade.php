@@ -91,7 +91,7 @@
                         </h2>
                         <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                You can use the contact form on this page or email us directly at support@jbiuniversity.edu. We aim to respond within 24 hours.
+                                You can use the contact form on this page or email us directly at info@jbiuniversity.com. We aim to respond within 24 hours.
                             </div>
                         </div>
                     </div>
@@ -181,11 +181,11 @@
             <div class="card-body">
                 <div class="mb-3">
                     <strong>Email</strong>
-                    <p class="mb-0">admin@johnsonbibleinstitute.com</p>
+                    <p class="mb-0">info@jbiuniversity.com</p>
                 </div>
                 <div class="mb-3">
                     <strong>Phone</strong>
-                    <p class="mb-0">+27 67 965 3866</p>
+                    <p class="mb-0">WhatsApp: +27 68 443 8415</p>
                 </div>
                 <div class="mb-3">
                     <strong>Office Hours</strong>

@@ -24,7 +24,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Dedicated to ministerial studies, biblical research, and pastoral leadership excellence.',
                 'location' => 'Main Campus, Building A',
                 'phone' => '+256 414 100 001',
-                'email' => 'stm@jbiuniversity.ac.ug',
+                'email' => 'stm@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Leadership & Management',
@@ -32,7 +32,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Empowering transformative organizational leaders and public sector administrators.',
                 'location' => 'Main Campus, Building B',
                 'phone' => '+256 414 100 002',
-                'email' => 'slm@jbiuniversity.ac.ug',
+                'email' => 'slm@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Strategy & Innovation',
@@ -40,7 +40,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Fostering strategic foresight, corporate innovation, and entrepreneurial ventures.',
                 'location' => 'Innovation Complex, Level 2',
                 'phone' => '+256 414 100 003',
-                'email' => 'ssi@jbiuniversity.ac.ug',
+                'email' => 'ssi@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Business',
@@ -48,7 +48,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Pioneering business analytics, financial management, accounting, and marketing.',
                 'location' => 'Business Center, Level 1',
                 'phone' => '+256 414 100 004',
-                'email' => 'sob@jbiuniversity.ac.ug',
+                'email' => 'sob@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Technology',
@@ -56,7 +56,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Advancing computer science, software engineering, cybersecurity, and artificial intelligence.',
                 'location' => 'Tech Hub, Block C',
                 'phone' => '+256 414 100 005',
-                'email' => 'sot@jbiuniversity.ac.ug',
+                'email' => 'sot@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Engineering',
@@ -64,7 +64,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Leading innovation in electrical, civil, mechanical, and systems engineering.',
                 'location' => 'Engineering Complex',
                 'phone' => '+256 414 100 006',
-                'email' => 'soe@jbiuniversity.ac.ug',
+                'email' => 'soe@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Science',
@@ -72,7 +72,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Exploring fundamental scientific principles, biotechnology, and environmental science.',
                 'location' => 'Science Quadrangle',
                 'phone' => '+256 414 100 007',
-                'email' => 'sos@jbiuniversity.ac.ug',
+                'email' => 'sos@jbiuniversity.com',
             ],
             [
                 'name' => 'School of Music & Media',
@@ -80,7 +80,7 @@ class SchoolSeeder extends Seeder
                 'description' => 'Cultivating creative expression, digital media production, journalism, and musical arts.',
                 'location' => 'Arts & Media Studio',
                 'phone' => '+256 414 100 008',
-                'email' => 'smm@jbiuniversity.ac.ug',
+                'email' => 'smm@jbiuniversity.com',
             ],
         ];
 

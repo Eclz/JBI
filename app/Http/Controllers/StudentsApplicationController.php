@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Program;
 use App\Models\User;
 use App\Models\Notification;
+use App\Models\SystemSetting;
 use App\Mail\ApplicationSubmitted;
 use App\Mail\NewApplicationNotification;
 use App\Mail\ApplicationApproved;
@@ -29,6 +30,10 @@ class StudentsApplicationController extends Controller
 
     public function store(Request $request)
     {
+        if (!SystemSetting::admissionWindow()['isOpen']) {
+            return back()->withErrors(['application' => 'Applications are currently closed. Your information was not submitted.']);
+        }
+
         $email = $request->email;
         if (auth()->check()) {
             $user = auth()->user();

@@ -14,9 +14,17 @@ class FeeStructure extends Model
         'description',
         'type',
         'amount',
+        'currency',
+        'student_region',
+        'total_amount',
+        'total_amount_max',
+        'academic_session',
+        'source_url',
         'frequency',
         'academic_year_id',
         'semester_id',
+        'program_id',
+        'program_level_id',
         'applicable_to',
         'is_mandatory',
         'is_active',
@@ -27,6 +35,8 @@ class FeeStructure extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'total_amount_max' => 'decimal:2',
         'late_fee_amount' => 'decimal:2',
         'applicable_to' => 'array',
         'is_mandatory' => 'boolean',
@@ -48,6 +58,16 @@ class FeeStructure extends Model
     public function semester()
     {
         return $this->belongsTo(Semester::class);
+    }
+
+    public function program()
+    {
+        return $this->belongsTo(Program::class);
+    }
+
+    public function programLevel()
+    {
+        return $this->belongsTo(ProgramLevel::class);
     }
 
     /**

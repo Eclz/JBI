@@ -162,6 +162,12 @@ All test accounts use the password `password123`:
 
 These credentials are for local testing only. Never deploy them to production.
 
+To initialize an empty production database with only essential academic structure and the administrator account, run:
+
+```bash
+php artisan migrate:fresh --force --seeder=Database\\Seeders\\ProductionDatabaseSeeder
+```
+
 ## Email configuration
 
 Email is written to the application log by default. To send real password-reset, application, and admission messages, configure the `MAIL_*` values in `.env`. For example:

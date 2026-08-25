@@ -41,6 +41,8 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    'production_url' => env('PRODUCTION_APP_URL', 'https://portal.jbiuniversity.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL
@@ -65,7 +67,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Africa/Johannesburg'),
 
     /*
     |--------------------------------------------------------------------------

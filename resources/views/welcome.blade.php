@@ -47,7 +47,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University" height="40" class="me-2">
+                <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" height="40" class="me-2">
                 <span class="fw-bold">JBI University</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -87,7 +87,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-6">
                     <h1 class="display-3 fw-bold mb-4">Welcome to JBI University</h1>
-                    <p class="lead mb-4">Transform your future with quality education. Join thousands of students who have achieved their dreams with us.</p>
+                    <p class="lead mb-4">Empowering individuals with wisdom, skills, and innovation to shape the future of governance, business, technology, and ministry.</p>
                     <div class="d-flex gap-3">
                         <a href="{{ route('applications.create') }}" class="btn btn-light btn-apply">
                             <i class="bi bi-file-earmark-text me-2"></i>Apply Now
@@ -98,7 +98,7 @@
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="University" class="img-fluid">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="img-fluid">
                 </div>
             </div>
         </div>
@@ -110,26 +110,26 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="stat-item">
-                        <div class="stat-number">5000+</div>
-                        <p class="text-muted">Students</p>
+                        <div class="stat-number"><i class="bi bi-globe2"></i></div>
+                        <p class="text-muted">Global Vision</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-item">
-                        <div class="stat-number">200+</div>
-                        <p class="text-muted">Faculty Members</p>
+                        <div class="stat-number"><i class="bi bi-heart"></i></div>
+                        <p class="text-muted">Faith-Based Learning</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-item">
-                        <div class="stat-number">50+</div>
-                        <p class="text-muted">Programs</p>
+                        <div class="stat-number"><i class="bi bi-lightbulb"></i></div>
+                        <p class="text-muted">Innovation</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-item">
-                        <div class="stat-number">95%</div>
-                        <p class="text-muted">Success Rate</p>
+                        <div class="stat-number"><i class="bi bi-people"></i></div>
+                        <p class="text-muted">Leadership</p>
                     </div>
                 </div>
             </div>
@@ -148,8 +148,8 @@
                     <div class="card feature-card h-100">
                         <div class="card-body text-center p-4">
                             <i class="bi bi-mortarboard text-primary" style="font-size: 3rem;"></i>
-                            <h4 class="card-title mt-3">Quality Education</h4>
-                            <p class="card-text text-muted">World-class faculty and cutting-edge curriculum designed for success.</p>
+                            <h4 class="card-title mt-3">Affordability</h4>
+                            <p class="card-text text-muted">Accessible quality education with affordable tuition and flexible payment options.</p>
                         </div>
                     </div>
                 </div>
@@ -157,8 +157,8 @@
                     <div class="card feature-card h-100">
                         <div class="card-body text-center p-4">
                             <i class="bi bi-building text-primary" style="font-size: 3rem;"></i>
-                            <h4 class="card-title mt-3">Modern Facilities</h4>
-                            <p class="card-text text-muted">State-of-the-art infrastructure and learning resources.</p>
+                            <h4 class="card-title mt-3">Top Instructors</h4>
+                            <p class="card-text text-muted">Learn from experienced faith leaders, industry experts, and academic professionals.</p>
                         </div>
                     </div>
                 </div>
@@ -166,8 +166,8 @@
                     <div class="card feature-card h-100">
                         <div class="card-body text-center p-4">
                             <i class="bi bi-people text-primary" style="font-size: 3rem;"></i>
-                            <h4 class="card-title mt-3">Vibrant Community</h4>
-                            <p class="card-text text-muted">Join a diverse and supportive student community.</p>
+                            <h4 class="card-title mt-3">Faith-Based Learning</h4>
+                            <p class="card-text text-muted">Grow spiritually and professionally through courses designed to equip you for impact.</p>
                         </div>
                     </div>
                 </div>
@@ -241,17 +241,17 @@
                 <div class="col-md-4 text-center mb-4">
                     <i class="bi bi-geo-alt text-primary" style="font-size: 2rem;"></i>
                     <h5 class="mt-3">Address</h5>
-                    <p class="text-muted">91 Progress Road Lindhaven<br>Roodeport South Africa</p>
+                    <p class="text-muted">South Africa</p>
                 </div>
                 <div class="col-md-4 text-center mb-4">
                     <i class="bi bi-telephone text-primary" style="font-size: 2rem;"></i>
-                    <h5 class="mt-3">Phone</h5>
-                    <p class="text-muted">+27 67 965 3866</p>
+                    <h5 class="mt-3">WhatsApp</h5>
+                    <p class="text-muted">+27 68 443 8415</p>
                 </div>
                 <div class="col-md-4 text-center mb-4">
                     <i class="bi bi-envelope text-primary" style="font-size: 2rem;"></i>
                     <h5 class="mt-3">Email</h5>
-                    <p class="text-muted">admission@jbiuniversity.com</p>
+                    <p class="text-muted">admission@jbiuniversity.com<br>info@jbiuniversity.com</p>
                 </div>
             </div>
         </div>
@@ -260,7 +260,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-white py-4">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2025 JBI University. All rights reserved.</p>
+            <p class="mb-0">&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
         </div>
     </footer>
 

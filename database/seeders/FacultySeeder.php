@@ -23,7 +23,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FTM',
                 'description' => 'Comprehensive biblical studies, pastoral theology, divinity, and christian ministry training.',
                 'location' => 'Theology Complex, Main Campus',
-                'email' => 'theology@jbiuniversity.ac.ug',
+                'email' => 'theology@jbiuniversity.com',
                 'phone' => '+256 414 100 101',
             ],
             [
@@ -31,7 +31,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FLM',
                 'description' => 'Executive leadership development, public policy, governance, and organizational management.',
                 'location' => 'Leadership Tower, Floor 3',
-                'email' => 'leadership@jbiuniversity.ac.ug',
+                'email' => 'leadership@jbiuniversity.com',
                 'phone' => '+256 414 100 102',
             ],
             [
@@ -39,7 +39,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FSI',
                 'description' => 'Strategic planning, corporate innovation, entrepreneurship, and digital transformation.',
                 'location' => 'Innovation Hub, Block B',
-                'email' => 'innovation@jbiuniversity.ac.ug',
+                'email' => 'innovation@jbiuniversity.com',
                 'phone' => '+256 414 100 103',
             ],
             [
@@ -47,7 +47,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FOB',
                 'description' => 'Accounting, finance, marketing, procurement, supply chain, and international business.',
                 'location' => 'Business School Building',
-                'email' => 'business@jbiuniversity.ac.ug',
+                'email' => 'business@jbiuniversity.com',
                 'phone' => '+256 414 100 104',
             ],
             [
@@ -55,7 +55,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FOT',
                 'description' => 'Computer science, software engineering, artificial intelligence, and cybersecurity.',
                 'location' => 'Tech Center, Room 101',
-                'email' => 'technology@jbiuniversity.ac.ug',
+                'email' => 'technology@jbiuniversity.com',
                 'phone' => '+256 414 100 105',
             ],
             [
@@ -63,7 +63,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FOE',
                 'description' => 'Civil engineering, electrical engineering, mechanical engineering, and telecommunications.',
                 'location' => 'Engineering Complex, East Wing',
-                'email' => 'engineering@jbiuniversity.ac.ug',
+                'email' => 'engineering@jbiuniversity.com',
                 'phone' => '+256 414 100 106',
             ],
             [
@@ -71,7 +71,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FOS',
                 'description' => 'Mathematics, statistics, physics, chemistry, and biological sciences.',
                 'location' => 'Science Laboratories, Building A',
-                'email' => 'science@jbiuniversity.ac.ug',
+                'email' => 'science@jbiuniversity.com',
                 'phone' => '+256 414 100 107',
             ],
             [
@@ -79,7 +79,7 @@ class FacultySeeder extends Seeder
                 'code' => 'FMM',
                 'description' => 'Audio production, digital journalism, mass communication, film, and performing arts.',
                 'location' => 'Media & Arts Center',
-                'email' => 'media@jbiuniversity.ac.ug',
+                'email' => 'media@jbiuniversity.com',
                 'phone' => '+256 414 100 108',
             ],
         ];

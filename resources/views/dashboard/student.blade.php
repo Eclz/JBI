@@ -11,7 +11,7 @@
             </div>
             <div class="col-md-4 text-right">
                 <div class="d-flex align-items-center justify-content-end">
-                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/JBI-Logo-oWxd478x1NMPMmr2woHizWQC9aCVG2.webp" alt="JBI Logo" style="height: 60px; opacity: 0.8;">
+                    <img src="{{ asset('images/jbi-logo-white.webp') }}" alt="JBI University Logo" style="height: 60px; opacity: 0.9;">
                 </div>
             </div>
         </div>
