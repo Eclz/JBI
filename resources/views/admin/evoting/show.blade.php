@@ -862,7 +862,7 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Select System User *</label>
-                        <select name="user_id" class="form-select" required>
+                        <select name="user_id" id="commission_user_select" class="form-select select2" data-placeholder="Search and select system user (Student, Faculty, Staff)..." required style="width: 100%;">
                             <option value="">Select User (Student, Faculty, Staff)...</option>
                             @foreach($eligibleCommissionUsers as $user)
                                 <option value="{{ $user->id }}">
@@ -974,6 +974,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    if (window.jQuery) {
+        $('#addCommissionModal').on('shown.bs.modal', function () {
+            $('#commission_user_select').select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $('#addCommissionModal'),
+                placeholder: 'Search and select system user (Student, Faculty, Staff)...',
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    }
 });
 </script>
 @endsection

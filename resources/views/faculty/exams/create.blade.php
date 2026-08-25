@@ -50,10 +50,11 @@
                                 <label for="exam_type" class="form-label fw-semibold">Exam Type *</label>
                                 <select name="exam_type" id="exam_type" class="form-select @error('exam_type') is-invalid @enderror" required>
                                     <option value="">Select Type</option>
-                                    <option value="midterm" {{ old('exam_type') == 'midterm' ? 'selected' : '' }}>Midterm</option>
-                                    <option value="final" {{ old('exam_type') == 'final' ? 'selected' : '' }}>Final</option>
-                                    <option value="quiz" {{ old('exam_type') == 'quiz' ? 'selected' : '' }}>Quiz</option>
-                                    <option value="assignment" {{ old('exam_type') == 'assignment' ? 'selected' : '' }}>Assignment</option>
+                                    @foreach($examTypes as $type)
+                                        <option value="{{ strtolower($type) }}" {{ old('exam_type') == strtolower($type) ? 'selected' : '' }}>
+                                            {{ ucfirst($type) }}
+                                        </option>
+                                    @endforeach
                                 </select>
                                 @error('exam_type')
                                     <div class="invalid-feedback">{{ $message }}</div>

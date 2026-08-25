@@ -89,6 +89,7 @@ class SystemController extends Controller
             'registration_payment_days' => 'nullable|integer|min:1|max:365',
             'tuition_min_percent' => 'nullable|numeric|min:0|max:100',
             'tuition_payment_days' => 'nullable|integer|min:1|max:365',
+            'exam_types' => 'nullable|string|max:500',
         ]);
 
         foreach ($request->except(['_token', '_method']) as $key => $value) {
@@ -119,6 +120,7 @@ class SystemController extends Controller
             'max_students_per_course' => 'academic',
             'academic_year_start' => 'academic',
             'academic_year_end' => 'academic',
+            'exam_types' => 'academic',
             'default_currency' => 'financial',
             'timezone' => 'system',
             'registration_fee_structure_id' => 'financial',

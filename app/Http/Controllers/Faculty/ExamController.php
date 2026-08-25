@@ -31,7 +31,10 @@ class ExamController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('faculty.exams.create', compact('courses'));
+        $rawTypes = \App\Models\SystemSetting::getSetting('exam_types', 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary');
+        $examTypes = array_values(array_filter(array_map('trim', explode(',', $rawTypes))));
+
+        return view('faculty.exams.create', compact('courses', 'examTypes'));
     }
 
     public function store(Request $request)
@@ -40,7 +43,7 @@ class ExamController extends Controller
             'course_id' => 'required|exists:courses,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'exam_type' => 'required|in:midterm,final,quiz,assignment',
+            'exam_type' => 'required|string|max:50',
             'exam_mode' => 'required|in:online,offline,hybrid',
             'exam_date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
@@ -127,7 +130,10 @@ class ExamController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('faculty.exams.edit', compact('exam', 'courses'));
+        $rawTypes = \App\Models\SystemSetting::getSetting('exam_types', 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary');
+        $examTypes = array_values(array_filter(array_map('trim', explode(',', $rawTypes))));
+
+        return view('faculty.exams.edit', compact('exam', 'courses', 'examTypes'));
     }
 
     public function update(Request $request, Exam $exam)
@@ -137,7 +143,7 @@ class ExamController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'exam_type' => 'required|in:midterm,final,quiz,assignment',
+            'exam_type' => 'required|string|max:50',
             'exam_mode' => 'required|in:online,offline,hybrid',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
