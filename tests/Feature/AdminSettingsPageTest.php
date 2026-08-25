@@ -19,6 +19,8 @@ class AdminSettingsPageTest extends TestCase
             ->assertOk()
             ->assertSee('Admission applications')
             ->assertSee('Semester registration')
-            ->assertSee('Admission Application Window');
+            ->assertSee('Admission Application Window')
+            ->assertSee('accepted_currencies[]', false)
+            ->assertSee('Select common');
     }
 }

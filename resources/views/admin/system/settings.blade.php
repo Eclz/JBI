@@ -162,13 +162,31 @@
                         $selectedCurrencies = old('accepted_currencies', is_array($savedCurrencies) ? $savedCurrencies : ['ZAR', 'USD']);
                     @endphp
                     <div class="mb-3">
-                        <label class="form-label">Accepted Currencies</label>
-                        <select name="accepted_currencies[]" class="form-select" multiple size="7" required>
-                            @foreach($supportedCurrencies as $code => $name)
-                                <option value="{{ $code }}" {{ in_array($code, $selectedCurrencies, true) ? 'selected' : '' }}>{{ $code }} — {{ $name }}</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select several currencies. The default currency must also be selected.</small>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-semibold mb-0">Accepted Currencies</label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary" id="selectCommonCurrencies">Select common</button>
+                                <button type="button" class="btn btn-outline-secondary" id="clearCurrencies">Clear</button>
+                            </div>
+                        </div>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <div class="row g-2">
+                                @foreach($supportedCurrencies as $code => $name)
+                                    <div class="col-md-6">
+                                        <label class="currency-option d-flex align-items-center gap-2 bg-white border rounded p-2 w-100" for="currency_{{ $code }}" style="cursor: pointer;">
+                                            <input class="form-check-input currency-checkbox mt-0" type="checkbox"
+                                                   name="accepted_currencies[]" id="currency_{{ $code }}" value="{{ $code }}"
+                                                   {{ in_array($code, $selectedCurrencies, true) ? 'checked' : '' }}>
+                                            <span class="fw-bold text-primary" style="min-width: 42px;">{{ $code }}</span>
+                                            <span class="small text-muted">{{ $name }}</span>
+                                            <span class="badge bg-primary ms-auto default-currency-badge d-none">Default</span>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @error('accepted_currencies')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        <small class="text-muted">Tick every currency JBI will accept. The selected default currency is automatically included.</small>
                     </div>
 
                     <div class="form-check form-switch mb-3">
@@ -296,3 +314,34 @@
     </div>
 </form>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const defaultCurrency = document.getElementById('default_currency');
+    const currencyCheckboxes = Array.from(document.querySelectorAll('.currency-checkbox'));
+    const commonCurrencies = ['ZAR', 'USD', 'EUR', 'GBP'];
+
+    function syncDefaultCurrency() {
+        document.querySelectorAll('.default-currency-badge').forEach(badge => badge.classList.add('d-none'));
+        const checkbox = document.getElementById('currency_' + defaultCurrency.value);
+        if (checkbox) {
+            checkbox.checked = true;
+            checkbox.closest('.currency-option').querySelector('.default-currency-badge').classList.remove('d-none');
+        }
+    }
+
+    defaultCurrency.addEventListener('change', syncDefaultCurrency);
+    document.getElementById('selectCommonCurrencies').addEventListener('click', function () {
+        currencyCheckboxes.forEach(checkbox => checkbox.checked = commonCurrencies.includes(checkbox.value));
+        syncDefaultCurrency();
+    });
+    document.getElementById('clearCurrencies').addEventListener('click', function () {
+        currencyCheckboxes.forEach(checkbox => checkbox.checked = false);
+        syncDefaultCurrency();
+    });
+    currencyCheckboxes.forEach(checkbox => checkbox.addEventListener('change', syncDefaultCurrency));
+    syncDefaultCurrency();
+});
+</script>
+@endpush
