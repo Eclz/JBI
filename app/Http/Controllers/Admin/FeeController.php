@@ -10,6 +10,8 @@ use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\AcademicYear;
 use App\Models\Semester;
+use App\Models\Program;
+use App\Models\ProgramLevel;
 use App\Http\Requests\StoreFeeRecordRequest;
 use App\Http\Requests\ProcessPaymentRequest;
 use App\Services\ReceiptVerificationService;
@@ -757,14 +759,39 @@ class FeeController extends Controller
     }
 
     // Fee Structures Management
-    public function structures()
+    public function structures(Request $request)
     {
+        $query = FeeStructure::with(['academicYear', 'semester', 'program.department', 'programLevel']);
 
-        $feeStructures = FeeStructure::with(['academicYear', 'semester'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $query->when($request->filled('search'), function ($query) use ($request) {
+            $search = $request->string('search')->trim();
+            $query->where(function ($query) use ($search) {
+                $query->where('fee_structures.name', 'like', "%{$search}%")
+                    ->orWhereHas('program', fn ($program) => $program->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"));
+            });
+        });
+        $query->when($request->filled('level'), fn ($query) => $query->where('fee_structures.program_level_id', $request->integer('level')));
+        $query->when($request->filled('program'), fn ($query) => $query->where('fee_structures.program_id', $request->integer('program')));
+        $query->when($request->filled('currency'), fn ($query) => $query->where('fee_structures.currency', $request->string('currency')));
+        $query->when($request->filled('region'), fn ($query) => $query->where('fee_structures.student_region', $request->string('region')));
+        $query->when($request->filled('type'), fn ($query) => $query->where('fee_structures.type', $request->string('type')));
+        $query->when($request->filled('status'), fn ($query) => $query->where('fee_structures.is_active', $request->string('status') === 'active'));
 
-        return view('admin.fees.structures.index', compact('feeStructures'));
+        $feeStructures = $query
+            ->leftJoin('program_levels', 'fee_structures.program_level_id', '=', 'program_levels.id')
+            ->leftJoin('programs', 'fee_structures.program_id', '=', 'programs.id')
+            ->select('fee_structures.*')
+            ->orderByRaw("CASE program_levels.code WHEN 'CERT' THEN 1 WHEN 'ADVDIP' THEN 2 WHEN 'DIP' THEN 3 WHEN 'BACH' THEN 4 WHEN 'MASTER' THEN 5 WHEN 'PHD' THEN 6 ELSE 99 END")
+            ->orderBy('programs.name')
+            ->orderBy('fee_structures.currency')
+            ->paginate(30)
+            ->withQueryString();
+
+        $levels = ProgramLevel::where('is_active', true)->orderBy('name')->get();
+        $programs = Program::where('is_active', true)->with('level')->orderBy('name')->get();
+        $currencies = FeeStructure::whereNotNull('currency')->distinct()->orderBy('currency')->pluck('currency');
+
+        return view('admin.fees.structures.index', compact('feeStructures', 'levels', 'programs', 'currencies'));
     }
 
     public function createStructure()
@@ -812,7 +839,7 @@ class FeeController extends Controller
 
     public function showStructure(FeeStructure $feeStructure)
     {
-        $feeStructure->load(['academicYear', 'semester']);
+        $feeStructure->load(['academicYear', 'semester', 'program.department', 'programLevel']);
 
         // Get related fee records
         $feeRecords = FeeRecord::where('fee_structure_id', $feeStructure->id)

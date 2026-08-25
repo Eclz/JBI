@@ -3,6 +3,13 @@
 @section('title', 'Programs')
 
 @section('content')
+@php
+    $levelStyles = [
+        'CERT' => ['primary', 'bi-award'], 'ADVDIP' => ['info', 'bi-patch-check'],
+        'DIP' => ['success', 'bi-journal-check'], 'BACH' => ['warning', 'bi-mortarboard'],
+        'MASTER' => ['danger', 'bi-mortarboard-fill'], 'PHD' => ['dark', 'bi-stars'],
+    ];
+@endphp
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -12,6 +19,23 @@
         <a href="{{ route('admin.programs.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Add Program
         </a>
+    </div>
+
+    <div class="row g-2 mb-4">
+        @foreach($levels as $level)
+            @php([$colour, $icon] = $levelStyles[$level->code] ?? ['secondary', 'bi-book'])
+            <div class="col-6 col-md-4 col-xl-2">
+                <a href="{{ route('admin.programs.index', ['level' => $level->id]) }}" class="text-decoration-none">
+                    <div class="card h-100 border-start border-4 border-{{ $colour }} {{ request('level') == $level->id ? 'shadow-sm bg-light' : '' }}">
+                        <div class="card-body py-3 px-3">
+                            <i class="bi {{ $icon }} text-{{ $colour }} me-1"></i>
+                            <span class="small fw-semibold text-dark">{{ $level->name }}</span>
+                            <div class="fs-5 fw-bold text-{{ $colour }}">{{ $level->programs_count }}</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        @endforeach
     </div>
 
     <div class="card mb-4">
@@ -65,18 +89,19 @@
                                 <th>Code</th>
                                 <th>Name</th>
                                 <th>Department</th>
-                                <th>Level</th>
+                                <th>Qualification Level</th>
                                 <th>Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($programs as $program)
-                                <tr>
-                                    <td>{{ $program->code }}</td>
-                                    <td>{{ $program->name }}</td>
+                                @php([$levelColour, $levelIcon] = $levelStyles[$program->level->code ?? ''] ?? ['secondary', 'bi-book'])
+                                <tr class="border-start border-3 border-{{ $levelColour }}">
+                                    <td><code class="text-dark">{{ $program->code }}</code></td>
+                                    <td><strong>{{ $program->name }}</strong></td>
                                     <td>{{ $program->department->name ?? '—' }}</td>
-                                    <td>{{ $program->level->name ?? '—' }}</td>
+                                    <td><span class="badge bg-{{ $levelColour }} bg-opacity-10 text-{{ $levelColour }} border border-{{ $levelColour }}"><i class="bi {{ $levelIcon }} me-1"></i>{{ $program->level->name ?? 'Unassigned' }}</span></td>
                                     <td>
                                         <span class="badge bg-{{ $program->is_active ? 'success' : 'secondary' }}">
                                             {{ $program->is_active ? 'Active' : 'Inactive' }}
