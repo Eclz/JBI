@@ -2,6 +2,19 @@
 
 @section('title', 'Fee Structures')
 
+@push('styles')
+<style>
+    .level-chip { display: inline-flex; align-items: center; color: #172033 !important; font-weight: 700; border: 1px solid transparent; white-space: nowrap; }
+    .level-chip-CERT { background: #e8f0ff !important; border-color: #8db1ff; color: #123b8f !important; }
+    .level-chip-ADVDIP { background: #e2f7fb !important; border-color: #7ccbd8; color: #155b66 !important; }
+    .level-chip-DIP { background: #e7f7ed !important; border-color: #82cea0; color: #176038 !important; }
+    .level-chip-BACH { background: #fff4cf !important; border-color: #e4c45c; color: #684f00 !important; }
+    .level-chip-MASTER { background: #fde9ed !important; border-color: #e497a5; color: #84243a !important; }
+    .level-chip-PHD { background: #e9eaf0 !important; border-color: #9da1af; color: #242733 !important; }
+    .level-chip-GENERAL { background: #eef0f3 !important; border-color: #b8bec8; color: #394150 !important; }
+</style>
+@endpush
+
 @section('content')
 @php
     $levelColours = ['CERT' => 'primary', 'ADVDIP' => 'info', 'DIP' => 'success', 'BACH' => 'warning', 'MASTER' => 'danger', 'PHD' => 'dark'];
@@ -81,7 +94,7 @@
                                             </td>
                                             <td>
                                                 <div>
-                                                    <span class="badge bg-{{ $levelColour }} bg-opacity-10 text-{{ $levelColour }} border border-{{ $levelColour }}">{{ $structure->programLevel->name ?? 'General' }}</span>
+                                                    <span class="badge level-chip level-chip-{{ $structure->programLevel->code ?? 'GENERAL' }}">{{ $structure->programLevel->name ?? 'General' }}</span>
                                                     <br><small class="text-muted">{{ ucfirst(str_replace('_', ' ', $structure->type)) }} · {{ ucfirst($structure->student_region ?? 'all regions') }}</small>
                                                 </div>
                                             </td>
