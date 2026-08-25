@@ -28,6 +28,16 @@ return [
         'reports' => 'Reports',
         'settings' => 'System Settings',
         'evoting' => 'E-Voting & Student Leadership',
+        'finance_hub' => 'Finance & Bursar Hub',
+        'revenue' => 'Revenue & Income',
+        'budgets' => 'Department Budgets',
+        'expenses' => 'Expenditures',
+        'payables' => 'Accounts Payable',
+        'receivables' => 'Accounts Receivable',
+        'payroll' => 'Payroll Management',
+        'assets' => 'Asset Management',
+        'banking' => 'Banking & Cash',
+        'financial_statements' => 'Financial Statements',
     ],
 
     'defaults' => [
