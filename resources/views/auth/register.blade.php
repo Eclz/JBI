@@ -25,6 +25,19 @@
                             </div>
                         @endif
 
+                        @if(!($registrationWindow['isOpen'] ?? true))
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading"><i class="bi bi-calendar-x me-2"></i>Registration is currently closed</h6>
+                                @if(($registrationWindow['status'] ?? '') === 'scheduled' && $registrationWindow['start'])
+                                    <p class="mb-0">Registration opens {{ $registrationWindow['start']->format('d M Y, H:i') }} {{ $registrationWindow['timezone'] }}.</p>
+                                @elseif(($registrationWindow['status'] ?? '') === 'closed' && $registrationWindow['end'])
+                                    <p class="mb-0">The registration window closed {{ $registrationWindow['end']->format('d M Y, H:i') }} {{ $registrationWindow['timezone'] }}.</p>
+                                @else
+                                    <p class="mb-0">Please contact the admissions office for the next registration period.</p>
+                                @endif
+                            </div>
+                        @endif
+
                         <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" id="registrationForm">
                             @csrf
 
@@ -100,7 +113,7 @@
                             </div>
 
                             <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;">
+                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;" {{ !($registrationWindow['isOpen'] ?? true) ? 'disabled' : '' }}>
                                     <i class="bi bi-person-plus-fill me-2"></i>Register Account
                                 </button>
                             </div>

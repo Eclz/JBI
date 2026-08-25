@@ -34,6 +34,13 @@ class ProductionDatabaseSeeder extends Seeder
             'institution_phone' => '+27 68 443 8415',
             'institution_email' => 'info@jbiuniversity.com',
             'default_timezone' => 'Africa/Johannesburg',
+            'timezone' => 'Africa/Johannesburg',
+            'operating_region' => 'southern_africa',
+            'default_currency' => 'ZAR',
+            'accepted_currencies' => json_encode(['ZAR', 'USD', 'EUR', 'GBP']),
+            'registration_enabled' => 'false',
+            'registration_open_at' => '',
+            'registration_close_at' => '',
             'demo_mode' => 'false',
         ] as $key => $value) {
             SystemSetting::updateOrCreate(

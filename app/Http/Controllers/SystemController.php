@@ -6,6 +6,7 @@ use App\Models\SystemSetting;
 use App\Models\Department;
 use App\Models\AcademicYear;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SystemController extends Controller
 {
@@ -28,8 +29,10 @@ class SystemController extends Controller
         $departments = Department::where('is_active', true)->get();
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
         $feeStructures = \App\Models\FeeStructure::where('is_active', true)->orderBy('name')->get();
+        $currencyRegions = config('currencies.regions');
+        $supportedCurrencies = config('currencies.supported');
 
-        return view('admin.system.settings', compact('settings', 'departments', 'academicYears', 'feeStructures'));
+        return view('admin.system.settings', compact('settings', 'departments', 'academicYears', 'feeStructures', 'currencyRegions', 'supportedCurrencies'));
     }
 
     public function settings()
@@ -72,7 +75,7 @@ class SystemController extends Controller
 
     public function updateAdminSettings(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'app_name' => 'required|string|max:255',
             'app_email' => 'required|email',
             'app_phone' => 'nullable|string|max:20',
@@ -83,20 +86,37 @@ class SystemController extends Controller
             'max_students_per_course' => 'nullable|integer|min:1',
             'academic_year_start' => 'nullable|date',
             'academic_year_end' => 'nullable|date|after:academic_year_start',
-            'default_currency' => 'nullable|string|max:5',
-            'timezone' => 'nullable|string|max:50',
+            'operating_region' => ['required', Rule::in(array_keys(config('currencies.regions')))],
+            'default_currency' => ['required', Rule::in(array_keys(config('currencies.supported')))],
+            'accepted_currencies' => 'required|array|min:1',
+            'accepted_currencies.*' => [Rule::in(array_keys(config('currencies.supported')))],
+            'timezone' => ['required', Rule::in(timezone_identifiers_list())],
+            'registration_open_at' => 'nullable|date',
+            'registration_close_at' => 'nullable|date|after:registration_open_at',
             'registration_fee_structure_id' => 'nullable|integer|exists:fee_structures,id',
             'registration_payment_days' => 'nullable|integer|min:1|max:365',
             'tuition_min_percent' => 'nullable|numeric|min:0|max:100',
             'tuition_payment_days' => 'nullable|integer|min:1|max:365',
         ]);
 
-        foreach ($request->except(['_token', '_method']) as $key => $value) {
+        if (!in_array($validated['default_currency'], $validated['accepted_currencies'], true)) {
+            return back()->withErrors([
+                'default_currency' => 'The default currency must also be selected as an accepted currency.',
+            ])->withInput();
+        }
+
+        $values = $request->except(['_token', '_method']);
+        $values['maintenance_mode'] = $request->boolean('maintenance_mode');
+        $values['registration_enabled'] = $request->boolean('registration_enabled');
+        $values['accepted_currencies'] = $request->input('accepted_currencies', []);
+
+        foreach ($values as $key => $value) {
+            $type = is_array($value) ? 'json' : (is_bool($value) ? 'boolean' : 'string');
             SystemSetting::updateOrCreate(
                 ['key' => $key],
                 [
-                    'value' => $value ?? '',
-                    'type' => is_bool($value) ? 'boolean' : 'string',
+                    'value' => is_array($value) ? json_encode(array_values($value)) : ($value ?? ''),
+                    'type' => $type,
                     'group' => $this->getSettingGroup($key),
                 ]
             );
@@ -120,7 +140,11 @@ class SystemController extends Controller
             'academic_year_start' => 'academic',
             'academic_year_end' => 'academic',
             'default_currency' => 'financial',
+            'accepted_currencies' => 'financial',
+            'operating_region' => 'financial',
             'timezone' => 'system',
+            'registration_open_at' => 'system',
+            'registration_close_at' => 'system',
             'registration_fee_structure_id' => 'financial',
             'registration_payment_days' => 'financial',
             'tuition_min_percent' => 'financial',

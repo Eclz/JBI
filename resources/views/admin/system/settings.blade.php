@@ -83,19 +83,44 @@
                     <div class="mb-3">
                         <label class="form-label">Timezone</label>
                         <select name="timezone" class="form-select">
-                            <option value="UTC" {{ old('timezone', $settings->get('timezone')->value ?? 'UTC') == 'UTC' ? 'selected' : '' }}>UTC</option>
-                            <option value="America/New_York" {{ old('timezone', $settings->get('timezone')->value ?? '') == 'America/New_York' ? 'selected' : '' }}>Eastern Time (US)</option>
-                            <option value="America/Chicago" {{ old('timezone', $settings->get('timezone')->value ?? '') == 'America/Chicago' ? 'selected' : '' }}>Central Time (US)</option>
-                            <option value="America/Denver" {{ old('timezone', $settings->get('timezone')->value ?? '') == 'America/Denver' ? 'selected' : '' }}>Mountain Time (US)</option>
-                            <option value="America/Los_Angeles" {{ old('timezone', $settings->get('timezone')->value ?? '') == 'America/Los_Angeles' ? 'selected' : '' }}>Pacific Time (US)</option>
+                            <option value="Africa/Johannesburg" {{ old('timezone', $settings->get('timezone')->value ?? 'Africa/Johannesburg') === 'Africa/Johannesburg' ? 'selected' : '' }}>South Africa Standard Time (SAST)</option>
+                            <option value="Africa/Kampala" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'Africa/Kampala' ? 'selected' : '' }}>East Africa Time (Kampala)</option>
+                            <option value="Africa/Nairobi" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'Africa/Nairobi' ? 'selected' : '' }}>East Africa Time (Nairobi)</option>
+                            <option value="UTC" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'UTC' ? 'selected' : '' }}>UTC</option>
+                        </select>
+                        <small class="text-muted">All registration windows and system dates use this timezone.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Operating Region</label>
+                        <select name="operating_region" id="operating_region" class="form-select" required>
+                            @foreach($currencyRegions as $code => $region)
+                                <option value="{{ $code }}" data-default-currency="{{ $region['default'] }}" {{ old('operating_region', $settings->get('operating_region')->value ?? 'southern_africa') === $code ? 'selected' : '' }}>{{ $region['label'] }}</option>
+                            @endforeach
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-dark"><i class="bi bi-currency-exchange me-1 text-primary"></i>System Default Currency</label>
-                        <input type="text" name="default_currency" class="form-control form-control-lg text-uppercase fw-bold" maxlength="5"
-                               value="{{ old('default_currency', $settings->get('default_currency')->value ?? 'USD') }}" placeholder="USD" required>
-                        <small class="text-muted d-block mt-1">3 to 5-letter global currency code (e.g. <strong>USD</strong>, <strong>EUR</strong>, <strong>GBP</strong>, <strong>UGX</strong>, <strong>KES</strong>). Applies dynamically across all fees, invoices, receipts, and finance modules.</small>
+                        <label class="form-label fw-bold"><i class="bi bi-currency-exchange me-1 text-primary"></i>Default Currency</label>
+                        <select name="default_currency" id="default_currency" class="form-select" required>
+                            @foreach($supportedCurrencies as $code => $name)
+                                <option value="{{ $code }}" {{ old('default_currency', $settings->get('default_currency')->value ?? 'ZAR') === $code ? 'selected' : '' }}>{{ $code }} — {{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    @php
+                        $savedCurrencies = $settings->get('accepted_currencies')->typed_value ?? ['ZAR', 'USD'];
+                        $selectedCurrencies = old('accepted_currencies', is_array($savedCurrencies) ? $savedCurrencies : ['ZAR', 'USD']);
+                    @endphp
+                    <div class="mb-3">
+                        <label class="form-label">Accepted Currencies</label>
+                        <select name="accepted_currencies[]" class="form-select" multiple size="7" required>
+                            @foreach($supportedCurrencies as $code => $name)
+                                <option value="{{ $code }}" {{ in_array($code, $selectedCurrencies, true) ? 'selected' : '' }}>{{ $code }} — {{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select several currencies. The default currency must also be selected.</small>
                     </div>
 
                     <div class="form-check form-switch mb-3">
@@ -109,11 +134,27 @@
 
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" name="registration_enabled" id="registration_enabled" value="1"
-                               {{ old('registration_enabled', $settings->get('registration_enabled')->value ?? true) ? 'checked' : '' }}>
+                               {{ filter_var(old('registration_enabled', $settings->get('registration_enabled')->value ?? true), FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                         <label class="form-check-label" for="registration_enabled">
                             Allow User Registration
                         </label>
                         <small class="d-block text-muted">Users can self-register for accounts</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Registration Opens</label>
+                            <input type="datetime-local" name="registration_open_at" class="form-control"
+                                   value="{{ old('registration_open_at', $settings->get('registration_open_at')->value ?? '') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Registration Closes</label>
+                            <input type="datetime-local" name="registration_close_at" class="form-control"
+                                   value="{{ old('registration_close_at', $settings->get('registration_close_at')->value ?? '') }}">
+                        </div>
+                    </div>
+                    <div class="alert alert-info py-2 small">
+                        Registration and new admission submissions are accepted only while enabled and within this window. Existing applicants remain available to administrators after closing.
                     </div>
                 </div>
             </div>
