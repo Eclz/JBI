@@ -693,6 +693,7 @@ Route::middleware(['auth'])->group(function () {
     // Mailbox & Messaging
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+    Route::post('/messages/group', [\App\Http\Controllers\MessageController::class, 'storeGroup'])->name('messages.storeGroup');
     Route::get('/messages/{message}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
 
     // Academic Calendar

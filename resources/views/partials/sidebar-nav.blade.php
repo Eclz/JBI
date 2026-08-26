@@ -675,14 +675,6 @@
             </ul>
         </li>
 
-        {{-- 4. Mailbox (flat) --}}
-        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
-            <a href="{{ route('messages.index') }}" class="menu-link">
-                <i class="bi bi-envelope-paper"></i>
-                <span>Mailbox</span>
-            </a>
-        </li>
-
         {{-- 5. E-Voting (flat) --}}
         <li class="menu-item {{ request()->routeIs('student.evoting.*') ? 'active' : '' }}">
             <a href="{{ route('student.evoting.index') }}" class="menu-link">
@@ -702,6 +694,13 @@
 
         {{-- ==================== COMMON (PINNED AT BOTTOM) ==================== --}}
         <li class="menu-header">Common</li>
+
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper"></i>
+                <span>Mailbox</span>
+            </a>
+        </li>
 
         <li class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
             <a href="{{ route('profile.show') }}" class="menu-link">
