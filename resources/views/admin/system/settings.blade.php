@@ -255,6 +255,14 @@
                                    value="{{ old('academic_year_end', $settings->get('academic_year_end')->value ?? '') }}">
                         </div>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-file-earmark-check me-1 text-primary"></i>Configured Exam Types</label>
+                        <input type="text" name="exam_types" class="form-control"
+                               value="{{ old('exam_types', $settings->get('exam_types')->value ?? 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary') }}"
+                               placeholder="e.g. Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam">
+                        <small class="text-muted d-block mt-1">Comma-separated list of examination types available for faculty to select when scheduling course exams.</small>
+                    </div>
                 </div>
             </div>
 

@@ -99,6 +99,7 @@ class SystemController extends Controller
             'registration_payment_days' => 'nullable|integer|min:1|max:365',
             'tuition_min_percent' => 'nullable|numeric|min:0|max:100',
             'tuition_payment_days' => 'nullable|integer|min:1|max:365',
+            'exam_types' => 'nullable|string|max:500',
         ]);
 
         if (!in_array($validated['default_currency'], $validated['accepted_currencies'], true)) {
@@ -141,6 +142,7 @@ class SystemController extends Controller
             'max_students_per_course' => 'academic',
             'academic_year_start' => 'academic',
             'academic_year_end' => 'academic',
+            'exam_types' => 'academic',
             'default_currency' => 'financial',
             'accepted_currencies' => 'financial',
             'operating_region' => 'financial',
