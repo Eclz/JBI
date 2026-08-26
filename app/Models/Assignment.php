@@ -17,6 +17,7 @@ class Assignment extends Model
         'instructions',
         'type',
         'max_points',
+        'max_score',
         'weight_percentage',
         'due_date',
         'available_from',
@@ -120,5 +121,29 @@ class Assignment extends Model
     public function getSubmissionForUser($userId)
     {
         return $this->submissions()->where('user_id', $userId)->latest()->first();
+    }
+
+    /**
+     * Accessor for max_score (maps to max_points)
+     */
+    public function getMaxScoreAttribute()
+    {
+        return $this->max_points;
+    }
+
+    /**
+     * Mutator for max_score (maps to max_points)
+     */
+    public function setMaxScoreAttribute($value)
+    {
+        $this->attributes['max_points'] = $value;
+    }
+
+    /**
+     * Accessor for points (maps to max_points)
+     */
+    public function getPointsAttribute()
+    {
+        return $this->max_points;
     }
 }
