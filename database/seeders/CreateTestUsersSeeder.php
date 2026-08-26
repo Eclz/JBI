@@ -51,8 +51,8 @@ class CreateTestUsersSeeder extends Seeder
             'role' => User::ROLE_ADMIN,
             'employee_id' => 'JBI001',
             'is_active' => true,
-            'phone' => '+1-555-0101',
-            'address' => '123 Admin Street, JBI Campus',
+            'phone' => '+27 68 443 8415',
+            'address' => 'South Africa',
         ]);
 
         $this->command->info('✓ Admin user created: admin@jbiuniversity.com');
@@ -65,8 +65,8 @@ class CreateTestUsersSeeder extends Seeder
             'role' => User::ROLE_FACULTY,
             'employee_id' => 'JBI002',
             'is_active' => true,
-            'phone' => '+1-555-0102',
-            'address' => '456 Faculty Lane, JBI Campus',
+            'phone' => '+27 68 443 8415',
+            'address' => 'South Africa',
             'date_of_birth' => '1975-05-15',
             'gender' => 'male',
         ]);
@@ -76,6 +76,7 @@ class CreateTestUsersSeeder extends Seeder
             'user_id' => $faculty->id,
             'department_id' => $firstDepartment->id,
             'position' => 'Professor',
+            'qualification' => 'Doctor of Theology',
             'hire_date' => now()->subYears(5),
             'employment_status' => 'active',
             'office_location' => 'Faculty Building, Room 201',
@@ -92,12 +93,12 @@ class CreateTestUsersSeeder extends Seeder
             'role' => User::ROLE_STUDENT,
             'student_id' => 'JBI2024001',
             'is_active' => true,
-            'phone' => '+1-555-0103',
-            'address' => '789 Student Drive, JBI Campus',
+            'phone' => '+27 68 443 8415',
+            'address' => 'South Africa',
             'date_of_birth' => '2000-08-20',
             'gender' => 'female',
             'emergency_contact' => 'Mary Student (Mother)',
-            'emergency_phone' => '+1-555-0104',
+            'emergency_phone' => '+27 68 443 8415',
         ]);
 
         // Create Student Profile
@@ -122,8 +123,8 @@ class CreateTestUsersSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => User::ROLE_PARENT,
             'is_active' => true,
-            'phone' => '+1-555-0105',
-            'address' => '321 Parent Avenue, Hometown',
+            'phone' => '+27 68 443 8415',
+            'address' => 'South Africa',
         ]);
 
         $this->command->info('✓ Parent user created: parent@jbiuniversity.com');

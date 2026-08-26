@@ -19,8 +19,8 @@ class DepartmentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Department::with(['faculty', 'headOfDepartment', 'facultyMembers.user', 'students.user', 'courses'])
-            ->withCount(['courses', 'facultyMembers', 'students']);
+        $query = Department::with(['faculty', 'headOfDepartment'])
+            ->withCount(['programs', 'courses', 'facultyMembers', 'students']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -53,9 +53,16 @@ class DepartmentController extends Controller
             }
         }
 
+        if ($request->filled('head')) {
+            $request->head === 'assigned'
+                ? $query->whereNotNull('head_of_department_id')
+                : $query->whereNull('head_of_department_id');
+        }
+
         // Sorting
         $sortBy = $request->get('sort', $request->get('sort_by', 'name'));
-        $sortOrder = $request->get('order', 'asc');
+        $sortBy = in_array($sortBy, ['name', 'code', 'faculty', 'created_at'], true) ? $sortBy : 'name';
+        $sortOrder = $request->get('order') === 'desc' ? 'desc' : 'asc';
 
         if ($sortBy === 'faculty') {
             $query->leftJoin('faculties', 'departments.faculty_id', '=', 'faculties.id')
@@ -77,6 +84,10 @@ class DepartmentController extends Controller
             'inactive' => Department::where('is_active', false)->count(),
             'with_head' => Department::whereNotNull('head_of_department_id')->count(),
             'without_faculty' => Department::whereNull('faculty_id')->count(),
+            'programs' => \App\Models\Program::count(),
+            'courses' => \App\Models\Course::count(),
+            'staff' => FacultyProfile::count(),
+            'students' => \App\Models\StudentProfile::count(),
         ];
 
         return view('admin.departments.index', compact('departments', 'faculties', 'stats'));

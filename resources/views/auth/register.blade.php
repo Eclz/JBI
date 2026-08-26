@@ -25,6 +25,19 @@
                             </div>
                         @endif
 
+                        @if(!($admissionWindow['isOpen'] ?? true))
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading"><i class="bi bi-calendar-x me-2"></i>Admissions are currently closed</h6>
+                                @if(($admissionWindow['status'] ?? '') === 'scheduled' && $admissionWindow['start'])
+                                    <p class="mb-0">Applications open {{ $admissionWindow['start']->format('d M Y, H:i') }} {{ $admissionWindow['timezone'] }}.</p>
+                                @elseif(($admissionWindow['status'] ?? '') === 'closed' && $admissionWindow['end'])
+                                    <p class="mb-0">The admission application window closed {{ $admissionWindow['end']->format('d M Y, H:i') }} {{ $admissionWindow['timezone'] }}.</p>
+                                @else
+                                    <p class="mb-0">Please contact the admissions office for the next registration period.</p>
+                                @endif
+                            </div>
+                        @endif
+
                         <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" id="registrationForm">
                             @csrf
 
@@ -100,7 +113,7 @@
                             </div>
 
                             <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;">
+                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;" {{ !($admissionWindow['isOpen'] ?? true) ? 'disabled' : '' }}>
                                     <i class="bi bi-person-plus-fill me-2"></i>Register Account
                                 </button>
                             </div>
@@ -116,7 +129,7 @@
                     <!-- Right Side - Info Panel -->
                     <div class="col-md-5 d-none d-md-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #1a2236 100%);">
                         <div class="text-center p-5">
-                            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/JBI-Logo-oWxd478x1NMPMmr2woHizWQC9aCVG2.webp" alt="JBI Logo" class="mb-4" style="height: 100px;">
+                            <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="mb-4" style="height: 100px;">
                             <h4 class="fw-bold mb-2">Welcome to JBI</h4>
                             <p class="text-white-50 small mb-4">Begin your student admission process directly from within your dashboard.</p>
 

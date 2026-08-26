@@ -37,9 +37,18 @@ class ProgramController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $programs = $query->orderBy('name')->paginate(20)->withQueryString();
+        $programs = $query
+            ->leftJoin('program_levels', 'programs.program_level_id', '=', 'program_levels.id')
+            ->select('programs.*')
+            ->orderByRaw("CASE program_levels.code WHEN 'CERT' THEN 1 WHEN 'ADVDIP' THEN 2 WHEN 'DIP' THEN 3 WHEN 'BACH' THEN 4 WHEN 'MASTER' THEN 5 WHEN 'PHD' THEN 6 ELSE 99 END")
+            ->orderBy('programs.name')
+            ->paginate(30)
+            ->withQueryString();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
-        $levels = ProgramLevel::where('is_active', true)->orderBy('name')->get();
+        $levels = ProgramLevel::where('is_active', true)
+            ->withCount('programs')
+            ->orderByRaw("CASE code WHEN 'CERT' THEN 1 WHEN 'ADVDIP' THEN 2 WHEN 'DIP' THEN 3 WHEN 'BACH' THEN 4 WHEN 'MASTER' THEN 5 WHEN 'PHD' THEN 6 ELSE 99 END")
+            ->get();
 
         return view('admin.programs.index', compact('programs', 'departments', 'levels'));
     }

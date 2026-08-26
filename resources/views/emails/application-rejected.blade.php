@@ -77,7 +77,7 @@
             <li><strong>Transfer Options:</strong> Explore transfer opportunities after completing coursework elsewhere</li>
         </ul>
 
-        <p>If you would like to discuss your application or learn about ways to strengthen a future application, please don't hesitate to contact our admissions office at <a href="mailto:admissions@johnsonbibleinstitute.com">admissions@johnsonbibleinstitute.com</a> or +27 67 965 3866.</p>
+        <p>If you would like to discuss your application or learn about ways to strengthen a future application, please contact our admissions office at <a href="mailto:admission@jbiuniversity.com">admission@jbiuniversity.com</a> or WhatsApp +27 68 443 8415.</p>
 
         <p>We wish you the very best in your educational pursuits and hope you will consider JBI University again in the future.</p>
 
@@ -86,7 +86,7 @@
 
         <div class="footer">
             <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
-            <p>JBI University | 91 Progress Road Lindhaven | Roodeport South Africa</p>
+            <p>JBI University | South Africa | www.jbiuniversity.com</p>
         </div>
     </div>
 </body>

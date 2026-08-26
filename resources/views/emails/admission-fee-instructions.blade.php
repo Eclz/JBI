@@ -126,16 +126,15 @@
         <p><strong>Note:</strong> Payment verification typically takes 1-2 business days. Once verified, you will receive your official admission letter.</p>
 
         <p>If you need assistance or have questions about payment, please contact:<br>
-        <strong>Email:</strong> finance@johnsonbibleinstitute.com<br>
-        <strong>Phone:</strong> +27 67 965 3866<br>
-        <strong>WhatsApp:</strong>+27 67 965 3866</p>
+        <strong>Email:</strong> info@jbiuniversity.com<br>
+        <strong>WhatsApp:</strong> +27 68 443 8415</p>
 
         <p>Best regards,<br>
         <strong>JBI University Finance Office</strong></p>
 
         <div class="footer">
             <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
-            <p>JBI University | 91 Progress Road Lindhaven Roodeport South Africa</p>
+            <p>JBI University | South Africa | www.jbiuniversity.com</p>
         </div>
     </div>
 </body>

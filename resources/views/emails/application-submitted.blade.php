@@ -108,14 +108,14 @@
 
         <p><strong>📌 Important:</strong> Please keep your application number (<strong>{{ $applicationNumber }}</strong>) for your records. You may need it for future correspondence.</p>
 
-        <p>If you have any questions about your application or the admissions process, please don't hesitate to contact our admissions office at <a href="mailto:admissions@jbiuniversity.edu">admissions@jbiuniversity.edu</a> or call us at (555) 123-4567.</p>
+        <p>If you have any questions about your application or the admissions process, contact our admissions office at <a href="mailto:admission@jbiuniversity.com">admission@jbiuniversity.com</a> or WhatsApp +27 68 443 8415.</p>
 
         <p>Best regards,<br>
         <strong>JBI University Admissions Team</strong></p>
 
         <div class="footer">
             <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
-            <p> <p>JBI University | 91 Progress Road Lindhaven | Roodeport South Africa</p></p>
+            <p>JBI University | South Africa | www.jbiuniversity.com</p>
         </div>
     </div>
 </body>

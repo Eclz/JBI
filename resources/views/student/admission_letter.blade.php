@@ -12,7 +12,7 @@
             <h5 class="fw-bold text-dark text-uppercase mb-0">
                 <i class="bi bi-file-earmark-pdf text-primary me-2"></i>OFFICIAL LETTER OF ADMISSION
             </h5>
-            <p class="text-muted small mb-0">Johnson Bible Institute (JBI) University Official Admission Record</p>
+            <p class="text-muted small mb-0">JBI University Official Admission Record</p>
         </div>
         <div class="d-flex gap-2">
             <button id="download-pdf-btn" onclick="downloadAdmissionLetterPDF()" class="btn btn-primary fw-bold px-3 py-1.5 shadow-sm" style="border-radius: 6px;">
@@ -33,25 +33,25 @@
         
         <!-- Subtle Background Watermark Seal -->
         <div class="position-absolute top-50 start-50 translate-middle pointer-events-none text-center" style="opacity: 0.05; z-index: 0; width: 400px;">
-            <img src="{{ asset('images/jbi-logo.webp') }}" alt="Watermark Seal" class="w-100 img-fluid mx-auto d-block">
+            <img src="{{ asset('images/jbi-blue.webp') }}" alt="Watermark Seal" class="w-100 img-fluid mx-auto d-block">
         </div>
 
         <!-- University Header & Letterhead Logo -->
         <div class="text-center pb-2 mb-3 border-bottom border-2 border-dark position-relative" style="z-index: 1;">
             <div class="mb-1 d-flex justify-content-center align-items-center">
-                <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University Emblem" 
+                <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Emblem"
                      style="height: 75px; width: auto; object-fit: contain;" 
                      class="mx-auto d-block">
             </div>
             <h2 class="fw-bold text-uppercase mb-0 text-center" style="color: #0f2942; letter-spacing: 1.5px; font-size: 1.6rem; font-family: 'Georgia', serif;">
-                JOHNSON BIBLE INSTITUTE UNIVERSITY
+                JBI UNIVERSITY
             </h2>
             <div class="text-uppercase fw-bold text-center mb-1" style="color: #c59b27; letter-spacing: 1px; font-size: 0.75rem;">
                 OFFICE OF THE ACADEMIC REGISTRAR & ADMISSIONS
             </div>
             <div class="text-muted text-center" style="font-size: 0.75rem; line-height: 1.3; font-family: Arial, sans-serif;">
-                91 Progress Road, Lindhaven, Roodepoort, South Africa | Tel: +27 67 965 3866<br>
-                Email: admissions@johnsonbibleinstitute.com | Website: www.johnsonbibleinstitute.com
+                South Africa | WhatsApp: +27 68 443 8415<br>
+                Email: admission@jbiuniversity.com | Website: www.jbiuniversity.com
             </div>
         </div>
 
@@ -95,7 +95,7 @@
             <p class="mb-2">Dear <strong>{{ $student->first_name }}</strong>,</p>
 
             <p class="mb-2">
-                On behalf of the Senate and Academic Council of <strong>Johnson Bible Institute (JBI) University</strong>, we are pleased to inform you that following the evaluation of your credentials, you have been officially granted admission to pursue studies at JBI University.
+                On behalf of the Senate and Academic Council of <strong>JBI University</strong>, we are pleased to inform you that following the evaluation of your credentials, you have been officially granted admission to pursue studies at JBI University.
             </p>
 
             <!-- Admission Particulars Summary Box -->
@@ -149,7 +149,7 @@
                 <div class="border-top border-dark d-inline-block pt-0.5 text-end" style="min-width: 180px;">
                     <h6 class="fw-bold text-dark mb-0" style="font-size: 0.85rem;">Academic Registrar</h6>
                     <small class="text-muted d-block" style="font-size: 0.7rem;">Directorate of Academic Affairs</small>
-                    <small class="text-muted d-block" style="font-size: 0.7rem;">Johnson Bible Institute University</small>
+                    <small class="text-muted d-block" style="font-size: 0.7rem;">JBI University</small>
                 </div>
             </div>
         </div>

@@ -16,7 +16,7 @@
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-start mb-4 border-bottom pb-3">
                 <div class="d-flex align-items-center gap-3">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="University Logo" class="receipt-logo">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="receipt-logo">
                     <div>
                         <h4 class="mb-0">JBI University</h4>
                         <div class="text-muted small">Official Fee Payment Receipt</div>

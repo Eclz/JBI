@@ -1,7 +1,7 @@
 <div class="sidebar-wrapper">
     <div class="sidebar-header">
         <div class="logo-container">
-            <img src="{{ asset('images/jbi.png') }}" alt="JBI University" class="logo-img">
+            <img src="{{ asset('images/jbi-logo-white.webp') }}" alt="JBI University" class="logo-img">
             {{-- <span class="logo-text">JBI University</span> --}}
         </div>
         <button id="sidebar-toggle-btn" class="sidebar-toggle d-md-none">
@@ -91,6 +91,7 @@
 
             // Group 3: Academic Structure
             $isAcademicActive = request()->routeIs('admin.courses.*') ||
+                                request()->routeIs('admin.academic-setup.*') ||
                                 request()->routeIs('admin.programs.*') ||
                                 request()->routeIs('admin.program-levels.*') ||
                                 request()->routeIs('admin.program-changes.*') ||
@@ -226,31 +227,17 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ $isAcademicActive ? 'display: block;' : 'display: none;' }}">
-                @if($canViewCourses)
-                <li class="submenu-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.courses.index') }}" class="submenu-link">
-                        <i class="bi bi-journal-bookmark"></i>
-                        <span>Course Management</span>
+                <li class="submenu-item {{ request()->routeIs('admin.academic-setup.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.academic-setup.index') }}" class="submenu-link">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Academic Setup Guide</span>
                     </a>
                 </li>
-                @endif
                 @if($canViewPrograms)
-                <li class="submenu-item {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.programs.index') }}" class="submenu-link">
-                        <i class="bi bi-collection"></i>
-                        <span>Program Management</span>
-                    </a>
-                </li>
                 <li class="submenu-item {{ request()->routeIs('admin.program-levels.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.program-levels.index') }}" class="submenu-link">
                         <i class="bi bi-layers"></i>
                         <span>Program Levels</span>
-                    </a>
-                </li>
-                <li class="submenu-item {{ request()->routeIs('admin.program-changes.*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.program-changes.index') }}" class="submenu-link">
-                        <i class="bi bi-arrow-repeat"></i>
-                        <span>Program Change Requests</span>
                     </a>
                 </li>
                 @endif
@@ -269,6 +256,28 @@
                 </li>
                 @endif
                 @if($canViewPrograms)
+                <li class="submenu-item {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.programs.index') }}" class="submenu-link">
+                        <i class="bi bi-collection"></i>
+                        <span>Program Management</span>
+                    </a>
+                </li>
+                @endif
+                @if($canViewCourses)
+                <li class="submenu-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.courses.index') }}" class="submenu-link">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Courses / Modules</span>
+                    </a>
+                </li>
+                @endif
+                @if($canViewPrograms)
+                <li class="submenu-item {{ request()->routeIs('admin.program-changes.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.program-changes.index') }}" class="submenu-link">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Program Change Requests</span>
+                    </a>
+                </li>
                 <li class="submenu-item {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.academic-years.index') }}" class="submenu-link">
                         <i class="bi bi-calendar3"></i>

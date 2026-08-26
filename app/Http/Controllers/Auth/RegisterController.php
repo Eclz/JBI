@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\Program;
+use App\Models\SystemSetting;
 use App\Mail\EmailVerification;
 use App\Mail\ApplicationSubmitted;
 use App\Mail\AdmissionApproved;
@@ -35,11 +36,15 @@ class RegisterController extends Controller
 
     public function showRegistrationForm()
     {
-        return view('auth.register');
+        return view('auth.register', ['admissionWindow' => SystemSetting::admissionWindow()]);
     }
 
     public function register(Request $request)
     {
+        if (!SystemSetting::admissionWindow()['isOpen']) {
+            return back()->withErrors(['admission' => 'Admissions are currently closed. Please check the published opening dates or contact the admissions office.']);
+        }
+
         // Custom validation
         $validator = $this->getValidationRules($request);
 

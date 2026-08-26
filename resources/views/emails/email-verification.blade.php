@@ -93,7 +93,7 @@
 
         <div class="footer">
             <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
-            <p>JJBI University | 91 Progress Road Lindhaven | Roodeport South Africa</p>
+            <p>JBI University | South Africa | www.jbiuniversity.com</p>
         </div>
     </div>
 </body>

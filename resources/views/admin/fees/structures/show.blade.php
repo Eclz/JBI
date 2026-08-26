@@ -54,8 +54,26 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Amount:</strong></td>
-                                    <td><strong class="text-success">{{ $currencyCode }} {{ number_format($feeStructure->amount, 2) }}</strong></td>
+                                    <td><strong class="text-success">{{ $feeStructure->currency ?? $currencyCode }} {{ number_format($feeStructure->amount, 2) }}</strong></td>
                                 </tr>
+                                <tr>
+                                    <td><strong>Programme:</strong></td>
+                                    <td>{{ $feeStructure->program->name ?? 'All programmes' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Level:</strong></td>
+                                    <td>{{ $feeStructure->programLevel->name ?? 'General' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Student region:</strong></td>
+                                    <td>{{ ucfirst($feeStructure->student_region ?? 'All regions') }}</td>
+                                </tr>
+                                @if($feeStructure->total_amount)
+                                    <tr>
+                                        <td><strong>Programme total:</strong></td>
+                                        <td>{{ $feeStructure->currency ?? $currencyCode }} {{ number_format($feeStructure->total_amount, 2) }}@if($feeStructure->total_amount_max && $feeStructure->total_amount_max != $feeStructure->total_amount) – {{ number_format($feeStructure->total_amount_max, 2) }}@endif</td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <td><strong>Frequency:</strong></td>
                                     <td>{{ ucfirst(str_replace('_', ' ', $feeStructure->frequency)) }}</td>
@@ -82,7 +100,7 @@
                                     <td><strong>Late Fee:</strong></td>
                                     <td>
                                         @if($feeStructure->late_fee_amount > 0)
-                                            {{ $currencyCode }} {{ number_format($feeStructure->late_fee_amount, 2) }}
+                                            {{ $feeStructure->currency ?? $currencyCode }} {{ number_format($feeStructure->late_fee_amount, 2) }}
                                             @if($feeStructure->late_fee_days)
                                                 <br><small class="text-muted">After {{ $feeStructure->late_fee_days }} days</small>
                                             @endif
@@ -161,9 +179,9 @@
                                                         </div>
                                                     </td>
                                                     <td>{{ $record->invoice_number ?? 'N/A' }}</td>
-                                                    <td>{{ $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
-                                                    <td>{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
-                                                    <td>{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
+                                                    <td>{{ $feeStructure->currency ?? $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
+                                                    <td>{{ $feeStructure->currency ?? $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                                                    <td>{{ $feeStructure->currency ?? $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                                                     <td>
                                                         @switch($record->status)
                                                             @case('paid')

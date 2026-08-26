@@ -495,7 +495,7 @@
                 </button>
 
                 <div class="mobile-nav-brand">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University" class="mobile-logo">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="mobile-logo">
                     <a href="{{ url('/') }}" class="mobile-brand-text">JBI University</a>
                 </div>
 
@@ -516,7 +516,7 @@
             @auth
             <div class="p-3 border-bottom border-secondary">
                 <div class="d-flex align-items-center">
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI University" height="30" class="me-2">
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" height="30" class="me-2">
                     <div>
                         <h5 class="mb-0 fw-bold">JBI</h5>
                         <div class="small">University</div>
@@ -769,7 +769,13 @@
             <!-- Footer -->
             <footer class="footer">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>&copy; {{ date('Y') }} JBI University. All rights reserved.</div>
+                    <div>
+                        &copy; {{ date('Y') }} JBI University. All rights reserved.
+                        <span class="badge bg-success ms-2">Production</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ config('app.production_url') }}" class="text-decoration-none small">JBI University Portal</a>
+                    </div>
                     <div class="d-flex align-items-center">
                         <span class="me-3">Version 1.0.0</span>
                         @guest

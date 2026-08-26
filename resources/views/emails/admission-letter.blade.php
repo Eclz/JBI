@@ -79,16 +79,16 @@
         <div class="header" style="text-align: center;">
             <div style="margin-bottom: 12px;">
                 @if(isset($message) && is_object($message))
-                    <img src="{{ $message->embed(public_path('images/jbi-logo.webp')) }}" alt="JBI Logo" style="max-height: 95px; width: auto;" />
+                    <img src="{{ $message->embed(public_path('images/jbi-blue.webp')) }}" alt="JBI University Logo" style="max-height: 95px; width: auto;" />
                 @else
-                    <img src="{{ asset('images/jbi-logo.webp') }}" alt="JBI Logo" style="max-height: 95px; width: auto;" />
+                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" style="max-height: 95px; width: auto;" />
                 @endif
             </div>
-            <h2 style="margin: 0 0 5px 0; color: #1e3a8a; font-size: 22px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">JOHNSON BIBLE INSTITUTE UNIVERSITY</h2>
+            <h2 style="margin: 0 0 5px 0; color: #1e3a8a; font-size: 22px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">JBI UNIVERSITY</h2>
             <div class="university-motto" style="font-style: italic; color: #555; font-size: 13px; margin-bottom: 8px;">"Excellence in Education, Service to Humanity & Faith"</div>
             <p style="font-size: 11px; color: #666; margin-top: 5px; line-height: 1.5;">
-                91 Progress Road, Lindhaven, Roodepoort, South Africa<br>
-                Tel: +27 67 965 3866 | Email: info@johnsonbibleinstitute.com | Website: www.johnsonbibleinstitute.com
+                South Africa<br>
+                WhatsApp: +27 68 443 8415 | Email: info@jbiuniversity.com | Website: www.jbiuniversity.com
             </p>
         </div>
 
@@ -163,7 +163,7 @@
             <li>Classes commence on {{ now()->addDays(30)->format('F j, Y') }}</li>
             <li>You must register before the deadline to secure your place</li>
             <li>Late registration may attract additional fees</li>
-            <li>For any queries, contact: admissions@johnsonbibleinstitute.com or +27 67 965 3866</li>
+            <li>For any queries, contact: admission@jbiuniversity.com or WhatsApp +27 68 443 8415</li>
         </ul>
 
         <p>We congratulate you on your admission and look forward to welcoming you to JBI University. We are confident that you will make the most of the opportunities available to you and contribute positively to our academic community.</p>
