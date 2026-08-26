@@ -39,8 +39,8 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-3">
-                                        @if($fee->student->avatar)
-                                            <img src="{{ asset('storage/' . $fee->student->avatar) }}"
+                                        @if($fee->student->profile_picture)
+                                            <img src="{{ asset('storage/' . $fee->student->profile_picture) }}"
                                                  class="rounded-circle me-3" width="64" height="64">
                                         @else
                                             <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"

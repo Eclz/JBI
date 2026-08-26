@@ -79,7 +79,7 @@ class UserController extends Controller
             $role = Role::findOrFail($request->role_id);
             $nameParts = preg_split('/\s+/', trim($request->name), 2);
 
-            $user = User::create([
+            $userData = [
                 'name' => $request->name,
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
@@ -91,10 +91,16 @@ class UserController extends Controller
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,
                 'address' => $request->address,
-                'emergency_contact_name' => $request->emergency_contact_name,
-                'emergency_contact_phone' => $request->emergency_contact_phone,
+                'emergency_contact' => $request->emergency_contact,
+                'emergency_phone' => $request->emergency_phone,
                 'is_active' => $request->input('status', 'active') === 'active',
-            ]);
+            ];
+
+            if ($request->hasFile('profile_picture')) {
+                $userData['profile_picture'] = $request->file('profile_picture')->store('avatars', 'public');
+            }
+
+            $user = User::create($userData);
 
             // Create role-specific profile
             if ($role->guard_role === 'student') {
@@ -159,13 +165,20 @@ class UserController extends Controller
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,
                 'address' => $request->address,
-                'emergency_contact_name' => $request->emergency_contact_name,
-                'emergency_contact_phone' => $request->emergency_contact_phone,
+                'emergency_contact' => $request->emergency_contact,
+                'emergency_phone' => $request->emergency_phone,
                 'is_active' => $request->input('status', 'active') === 'active',
             ];
 
             if ($request->filled('password')) {
                 $userData['password'] = Hash::make($request->password);
+            }
+
+            if ($request->hasFile('profile_picture')) {
+                if ($user->profile_picture) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_picture);
+                }
+                $userData['profile_picture'] = $request->file('profile_picture')->store('avatars', 'public');
             }
 
             $user->update($userData);

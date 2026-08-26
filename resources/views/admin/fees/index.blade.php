@@ -181,8 +181,8 @@
                                                  <td>
                                                      <div class="d-flex align-items-center">
                                                          @if($record->student)
-                                                             @if($record->student->avatar)
-                                                                 <img src="{{ asset('storage/' . $record->student->avatar) }}"
+                                                             @if($record->student->profile_picture)
+                                                                 <img src="{{ asset('storage/' . $record->student->profile_picture) }}"
                                                                       class="rounded-circle me-2" width="32" height="32">
                                                              @else
                                                                  <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"

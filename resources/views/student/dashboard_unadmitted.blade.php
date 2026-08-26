@@ -1160,7 +1160,7 @@
                     <div class="card border-0 shadow-sm text-center p-4 h-100" style="border-radius: 12px;">
                         <div class="mb-3 position-relative d-inline-block mx-auto">
                             @php
-                                $avatarPath = $student->avatar ?? ($application->documents['profile_picture'] ?? null);
+                                $avatarPath = $student->profile_picture ?? ($application->documents['profile_picture'] ?? null);
                                 $avatarUrl = $avatarPath ? Storage::url($avatarPath) : null;
                             @endphp
                             @if($avatarUrl)

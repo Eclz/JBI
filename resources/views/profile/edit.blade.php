@@ -85,11 +85,11 @@
 
                             <div class="col-12">
                                 <label class="form-label">Profile Picture</label>
-                                <input type="file" name="avatar" class="form-control @error('avatar') is-invalid @enderror" accept="image/*">
-                                @error('avatar')
+                                <input type="file" name="profile_picture" class="form-control @error('profile_picture') is-invalid @enderror" accept="image/*">
+                                @error('profile_picture')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                @if($user->avatar)
+                                @if($user->profile_picture)
                                     <small class="text-muted">Current image will be replaced if you upload a new one</small>
                                 @endif
                             </div>
@@ -171,10 +171,10 @@
                 <div class="card-body text-center">
                     <h6 class="card-subtitle mb-3 text-muted">Profile Preview</h6>
                     <div class="avatar-lg bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
-                        @if($user->avatar)
-                            <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                        @if($user->profile_picture)
+                            <img src="{{ $user->profile_picture_url }}" alt="Avatar" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
                         @else
-                            <span class="h2 mb-0">{{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}</span>
+                            <span class="h2 mb-0">{{ $user->initials }}</span>
                         @endif
                     </div>
                     <h5 class="mb-1">{{ $user->first_name }} {{ $user->last_name }}</h5>
