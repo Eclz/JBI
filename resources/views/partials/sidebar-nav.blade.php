@@ -489,7 +489,14 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('faculty.attendance.*') ? 'active' : '' }}">
+        <li class="menu-item {{ request()->routeIs('faculty.timetables.*') ? 'active' : '' }}">
+            <a href="{{ route('faculty.timetables.index') }}" class="menu-link">
+                <i class="bi bi-calendar3"></i>
+                <span>Timetable & Schedules</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('faculty.attendance.*') || request()->routeIs('faculty.courses.attendance.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.attendance.index') }}" class="menu-link">
                 <i class="bi bi-calendar-check"></i>
                 <span>Attendance</span>

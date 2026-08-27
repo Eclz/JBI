@@ -42,14 +42,7 @@ class AttendanceController extends Controller
 
     public function index(Course $course)
     {
-        $this->authorize('view', $course);
-
-        $attendanceRecords = Attendance::where('course_id', $course->id)
-            ->with(['student', 'markedBy'])
-            ->orderBy('attendance_date', 'desc')
-            ->paginate(20);
-
-        return view('faculty.attendance.show', compact('course', 'attendanceRecords'));
+        return $this->show($course);
     }
 
     public function show(Course $course)
@@ -61,7 +54,19 @@ class AttendanceController extends Controller
             ->orderBy('attendance_date', 'desc')
             ->paginate(20);
 
-        return view('faculty.attendance.show', compact('course', 'attendanceRecords'));
+        $enrolledStudents = $course->enrollments()
+            ->with('student')
+            ->where('status', 'enrolled')
+            ->get()
+            ->pluck('student')
+            ->filter();
+
+        return view('faculty.attendance.show', compact('course', 'attendanceRecords', 'enrolledStudents'));
+    }
+
+    public function store(Request $request, Course $course)
+    {
+        return $this->mark($request, $course);
     }
 
     public function mark(Request $request, Course $course)
@@ -70,8 +75,11 @@ class AttendanceController extends Controller
 
         $request->validate([
             'date' => 'required|date',
+            'class_start_time' => 'nullable|string',
+            'class_end_time' => 'nullable|string',
+            'notes' => 'nullable|string|max:500',
             'attendance' => 'required|array',
-            'attendance.*' => 'in:present,absent,late',
+            'attendance.*' => 'in:present,absent,late,excused',
         ]);
 
         foreach ($request->attendance as $studentId => $status) {
@@ -83,12 +91,15 @@ class AttendanceController extends Controller
                 ],
                 [
                     'status' => $status,
+                    'class_start_time' => $request->class_start_time,
+                    'class_end_time' => $request->class_end_time,
+                    'notes' => $request->notes,
                     'marked_by' => Auth::id(),
                 ]
             );
         }
 
-        return back()->with('success', 'Attendance marked successfully.');
+        return back()->with('success', 'Attendance for ' . count($request->attendance) . ' students recorded successfully.');
     }
 
     public function generateQRCode(Course $course)

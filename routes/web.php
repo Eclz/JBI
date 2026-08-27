@@ -29,6 +29,7 @@ use App\Http\Controllers\Faculty\CourseController as FacultyCourseController;
 use App\Http\Controllers\Faculty\AttendanceController as FacultyAttendanceController;
 use App\Http\Controllers\Faculty\GradingController as FacultyGradingController;
 use App\Http\Controllers\Faculty\MaterialController as FacultyMaterialController;
+use App\Http\Controllers\Faculty\TimetableController as FacultyTimetableController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -567,8 +568,13 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
 
     // Attendance Management
     Route::get('/courses/{course}/attendance', [FacultyAttendanceController::class, 'index'])->name('courses.attendance.index');
+    Route::get('/courses/{course}/attendance/show', [FacultyAttendanceController::class, 'show'])->name('courses.attendance.show');
+    Route::get('/courses/{course}/attendance/qr', [FacultyAttendanceController::class, 'generateQRCode'])->name('courses.attendance.qr');
     Route::post('/courses/{course}/attendance', [FacultyAttendanceController::class, 'store'])->name('courses.attendance.store');
     Route::put('/courses/{course}/attendance/{attendance}', [FacultyAttendanceController::class, 'update'])->name('courses.attendance.update');
+
+    // Faculty Timetables
+    Route::get('/timetables', [FacultyTimetableController::class, 'index'])->name('timetables.index');
 
     // Grading
     Route::get('/courses/{course}/grades', [FacultyGradingController::class, 'index'])->name('courses.grades.index');
