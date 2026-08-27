@@ -337,7 +337,9 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                                                        <a href="{{ route('student.assignments.show', $assignment) }}" class="btn btn-sm btn-primary fw-semibold">
+                                                            <i class="bi bi-eye me-1"></i>View
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             @endforeach
