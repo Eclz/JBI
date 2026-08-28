@@ -64,7 +64,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('admin.evaluation-surveys.show', $survey) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('admin.evaluation-surveys.show', ['evaluation_survey' => $survey->id]) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-eye me-1"></i>View Results
                                     </a>
                                 </td>
