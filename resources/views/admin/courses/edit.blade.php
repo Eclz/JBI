@@ -259,7 +259,7 @@
                                     <textarea class="form-control @error('prerequisites') is-invalid @enderror"
                                               id="prerequisites"
                                               name="prerequisites"
-                                              rows="3">{{ old('prerequisites', $course->prerequisites) }}</textarea>
+                                              rows="3">@php $prereq = old('prerequisites', $course->prerequisites); @endphp{{ is_array($prereq) ? implode(', ', $prereq) : $prereq }}</textarea>
                                     @error('prerequisites')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

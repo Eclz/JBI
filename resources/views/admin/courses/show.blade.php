@@ -93,7 +93,7 @@
                             @if($course->prerequisites)
                             <div class="mt-3">
                                 <h6 class="text-primary">Prerequisites</h6>
-                                <p class="text-muted">{{ $course->prerequisites }}</p>
+                                <p class="text-muted">{{ is_array($course->prerequisites) ? implode(', ', $course->prerequisites) : $course->prerequisites }}</p>
                             </div>
                             @endif
                         </div>
