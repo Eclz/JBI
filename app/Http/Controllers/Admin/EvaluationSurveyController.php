@@ -125,15 +125,15 @@ class EvaluationSurveyController extends Controller
         return redirect()->route('admin.evaluation-surveys.index')->with('success', 'Evaluation survey deleted successfully!');
     }
 
-    public function toggleStatus(EvaluationSurvey $survey)
+    public function toggleStatus(EvaluationSurvey $evaluation_survey)
     {
-        $survey->update(['is_active' => !$survey->is_active]);
+        $evaluation_survey->update(['is_active' => !$evaluation_survey->is_active]);
 
-        $statusStr = $survey->is_active ? 'activated' : 'closed';
+        $statusStr = $evaluation_survey->is_active ? 'activated' : 'closed';
         return redirect()->back()->with('success', "Evaluation survey {$statusStr} successfully!");
     }
 
-    public function addQuestion(Request $request, EvaluationSurvey $survey)
+    public function addQuestion(Request $request, EvaluationSurvey $evaluation_survey)
     {
         $validated = $request->validate([
             'question_text' => 'required|string|max:500',
@@ -141,21 +141,21 @@ class EvaluationSurveyController extends Controller
             'question_type' => 'required|in:rating,text,boolean',
         ]);
 
-        $maxOrder = $survey->questions()->max('display_order') ?? 0;
+        $maxOrder = $evaluation_survey->questions()->max('display_order') ?? 0;
         $validated['display_order'] = $maxOrder + 1;
 
-        $survey->questions()->create($validated);
+        $evaluation_survey->questions()->create($validated);
 
-        return redirect()->route('admin.evaluation-surveys.show', $survey)->with('success', 'New evaluation question added successfully!');
+        return redirect()->route('admin.evaluation-surveys.show', $evaluation_survey)->with('success', 'New evaluation question added successfully!');
     }
 
-    public function destroyQuestion(EvaluationSurvey $survey, EvaluationQuestion $question)
+    public function destroyQuestion(EvaluationSurvey $evaluation_survey, EvaluationQuestion $question)
     {
-        if ($question->survey_id === $survey->id) {
+        if ($question->survey_id === $evaluation_survey->id) {
             $question->delete();
         }
 
-        return redirect()->route('admin.evaluation-surveys.show', $survey)->with('success', 'Question deleted successfully!');
+        return redirect()->route('admin.evaluation-surveys.show', $evaluation_survey)->with('success', 'Question deleted successfully!');
     }
 }
 
