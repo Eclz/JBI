@@ -410,6 +410,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Admin Evaluation Surveys
     Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class);
+    Route::post('/evaluation-surveys/{survey}/toggle-status', [AdminEvaluationSurveyController::class, 'toggleStatus'])->name('evaluation-surveys.toggle-status');
+    Route::post('/evaluation-surveys/{survey}/questions', [AdminEvaluationSurveyController::class, 'addQuestion'])->name('evaluation-surveys.questions.store');
+    Route::delete('/evaluation-surveys/{survey}/questions/{question}', [AdminEvaluationSurveyController::class, 'destroyQuestion'])->name('evaluation-surveys.questions.destroy');
 
 
     // Application Management
