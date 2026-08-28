@@ -48,7 +48,7 @@
                         @if($survey->academicYear)
                             <span><i class="bi bi-bookmark me-1 text-primary"></i><strong>Academic Year:</strong> {{ $survey->academicYear->name ?? $survey->academicYear->year }}</span>
                         @endif
-                        <span><i class="bi bi-clock me-1 text-primary"></i><strong>Created:</strong> {{ $survey->created_at->format('M d, Y') }}</span>
+                        <span><i class="bi bi-clock me-1 text-primary"></i><strong>Created:</strong> {{ $survey->created_at ? $survey->created_at->format('M d, Y') : 'N/A' }}</span>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -271,7 +271,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <small class="text-muted">{{ $resp->submitted_at ? $resp->submitted_at->format('M d, Y H:i') : $resp->created_at->format('M d, Y H:i') }}</small>
+                                            <small class="text-muted">{{ $resp->submitted_at ? $resp->submitted_at->format('M d, Y H:i') : ($resp->created_at ? $resp->created_at->format('M d, Y H:i') : 'N/A') }}</small>
                                         </td>
                                         <td class="text-end">
                                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#responseModal_{{ $resp->id }}">
