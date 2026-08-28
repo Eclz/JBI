@@ -52,7 +52,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <form action="{{ route('admin.evaluation-surveys.toggle-status', ['evaluation_survey' => $survey->id]) }}" method="POST">
+                    <form action="{{ route('admin.evaluation-surveys.toggle-status', $survey) }}" method="POST">
                         @csrf
                         <button type="submit" class="btn btn-{{ $survey->is_active ? 'warning' : 'success' }}">
                             <i class="bi bi-power me-1"></i>{{ $survey->is_active ? 'Close Survey' : 'Activate Survey' }}
@@ -61,7 +61,7 @@
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSurveyModal">
                         <i class="bi bi-pencil me-1"></i>Edit Survey
                     </button>
-                    <form action="{{ route('admin.evaluation-surveys.destroy', ['evaluation_survey' => $survey->id]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this evaluation survey? All submitted responses will be removed.');">
+                    <form action="{{ route('admin.evaluation-surveys.destroy', $survey) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this evaluation survey? All submitted responses will be removed.');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline-danger">
@@ -386,7 +386,7 @@
                                         <td class="fw-medium text-dark">{{ $q->question_text }}</td>
                                         <td><span class="badge bg-light text-dark border">{{ strtoupper($q->question_type) }}</span></td>
                                         <td class="text-end">
-                                            <form action="{{ route('admin.evaluation-surveys.questions.destroy', ['evaluation_survey' => $survey->id, 'question' => $q->id]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                            <form action="{{ route('admin.evaluation-surveys.questions.destroy', [$survey, $q]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this question?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -414,7 +414,7 @@
 <div class="modal fade" id="editSurveyModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.evaluation-surveys.update', ['evaluation_survey' => $survey->id]) }}" method="POST">
+            <form action="{{ route('admin.evaluation-surveys.update', $survey) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="modal-header">
@@ -468,7 +468,7 @@
 <div class="modal fade" id="addQuestionModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.evaluation-surveys.questions.store', ['evaluation_survey' => $survey->id]) }}" method="POST">
+            <form action="{{ route('admin.evaluation-surveys.questions.store', $survey) }}" method="POST">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold text-primary">Add New Survey Question</h5>
