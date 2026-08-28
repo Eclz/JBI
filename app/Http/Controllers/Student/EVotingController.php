@@ -84,12 +84,13 @@ class EVotingController extends Controller
             ->orderBy('display_order')
             ->get();
 
+        $hasRetake = $this->checkStudentHasRetake($user->id);
         $existingApplications = VotingCandidate::where('voting_session_id', $session->id)
             ->where('user_id', $user->id)
             ->pluck('voting_position_id')
             ->toArray();
 
-        return view('student.evoting.apply', compact('session', 'eligiblePositions', 'studentProfile', 'existingApplications'));
+        return view('student.evoting.apply', compact('session', 'eligiblePositions', 'studentProfile', 'existingApplications', 'hasRetake'));
     }
 
     public function storeApplication(Request $request, VotingSession $session)
@@ -154,6 +155,9 @@ class EVotingController extends Controller
             }
         }
 
+        // Automated Academic Vetting Check (Course retake / failing grade check)
+        $hasRetake = $this->checkStudentHasRetake($user->id);
+
         $candidate = VotingCandidate::create([
             'voting_session_id' => $session->id,
             'voting_position_id' => $position->id,
@@ -167,12 +171,29 @@ class EVotingController extends Controller
             'year_of_study' => $validated['year_of_study'] ?? ($studentProfile->year_of_study ?? 1),
             'faculty_id' => $studentProfile->department?->faculty_id,
             'supporting_documents' => $documents,
-            'application_status' => 'submitted',
-            'candidate_status' => 'applicant',
-            'status' => 'pending',
+            'application_status' => $hasRetake ? 'rejected' : 'submitted',
+            'candidate_status' => $hasRetake ? 'disqualified' : 'applicant',
+            'status' => $hasRetake ? 'rejected' : 'pending',
+            'vetting_notes' => $hasRetake 
+                ? 'Automated Academic Vetting Engine: Disqualified due to an active course retake, failed course, or retake invoice on your academic record.'
+                : null,
         ]);
 
-        // Notify Admins & Electoral Commission
+        if ($hasRetake) {
+            Notification::create([
+                'user_id' => $user->id,
+                'type' => 'warning',
+                'title' => 'Electoral Candidacy Vetting Outcome - Disqualified',
+                'message' => "Your candidacy application for {$position->title} in {$session->title} was automatically vetted out. According to JBI Electoral Regulations, students with an active course retake or failing grade are ineligible to contest for student leadership positions.",
+                'priority' => 'high',
+                'action_url' => route('student.evoting.my-applications'),
+            ]);
+
+            return redirect()->route('student.evoting.my-applications')
+                ->with('error', "Application Vetted Out: Your application for {$position->title} was automatically vetted out and disqualified because an active course retake or failed course was detected on your academic record.");
+        }
+
+        // Notify Admins & Electoral Commission if clean
         $commissionUsers = $session->commissionMembers()->with('user')->get();
         foreach ($commissionUsers as $commMember) {
             if ($commMember->user) {
@@ -180,14 +201,36 @@ class EVotingController extends Controller
                     'user_id' => $commMember->user->id,
                     'type' => 'info',
                     'title' => 'New Candidate Application Submitted',
-                    'message' => "{$user->name} applied for {$position->title} in {$session->title}. Ready for vetting.",
+                    'message' => "{$user->name} applied for {$position->title} in {$session->title}. Academic vetting passed; ready for review.",
                     'priority' => 'high',
                 ]);
             }
         }
 
         return redirect()->route('student.evoting.my-applications')
-            ->with('success', 'Your candidacy application has been submitted successfully! The Electoral Commission will review and vet your application.');
+            ->with('success', 'Your candidacy application has been submitted successfully! Academic check passed; the Electoral Commission will review your portfolio.');
+    }
+
+    private function checkStudentHasRetake($userId)
+    {
+        $hasRetakeEnrollment = \App\Models\CourseEnrollment::where('user_id', $userId)
+            ->where(function($q) {
+                $q->where('enrollment_type', 'retake')
+                  ->orWhere('status', 'failed')
+                  ->orWhere('letter_grade', 'F');
+            })->exists();
+
+        $hasFailingGrade = \App\Models\Grade::where('user_id', $userId)
+            ->where(function($q) {
+                $q->where('letter_grade', 'F')
+                  ->orWhere('percentage', '<', 50);
+            })->exists();
+
+        $hasRetakeFee = \App\Models\Fee::where('user_id', $userId)
+            ->whereIn('type', ['retake', 'retake_fee', 'missed_paper'])
+            ->exists();
+
+        return $hasRetakeEnrollment || $hasFailingGrade || $hasRetakeFee;
     }
 
     public function myApplications()

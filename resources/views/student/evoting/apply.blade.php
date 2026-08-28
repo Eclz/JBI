@@ -24,6 +24,21 @@
         </div>
     @endif
 
+    @if(isset($hasRetake) && $hasRetake)
+        <div class="alert alert-warning border-start border-warning border-4 shadow-sm mb-4">
+            <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-warning"></i>
+                <div>
+                    <h5 class="fw-bold mb-1">Academic Retake / Failed Course Warning</h5>
+                    <p class="mb-0 small">
+                        Our academic system has detected an active course retake, failing grade, or retake fee invoice on your profile. 
+                        Under JBI Electoral Regulations, candidate applications from students with course retakes will be <strong>automatically vetted out and disqualified</strong> upon submission.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
