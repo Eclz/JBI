@@ -72,30 +72,11 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="password" class="form-label">New Password (leave blank to keep current)</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                               id="password" name="password">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                    @error('password')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="password_confirmation" class="form-label">Confirm New Password</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control"
-                                               id="password_confirmation" name="password_confirmation">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirmation" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
+                            <div class="col-12">
+                                <div class="alert alert-light border d-flex align-items-center mb-3" role="alert">
+                                    <i class="bi bi-shield-lock text-primary me-2 fs-5"></i>
+                                    <div>
+                                        <strong>Password Management:</strong> Passwords cannot be directly viewed or edited by administrators. The user can reset their own password via the "Forgot Password" link on the login page, or you can send them a reset link from their profile page.
                                     </div>
                                 </div>
                             </div>

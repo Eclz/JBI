@@ -364,28 +364,19 @@
                             </div>
                         </div>
 
-                        <!-- Security -->
+                        <!-- Security & Status -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="border-bottom pb-2 mb-3">Security & Status</h5>
+                                <h5 class="border-bottom pb-2 mb-3">Account Status</h5>
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">New Password</label>
-                                <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                       id="password" name="password"
-                                       placeholder="Leave blank to keep current password">
-                                @error('password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Minimum 8 characters. Leave blank to keep current password.</div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="password_confirmation" class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control"
-                                       id="password_confirmation" name="password_confirmation"
-                                       placeholder="Confirm new password">
+                            <div class="col-md-12 mb-3">
+                                <div class="alert alert-light border d-flex align-items-center mb-3">
+                                    <i class="bi bi-shield-lock text-primary me-2 fs-5"></i>
+                                    <div>
+                                        <strong>Password Management:</strong> Faculty passwords are confidential and managed by the faculty member. You can send a password reset link from their profile if needed.
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="col-md-6 mb-3">
@@ -488,30 +479,6 @@ document.addEventListener('DOMContentLoaded', function() {
         $(departmentSelect).on('change', function() {
             filterCoursesByDepartment($(this).val());
         });
-    }
-
-    // Password confirmation validation
-    const passwordField = document.getElementById('password');
-    const confirmPasswordField = document.getElementById('password_confirmation');
-
-    function validatePasswordMatch() {
-        if (!passwordField || !confirmPasswordField) return;
-        const passVal = passwordField.value.trim();
-        const confVal = confirmPasswordField.value.trim();
-        if (passVal !== '' || confVal !== '') {
-            if (passVal !== confVal) {
-                confirmPasswordField.setCustomValidity('Passwords do not match');
-            } else {
-                confirmPasswordField.setCustomValidity('');
-            }
-        } else {
-            confirmPasswordField.setCustomValidity('');
-        }
-    }
-
-    if (passwordField && confirmPasswordField) {
-        passwordField.addEventListener('input', validatePasswordMatch);
-        confirmPasswordField.addEventListener('input', validatePasswordMatch);
     }
 });
 </script>

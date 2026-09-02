@@ -419,25 +419,26 @@ function toggleStatus(userId) {
 }
 
 function resetPassword(userId) {
-    if (confirm('Are you sure you want to reset this faculty member\'s password?')) {
+    if (confirm('Send a secure password setup / reset email link to this faculty member?')) {
         fetch(`/admin/users/${userId}/reset-password`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
             },
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Password reset successfully. New password: ' + data.new_password);
+                alert(data.message || 'Password setup link has been emailed successfully.');
             } else {
-                alert('Error: ' + (data.error || 'Failed to reset password'));
+                alert('Error: ' + (data.error || 'Failed to send password setup link'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while resetting the password');
+            alert('An error occurred while sending the password setup link');
         });
     }
 }

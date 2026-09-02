@@ -71,30 +71,11 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="password" class="form-label">Password *</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                               id="password" name="password" required>
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                    @error('password')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="password_confirmation" class="form-label">Confirm Password *</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control"
-                                               id="password_confirmation" name="password_confirmation" required>
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirmation" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
+                            <div class="col-12">
+                                <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+                                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                    <div>
+                                        <strong>Automated Password Setup:</strong> The administrator does not set a password. Upon saving, a secure account activation link will be emailed to the user to verify their account and create their own password.
                                     </div>
                                 </div>
                             </div>

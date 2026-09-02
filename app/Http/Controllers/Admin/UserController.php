@@ -13,6 +13,10 @@ use App\Models\FacultyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Mail\AccountCreatedSetupPassword;
 
 class UserController extends Controller
 {
@@ -84,7 +88,7 @@ class UserController extends Controller
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => Hash::make(Str::random(32)),
                 'role' => $role->guard_role,
                 'role_id' => $role->id,
                 'phone' => $request->phone,
@@ -94,6 +98,8 @@ class UserController extends Controller
                 'emergency_contact' => $request->emergency_contact,
                 'emergency_phone' => $request->emergency_phone,
                 'is_active' => $request->input('status', 'active') === 'active',
+                'email_verified_at' => null,
+                'must_change_password' => false,
             ];
 
             if ($request->hasFile('profile_picture')) {
@@ -125,12 +131,20 @@ class UserController extends Controller
 
             DB::commit();
 
+            // Send account creation invitation email with password setup token
+            try {
+                $token = Password::broker()->createToken($user);
+                Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
+            } catch (\Throwable $mailEx) {
+                \Illuminate\Support\Facades\Log::warning('Failed to send account setup email: ' . $mailEx->getMessage());
+            }
+
             return redirect()->route('admin.users.show', $user)
-                ->with('success', 'User created successfully.');
+                ->with('success', "User created successfully. An activation link has been sent to {$user->email} to set their password.");
 
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Failed to create user.']);
+            return back()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()]);
         }
     }
 
@@ -170,10 +184,6 @@ class UserController extends Controller
                 'is_active' => $request->input('status', 'active') === 'active',
             ];
 
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->password);
-            }
-
             if ($request->hasFile('profile_picture')) {
                 if ($user->profile_picture) {
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_picture);
@@ -191,6 +201,45 @@ class UserController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Failed to update user.']);
+        }
+    }
+
+    /**
+     * Send or resend password setup / reset link to user.
+     */
+    public function sendResetLink(User $user)
+    {
+        return $this->resetPassword($user, request());
+    }
+
+    /**
+     * Trigger password reset link to user's email.
+     */
+    public function resetPassword(User $user, Request $request)
+    {
+        $this->authorize('update', $user);
+
+        try {
+            $token = Password::broker()->createToken($user);
+            Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Password setup link sent to {$user->email} successfully.",
+                ]);
+            }
+
+            return back()->with('success', "Password setup & activation link sent to {$user->email} successfully.");
+        } catch (\Throwable $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to send setup link: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return back()->withErrors(['error' => 'Failed to send setup link: ' . $e->getMessage()]);
         }
     }
 

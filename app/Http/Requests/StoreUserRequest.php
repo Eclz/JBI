@@ -37,13 +37,6 @@ class StoreUserRequest extends FormRequest
                 'max:255',
                 'unique:users,email',
             ],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'max:255',
-                'confirmed',
-            ],
             'role' => [
                 'nullable',
                 'string',

@@ -474,4 +474,16 @@ class User extends Authenticatable
     {
         return 'JBI@' . \Illuminate\Support\Str::random(8);
     }
+
+    /**
+     * Send password reset notification with custom branded template.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        try {
+            \Illuminate\Support\Facades\Mail::to($this->email)->send(new \App\Mail\ResetPasswordMail($this, $token));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send password reset email: ' . $e->getMessage());
+        }
+    }
 }
