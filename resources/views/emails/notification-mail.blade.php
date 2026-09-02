@@ -1,103 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $notification->title ?? 'New Notification' }} - JBI University</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .email-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #3a7bd5;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3a7bd5;
-            margin-bottom: 10px;
-        }
-        .alert-badge {
-            background-color: #3a7bd5;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            display: inline-block;
-        }
-        .details-box {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-            border-left: 4px solid #3a7bd5;
-        }
-        .action-button {
-            display: inline-block;
-            background-color: #3a7bd5;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-        .action-button:hover {
-            background-color: #2a6bc5;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <div class="logo">JBI University</div>
-            <div class="alert-badge">New Notification</div>
-            <h2>{{ $notification->title ?? 'New Update' }}</h2>
-        </div>
+@extends('emails.layouts.master')
 
-        <p>Dear {{ $user->first_name ?? $user->name }},</p>
+@section('title', ($notification->title ?? 'New Notification') . ' - ' . config('app.name', 'JBI University'))
 
-        <div class="details-box">
-            <p style="margin: 0; font-size: 16px; font-weight: 500;">{{ $notification->message }}</p>
-        </div>
+@section('header_badge')
+    <div style="margin-top: 14px;">
+        @php
+            $priority = strtolower($notification->priority ?? 'normal');
+            $badgeClass = match($priority) {
+                'urgent' => 'badge-urgent',
+                'high' => 'badge-high',
+                'success' => 'badge-success',
+                default => 'badge-primary',
+            };
+            $priorityLabel = match($priority) {
+                'urgent' => '⚡ Urgent Notice',
+                'high' => '⚠️ High Priority',
+                'low' => 'ℹ️ Low Priority',
+                default => '📌 Official Notification',
+            };
+        @endphp
+        <span class="badge {{ $badgeClass }}">{{ $priorityLabel }}</span>
+    </div>
+@endsection
 
-        @if(!empty($notification->action_url))
-        <div style="text-align: center;">
-            <a href="{{ $notification->action_url }}" class="action-button">View Details</a>
-        </div>
-        @endif
+@section('content')
+    @php
+        $roleName = $user->role_name ?? ucfirst($user->role ?? 'User');
+        $userRole = strtolower($user->role ?? '');
+        $firstName = $user->first_name ?? $user->name ?? 'User';
+        
+        $roleGreeting = match(true) {
+            $userRole === 'faculty' || str_contains($roleName, 'Lecturer') || str_contains($roleName, 'Professor') => "Dear Faculty Member {$firstName}",
+            $userRole === 'admin' || $userRole === 'super_admin' => "Dear Administrator {$firstName}",
+            str_contains($roleName, 'Dean') || str_contains($roleName, 'Head') => "Dear {$firstName} ({$roleName})",
+            str_contains($roleName, 'Officer') || str_contains($roleName, 'Staff') || str_contains($roleName, 'Registrar') => "Dear {$firstName} ({$roleName})",
+            $userRole === 'student' => "Dear {$firstName}",
+            default => "Dear {$firstName}",
+        };
+    @endphp
 
-        <p>Best regards,<br>
-        <strong>JBI University System</strong></p>
+    <h2 class="greeting">{{ $roleGreeting }},</h2>
 
-        <div class="footer">
-            <p>&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
-            <p>This is an automated notification from the JBI University Management System. You can view all your notifications by logging into your student dashboard.</p>
+    <p style="margin-bottom: 16px; color: #4a5568; font-size: 15px;">
+        You have received a new institutional notification on your <strong>{{ config('app.name', 'JBI University') }}</strong> account.
+    </p>
+
+    <!-- Notification Content Card -->
+    <div class="callout @if($priority === 'urgent') callout-urgent @elseif($priority === 'high') callout-warning @endif">
+        <h3 style="margin: 0 0 10px 0; font-size: 17px; color: #1e293b;">
+            {{ $notification->title ?? 'System Notification' }}
+        </h3>
+        <div style="font-size: 15px; color: #334155; line-height: 1.6; white-space: pre-line;">
+            {{ $notification->message }}
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Additional Metadata Table -->
+    <table role="presentation" class="meta-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>Notification Type</td>
+            <td><strong>{{ ucfirst(str_replace('_', ' ', $notification->type ?? 'General')) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Priority Level</td>
+            <td>
+                <span style="font-weight: 600; text-transform: capitalize; color: @if($priority === 'urgent') #dc2626 @elseif($priority === 'high') #d97706 @else #3b5bdb @endif;">
+                    {{ $priority }}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td>Recipient Role</td>
+            <td>{{ $roleName }}</td>
+        </tr>
+        <tr>
+            <td>Date & Time</td>
+            <td>{{ $notification->created_at ? $notification->created_at->format('M d, Y \a\t h:i A') : date('M d, Y \a\t h:i A') }}</td>
+        </tr>
+    </table>
+
+    <!-- CTA Button -->
+    @if(!empty($notification->action_url))
+    <div class="button-wrapper">
+        <a href="{{ $notification->action_url }}" class="btn-primary" target="_blank">
+            View Details in Portal &rarr;
+        </a>
+    </div>
+    @else
+    <div class="button-wrapper">
+        <a href="{{ config('app.url', url('/')) }}/dashboard" class="btn-primary" target="_blank">
+            Go to Your Dashboard &rarr;
+        </a>
+    </div>
+    @endif
+
+    <p style="font-size: 13px; color: #64748b; margin-top: 25px; line-height: 1.5;">
+        You can review, manage, and archive all past notifications by navigating to the <strong>Notifications</strong> tab within your account dashboard.
+    </p>
+@endsection

@@ -26,8 +26,17 @@ class NotificationMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $priority = strtolower($this->notification->priority ?? 'normal');
+        $prefix = match ($priority) {
+            'urgent' => '[URGENT] ',
+            'high' => '[IMPORTANT] ',
+            default => '',
+        };
+
+        $subject = $prefix . ($this->notification->title ?: 'New Notification from ' . config('app.name', 'JBI University'));
+
         return new Envelope(
-            subject: $this->notification->title ?: 'New Notification from JBI University',
+            subject: $subject,
         );
     }
 
@@ -35,6 +44,10 @@ class NotificationMail extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.notification-mail',
+            with: [
+                'notification' => $this->notification,
+                'user' => $this->user,
+            ],
         );
     }
 }

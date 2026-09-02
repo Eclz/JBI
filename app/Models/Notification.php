@@ -85,7 +85,12 @@ class Notification extends Model
             try {
                 $user = $notification->user;
                 if ($user && !empty($user->email)) {
-                    if (in_array($user->role, ['student', 'applicant'])) {
+                    // Check user preferences if present (crucial/high/urgent always bypass preference)
+                    $priority = strtolower($notification->priority ?? 'normal');
+                    $isCrucial = in_array($priority, ['urgent', 'high']);
+                    $emailPref = $user->preferences['email_notifications'] ?? true;
+
+                    if ($isCrucial || $emailPref) {
                         \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\NotificationMail($notification, $user));
                         $notification->updateQuietly(['email_sent' => true]);
                     }
