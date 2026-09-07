@@ -482,6 +482,59 @@
                 top: var(--mobile-header-height);
             }
         }
+
+        /* Print Styles: Hide all navigation and chrome so printed pages are clean */
+        @media print {
+            .sidebar,
+            .sidebar-overlay,
+            .mobile-nav,
+            .top-header,
+            .navbar,
+            .footer,
+            .no-print,
+            .btn,
+            .quick-actions,
+            .dropdown,
+            .alert {
+                display: none !important;
+            }
+
+            html, body {
+                background: #fff !important;
+                color: #000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                min-height: auto !important;
+            }
+
+            body.guest-user,
+            body.authenticated-user {
+                padding-top: 0 !important;
+            }
+
+            #app,
+            .main-content,
+            .content-area,
+            .guest-content-area,
+            .content-wrapper {
+                margin: 0 !important;
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                display: block !important;
+            }
+
+            .container,
+            .container-fluid {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
     </style>
 </head>
 <body class="{{ auth()->guest() ? 'guest-user' : 'authenticated-user' }}">

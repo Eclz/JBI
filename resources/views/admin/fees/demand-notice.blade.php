@@ -40,14 +40,14 @@
             </div>
 
             <div class="row mb-4">
-                <div class="col-md-6">
+                <div class="col-6">
                     <h6 class="mb-2">Student Information</h6>
                     <div>{{ $fee->student?->full_name ?: ($fee->student?->first_name . ' ' . $fee->student?->last_name) }}</div>
                     <div>{{ $fee->student?->email }}</div>
                     <div>Admission #: {{ $fee->student?->studentProfile?->admission_number ?? 'N/A' }}</div>
                     <div>Department: {{ $fee->student?->studentProfile?->department?->name ?? 'N/A' }}</div>
                 </div>
-                <div class="col-md-6 text-md-end">
+                <div class="col-6 text-end">
                     <h6 class="mb-2">Fee Details</h6>
                     <div>{{ $fee->feeStructure?->name ?? 'N/A' }}</div>
                     <div>Academic Year: {{ $fee->feeStructure?->academicYear?->name ?? 'N/A' }}</div>
@@ -78,23 +78,25 @@
                             <td class="text-end text-warning">+{{ $currencyCode }} {{ number_format($fee->late_fee, 2) }}</td>
                         </tr>
                         <tr class="table-light">
-                            <td><strong>Total Payable</strong></td>
+                            <td><strong>Total Billed Amount</strong></td>
                             <td class="text-end"><strong>{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <td>Amount Paid</td>
-                            <td class="text-end">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td>
+                            <td>Total Amount Paid to Date</td>
+                            <td class="text-end text-success">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td>
                         </tr>
-                        <tr class="table-danger">
-                            <td><strong>Outstanding Balance</strong></td>
-                            <td class="text-end"><strong>{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</strong></td>
+                        <tr class="table-warning">
+                            <td><strong>Outstanding Balance / Payable</strong></td>
+                            <td class="text-end text-danger"><strong>{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</strong></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="small text-muted mb-4">
-                Please settle the outstanding balance on or before the due date to avoid additional penalties and restrictions.
+            <div class="mb-4">
+                <h6>Payment Instructions</h6>
+                <p class="small text-muted mb-1">Please settle the outstanding balance immediately through authorized university bank accounts or online payment channels to avoid registration holds or examination restrictions.</p>
+                <p class="small text-muted mb-0">Bring this notice and proof of payment to the Finance Office for verification and receipt issuance.</p>
             </div>
 
             <div class="small mb-4">
@@ -103,15 +105,15 @@
             </div>
 
             <div class="row mt-4 pt-3 border-top">
-                <div class="col-md-4 text-center">
+                <div class="col-4 text-center">
                     <div class="signature-line"></div>
                     <div class="small text-muted">Student Signature</div>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-4 text-center">
                     <div class="signature-line"></div>
                     <div class="small text-muted">Finance Officer</div>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-4 text-center">
                     <div class="stamp-box">OFFICIAL STAMP</div>
                 </div>
             </div>
@@ -126,9 +128,20 @@
 .signature-line { height: 34px; border-bottom: 1px solid #333; margin-bottom: 8px; }
 .stamp-box { border: 1px dashed #777; min-height: 56px; padding: 14px 8px; font-size: 12px; color: #666; }
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm;
+    }
     .no-print { display: none !important; }
     body { background: #fff !important; }
-    .container-fluid { padding: 1rem !important; }
+    .container-fluid, .receipt-page { padding: 0 !important; margin: 0 !important; }
+    .printable-receipt {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .card-body { padding: 1.5rem !important; }
 }
 </style>
 @endpush
