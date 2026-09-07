@@ -13,11 +13,11 @@
                     <p class="text-muted mb-0">Manage student records and academic information</p>
                 </div>
                 <div class="d-flex gap-2">
-                    @if(auth()->user()->hasPermission('students', 'create'))
+                    @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="bi bi-upload"></i> Import Students
                     </button>
-                    <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
+                    <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i> Add New Student
                     </a>
                     @endif
@@ -388,8 +388,8 @@
                                             <i class="bi bi-people fs-1 text-muted mb-3"></i>
                                             <h5 class="text-muted">No students found</h5>
                                             <p class="text-muted mb-3">Get started by adding your first student</p>
-                                            @if(auth()->user()->hasPermission('students', 'create'))
-                                            <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
+                                            @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
+                                            <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
                                                 <i class="bi bi-plus-lg"></i> Add Student
                                             </a>
                                             @endif

@@ -334,9 +334,9 @@
                         $colClass = $actionCount > 0 ? 'col-md-' . (12 / $actionCount) : 'col-12';
                     @endphp
                     <div class="row g-3">
-                        @if(auth()->user()->hasPermission('students', 'create'))
+                        @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
                         <div class="{{ $colClass }}">
-                            <a href="{{ route('admin.students.create') }}" class="btn btn-outline-primary w-100">
+                            <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-primary w-100">
                                 <i class="bi bi-person-plus me-2"></i>Add Student
                             </a>
                         </div>

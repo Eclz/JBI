@@ -10,11 +10,11 @@
         </h1>
         <p class="text-muted mb-0">Manage student records and profiles</p>
     </div>
-    @can('create', App\Models\StudentProfile::class)
-        <a href="{{ route('students.create') }}" class="btn btn-primary">
+    @if(auth()->check() && (auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view') || auth()->user()->isAdmin()))
+        <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-2"></i>Add Student
         </a>
-    @endcan
+    @endif
 </div>
 
 <!-- Filters -->
@@ -163,11 +163,11 @@
                 <i class="bi bi-people display-1 text-muted"></i>
                 <h4 class="mt-3">No students found</h4>
                 <p class="text-muted">No students match your current filters.</p>
-                @can('create', App\Models\StudentProfile::class)
-                    <a href="{{ route('students.create') }}" class="btn btn-primary">
+                @if(auth()->check() && (auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view') || auth()->user()->isAdmin()))
+                    <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-2"></i>Add First Student
                     </a>
-                @endcan
+                @endif
             </div>
         @endif
     </div>

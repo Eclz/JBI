@@ -653,7 +653,7 @@
                         <!-- Quick action buttons for common tasks -->
                         <div class="quick-actions d-none d-xl-flex">
                             @if(Auth::user()->role === 'admin' || Auth::user()->role === 'faculty')
-                                <a href="{{ route('admin.students.create') }}" class="quick-action-btn" title="Add Student">
+                                <a href="{{ route('admin.applications.index') }}" class="quick-action-btn" title="Add Student (Applications)">
                                     <i class="bi bi-person-plus"></i>
                                 </a>
                                 <a href="{{ route('admin.courses.create') }}" class="quick-action-btn" title="Add Course">
