@@ -110,22 +110,32 @@ class UserController extends Controller
 
             // Create role-specific profile
             if ($role->guard_role === 'student') {
+                $deptId = $request->department_id ?: Department::where('is_active', true)->value('id');
+                $admissionNumber = $request->student_id ?: ('ADM' . date('Y') . str_pad($user->id, 4, '0', STR_PAD_LEFT));
                 StudentProfile::create([
                     'user_id' => $user->id,
-                    'student_id' => $request->student_id,
-                    'department_id' => $request->department_id,
-                    'program' => $request->program,
-                    'admission_date' => $request->admission_date,
-                    'academic_status' => 'active',
+                    'admission_number' => $admissionNumber,
+                    'student_id' => $request->student_id ?: $admissionNumber,
+                    'department_id' => $deptId,
+                    'program' => $request->program ?: 'General Studies',
+                    'admission_date' => $request->admission_date ?: now(),
+                    'status' => 'active',
+                    'application_status' => 'approved',
                 ]);
             } elseif ($role->guard_role === 'faculty') {
+                $deptId = $request->department_id ?: Department::where('is_active', true)->value('id');
                 FacultyProfile::create([
                     'user_id' => $user->id,
-                    'employee_id' => $request->employee_id,
-                    'department_id' => $request->department_id,
-                    'position' => $request->position,
-                    'hire_date' => $request->hire_date,
+                    'employee_id' => $request->employee_id ?: ('EMP' . str_pad($user->id, 4, '0', STR_PAD_LEFT)),
+                    'department_id' => $deptId,
+                    'designation' => $role->name ?: 'Lecturer',
+                    'position' => $role->name ?: 'Lecturer',
+                    'qualification' => 'Master\'s / Bachelor\'s',
+                    'joining_date' => $request->hire_date ?: now(),
+                    'hire_date' => $request->hire_date ?: now(),
+                    'employment_type' => 'full_time',
                     'employment_status' => 'active',
+                    'status' => 'active',
                 ]);
             }
 
@@ -142,9 +152,10 @@ class UserController extends Controller
             return redirect()->route('admin.users.show', $user)
                 ->with('success', "User created successfully. An activation link has been sent to {$user->email} to set their password.");
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()]);
+            \Illuminate\Support\Facades\Log::error('Failed to create user: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withInput()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()]);
         }
     }
 
