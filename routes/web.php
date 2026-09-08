@@ -105,7 +105,9 @@ Route::get('/receipts/verify', [ReceiptVerificationController::class, 'showForm'
 Route::post('/receipts/verify', [ReceiptVerificationController::class, 'verify'])->name('receipts.verify.submit');
 
 // Public Application Routes
-Route::redirect('/apply', '/register')->name('applications.create');
+Route::get('/apply', function () {
+    return redirect()->route('register');
+})->name('applications.create');
 Route::post('/apply', [StudentsApplicationController::class, 'store'])->name('applications.store');
 Route::get('/application/success/{application}', [StudentsApplicationController::class, 'success'])->name('applications.success');
 Route::get('/application/payment/{token}', [StudentsApplicationController::class, 'uploadPayment'])->name('applications.upload-payment');

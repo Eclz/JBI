@@ -46,7 +46,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                 <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" height="40" class="me-2">
                 <span class="fw-bold">JBI University</span>
             </a>
@@ -82,7 +82,7 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section">
+    <section class="hero-section" style="background: url('{{ asset('images/jbi-png.png') }}') no-repeat center center; background-size: cover; background-position: center;" height="100px">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
@@ -98,7 +98,7 @@
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="img-fluid">
+                    {{-- <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="img-fluid"> --}}
                 </div>
             </div>
         </div>

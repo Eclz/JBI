@@ -93,7 +93,7 @@ class StudentController extends Controller
             'attendanceRecords.course',
             'feeRecords.feeStructure',
             'studentNotes' => function ($query) {
-                $query->orderBy('created_at', 'desc')->limit(10);
+                $query->with('createdBy')->orderBy('created_at', 'desc');
             }
         ]);
 
@@ -579,5 +579,32 @@ class StudentController extends Controller
         if ($percentage >= 70) return 2.0;
         if ($percentage >= 60) return 1.0;
         return 0.0;
+    }
+
+    public function addNote(Request $request, User $student)
+    {
+        if ($student->role !== 'student') {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|string|in:general,academic,disciplinary,counseling,medical',
+            'priority' => 'required|string|in:low,medium,high,urgent',
+            'note' => 'required|string|max:2000',
+            'is_private' => 'nullable|boolean',
+        ]);
+
+        StudentNote::create([
+            'student_id' => $student->id,
+            'created_by' => auth()->id(),
+            'note' => $validated['note'],
+            'type' => $validated['type'],
+            'priority' => $validated['priority'],
+            'is_private' => $request->boolean('is_private'),
+            'noted_at' => now(),
+        ]);
+
+        return redirect()->to(route('admin.students.show', $student) . '#notes')
+            ->with('success', 'Student note added successfully.');
     }
 }

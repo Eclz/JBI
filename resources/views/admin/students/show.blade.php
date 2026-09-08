@@ -439,14 +439,14 @@
                                                                         @endif
                                                                     </div>
                                                                     <small class="text-muted">
-                                                                        {{ $note->noted_at->format('M d, Y g:i A') }}
+                                                                        {{ $note->noted_at ? $note->noted_at->format('M d, Y g:i A') : $note->created_at->format('M d, Y g:i A') }}
                                                                     </small>
                                                                 </div>
                                                             </div>
                                                             <div class="card-body py-2">
                                                                 <p class="mb-2">{{ $note->note }}</p>
                                                                 <small class="text-muted">
-                                                                    <i class="fas fa-user"></i> {{ $note->createdBy->name }}
+                                                                    <i class="fas fa-user"></i> {{ $note->createdBy?->full_name ?? ($note->createdBy?->name ?? 'Administrator') }}
                                                                 </small>
                                                             </div>
                                                         </div>
@@ -585,9 +585,18 @@
 </style>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-activate tab based on URL hash (e.g. #notes)
+    if (window.location.hash) {
+        const hashTab = document.querySelector(`button[data-bs-target="${window.location.hash}"]`);
+        if (hashTab && typeof bootstrap !== 'undefined') {
+            const tab = new bootstrap.Tab(hashTab);
+            tab.show();
+        }
+    }
+
     // Character counter for note textarea
     const noteTextarea = document.getElementById('note');
     if (noteTextarea) {
@@ -613,4 +622,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+@endpush

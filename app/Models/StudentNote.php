@@ -76,29 +76,29 @@ class StudentNote extends Model
     /**
      * Get priority badge class
      */
-    public function getPriorityBadgeAttribute()
+    public function getPriorityBadgeAttribute(): string
     {
         return match($this->priority) {
-            'low' => 'badge-secondary',
-            'medium' => 'badge-primary',
-            'high' => 'badge-warning',
-            'urgent' => 'badge-danger',
-            default => 'badge-secondary'
+            'low' => 'secondary',
+            'medium' => 'primary',
+            'high' => 'warning',
+            'urgent' => 'danger',
+            default => 'secondary'
         };
     }
 
     /**
      * Get type badge class
      */
-    public function getTypeBadgeAttribute()
+    public function getTypeBadgeAttribute(): string
     {
         return match($this->type) {
-            'general' => 'badge-secondary',
-            'academic' => 'badge-primary',
-            'disciplinary' => 'badge-danger',
-            'counseling' => 'badge-info',
-            'medical' => 'badge-warning',
-            default => 'badge-secondary'
+            'general' => 'secondary',
+            'academic' => 'primary',
+            'disciplinary' => 'danger',
+            'counseling' => 'info',
+            'medical' => 'warning',
+            default => 'secondary'
         };
     }
 }
