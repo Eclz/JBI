@@ -295,6 +295,9 @@ class ApplicationController extends Controller
                 ]);
             }
 
+            // Record verified admission payment into Finance (FeeRecord, Payment, and FinanceRevenue)
+            \App\Services\AdmissionPaymentService::recordAdmissionPayment($application, auth()->id());
+
             DB::commit();
 
             return redirect()->back()
@@ -370,24 +373,30 @@ class ApplicationController extends Controller
                 $application->update(['admission_number' => $admissionNumber]);
             }
 
-            $feeStructureId = SystemSetting::getSetting('registration_fee_structure_id');
-            if ($feeStructureId) {
-                $feeStructure = FeeStructure::find($feeStructureId);
+            // Record admission fee in Finance if verified
+            if ($application->payment_status === 'verified' || $application->payment_verified_at) {
+                \App\Services\AdmissionPaymentService::recordAdmissionPayment($application, auth()->id());
+            } else {
+                $feeStructure = \App\Services\AdmissionPaymentService::getOrCreateAdmissionFeeStructure();
                 if ($feeStructure) {
                     $dueDate = now()->addDays($registrationDays);
-                    FeeRecord::create([
-                        'user_id' => $existingUser->id,
-                        'fee_structure_id' => $feeStructure->id,
-                        'invoice_number' => 'REG-' . strtoupper(Str::random(8)),
-                        'amount' => $feeStructure->amount,
-                        'discount_amount' => 0,
-                        'late_fee' => 0,
-                        'total_amount' => $feeStructure->amount,
-                        'paid_amount' => 0,
-                        'balance_amount' => $feeStructure->amount,
-                        'status' => 'pending',
-                        'due_date' => $dueDate,
-                    ]);
+                    FeeRecord::firstOrCreate(
+                        [
+                            'user_id' => $existingUser->id,
+                            'fee_structure_id' => $feeStructure->id,
+                        ],
+                        [
+                            'invoice_number' => $application->payment_ref ?: ('REG-' . strtoupper(Str::random(8))),
+                            'amount' => $feeStructure->amount,
+                            'discount_amount' => 0,
+                            'late_fee' => 0,
+                            'total_amount' => $feeStructure->amount,
+                            'paid_amount' => 0,
+                            'balance_amount' => $feeStructure->amount,
+                            'status' => 'pending',
+                            'due_date' => $dueDate,
+                        ]
+                    );
                 }
             }
         }
@@ -439,6 +448,9 @@ class ApplicationController extends Controller
             if ($studentUser) {
                 AdmissionWorkflow::activateStudent($studentUser, $application, auth()->id());
             }
+
+            // Ensure admission payment is recorded in Finance
+            \App\Services\AdmissionPaymentService::recordAdmissionPayment($application, auth()->id());
 
             DB::commit();
 
