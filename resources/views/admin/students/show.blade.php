@@ -20,7 +20,7 @@
                         <i class="fas fa-edit"></i> Edit Student
                     </a>
                     @endif
-                    @if(auth()->user()->hasPermission('enrollments', 'create'))
+                    @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                     <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-success">
                         <i class="fas fa-plus"></i> Enroll in Course
                     </a>
@@ -249,9 +249,11 @@
                                         <div class="text-center py-4">
                                             <i class="fas fa-book fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No courses enrolled yet.</p>
+                                            @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                                             <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-primary">
                                                 <i class="fas fa-plus"></i> Enroll in Course
                                             </a>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>

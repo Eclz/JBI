@@ -359,7 +359,7 @@
                                                             <i class="bi bi-credit-card me-2"></i>Fee Records
                                                         </a>
                                                     </li>
-                                                    @if(auth()->user()->hasPermission('enrollments', 'create'))
+                                                    @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.enroll-course', $student) }}">

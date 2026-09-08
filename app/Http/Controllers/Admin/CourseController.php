@@ -139,6 +139,11 @@ class CourseController extends Controller
 
     public function enrollStudent(Request $request, Course $course)
     {
+        $user = auth()->user();
+        if ($user && ($user->roleCatalog?->slug === 'finance_officer' || $user->hasRole('finance_officer') || !$user->hasPermission('enrollments', 'create'))) {
+            return back()->withErrors(['error' => 'Finance staff are not authorized to enroll students in courses.']);
+        }
+
         $request->validate([
             'student_id' => 'required|exists:users,id',
         ]);

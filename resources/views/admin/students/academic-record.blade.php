@@ -208,9 +208,11 @@
                             <i class="fa fa-graduation-cap fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">No Course Enrollments Found</h5>
                             <p class="text-muted">This student has not been enrolled in any courses yet.</p>
+                            @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                             <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-primary">
                                 <i class="fa fa-plus"></i> Enroll in Course
                             </a>
+                            @endif
                         </div>
                     @endif
                 </div>

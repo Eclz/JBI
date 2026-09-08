@@ -302,6 +302,11 @@ class StudentController extends Controller
 
     public function showEnrollCourse(User $student)
     {
+        $user = auth()->user();
+        if ($user && ($user->roleCatalog?->slug === 'finance_officer' || $user->hasRole('finance_officer') || !$user->hasPermission('enrollments', 'create'))) {
+            abort(403, 'Finance staff are not authorized to enroll students in courses.');
+        }
+
         if ($student->role !== 'student') {
             abort(404);
         }
@@ -324,6 +329,11 @@ class StudentController extends Controller
 
     public function enrollCourse(Request $request, User $student)
     {
+        $user = auth()->user();
+        if ($user && ($user->roleCatalog?->slug === 'finance_officer' || $user->hasRole('finance_officer') || !$user->hasPermission('enrollments', 'create'))) {
+            abort(403, 'Finance staff are not authorized to enroll students in courses.');
+        }
+
         if ($student->role !== 'student') {
             abort(404);
         }
