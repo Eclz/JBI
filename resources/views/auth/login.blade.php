@@ -29,9 +29,9 @@
 <body class="font-sans antialiased bg-gray-50">
     <div class="min-h-screen flex">
         <!-- Left Side - Branding -->
-        <div class="hidden lg:flex lg:w-1/2 jbi-gradient relative overflow-hidden">
-            <div class="absolute inset-0 bg-black opacity-20"></div>
-            <div class="relative z-10 flex flex-col justify-center items-center text-white p-12">
+        <div class="hidden lg:flex lg:w-1/2 jbi-gradient relative overflow-hidden" style="background: url('{{ asset('images/login.png') }}') no-repeat center center; background-size: cover; background-position: center;" height="100px">
+            {{-- <div class="absolute inset-0 bg-black opacity-20"></div>
+            <div class="relative z-20 flex flex-col justify-center items-center text-white p-12">
                 <div class="text-center mb-8">
                     <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="h-32 w-auto mx-auto mb-6">
                     <h1 class="text-4xl font-bold mb-4">JBI University</h1>
@@ -45,7 +45,7 @@
                         Your journey in theological education starts here.
                     </p>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Decorative Elements -->
             <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>

@@ -90,22 +90,28 @@
                     <!-- Tabs -->
                     <ul class="nav nav-tabs" id="feesTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="records-tab" data-bs-toggle="tab"
+                            <button class="nav-link {{ !(request('tx_page') || request('transaction_search') || request('transaction_method')) ? 'active' : '' }}" id="records-tab" data-bs-toggle="tab"
                                     data-bs-target="#records" type="button" role="tab">
-                                Fee Records
+                                <i class="fas fa-file-invoice-dollar me-1"></i> Fee Records
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ (request('tx_page') || request('transaction_search') || request('transaction_method')) ? 'active' : '' }}" id="transactions-tab" data-bs-toggle="tab"
+                                    data-bs-target="#transactions" type="button" role="tab">
+                                <i class="fas fa-receipt me-1 text-success"></i> Transactions & Receipts
                             </button>
                         </li>
                         @if(optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="structures-tab" data-bs-toggle="tab"
                                     data-bs-target="#structures" type="button" role="tab">
-                                Fee Structures
+                                <i class="fas fa-layer-group me-1"></i> Fee Structures
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="reports-tab" data-bs-toggle="tab"
                                     data-bs-target="#reports" type="button" role="tab">
-                                Reports
+                                <i class="fas fa-chart-line me-1"></i> Reports
                             </button>
                         </li>
                         @endif
@@ -113,7 +119,7 @@
 
                     <div class="tab-content" id="feesTabContent">
                         <!-- Fee Records Tab -->
-                        <div class="tab-pane fade show active" id="records" role="tabpanel">
+                        <div class="tab-pane fade {{ !(request('tx_page') || request('transaction_search') || request('transaction_method')) ? 'show active' : '' }}" id="records" role="tabpanel">
                             <div class="mt-3">
                                 <!-- Search and Filter -->
                                 <form method="GET" action="{{ route('admin.fees.index') }}" class="mb-3">
@@ -233,6 +239,12 @@
                                                              <i class="fas fa-dollar-sign"></i>
                                                          </a>
                                                          @endif
+                                                         @if($record->status != 'paid' && auth()->user()->hasPermission('fees', 'edit'))
+                                                         <button type="button" class="btn btn-sm btn-outline-warning" title="Send Payment Reminder"
+                                                                 onclick="openSingleReminderModal({{ $record->id }}, {{ $record->user_id }}, '{{ addslashes($record->student->name ?? 'Student') }}', '{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}', '{{ addslashes($record->feeStructure->name ?? 'Fee') }}')">
+                                                             <i class="fas fa-bell"></i>
+                                                         </button>
+                                                         @endif
                                                          @if(auth()->user()->hasPermission('fees', 'edit'))
                                                          <a href="{{ route('admin.fees.records.edit', $record) }}"
                                                             class="btn btn-sm btn-outline-primary" title="Edit">
@@ -267,6 +279,179 @@
                                         of {{ $feeRecords->total() }} results
                                     </div>
                                     {{ $feeRecords->appends(request()->query())->links() }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transactions & Receipts Tab -->
+                        <div class="tab-pane fade {{ (request('tx_page') || request('transaction_search') || request('transaction_method')) ? 'show active' : '' }}" id="transactions" role="tabpanel">
+                            <div class="mt-3">
+                                <!-- Transactions Search & Filter -->
+                                <form method="GET" action="{{ route('admin.fees.index') }}" class="mb-3">
+                                    <input type="hidden" name="tx_page" value="1">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-md-5">
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                                <input type="text" class="form-control" name="transaction_search"
+                                                       value="{{ request('transaction_search') }}"
+                                                       placeholder="Search reference #, transaction ID, or student name/email...">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <select class="form-select" name="transaction_method">
+                                                <option value="">All Payment Methods</option>
+                                                <option value="Bank Transfer" {{ request('transaction_method') == 'Bank Transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                                <option value="Cash" {{ request('transaction_method') == 'Cash' ? 'selected' : '' }}>Cash</option>
+                                                <option value="Online" {{ request('transaction_method') == 'Online' ? 'selected' : '' }}>Online</option>
+                                                <option value="Cheque" {{ request('transaction_method') == 'Cheque' ? 'selected' : '' }}>Cheque</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter me-1"></i> Filter Transactions
+                                            </button>
+                                            <a href="{{ route('admin.fees.index') }}#transactions" class="btn btn-outline-secondary">
+                                                <i class="fas fa-undo me-1"></i> Reset
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Transactions Summary Banner -->
+                                <div class="alert alert-light border d-flex justify-content-between align-items-center py-2 px-3 mb-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-2 bg-success text-white rounded">
+                                            <i class="fas fa-coins fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small text-muted">Total Recorded Transactions</div>
+                                            <div class="fw-bold fs-5 text-dark">{{ $currencyCode }} {{ number_format($totalTransactionsAmount, 2) }}</div>
+                                        </div>
+                                        <div class="border-start ps-3 ms-2">
+                                            <div class="small text-muted">Total Records</div>
+                                            <div class="fw-bold fs-5 text-primary">{{ $transactions->total() }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-info-circle me-1 text-info"></i> Includes standard fee payments and verified admission payments.
+                                    </div>
+                                </div>
+
+                                <!-- Transactions Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover align-middle">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Student</th>
+                                                <th>Purpose / Description</th>
+                                                <th>Reference / Tx ID</th>
+                                                <th>Method</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($transactions as $tx)
+                                            <tr>
+                                                <td>
+                                                    <span class="fw-semibold">
+                                                        {{ $tx->payment_date ? \Carbon\Carbon::parse($tx->payment_date)->format('M d, Y') : $tx->created_at->format('M d, Y') }}
+                                                    </span>
+                                                    <br><small class="text-muted">{{ $tx->created_at->format('h:i A') }}</small>
+                                                </td>
+                                                <td>
+                                                    @if($tx->student)
+                                                        <div>
+                                                            <strong>{{ $tx->student->name }}</strong>
+                                                            <br><small class="text-muted">{{ $tx->student->email }}</small>
+                                                            @if($tx->student->studentProfile?->admission_number)
+                                                                <br><span class="badge bg-secondary font-monospace">{{ $tx->student->studentProfile->admission_number }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted fst-italic">Applicant / User Deleted</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($tx->feeRecord && $tx->feeRecord->feeStructure)
+                                                        <strong>{{ $tx->feeRecord->feeStructure->name }}</strong>
+                                                        @if($tx->notes)
+                                                            <br><small class="text-muted">{{ Str::limit($tx->notes, 40) }}</small>
+                                                        @endif
+                                                    @elseif($tx->notes)
+                                                        <span class="text-dark">{{ Str::limit($tx->notes, 50) }}</span>
+                                                    @else
+                                                        <span class="badge bg-info text-dark">Admission & Application Fee</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border font-monospace">
+                                                        {{ $tx->reference_number ?: ($tx->transaction_id ?: 'N/A') }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                                                        {{ $tx->payment_method ?: 'Bank Transfer' }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="fw-bold text-success fs-6">
+                                                        {{ $currencyCode }} {{ number_format($tx->amount, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i> {{ ucfirst($tx->status ?: 'completed') }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{{ route('admin.fees.payments.receipt', $tx->id) }}"
+                                                           target="_blank"
+                                                           class="btn btn-sm btn-outline-primary"
+                                                           title="Print / View Official Receipt">
+                                                            <i class="fas fa-receipt me-1"></i> Receipt
+                                                        </a>
+                                                        @if($tx->payment_proof)
+                                                        <a href="{{ asset('storage/' . $tx->payment_proof) }}"
+                                                           target="_blank"
+                                                           class="btn btn-sm btn-outline-secondary"
+                                                           title="View Attached Payment Slip / Proof">
+                                                            <i class="fas fa-paperclip"></i>
+                                                        </a>
+                                                        @endif
+                                                        @if($tx->fee_record_id)
+                                                        <a href="{{ route('admin.fees.records.show', $tx->fee_record_id) }}"
+                                                           class="btn btn-sm btn-outline-info"
+                                                           title="View Invoice">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                                                    <p class="text-muted">No finance transactions found</p>
+                                                </td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Transactions Pagination -->
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        Showing {{ $transactions->firstItem() ?? 0 }} to {{ $transactions->lastItem() ?? 0 }}
+                                        of {{ $transactions->total() }} transactions
+                                    </div>
+                                    {{ $transactions->appends(request()->query())->links() }}
                                 </div>
                             </div>
                         </div>
@@ -557,31 +742,118 @@
 
 <!-- Send Reminders Modal -->
 <div class="modal fade" id="sendRemindersModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="POST" action="{{ route('admin.fees.records.send-reminders') }}">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Send Payment Reminders</h5>
+                <input type="hidden" name="fee_record_id" id="reminder_fee_record_id" value="">
+                <div class="modal-header bg-warning bg-opacity-25">
+                    <h5 class="modal-title"><i class="fas fa-bell me-2 text-warning"></i>Send Fee Payment Reminders</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="reminder_type" class="form-label">Reminder Type</label>
-                        <select class="form-control" name="reminder_type" required>
-                            <option value="due_soon">Due Soon</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="all">All Pending</option>
-                        </select>
+                    <!-- Single Student Notice if triggered from a specific invoice row -->
+                    <div id="singleReminderNotice" class="alert alert-info d-none mb-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="fas fa-user-tag me-1"></i> Quick Reminder for: <strong id="noticeStudentName"></strong><br>
+                                <small class="text-muted">Invoice: <span id="noticeFeeName"></span> | Outstanding: <span id="noticeBalance" class="fw-bold text-danger"></span></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetReminderTarget()">Switch to Group</button>
+                        </div>
                     </div>
-                    <div class="mb-3" id="days_before_container">
-                        <label for="days_before_due" class="form-label">Days Before Due Date</label>
-                        <input type="number" class="form-control" name="days_before_due" value="7" min="1" max="30">
+
+                    <!-- Target Selection -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Target Audience <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-4 p-2 bg-light rounded border">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="target_group" value="group" checked onchange="toggleReminderAudience()">
+                                <label class="form-check-label fw-semibold" for="target_group">
+                                    <i class="fas fa-users me-1 text-primary"></i> Filtered Group of Students
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="target_single" value="single" onchange="toggleReminderAudience()">
+                                <label class="form-check-label fw-semibold" for="target_single">
+                                    <i class="fas fa-user me-1 text-success"></i> Single Student
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Student Selector -->
+                    <div id="singleStudentContainer" class="mb-3 d-none">
+                        <label for="reminder_student_id" class="form-label fw-bold">Select Student <span class="text-danger">*</span></label>
+                        <select class="form-select" name="student_id" id="reminder_student_id">
+                            <option value="">-- Choose a student --</option>
+                            @foreach($students as $student)
+                                <option value="{{ $student->id }}">
+                                    {{ $student->name }} ({{ $student->email }}) {{ $student->studentProfile?->admission_number ? ' - Adm: ' . $student->studentProfile->admission_number : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Search and pick any registered student with pending balances.</small>
+                    </div>
+
+                    <!-- Group Filters -->
+                    <div id="groupFiltersContainer">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="reminder_type" class="form-label fw-bold">Reminder Status Filter</label>
+                                <select class="form-select" name="reminder_type" id="reminder_type">
+                                    <option value="all">All Pending / Partial Balances</option>
+                                    <option value="due_soon">Due Soon (Approaching Deadline)</option>
+                                    <option value="overdue">Overdue Only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="days_before_container" style="display: none;">
+                                <label for="days_before_due" class="form-label fw-bold">Days Before Due Date</label>
+                                <input type="number" class="form-control" name="days_before_due" id="days_before_due" value="7" min="1" max="30">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="reminder_department_id" class="form-label fw-semibold">Department</label>
+                                <select class="form-select" name="department_id" id="reminder_department_id">
+                                    <option value="">All Departments</option>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="reminder_program_id" class="form-label fw-semibold">Program</label>
+                                <select class="form-select" name="program_id" id="reminder_program_id">
+                                    <option value="">All Programs</option>
+                                    @foreach($programs as $prog)
+                                        <option value="{{ $prog->id }}">{{ $prog->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="reminder_semester_id" class="form-label fw-semibold">Semester</label>
+                                <select class="form-select" name="semester_id" id="reminder_semester_id">
+                                    <option value="">All Semesters</option>
+                                    @foreach($semesters as $sem)
+                                        <option value="{{ $sem->id }}">{{ $sem->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Message -->
+                    <div class="mb-3">
+                        <label for="custom_message" class="form-label fw-bold">Custom Note / Urgent Instructions (Optional)</label>
+                        <textarea class="form-control" name="custom_message" id="custom_message" rows="3" placeholder="Leave empty for standard reminder, or enter custom instructions (e.g. deadline extension, bank deposit details)..."></textarea>
+                        <small class="text-muted"><i class="fas fa-paper-plane me-1 text-primary"></i> Dispatched via in-app alert, portal direct message, and email notification.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Send Reminders</button>
+                    <button type="submit" class="btn btn-warning"><i class="fas fa-paper-plane me-1"></i> Send Reminders</button>
                 </div>
             </form>
         </div>
@@ -623,6 +895,71 @@ function confirmDeleteStructure(structureId) {
         `;
         document.body.appendChild(form);
         form.submit();
+    }
+}
+
+function openSingleReminderModal(recordId, studentId, studentName, balance, feeName) {
+    const feeInput = document.getElementById('reminder_fee_record_id');
+    if (feeInput) feeInput.value = recordId || '';
+
+    const singleRadio = document.getElementById('target_single');
+    const groupRadio = document.getElementById('target_group');
+    if (singleRadio && groupRadio) {
+        singleRadio.checked = true;
+        groupRadio.checked = false;
+    }
+    toggleReminderAudience();
+
+    const studentSelect = document.getElementById('reminder_student_id');
+    if (studentSelect && studentId) {
+        studentSelect.value = studentId;
+    }
+
+    const nameEl = document.getElementById('noticeStudentName');
+    const feeEl = document.getElementById('noticeFeeName');
+    const balEl = document.getElementById('noticeBalance');
+    const noticeEl = document.getElementById('singleReminderNotice');
+
+    if (nameEl) nameEl.textContent = studentName;
+    if (feeEl) feeEl.textContent = feeName;
+    if (balEl) balEl.textContent = balance;
+    if (noticeEl) noticeEl.classList.remove('d-none');
+
+    const modalEl = document.getElementById('sendRemindersModal');
+    if (modalEl) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function resetReminderTarget() {
+    const feeInput = document.getElementById('reminder_fee_record_id');
+    if (feeInput) feeInput.value = '';
+
+    const singleRadio = document.getElementById('target_single');
+    const groupRadio = document.getElementById('target_group');
+    if (singleRadio && groupRadio) {
+        groupRadio.checked = true;
+        singleRadio.checked = false;
+    }
+
+    const noticeEl = document.getElementById('singleReminderNotice');
+    if (noticeEl) noticeEl.classList.add('d-none');
+
+    toggleReminderAudience();
+}
+
+function toggleReminderAudience() {
+    const singleRadio = document.getElementById('target_single');
+    const isSingle = singleRadio ? singleRadio.checked : false;
+    const singleContainer = document.getElementById('singleStudentContainer');
+    const groupContainer = document.getElementById('groupFiltersContainer');
+
+    if (singleContainer) {
+        singleContainer.classList.toggle('d-none', !isSingle);
+    }
+    if (groupContainer) {
+        groupContainer.classList.toggle('d-none', isSingle);
     }
 }
 

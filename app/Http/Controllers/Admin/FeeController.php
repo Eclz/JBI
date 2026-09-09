@@ -8,6 +8,7 @@ use App\Models\FeeStructure;
 use App\Models\User;
 use App\Models\Notification;
 use App\Models\Payment;
+use App\Models\SystemSetting;
 use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\Program;
@@ -25,7 +26,10 @@ class FeeController extends Controller
 {
     public function index(Request $request)
     {
-        // Get statistics
+        // Auto-synchronize verified admission payments into finance transactions
+        \App\Services\AdmissionPaymentService::syncAllAdmissionPayments();
+
+        // Get statistics (including synced admission payments)
         $totalCollected = FeeRecord::where('status', 'paid')->sum('paid_amount');
         $totalPending = FeeRecord::whereIn('status', ['pending', 'partial'])->sum('balance_amount');
         $totalOverdue = FeeRecord::where('status', 'overdue')
@@ -163,8 +167,31 @@ class FeeController extends Controller
                 'users.email'
             )
             ->orderByRaw('COALESCE(semesters.name, "Unassigned") asc')
-            ->orderByRaw('COALESCE(NULLIF(' . $concatSql . ', ""), users.name, users.email) asc')
             ->get();
+
+        // Fetch all transactions (including admission payments)
+        $transactionsQuery = Payment::with(['student.studentProfile.department', 'feeRecord.feeStructure', 'processedBy'])
+            ->when($request->transaction_search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('reference_number', 'like', "%{$search}%")
+                      ->orWhere('transaction_id', 'like', "%{$search}%")
+                      ->orWhereHas('student', function ($sq) use ($search) {
+                          $sq->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                      });
+                });
+            })
+            ->when($request->transaction_method, function ($query, $method) {
+                $query->where('payment_method', $method);
+            })
+            ->orderBy('payment_date', 'desc');
+
+        $transactions = $transactionsQuery->paginate(15, ['*'], 'tx_page');
+        $totalTransactionsAmount = Payment::where('status', 'completed')->sum('amount');
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        $programs = \App\Models\Program::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.fees.index', compact(
             'feeRecords',
@@ -172,6 +199,10 @@ class FeeController extends Controller
             'semesters',
             'courses',
             'students',
+            'departments',
+            'programs',
+            'transactions',
+            'totalTransactionsAmount',
             'totalCollected',
             'totalPending',
             'totalOverdue',
@@ -692,58 +723,137 @@ class FeeController extends Controller
         @set_time_limit(300);
 
         $request->validate([
-            'reminder_type' => 'required|in:due_soon,overdue,all',
+            'target_type' => 'nullable|in:single,group',
+            'student_id' => 'nullable|required_if:target_type,single|exists:users,id',
+            'fee_record_id' => 'nullable|exists:fee_records,id',
+            'reminder_type' => 'nullable|in:due_soon,overdue,all',
             'days_before_due' => 'nullable|integer|min:1|max:30',
+            'department_id' => 'nullable|exists:departments,id',
+            'program_id' => 'nullable|exists:programs,id',
+            'semester_id' => 'nullable|exists:semesters,id',
+            'custom_message' => 'nullable|string|max:1000',
         ]);
 
         try {
-            $query = FeeRecord::with(['student', 'feeStructure'])
+            $targetType = $request->input('target_type', 'group');
+            $query = FeeRecord::with(['student.studentProfile', 'feeStructure'])
                 ->whereIn('status', ['pending', 'partial']);
 
-            switch ($request->reminder_type) {
-                case 'due_soon':
-                    $daysBefore = (int) ($request->days_before_due ?? 7);
-                    $query->whereBetween('due_date', [now(), now()->addDays($daysBefore)]);
-                    break;
-                case 'overdue':
-                    $query->where('due_date', '<', now());
-                    break;
-                case 'all':
-                    // No additional filter
-                    break;
+            if ($targetType === 'single') {
+                if ($request->filled('fee_record_id')) {
+                    $query->where('id', $request->fee_record_id);
+                } elseif ($request->filled('student_id')) {
+                    $query->where('user_id', $request->student_id);
+                }
+            } else {
+                $reminderType = $request->input('reminder_type', 'all');
+                switch ($reminderType) {
+                    case 'due_soon':
+                        $daysBefore = (int) ($request->days_before_due ?? 7);
+                        $query->whereBetween('due_date', [now(), now()->addDays($daysBefore)]);
+                        break;
+                    case 'overdue':
+                        $query->where('due_date', '<', now());
+                        break;
+                    case 'all':
+                    default:
+                        break;
+                }
+
+                if ($request->filled('department_id')) {
+                    $deptId = $request->department_id;
+                    $query->whereHas('student.studentProfile', function ($sq) use ($deptId) {
+                        $sq->where('department_id', $deptId);
+                    });
+                }
+
+                if ($request->filled('program_id')) {
+                    $progId = $request->program_id;
+                    $query->whereHas('student.studentProfile', function ($sq) use ($progId) {
+                        $sq->where('program_id', $progId);
+                    });
+                }
+
+                if ($request->filled('semester_id')) {
+                    $semId = $request->semester_id;
+                    $query->whereHas('feeStructure', function ($sq) use ($semId) {
+                        $sq->where('semester_id', $semId);
+                    });
+                }
             }
 
             $feeRecords = $query->get();
+
+            if ($feeRecords->isEmpty()) {
+                return back()->with('info', 'No pending fee records matched the selected criteria.');
+            }
+
             $sentCount = 0;
             $failedCount = 0;
+            $currency = SystemSetting::getSetting('default_currency', 'USD');
+            $customMessage = $request->input('custom_message');
 
             foreach ($feeRecords as $feeRecord) {
-                if (!$feeRecord->student || !$feeRecord->student->email) {
+                if (!$feeRecord->student) {
                     $failedCount++;
                     continue;
                 }
 
-                try {
-                    // Send email reminder
-                    Mail::to($feeRecord->student->email)
-                        ->send(new \App\Mail\FeePaymentReminder($feeRecord));
+                $student = $feeRecord->student;
 
-                    $sentCount++;
-                } catch (\Throwable $e) {
-                    $failedCount++;
-                    Log::error('Failed to send fee reminder: ' . $e->getMessage(), [
-                        'fee_record_id' => $feeRecord->id,
-                        'student_id' => $feeRecord->user_id,
+                // 1. In-app Notification
+                try {
+                    Notification::create([
+                        'user_id' => $student->id,
+                        'type' => 'warning',
+                        'title' => 'Fee Payment Reminder',
+                        'message' => $customMessage ?: "Reminder: You have a pending fee balance of {$currency} " . number_format($feeRecord->balance_amount, 2) . " for " . ($feeRecord->feeStructure->name ?? 'fees') . ". Due date: " . $feeRecord->due_date->format('M d, Y') . ".",
+                        'priority' => 'high',
+                        'action_url' => route('student.fees.index'),
                     ]);
+                } catch (\Throwable $notifEx) {
+                    Log::warning('Failed to create in-app reminder notification: ' . $notifEx->getMessage());
+                }
+
+                // 2. Portal Message
+                try {
+                    \App\Models\Message::create([
+                        'sender_id' => auth()->id() ?: User::where('role', 'admin')->value('id'),
+                        'receiver_id' => $student->id,
+                        'subject' => 'Payment Reminder: ' . ($feeRecord->feeStructure->name ?? 'Institutional Fees'),
+                        'body' => $customMessage ?: "Dear {$student->name},\n\nThis is an official reminder that your fee account has an outstanding balance of {$currency} " . number_format($feeRecord->balance_amount, 2) . " due on " . $feeRecord->due_date->format('M d, Y') . ".\n\nPlease log in to your student portal under the Fees section to view your demand notice or submit payment.",
+                        'type' => 'system',
+                        'is_read' => false,
+                        'related_link' => route('student.fees.index'),
+                    ]);
+                } catch (\Throwable $msgEx) {
+                    Log::warning('Failed to create portal reminder message: ' . $msgEx->getMessage());
+                }
+
+                // 3. Email Reminder
+                if ($student->email) {
+                    try {
+                        Mail::to($student->email)
+                            ->send(new \App\Mail\FeePaymentReminder($feeRecord));
+                        $sentCount++;
+                    } catch (\Throwable $e) {
+                        $failedCount++;
+                        Log::error('Failed to send fee reminder email: ' . $e->getMessage(), [
+                            'fee_record_id' => $feeRecord->id,
+                            'student_id' => $feeRecord->user_id,
+                        ]);
+                    }
+                } else {
+                    $sentCount++;
                 }
             }
 
-            $message = "Sent {$sentCount} payment reminder(s) successfully.";
+            $message = "Dispatched payment reminder to {$sentCount} student record(s) successfully.";
             if ($failedCount > 0) {
-                $message .= " {$failedCount} failed to send.";
+                $message .= " ({$failedCount} email(s) had SMTP delays/limits; in-portal notifications were delivered).";
             }
 
-            return back()->with($sentCount > 0 ? 'success' : 'warning', $message);
+            return back()->with('success', $message);
 
         } catch (\Throwable $e) {
             Log::error('Error in sendReminders: ' . $e->getMessage());

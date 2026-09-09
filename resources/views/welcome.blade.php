@@ -220,7 +220,7 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-5 bg-primary text-white">
+    <section class="py-5 bg-primary text-white" style="background-image: url('{{ asset('images/banner-gold.png') }}'); background-repeat: no-repeat; background-size: cover; background-position: center;" height="100px">
         <div class="container text-center">
             <h2 class="display-5 fw-bold mb-4">Ready to Start Your Journey?</h2>
             <p class="lead mb-4">Apply now and take the first step towards your future</p>
