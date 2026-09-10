@@ -249,6 +249,30 @@ class User extends Authenticatable
         return $this->hasMany(StudentNote::class, 'student_id');
     }
 
+    /**
+     * Get the student ID or admission number.
+     */
+    public function getStudentIdAttribute($value)
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+
+        if ($this->relationLoaded('studentProfile')) {
+            return $this->studentProfile?->admission_number ?: null;
+        }
+
+        return $this->studentProfile()->value('admission_number');
+    }
+
+    /**
+     * Alias for student registration/admission number.
+     */
+    public function getStudentNumberAttribute()
+    {
+        return $this->student_id;
+    }
+
     public function roleCatalog(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');

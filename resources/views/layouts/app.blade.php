@@ -652,13 +652,28 @@
 
                         <!-- Quick action buttons for common tasks -->
                         <div class="quick-actions d-none d-xl-flex">
-                            @if(Auth::user()->role === 'admin' || Auth::user()->role === 'faculty')
-                                <a href="{{ route('admin.enrollments.index') }}" class="quick-action-btn" title="Course Enrollments">
-                                    <i class="bi bi-card-checklist"></i>
-                                </a>
-                                <a href="{{ route('admin.courses.create') }}" class="quick-action-btn" title="Add Course">
-                                    <i class="bi bi-journal-plus"></i>
-                                </a>
+                            @if(Auth::user()->isAdmin())
+                                @if(Auth::user()->hasPermission('enrollments', 'view'))
+                                    <a href="{{ route('admin.enrollments.index') }}" class="quick-action-btn" title="Course Enrollments">
+                                        <i class="bi bi-card-checklist"></i>
+                                    </a>
+                                @endif
+                                @if(Auth::user()->hasPermission('courses', 'create'))
+                                    <a href="{{ route('admin.courses.create') }}" class="quick-action-btn" title="Add Course">
+                                        <i class="bi bi-journal-plus"></i>
+                                    </a>
+                                @endif
+                            @elseif(Auth::user()->isFaculty())
+                                @if(Auth::user()->hasPermission('courses', 'view'))
+                                    <a href="{{ route('faculty.courses.index') }}" class="quick-action-btn" title="My Courses">
+                                        <i class="bi bi-journal-text"></i>
+                                    </a>
+                                @endif
+                                @if(Auth::user()->hasPermission('attendance', 'view'))
+                                    <a href="{{ route('faculty.attendance.index') }}" class="quick-action-btn" title="Attendance">
+                                        <i class="bi bi-calendar-check"></i>
+                                    </a>
+                                @endif
                             @endif
                         </div>
 

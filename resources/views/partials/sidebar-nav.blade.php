@@ -454,27 +454,34 @@
         @if(auth()->user()->isFaculty())
         <li class="menu-header">Faculty</li>
 
+        @if(auth()->user()->hasPermission('courses', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.courses.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.courses.index') }}" class="menu-link">
                 <i class="bi bi-journal-text"></i>
                 <span>My Courses</span>
             </a>
         </li>
+        @endif
 
+        @if(auth()->user()->hasPermission('lms', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.lms.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.lms.index') }}" class="menu-link">
                 <i class="bi bi-bar-chart-line"></i>
                 <span>LMS Analytics</span>
             </a>
         </li>
+        @endif
 
+        @if(auth()->user()->hasPermission('courses', 'view') || auth()->user()->hasPermission('lms', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.assignments.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.assignments.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Assignments</span>
             </a>
         </li>
+        @endif
 
+        @if(auth()->user()->hasPermission('exams', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.exams.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.exams.index') }}" class="menu-link">
                 <i class="bi bi-pencil-square"></i>
@@ -488,6 +495,7 @@
                 <span>Quizzes</span>
             </a>
         </li>
+        @endif
 
         <li class="menu-item {{ request()->routeIs('faculty.timetables.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.timetables.index') }}" class="menu-link">
@@ -496,26 +504,32 @@
             </a>
         </li>
 
+        @if(auth()->user()->hasPermission('attendance', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.attendance.*') || request()->routeIs('faculty.courses.attendance.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.attendance.index') }}" class="menu-link">
                 <i class="bi bi-calendar-check"></i>
                 <span>Attendance</span>
             </a>
         </li>
+        @endif
 
+        @if(auth()->user()->hasPermission('grades', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.grading.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.grading.index') }}" class="menu-link">
                 <i class="bi bi-award"></i>
                 <span>Grading</span>
             </a>
         </li>
+        @endif
 
+        @if(auth()->user()->hasPermission('courses', 'view'))
         <li class="menu-item {{ request()->routeIs('faculty.materials.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.materials.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Course Materials</span>
             </a>
         </li>
+        @endif
         @endif
 
         {{-- ==================== STUDENT NAVIGATION ==================== --}}

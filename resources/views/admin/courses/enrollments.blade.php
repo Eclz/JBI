@@ -187,8 +187,8 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="student_id" class="form-label">Select Student</label>
-                        <select class="form-select" id="student_id" name="student_id" required>
-                            <option value="">Choose a student...</option>
+                        <select class="form-select select2" id="student_id" name="student_id" data-placeholder="Search or choose a student..." required>
+                            <option value=""></option>
                             @foreach($availableStudents as $student)
                                 <option value="{{ $student->id }}">
                                     {{ $student->name }}
