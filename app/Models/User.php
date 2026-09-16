@@ -87,6 +87,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the HR employee profile associated with the user.
+     */
+    public function hrProfile(): HasOne
+    {
+        return $this->hasOne(HrEmployee::class);
+    }
+
+    /**
      * Get the courses that the user is enrolled in (for students).
      */
     public function enrolledCourses(): BelongsToMany
@@ -384,6 +392,22 @@ class User extends Authenticatable
     public function isParent(): bool
     {
         return $this->hasRole(self::ROLE_PARENT);
+    }
+
+    /**
+     * Check if user is HR staff
+     */
+    public function isHrStaff(): bool
+    {
+        return $this->hasRole('hr') || $this->hasRole('human_resources') || $this->hasPermission('human_resources', 'view');
+    }
+
+    /**
+     * Check if user is Facilities staff
+     */
+    public function isFacilitiesStaff(): bool
+    {
+        return $this->hasRole('facilities') || $this->hasRole('facilities_staff') || $this->hasPermission('facilities', 'view');
     }
 
     /**
