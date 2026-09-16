@@ -38,6 +38,7 @@
                             <th>Principal Investigator</th>
                             <th>Grant Duration</th>
                             <th class="text-end pe-3">Total Grant Amount</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,10 +52,21 @@
                                 <td>{{ $gnt->principalInvestigator->full_name ?? 'Principal Investigator' }}</td>
                                 <td class="small">{{ $gnt->start_date->format('M Y') }} - {{ $gnt->end_date->format('M Y') }}</td>
                                 <td class="text-end pe-3 fw-bold text-success fs-6">{{ $currencyCode }} {{ number_format($gnt->total_grant_amount, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <a href="{{ route('admin.finance.grants.show', $gnt->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <a href="{{ route('admin.finance.grants.edit', $gnt->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form action="{{ route('admin.finance.grants.destroy', $gnt->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this grant?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">No research grants registered yet.</td>
+                                <td colspan="7" class="text-center py-5 text-muted">No research grants registered yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

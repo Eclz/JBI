@@ -137,7 +137,10 @@ class StudentController extends Controller
             $lastName = trim($request->input('last_name', ''));
             $fullName = trim($firstName . ' ' . $lastName);
 
+            $studentId = $request->student_id ?? $this->generateStudentId();
+
             // Create user
+            $studentRole = \App\Models\Role::where('guard_role', 'student')->first();
             $user = User::create([
                 'first_name' => $firstName ?: null,
                 'last_name' => $lastName ?: null,
@@ -145,6 +148,8 @@ class StudentController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password ?? 'password123'),
                 'role' => 'student',
+                'role_id' => $studentRole?->id,
+                'student_id' => $studentId,
                 'is_active' => true,
                 'must_change_password' => true,
             ]);
@@ -158,7 +163,6 @@ class StudentController extends Controller
 
             $studentProfile = StudentProfile::create([
                 'user_id' => $user->id,
-                'student_id' => $request->student_id ?? $this->generateStudentId(),
                 'admission_number' => $admissionNumber,
                 'department_id' => $resolvedDepartmentId,
                 'program_id' => $program?->id,
@@ -537,7 +541,7 @@ class StudentController extends Controller
     {
         do {
             $studentId = 'STU' . date('Y') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        } while (StudentProfile::where('student_id', $studentId)->exists());
+        } while (User::where('student_id', $studentId)->exists());
 
         return $studentId;
     }

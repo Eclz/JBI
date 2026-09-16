@@ -352,7 +352,7 @@ class ApplicationController extends Controller
             $registrationDays = (int) SystemSetting::getSetting('registration_payment_days', 14);
             $tuitionDays = (int) SystemSetting::getSetting('tuition_payment_days', 30);
 
-            StudentProfile::create([
+            $profile = StudentProfile::create([
                 'user_id' => $existingUser->id,
                 'admission_number' => $admissionNumber,
                 'admission_date' => now(),
@@ -368,6 +368,7 @@ class ApplicationController extends Controller
                 'previous_school' => $application->previous_school,
                 'previous_gpa' => $application->previous_gpa,
             ]);
+            $existingUser->setRelation('studentProfile', $profile);
 
             if (!$application->admission_number) {
                 $application->update(['admission_number' => $admissionNumber]);
@@ -446,6 +447,8 @@ class ApplicationController extends Controller
             }
 
             if ($studentUser) {
+                $studentUser->unsetRelation('studentProfile');
+                $studentUser->load('studentProfile');
                 AdmissionWorkflow::activateStudent($studentUser, $application, auth()->id());
             }
 

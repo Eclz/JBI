@@ -188,6 +188,44 @@ Route::middleware('auth')->group(function () {
     Route::post('/change-password', [PasswordChangeController::class, 'changePassword'])->name('password.change');
 });
 
+// Library module routes
+Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name('library.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\LibraryController::class, 'index'])->name('index');
+    Route::get('/catalogue', [\App\Http\Controllers\LibraryController::class, 'catalogueIndex'])->name('catalogue.index');
+    Route::get('/catalogue/create', [\App\Http\Controllers\LibraryController::class, 'create'])->name('catalogue.create')->middleware('permission:library_catalogue,create');
+    Route::post('/catalogue', [\App\Http\Controllers\LibraryController::class, 'store'])->name('catalogue.store')->middleware('permission:library_catalogue,create');
+    Route::get('/catalogue/{item}/edit', [\App\Http\Controllers\LibraryController::class, 'edit'])->name('catalogue.edit')->middleware('permission:library_catalogue,edit');
+    Route::put('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'update'])->name('catalogue.update')->middleware('permission:library_catalogue,edit');
+    Route::delete('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'destroy'])->name('catalogue.destroy')->middleware('permission:library_catalogue,delete');
+    Route::get('/loans', [\App\Http\Controllers\LibraryController::class, 'loansIndex'])->name('loans.index');
+    Route::get('/my-loans', [\App\Http\Controllers\LibraryController::class, 'myLoans'])->name('my-loans');
+});
+
+// Human resources module routes
+Route::middleware(['auth', 'permission:human_resources,view'])->prefix('human-resources')->name('human-resources.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
+    Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index');
+    Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
+    Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
+    Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
+    Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
+    Route::delete('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'destroy'])->name('staff.destroy')->middleware('permission:hr_core,delete');
+    Route::get('/leaves', [\App\Http\Controllers\HumanResourcesController::class, 'leavesIndex'])->name('leaves.index');
+    Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('sections.show');
+});
+
+// Estates & facilities module routes
+Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')->name('facilities.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FacilitiesController::class, 'index'])->name('index');
+    Route::get('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'roomsIndex'])->name('rooms.index');
+    Route::get('/rooms/create', [\App\Http\Controllers\FacilitiesController::class, 'create'])->name('rooms.create')->middleware('permission:facilities_rooms,create');
+    Route::post('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'store'])->name('rooms.store')->middleware('permission:facilities_rooms,create');
+    Route::get('/rooms/{room}/edit', [\App\Http\Controllers\FacilitiesController::class, 'edit'])->name('rooms.edit')->middleware('permission:facilities_rooms,edit');
+    Route::put('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'update'])->name('rooms.update')->middleware('permission:facilities_rooms,edit');
+    Route::delete('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:facilities_rooms,delete');
+    Route::get('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'bookingsIndex'])->name('bookings.index');
+});
+
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // User Management
@@ -337,44 +375,81 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::middleware('permission:revenue,view')->group(function () {
             Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
             Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store')->middleware('permission:revenue,create');
+            Route::get('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showRevenue'])->name('revenue.show');
+            Route::get('/revenue/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editRevenue'])->name('revenue.edit')->middleware('permission:revenue,update');
+            Route::put('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateRevenue'])->name('revenue.update')->middleware('permission:revenue,update');
+            Route::delete('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyRevenue'])->name('revenue.destroy')->middleware('permission:revenue,delete');
         });
 
         Route::middleware('permission:budgets,view')->group(function () {
             Route::get('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'budgets'])->name('budgets.index');
             Route::post('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBudget'])->name('budgets.store')->middleware('permission:budgets,create');
+            Route::get('/budgets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showBudget'])->name('budgets.show');
+            Route::get('/budgets/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editBudget'])->name('budgets.edit')->middleware('permission:budgets,update');
+            Route::put('/budgets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateBudget'])->name('budgets.update')->middleware('permission:budgets,update');
+            Route::delete('/budgets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyBudget'])->name('budgets.destroy')->middleware('permission:budgets,delete');
         });
 
         Route::middleware('permission:expenses,view')->group(function () {
             Route::get('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'expenses'])->name('expenses.index');
             Route::post('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeExpense'])->name('expenses.store')->middleware('permission:expenses,create');
+            Route::get('/expenses/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showExpense'])->name('expenses.show');
+            Route::get('/expenses/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editExpense'])->name('expenses.edit')->middleware('permission:expenses,update');
+            Route::put('/expenses/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateExpense'])->name('expenses.update')->middleware('permission:expenses,update');
+            Route::delete('/expenses/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyExpense'])->name('expenses.destroy')->middleware('permission:expenses,delete');
             Route::get('/procurement', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'procurement'])->name('procurement.index');
         });
 
         Route::middleware('permission:payables,view')->group(function () {
             Route::get('/payables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payables'])->name('payables.index');
             Route::post('/payables/suppliers', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeSupplier'])->name('payables.suppliers.store')->middleware('permission:payables,create');
+            Route::get('/payables/suppliers/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showSupplier'])->name('payables.suppliers.show');
+            Route::get('/payables/suppliers/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editSupplier'])->name('payables.suppliers.edit')->middleware('permission:payables,update');
+            Route::put('/payables/suppliers/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateSupplier'])->name('payables.suppliers.update')->middleware('permission:payables,update');
+            Route::delete('/payables/suppliers/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroySupplier'])->name('payables.suppliers.destroy')->middleware('permission:payables,delete');
+
             Route::post('/payables/invoices', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeVendorInvoice'])->name('payables.invoices.store')->middleware('permission:payables,create');
+            Route::get('/payables/invoices/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showVendorInvoice'])->name('payables.invoices.show');
+            Route::get('/payables/invoices/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editVendorInvoice'])->name('payables.invoices.edit')->middleware('permission:payables,update');
+            Route::put('/payables/invoices/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateVendorInvoice'])->name('payables.invoices.update')->middleware('permission:payables,update');
+            Route::delete('/payables/invoices/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyVendorInvoice'])->name('payables.invoices.destroy')->middleware('permission:payables,delete');
         });
 
         Route::middleware('permission:receivables,view')->group(function () {
             Route::get('/receivables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'receivables'])->name('receivables.index');
+            Route::get('/receivables/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showReceivable'])->name('receivables.show');
+            
             Route::get('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'grants'])->name('grants.index');
             Route::post('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeGrant'])->name('grants.store')->middleware('permission:receivables,create');
+            Route::get('/grants/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showGrant'])->name('grants.show');
+            Route::get('/grants/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editGrant'])->name('grants.edit')->middleware('permission:receivables,update');
+            Route::put('/grants/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateGrant'])->name('grants.update')->middleware('permission:receivables,update');
+            Route::delete('/grants/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyGrant'])->name('grants.destroy')->middleware('permission:receivables,delete');
         });
 
         Route::middleware('permission:payroll,view')->group(function () {
             Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
             Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate')->middleware('permission:payroll,create');
+            Route::get('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showPayroll'])->name('payroll.show');
+            Route::delete('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyPayroll'])->name('payroll.destroy')->middleware('permission:payroll,delete');
         });
 
         Route::middleware('permission:assets,view')->group(function () {
             Route::get('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'assets'])->name('assets.index');
             Route::post('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeAsset'])->name('assets.store')->middleware('permission:assets,create');
+            Route::get('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showAsset'])->name('assets.show');
+            Route::get('/assets/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editAsset'])->name('assets.edit')->middleware('permission:assets,update');
+            Route::put('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateAsset'])->name('assets.update')->middleware('permission:assets,update');
+            Route::delete('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyAsset'])->name('assets.destroy')->middleware('permission:assets,delete');
         });
 
         Route::middleware('permission:banking,view')->group(function () {
             Route::get('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'banking'])->name('banking.index');
             Route::post('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBankAccount'])->name('banking.store')->middleware('permission:banking,create');
+            Route::get('/banking/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showBankAccount'])->name('banking.show');
+            Route::get('/banking/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editBankAccount'])->name('banking.edit')->middleware('permission:banking,update');
+            Route::put('/banking/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateBankAccount'])->name('banking.update')->middleware('permission:banking,update');
+            Route::delete('/banking/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyBankAccount'])->name('banking.destroy')->middleware('permission:banking,delete');
         });
 
         Route::get('/reports', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'reports'])->name('reports.index')->middleware('permission:financial_statements,view');

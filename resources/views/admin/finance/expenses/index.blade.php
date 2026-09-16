@@ -39,6 +39,7 @@
                             <th>Date</th>
                             <th>Status</th>
                             <th class="text-end pe-3">Amount</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -54,10 +55,21 @@
                                 <td class="small">{{ $exp->expense_date ? $exp->expense_date->format('M d, Y') : '-' }}</td>
                                 <td><span class="badge bg-success px-2.5 py-1.5 text-uppercase">{{ $exp->status }}</span></td>
                                 <td class="text-end pe-3 fw-bold text-danger">{{ $currencyCode }} {{ number_format($exp->amount, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <a href="{{ route('admin.finance.expenses.show', $exp->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <a href="{{ route('admin.finance.expenses.edit', $exp->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form action="{{ route('admin.finance.expenses.destroy', $exp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this record?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No expense records found.</td>
+                                <td colspan="8" class="text-center py-5 text-muted">No expense records found.</td>
                             </tr>
                         @endforelse
                     </tbody>

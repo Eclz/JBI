@@ -176,7 +176,7 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            $role = Role::findOrFail($request->role_id);
+            $role = $request->filled('role_id') ? Role::find($request->role_id) : null;
             $nameParts = preg_split('/\s+/', trim($request->name), 2);
 
             $userData = [
@@ -184,8 +184,6 @@ class UserController extends Controller
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'role' => $role->guard_role,
-                'role_id' => $role->id,
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,
@@ -194,6 +192,11 @@ class UserController extends Controller
                 'emergency_phone' => $request->emergency_phone,
                 'is_active' => $request->input('status', 'active') === 'active',
             ];
+
+            if ($role) {
+                $userData['role'] = $role->guard_role;
+                $userData['role_id'] = $role->id;
+            }
 
             if ($request->hasFile('profile_picture')) {
                 if ($user->profile_picture) {

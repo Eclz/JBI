@@ -43,11 +43,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label for="role_id" class="form-label">Role *</label>
-                                    <select class="form-control @error('role_id') is-invalid @enderror" id="role_id" name="role_id" required>
-                                        <option value="">Select Role</option>
+                                    <label for="role_id" class="form-label">Role <small class="text-muted fw-normal">(Optional)</small></label>
+                                    <select class="form-control @error('role_id') is-invalid @enderror" id="role_id" name="role_id">
+                                        <option value="">Select Role (Leave unchanged)</option>
                                         @foreach($roles as $role)
-                                            <option value="{{ $role->id }}" {{ (int) old('role_id', $user->role_id) === $role->id ? 'selected' : '' }}>
+                                            <option value="{{ $role->id }}" {{ (int) old('role_id', $user->role_id ?? ($role->guard_role === $user->role ? $role->id : null)) === $role->id ? 'selected' : '' }}>
                                                 {{ $role->name }} ({{ ucfirst($role->guard_role) }})
                                             </option>
                                         @endforeach

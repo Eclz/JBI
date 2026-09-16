@@ -51,6 +51,11 @@ class DashboardController extends Controller
         // Role-specific data
         switch ($role) {
             case 'admin':
+                // Check if user is strictly a finance admin and redirect to finance dashboard
+                if (!$user->isSuperAdmin() && $user->hasPermission('finance_hub', 'view') && !$user->hasPermission('academic_setup', 'view')) {
+                    return redirect()->route('admin.finance.dashboard');
+                }
+                
                 $data['totalStudents'] = User::where('role', 'student')->count();
                 $data['totalFaculty'] = User::where('role', 'faculty')->count();
                 $data['totalCourses'] = Course::count();

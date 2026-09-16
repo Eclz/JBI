@@ -46,7 +46,7 @@ class UpdateUserRequest extends FormRequest
                 Rule::in(['admin', 'faculty', 'student', 'parent']),
             ],
             'role_id' => [
-                'required',
+                'nullable',
                 'exists:roles,id',
             ],
             'student_id' => [

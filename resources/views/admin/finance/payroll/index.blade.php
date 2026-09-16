@@ -38,7 +38,8 @@
                             <th>Allowances</th>
                             <th>PAYE Tax (10%)</th>
                             <th>NSSF Pension (5%)</th>
-                            <th class="text-end pe-3">Net Salary</th>
+                            <th>Net Salary</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,11 +51,21 @@
                                 <td>{{ $currencyCode }} {{ number_format($pr->total_allowances, 2) }}</td>
                                 <td class="text-danger">{{ $currencyCode }} {{ number_format($pr->tax_deductions, 2) }}</td>
                                 <td class="text-danger">{{ $currencyCode }} {{ number_format($pr->pension_deductions, 2) }}</td>
-                                <td class="text-end pe-3 fw-bold text-success fs-6">{{ $currencyCode }} {{ number_format($pr->net_salary, 2) }}</td>
+                                <td class="fw-bold text-success fs-6">{{ $currencyCode }} {{ number_format($pr->net_salary, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <a href="{{ route('admin.finance.payroll.show', $pr->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <form action="{{ route('admin.finance.payroll.destroy', $pr->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this payroll record?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No payroll records generated yet. Click "Generate Monthly Payroll" above.</td>
+                                <td colspan="8" class="text-center py-5 text-muted">No payroll records generated yet. Click "Generate Monthly Payroll" above.</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -34,6 +34,14 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
+        // Auto-activate student profile if application is officially admitted or approved with verified payment
+        if ($application && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified'))) {
+            if (!$studentProfile || $studentProfile->status !== 'active') {
+                \App\Services\AdmissionWorkflow::activateStudent($student, $application);
+                $studentProfile = $student->studentProfile()->with('department')->first();
+            }
+        }
+
         $requestedAdmissionView = $request->query('view') === 'admission' || $request->query('view') === 'unadmitted';
         $isAdmitted = ($studentProfile && $studentProfile->status === 'active') || ($application && in_array($application->status, ['admitted', 'approved']));
         $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null) || ($studentProfile && $studentProfile->status === 'active' && !$application);
@@ -293,8 +301,21 @@ class DashboardController extends Controller
         $student = Auth::user();
         $studentProfile = $student->studentProfile;
 
+        $studentEmail = $student->email;
+        $application = \App\Models\Application::where(function($q) use ($studentEmail) {
+                $q->where('email', $studentEmail)->orWhere('email', strtolower(trim($studentEmail)));
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($application && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified'))) {
+            \App\Services\AdmissionWorkflow::activateStudent($student, $application);
+            $studentProfile = $student->studentProfile()->first();
+        }
+
         if ($studentProfile) {
             $studentProfile->admission_acknowledged_at = now();
+            $studentProfile->status = 'active';
             $studentProfile->save();
         }
 

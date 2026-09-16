@@ -425,10 +425,12 @@ class ReportController extends Controller
         $semesterId = $request->get('semester_id');
         $departmentId = $request->get('department_id');
 
-        $query = CourseEnrollment::with(['student', 'course', 'semester']);
+        $query = CourseEnrollment::with(['student', 'course', 'course.semester']);
 
         if ($semesterId) {
-            $query->where('semester_id', $semesterId);
+            $query->whereHas('course', function ($q) use ($semesterId) {
+                $q->where('semester_id', $semesterId);
+            });
         }
 
         if ($departmentId) {
@@ -472,10 +474,11 @@ class ReportController extends Controller
             ->get();
 
         // Enrollments by semester
-        $enrollmentsBySemester = CourseEnrollment::select('semester_id', DB::raw('COUNT(*) as count'))
-            ->with('semester')
-            ->groupBy('semester_id')
-            ->orderBy('semester_id', 'desc')
+        $enrollmentsBySemester = CourseEnrollment::select('courses.semester_id', DB::raw('COUNT(*) as count'))
+            ->join('courses', 'course_enrollments.course_id', '=', 'courses.id')
+            ->with('course.semester')
+            ->groupBy('courses.semester_id')
+            ->orderBy('courses.semester_id', 'desc')
             ->get();
 
         // Get filter options

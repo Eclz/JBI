@@ -38,6 +38,7 @@
                             <th>Branch</th>
                             <th>Currency</th>
                             <th class="text-end pe-3">Current Balance</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -49,10 +50,21 @@
                                 <td class="small text-muted">{{ $acc->branch ?? 'Main Branch' }}</td>
                                 <td><span class="badge bg-secondary">{{ $acc->currency ?? $currencyCode }}</span></td>
                                 <td class="text-end pe-3 fw-bold text-success fs-6">{{ $acc->currency ?? $currencyCode }} {{ number_format($acc->current_balance, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <a href="{{ route('admin.finance.banking.show', $acc->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <a href="{{ route('admin.finance.banking.edit', $acc->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form action="{{ route('admin.finance.banking.destroy', $acc->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this bank account?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">No bank accounts registered.</td>
+                                <td colspan="7" class="text-center py-5 text-muted">No bank accounts registered.</td>
                             </tr>
                         @endforelse
                     </tbody>

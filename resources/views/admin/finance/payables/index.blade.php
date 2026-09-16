@@ -45,7 +45,8 @@
                                     <th class="ps-3">Code</th>
                                     <th>Company Name</th>
                                     <th>Contact</th>
-                                    <th class="text-end pe-3">Invoices</th>
+                                    <th>Invoices</th>
+                                    <th class="text-end pe-3">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -60,13 +61,24 @@
                                             <div>{{ $sup->contact_person }}</div>
                                             <small class="text-muted">{{ $sup->phone }}</small>
                                         </td>
-                                        <td class="text-end pe-3">
+                                        <td>
                                             <span class="badge bg-secondary px-2 py-1">{{ $sup->invoices_count }}</span>
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <div class="btn-group">
+                                                <a href="{{ route('admin.finance.payables.suppliers.show', $sup->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                                <a href="{{ route('admin.finance.payables.suppliers.edit', $sup->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                                <form action="{{ route('admin.finance.payables.suppliers.destroy', $sup->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this supplier?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">No suppliers registered.</td>
+                                        <td colspan="5" class="text-center py-4 text-muted">No suppliers registered.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -91,7 +103,8 @@
                                     <th>Supplier</th>
                                     <th>Due Date</th>
                                     <th>Status</th>
-                                    <th class="text-end pe-3">Amount</th>
+                                    <th>Amount</th>
+                                    <th class="text-end pe-3">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -109,11 +122,22 @@
                                                 <span class="badge bg-danger px-2 py-1">Pending</span>
                                             @endif
                                         </td>
-                                        <td class="text-end pe-3 fw-bold text-dark">{{ $currencyCode }} {{ number_format($inv->amount, 2) }}</td>
+                                        <td class="fw-bold text-dark">{{ $currencyCode }} {{ number_format($inv->amount, 2) }}</td>
+                                        <td class="text-end pe-3">
+                                            <div class="btn-group">
+                                                <a href="{{ route('admin.finance.payables.invoices.show', $inv->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                                <a href="{{ route('admin.finance.payables.invoices.edit', $inv->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                                <form action="{{ route('admin.finance.payables.invoices.destroy', $inv->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this invoice?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">No vendor invoices recorded.</td>
+                                        <td colspan="6" class="text-center py-4 text-muted">No vendor invoices recorded.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

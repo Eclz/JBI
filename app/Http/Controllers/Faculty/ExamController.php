@@ -9,9 +9,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\EnforcesSemesterPolicies;
 
 class ExamController extends Controller
 {
+    use EnforcesSemesterPolicies;
     public function index()
     {
         $exams = Exam::whereHas('course', function ($query) {
@@ -62,6 +64,9 @@ class ExamController extends Controller
         ]);
 
         $course = Course::findOrFail($request->course_id);
+
+        // Prevent action if past semester
+        $this->abortIfPastSemester($course);
 
         // Verify faculty teaches this course
         if ($course->instructor_id !== Auth::id()) {
