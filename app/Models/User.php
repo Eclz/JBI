@@ -411,6 +411,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is Librarian
+     */
+    public function isLibrarian(): bool
+    {
+        return $this->hasRole('librarian') || $this->hasRole('library_staff') || $this->hasPermission('library', 'view');
+    }
+
+    /**
      * Check if user is active.
      */
     public function isActive(): bool
