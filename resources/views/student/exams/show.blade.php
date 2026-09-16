@@ -74,10 +74,16 @@
                         <span class="text-muted">Start Time</span>
                         <span class="fw-semibold">{{ $exam->start_time->format('M d, Y h:i A') }}</span>
                     </div>
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between {{ $exam->room_number ? 'border-bottom pb-2 mb-2' : '' }}">
                         <span class="text-muted">End Time</span>
                         <span class="fw-semibold">{{ $exam->end_time->format('M d, Y h:i A') }}</span>
                     </div>
+                    @if($exam->room_number)
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Room / Venue</span>
+                        <span class="fw-semibold">{{ $exam->room_number }}</span>
+                    </div>
+                    @endif
                 </div>
             </div>
 

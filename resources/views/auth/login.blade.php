@@ -21,6 +21,7 @@
             --jbi-accent: #fbbf24;
         }
 
+
         .jbi-gradient {
             background: linear-gradient(135deg, var(--jbi-primary) 0%, var(--jbi-secondary) 100%);
         }
