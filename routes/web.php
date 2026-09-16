@@ -206,6 +206,7 @@ Route::middleware(['auth', 'permission:human_resources,view'])->prefix('human-re
     Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
     Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index');
     Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
+    Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show');
     Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
     Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
     Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');

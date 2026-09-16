@@ -46,6 +46,7 @@
                                     <span class="badge text-bg-{{ $badgeClass }}">{{ $status }}</span>
                                 </td>
                                 <td class="text-end">
+                                    <a href="{{ route('human-resources.staff.show', $employee) }}" class="btn btn-sm btn-outline-info" title="View Profile"><i class="bi bi-eye"></i> View</a>
                                     @if(auth()->user()->hasPermission('hr_core', 'edit'))
                                         <a href="{{ route('human-resources.staff.edit', $employee) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                     @endif
@@ -64,7 +65,6 @@
                     </tbody>
                 </table>
             </div>
-            {{ $employees->links() }}
         </div>
     </div>
 </div>

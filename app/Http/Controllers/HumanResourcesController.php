@@ -27,8 +27,14 @@ class HumanResourcesController extends Controller
             ->whereNotIn('role', ['student', 'applicant', 'parent', ''])
             ->whereNotNull('role')
             ->latest()
-            ->paginate(15);
+            ->get();
         return view('human-resources.staff', compact('employees'));
+    }
+
+    public function show(User $employee)
+    {
+        $employee->load('hrProfile');
+        return view('human-resources.show', compact('employee'));
     }
 
     public function leavesIndex()
