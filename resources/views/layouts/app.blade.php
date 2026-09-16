@@ -25,6 +25,9 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
     <!-- Custom CSS -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
@@ -914,6 +917,10 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -928,6 +935,31 @@
                     dropdownParent: $(this).closest('.modal').length ? $(this).closest('.modal') : $(document.body)
                 });
             });
+
+            // Global DataTables initialization
+            if ($.fn.DataTable) {
+                // Suppress DataTables alert warnings globally and log to console instead
+                $.fn.dataTable.ext.errMode = 'none';
+                
+                $('.table:not(.no-datatable)').each(function() {
+                    if ($(this).find('thead').length > 0) {
+                        try {
+                            $(this).DataTable({
+                                pageLength: 25,
+                                language: {
+                                    search: "",
+                                    searchPlaceholder: "Search records..."
+                                },
+                                drawCallback: function() {
+                                    $('.dataTables_paginate > .pagination').addClass('pagination-sm');
+                                }
+                            });
+                        } catch (e) {
+                            console.warn("Could not initialize DataTable:", e);
+                        }
+                    }
+                });
+            }
         });
 
         function markAllAsRead(event) {
