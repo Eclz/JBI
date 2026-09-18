@@ -103,7 +103,11 @@ class AssignmentSubmission extends Model
     public function getFilePathAttribute()
     {
         if (is_array($this->submitted_files) && count($this->submitted_files) > 0) {
-            return $this->submitted_files[0];
+            $firstFile = $this->submitted_files[0];
+            if (is_array($firstFile)) {
+                return $firstFile['path'] ?? null;
+            }
+            return $firstFile;
         }
         return null;
     }

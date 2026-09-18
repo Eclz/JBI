@@ -13,17 +13,24 @@ class MessageController extends Controller
     {
         $user = Auth::user();
         $type = $request->query('type', 'all');
+        $replyTo = $request->query('reply_to');
+        $replySubject = $request->query('subject');
 
-        $query = Message::with(['sender', 'receiver'])
-            ->where(function($q) use ($user) {
-                $q->where('receiver_id', $user->id)
-                  ->orWhereNull('receiver_id'); // System broadcast alerts
-            });
+        if ($type === 'sent') {
+            $query = Message::with(['sender', 'receiver'])
+                ->where('sender_id', $user->id);
+        } else {
+            $query = Message::with(['sender', 'receiver'])
+                ->where(function($q) use ($user) {
+                    $q->where('receiver_id', $user->id)
+                      ->orWhereNull('receiver_id'); // System broadcast alerts
+                });
 
-        if ($type === 'personal') {
-            $query->where('type', 'message');
-        } elseif ($type === 'alerts') {
-            $query->whereIn('type', ['assignment_alert', 'quiz_alert', 'exam_alert', 'system']);
+            if ($type === 'personal') {
+                $query->where('type', 'message');
+            } elseif ($type === 'alerts') {
+                $query->whereIn('type', ['assignment_alert', 'quiz_alert', 'exam_alert', 'system']);
+            }
         }
 
         $messages = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -37,7 +44,14 @@ class MessageController extends Controller
             ->select('id', 'first_name', 'last_name', 'email', 'role')
             ->get();
 
-        return view('messages.index', compact('messages', 'unreadCount', 'recipients', 'type'));
+        $groupCourses = collect();
+        if ($user->isAdmin()) {
+            $groupCourses = \App\Models\Course::orderBy('course_code')->get();
+        } elseif ($user->isFaculty()) {
+            $groupCourses = \App\Models\Course::where('instructor_id', $user->id)->orderBy('course_code')->get();
+        }
+
+        return view('messages.index', compact('messages', 'unreadCount', 'recipients', 'type', 'replyTo', 'replySubject', 'groupCourses'));
     }
 
     public function store(Request $request)
@@ -58,6 +72,61 @@ class MessageController extends Controller
         ]);
 
         return redirect()->route('messages.index')->with('success', 'Message sent successfully.');
+    }
+
+    public function storeGroup(Request $request)
+    {
+        $request->validate([
+            'course_id' => 'required|exists:courses,id',
+            'year' => 'nullable|integer|min:1|max:4',
+            'subject' => 'required|string|max:255',
+            'body' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+        $course = \App\Models\Course::findOrFail($request->course_id);
+
+        if (!$user->isAdmin() && $course->instructor_id !== $user->id) {
+            abort(403, 'You are not authorized to send messages to this course group.');
+        }
+
+        $query = User::role('student')
+            ->whereHas('courseEnrollments', function ($q) use ($course) {
+                $q->where('course_id', $course->id)->where('status', 'enrolled');
+            });
+
+        if ($request->filled('year')) {
+            $query->whereHas('studentProfile', function ($q) use ($request) {
+                $q->where('year_of_study', $request->year);
+            });
+        }
+
+        $students = $query->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->withErrors(['group_error' => 'No enrolled students found matching the criteria.'])->withInput();
+        }
+
+        foreach ($students as $student) {
+            Message::create([
+                'sender_id' => $user->id,
+                'receiver_id' => $student->id,
+                'subject' => $request->subject,
+                'body' => $request->body,
+                'type' => 'message',
+                'is_read' => false,
+            ]);
+
+            try {
+                \Illuminate\Support\Facades\Mail::to($student->email)
+                    ->queue(new \App\Mail\CourseGroupMail($student, $user, $course, $request->subject, $request->body));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed sending course group email to {$student->email}: " . $e->getMessage());
+            }
+        }
+
+        $yearText = $request->filled('year') ? " (Year {$request->year})" : "";
+        return redirect()->route('messages.index')->with('success', "Group message sent successfully to " . $students->count() . " students enrolled in {$course->course_code}{$yearText}.");
     }
 
     public function show(Message $message)

@@ -104,9 +104,14 @@
                                     <td><span class="badge bg-warning">{{ $lateCount }}</span></td>
                                     <td><span class="badge bg-danger">{{ $absentCount }}</span></td>
                                     <td>
-                                        <a href="{{ route('faculty.courses.attendance.index', $course) }}" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-eye me-1"></i>Manage
-                                        </a>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('faculty.courses.attendance.show', [$course, 'take' => 1]) }}" class="btn btn-sm btn-success fw-bold">
+                                                <i class="bi bi-check2-square me-1"></i>Take Attendance
+                                            </a>
+                                            <a href="{{ route('faculty.courses.attendance.show', $course) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-clock-history me-1"></i>History
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

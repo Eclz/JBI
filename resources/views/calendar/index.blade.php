@@ -58,7 +58,7 @@
                             <div class="list-group-item p-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold text-dark">{{ $assign->course?->code }} - {{ $assign->title }}</span>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">{{ $assign->max_score ?? 100 }} Marks</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-white border border-primary">{{ $assign->max_score ?? 100 }} Marks</span>
                                 </div>
                                 <div class="text-muted small">
                                     <i class="bi bi-hourglass-split me-1 text-danger"></i>Due Date: {{ $assign->due_date ? $assign->due_date->format('M d, Y h:i A') : 'TBA' }}

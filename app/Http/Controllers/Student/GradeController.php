@@ -31,6 +31,11 @@ class GradeController extends Controller
         return view('student.grades.index', compact('grades', 'gpa', 'totalCredits', 'completedCourses', 'averageScore'));
     }
 
+    public function course(Course $course)
+    {
+        return $this->show($course);
+    }
+
     public function show(Course $course)
     {
         // Verify student is enrolled in the course

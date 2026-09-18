@@ -25,6 +25,11 @@ class AttendanceController extends Controller
         return view('student.attendance.index', compact('attendanceData'));
     }
 
+    public function course(Course $course)
+    {
+        return $this->show($course);
+    }
+
     public function show(Course $course)
     {
         $course->enrollments()

@@ -44,6 +44,14 @@
                             </a>
                         </div>
                     @endif
+
+                    @if($message->sender_id !== Auth::id())
+                        <div class="mt-4 pt-3 border-top d-flex gap-2">
+                            <a href="{{ route('messages.index', ['reply_to' => $message->sender_id, 'subject' => 'Re: ' . $message->subject]) }}" class="btn btn-primary fw-bold">
+                                <i class="bi bi-reply-fill me-1"></i>Reply
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -25,10 +25,10 @@
             <div class="card">
                 <div class="card-body text-center">
                     <div class="avatar-lg bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
-                        @if($user->avatar)
-                            <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                        @if($user->profile_picture)
+                            <img src="{{ $user->profile_picture_url }}" alt="Avatar" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
                         @else
-                            <span class="h2 mb-0">{{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}</span>
+                            <span class="h2 mb-0">{{ $user->initials }}</span>
                         @endif
                     </div>
                     <h4 class="mb-1">{{ $user->first_name }} {{ $user->last_name }}</h4>

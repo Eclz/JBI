@@ -83,8 +83,8 @@
                                     <td>
                                         @if($course->instructor)
                                             <div class="d-flex align-items-center">
-                                                @if($course->instructor->avatar)
-                                                    <img src="{{ asset('storage/' . $course->instructor->avatar) }}"
+                                                @if($course->instructor->profile_picture)
+                                                    <img src="{{ asset('storage/' . $course->instructor->profile_picture) }}"
                                                          class="rounded-circle me-2" width="24" height="24">
                                                 @endif
                                                 {{ $course->instructor->name }}

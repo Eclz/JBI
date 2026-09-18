@@ -35,16 +35,16 @@ class ProfileController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
-            'avatar' => 'nullable|image|max:2048',
+            'profile_picture' => 'nullable|image|max:2048',
         ]);
 
         $userData = $request->only(['first_name', 'last_name', 'email', 'phone', 'address']);
 
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
+        if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                Storage::disk('public')->delete($user->profile_picture);
             }
-            $userData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $userData['profile_picture'] = $request->file('profile_picture')->store('avatars', 'public');
         }
 
         $user->update($userData);

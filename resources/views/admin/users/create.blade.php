@@ -113,10 +113,10 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label for="avatar" class="form-label">Profile Picture</label>
-                                    <input type="file" class="form-control @error('avatar') is-invalid @enderror"
-                                           id="avatar" name="avatar" accept="image/*">
-                                    @error('avatar')
+                                    <label for="profile_picture" class="form-label">Profile Picture</label>
+                                    <input type="file" class="form-control @error('profile_picture') is-invalid @enderror"
+                                           id="profile_picture" name="profile_picture" accept="image/*">
+                                    @error('profile_picture')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

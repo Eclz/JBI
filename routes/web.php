@@ -29,6 +29,7 @@ use App\Http\Controllers\Faculty\CourseController as FacultyCourseController;
 use App\Http\Controllers\Faculty\AttendanceController as FacultyAttendanceController;
 use App\Http\Controllers\Faculty\GradingController as FacultyGradingController;
 use App\Http\Controllers\Faculty\MaterialController as FacultyMaterialController;
+use App\Http\Controllers\Faculty\TimetableController as FacultyTimetableController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -408,7 +409,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Admin Evaluation Surveys
-    Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class);
+    Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class)->parameters([
+        'evaluation-surveys' => 'survey'
+    ]);
+    Route::post('/evaluation-surveys/{survey}/toggle-status', [AdminEvaluationSurveyController::class, 'toggleStatus'])->name('evaluation-surveys.toggle-status');
+    Route::post('/evaluation-surveys/{survey}/questions', [AdminEvaluationSurveyController::class, 'addQuestion'])->name('evaluation-surveys.questions.store');
+    Route::delete('/evaluation-surveys/{survey}/questions/{question}', [AdminEvaluationSurveyController::class, 'destroyQuestion'])->name('evaluation-surveys.questions.destroy');
 
 
     // Application Management
@@ -567,8 +573,13 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
 
     // Attendance Management
     Route::get('/courses/{course}/attendance', [FacultyAttendanceController::class, 'index'])->name('courses.attendance.index');
+    Route::get('/courses/{course}/attendance/show', [FacultyAttendanceController::class, 'show'])->name('courses.attendance.show');
+    Route::get('/courses/{course}/attendance/qr', [FacultyAttendanceController::class, 'generateQRCode'])->name('courses.attendance.qr');
     Route::post('/courses/{course}/attendance', [FacultyAttendanceController::class, 'store'])->name('courses.attendance.store');
     Route::put('/courses/{course}/attendance/{attendance}', [FacultyAttendanceController::class, 'update'])->name('courses.attendance.update');
+
+    // Faculty Timetables
+    Route::get('/timetables', [FacultyTimetableController::class, 'index'])->name('timetables.index');
 
     // Grading
     Route::get('/courses/{course}/grades', [FacultyGradingController::class, 'index'])->name('courses.grades.index');
@@ -693,6 +704,7 @@ Route::middleware(['auth'])->group(function () {
     // Mailbox & Messaging
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+    Route::post('/messages/group', [\App\Http\Controllers\MessageController::class, 'storeGroup'])->name('messages.storeGroup');
     Route::get('/messages/{message}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
 
     // Academic Calendar

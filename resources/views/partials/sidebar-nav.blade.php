@@ -489,7 +489,14 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('faculty.attendance.*') ? 'active' : '' }}">
+        <li class="menu-item {{ request()->routeIs('faculty.timetables.*') ? 'active' : '' }}">
+            <a href="{{ route('faculty.timetables.index') }}" class="menu-link">
+                <i class="bi bi-calendar3"></i>
+                <span>Timetable & Schedules</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('faculty.attendance.*') || request()->routeIs('faculty.courses.attendance.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.attendance.index') }}" class="menu-link">
                 <i class="bi bi-calendar-check"></i>
                 <span>Attendance</span>
@@ -675,14 +682,6 @@
             </ul>
         </li>
 
-        {{-- 4. Mailbox (flat) --}}
-        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
-            <a href="{{ route('messages.index') }}" class="menu-link">
-                <i class="bi bi-envelope-paper"></i>
-                <span>Mailbox</span>
-            </a>
-        </li>
-
         {{-- 5. E-Voting (flat) --}}
         <li class="menu-item {{ request()->routeIs('student.evoting.*') ? 'active' : '' }}">
             <a href="{{ route('student.evoting.index') }}" class="menu-link">
@@ -702,6 +701,13 @@
 
         {{-- ==================== COMMON (PINNED AT BOTTOM) ==================== --}}
         <li class="menu-header">Common</li>
+
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper"></i>
+                <span>Mailbox</span>
+            </a>
+        </li>
 
         <li class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
             <a href="{{ route('profile.show') }}" class="menu-link">

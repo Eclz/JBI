@@ -178,6 +178,41 @@ class AssignmentController extends Controller
 
         $submission->update($validated);
 
+        // Sync with Grade model
+        $percentage = $assignment->max_points > 0 ? ($request->score / $assignment->max_points) * 100 : 0;
+
+        $letterGrade = 'F';
+        if ($percentage >= 90) $letterGrade = 'A';
+        elseif ($percentage >= 80) $letterGrade = 'B';
+        elseif ($percentage >= 70) $letterGrade = 'C';
+        elseif ($percentage >= 60) $letterGrade = 'D';
+
+        $gradePoints = 0.0;
+        if ($percentage >= 90) $gradePoints = 4.0;
+        elseif ($percentage >= 80) $gradePoints = 3.0;
+        elseif ($percentage >= 70) $gradePoints = 2.0;
+        elseif ($percentage >= 60) $gradePoints = 1.0;
+
+        \App\Models\Grade::updateOrCreate(
+            [
+                'user_id' => $submission->user_id,
+                'course_id' => $assignment->course_id,
+                'assignment_id' => $assignment->id,
+            ],
+            [
+                'grade_type' => 'assignment',
+                'points_earned' => $request->score,
+                'points_possible' => $assignment->max_points,
+                'percentage' => $percentage,
+                'letter_grade' => $letterGrade,
+                'grade_points' => $gradePoints,
+                'comments' => $request->feedback,
+                'is_published' => true,
+                'graded_at' => now(),
+                'graded_by' => Auth::id(),
+            ]
+        );
+
         return back()->with('success', 'Submission graded successfully');
     }
 
