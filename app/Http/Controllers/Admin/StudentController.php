@@ -371,6 +371,11 @@ class StudentController extends Controller
 
     public function academicRecord(User $student)
     {
+        $user = auth()->user();
+        if ($user && $user->isFinanceOfficer() && !$user->isSuperAdmin()) {
+            abort(403, 'Finance staff are not authorized to view academic records.');
+        }
+
         if ($student->role !== 'student') {
             abort(404);
         }

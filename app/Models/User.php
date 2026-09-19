@@ -403,6 +403,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is Finance Officer
+     */
+    public function isFinanceOfficer(): bool
+    {
+        return $this->hasRole('finance_officer') || $this->hasRole('finance') || $this->hasPermission('finance_hub', 'view');
+    }
+
+    /**
      * Check if user is Facilities staff
      */
     public function isFacilitiesStaff(): bool

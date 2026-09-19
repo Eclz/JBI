@@ -493,6 +493,31 @@ class BursarFinanceController extends Controller
         return view('admin.finance.payroll.show', compact('payroll', 'currencyCode'));
     }
 
+    public function updatePayroll(Request $request, $id)
+    {
+        $payroll = PayrollRecord::findOrFail($id);
+        
+        $validated = $request->validate([
+            'basic_salary' => 'required|numeric|min:0',
+            'total_allowances' => 'required|numeric|min:0',
+            'tax_deductions' => 'required|numeric|min:0',
+            'pension_deductions' => 'required|numeric|min:0',
+        ]);
+        
+        $net_salary = $validated['basic_salary'] + $validated['total_allowances'] - $validated['tax_deductions'] - $validated['pension_deductions'];
+        
+        $payroll->update([
+            'basic_salary' => $validated['basic_salary'],
+            'total_allowances' => $validated['total_allowances'],
+            'tax_deductions' => $validated['tax_deductions'],
+            'pension_deductions' => $validated['pension_deductions'],
+            'net_salary' => $net_salary,
+        ]);
+        
+        return redirect()->route('admin.finance.payroll.index')
+            ->with('success', 'Payroll record updated successfully.');
+    }
+
     public function destroyPayroll($id)
     {
         $payroll = PayrollRecord::findOrFail($id);

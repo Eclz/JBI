@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    $isFinanceOfficer = auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin();
+@endphp
+
 @section('title', 'Student Management')
 
 @section('content')
@@ -187,7 +191,9 @@
                                     <th class="border-0">Academic Info</th>
                                     <th class="border-0">Contact</th>
                                     <th class="border-0">Status</th>
+                                    @if(!$isFinanceOfficer)
                                     <th class="border-0">Performance</th>
+                                    @endif
                                     <th class="border-0 text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -297,6 +303,7 @@
                                         </span>
                                     </td>
                                     <td>
+                                        @if(!$isFinanceOfficer)
                                         @if($student->studentProfile)
                                             <div>
                                                 <div class="d-flex align-items-center gap-2 mb-1">
@@ -325,6 +332,7 @@
                                         @else
                                             <span class="text-muted small">No profile</span>
                                         @endif
+                                        @endif
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -344,11 +352,13 @@
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
+                                                    @if(!$isFinanceOfficer)
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.academic-record', $student) }}">
                                                             <i class="bi bi-file-text me-2"></i>Academic Record
                                                         </a>
                                                     </li>
+                                                    @endif
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.attendance', $student) }}">
                                                             <i class="bi bi-calendar-check me-2"></i>Attendance

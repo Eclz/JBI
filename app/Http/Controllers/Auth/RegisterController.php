@@ -176,7 +176,7 @@ class RegisterController extends Controller
             $admins = User::where('role', 'admin')
                          ->where('is_active', true)
                          ->whereNotNull('email_verified_at')
-                         ->get();
+                         ->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
 
             $successCount = 0;
             $totalAdmins = $admins->count();

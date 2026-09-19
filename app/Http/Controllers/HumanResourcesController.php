@@ -67,7 +67,19 @@ class HumanResourcesController extends Controller
         abort_unless(isset($permissions[$section]) && Auth::user()->hasPermission($permissions[$section], 'view'), 403);
 
         if ($section === 'payroll') {
-            return redirect()->route('payroll.index');
+            return redirect()->route('admin.finance.payroll.index');
+        }
+
+        if ($section === 'leave-management') {
+            return redirect()->route('human-resources.leaves.index');
+        }
+
+        if ($section === 'profiles') {
+            return redirect()->route('human-resources.staff.index');
+        }
+
+        if (view()->exists("human-resources.{$section}")) {
+            return view("human-resources.{$section}");
         }
 
         return view('human-resources.section', [

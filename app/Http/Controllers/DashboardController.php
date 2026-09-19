@@ -51,8 +51,8 @@ class DashboardController extends Controller
         // Role-specific data
         switch ($role) {
             case 'admin':
-                // Check if user is strictly a finance admin and redirect to finance dashboard
-                if (!$user->isSuperAdmin() && $user->hasPermission('finance_hub', 'view') && !$user->hasPermission('academic_setup', 'view')) {
+                // Check if user is finance officer and redirect to finance dashboard
+                if ($user->isFinanceOfficer() && !$user->isSuperAdmin()) {
                     return redirect()->route('admin.finance.dashboard');
                 }
                 

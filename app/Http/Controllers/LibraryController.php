@@ -32,10 +32,14 @@ class LibraryController extends Controller
                 });
             })
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         return view('library.catalogue', compact('items'));
+    }
+
+    public function show(LibraryItem $item)
+    {
+        return view('library.show', compact('item'));
     }
 
     public function loansIndex()

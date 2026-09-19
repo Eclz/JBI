@@ -24,7 +24,10 @@ class RolePermissionSeeder extends Seeder
             'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
             'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
             'lecturer' => $this->matrix(['courses', 'attendance', 'grades', 'lms', 'exams'], ['view', 'create', 'edit']),
-            'finance_officer' => $this->matrix(['fees', 'students', 'reports', 'finance_hub', 'revenue', 'budgets', 'expenses', 'payables', 'receivables', 'payroll', 'assets', 'banking', 'financial_statements'], ['view', 'create', 'edit', 'approve', 'export']),
+            'finance_officer' => array_merge_recursive(
+                $this->matrix(['fees', 'reports', 'finance_hub', 'revenue', 'budgets', 'expenses', 'payables', 'receivables', 'payroll', 'assets', 'banking', 'financial_statements'], ['view', 'create', 'edit', 'approve', 'export']),
+                $this->matrix(['students'], ['view'])
+            ),
             'admissions_officer' => array_merge_recursive(
                 $this->matrix(['applications', 'students', 'fees', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
                 $this->matrix(['courses', 'programs', 'departments'], ['view'])

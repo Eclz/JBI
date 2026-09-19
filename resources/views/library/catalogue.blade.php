@@ -51,6 +51,7 @@
                                 <td><span class="badge text-bg-{{ $item->available_copies > 0 ? 'success' : 'warning' }}">{{ $item->available_copies > 0 ? 'Available' : 'On loan' }}</span></td>
                                 <td>{{ $item->available_copies }} / {{ $item->total_copies }}</td>
                                 <td class="text-end">
+                                    <a href="{{ route('library.catalogue.show', $item) }}" class="btn btn-sm btn-outline-info" title="View Details"><i class="bi bi-eye"></i> View</a>
                                     @if(auth()->user()->hasPermission('library_catalogue', 'edit'))
                                         <a href="{{ route('library.catalogue.edit', $item) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                     @endif
@@ -69,7 +70,6 @@
                     </tbody>
                 </table>
             </div>
-            {{ $items->links() }}
         </div>
     </div>
 </div>

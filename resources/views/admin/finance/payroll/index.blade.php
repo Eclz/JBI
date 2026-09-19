@@ -55,11 +55,50 @@
                                 <td class="text-end pe-3">
                                     <div class="btn-group">
                                         <a href="{{ route('admin.finance.payroll.show', $pr->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPayrollModal{{ $pr->id }}" title="Edit"><i class="bi bi-pencil"></i></button>
                                         <form action="{{ route('admin.finance.payroll.destroy', $pr->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this payroll record?');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                                         </form>
+                                    </div>
+
+                                    <!-- Edit Modal for {{ $pr->id }} -->
+                                    <div class="modal fade" id="editPayrollModal{{ $pr->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog text-start">
+                                            <div class="modal-content">
+                                                <form action="{{ route('admin.finance.payroll.update', $pr->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <div class="modal-header bg-primary text-white">
+                                                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Payroll: {{ $pr->user->full_name ?? 'University Staff' }}</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Basic Salary ({{ $currencyCode }})</label>
+                                                            <input type="number" step="0.01" name="basic_salary" class="form-control" value="{{ $pr->basic_salary }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Total Allowances ({{ $currencyCode }})</label>
+                                                            <input type="number" step="0.01" name="total_allowances" class="form-control" value="{{ $pr->total_allowances }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">PAYE Tax ({{ $currencyCode }})</label>
+                                                            <input type="number" step="0.01" name="tax_deductions" class="form-control" value="{{ $pr->tax_deductions }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">NSSF Pension ({{ $currencyCode }})</label>
+                                                            <input type="number" step="0.01" name="pension_deductions" class="form-control" value="{{ $pr->pension_deductions }}" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

@@ -29,7 +29,57 @@ class FacilitiesController extends Controller
 
     public function bookingsIndex()
     {
-        return view('facilities.bookings');
+        $bookings = \App\Models\FacilityBooking::with(['facilityRoom', 'user'])->latest()->paginate(15);
+        $rooms = FacilityRoom::where('status', '!=', 'Retired')->get();
+        return view('facilities.bookings', compact('bookings', 'rooms'));
+    }
+
+    public function showBooking(\App\Models\FacilityBooking $booking)
+    {
+        $booking->load(['facilityRoom', 'user']);
+        return response()->json($booking);
+    }
+
+    public function storeBooking(Request $request)
+    {
+        $data = $request->validate([
+            'facility_room_id' => 'required|exists:facility_rooms,id',
+            'title' => 'required|string|max:150',
+            'purpose' => 'required|string',
+            'booking_type' => 'required|in:Room Booking,Maintenance',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'notes' => 'nullable|string',
+        ]);
+        
+        $data['user_id'] = Auth::id();
+        $data['status'] = 'Pending';
+        
+        \App\Models\FacilityBooking::create($data);
+        
+        $this->notify('Facility booking requested', "Your booking request for {$data['title']} has been submitted.", 'facilities.bookings.index');
+        
+        return redirect()->route('facilities.bookings.index')->with('success', 'Booking requested successfully.');
+    }
+
+    public function updateBooking(Request $request, \App\Models\FacilityBooking $booking)
+    {
+        $data = $request->validate([
+            'status' => 'required|in:Pending,Approved,Assigned,In Progress,Completed,Cancelled',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'notes' => 'nullable|string',
+        ]);
+        
+        $booking->update($data);
+        
+        return redirect()->route('facilities.bookings.index')->with('success', 'Booking updated successfully.');
+    }
+
+    public function destroyBooking(\App\Models\FacilityBooking $booking)
+    {
+        $booking->delete();
+        return redirect()->route('facilities.bookings.index')->with('success', 'Booking deleted successfully.');
     }
 
     public function create()

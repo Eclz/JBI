@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    $isFinanceOfficer = auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin();
+@endphp
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -125,6 +129,7 @@
                                     <td><strong>Current Semester:</strong></td>
                                     <td>{{ $student->studentProfile->current_semester ?? 'N/A' }}</td>
                                 </tr>
+                                @if(!$isFinanceOfficer)
                                 <tr>
                                     <td><strong>Current GPA:</strong></td>
                                     <td>{{ number_format($student->studentProfile->current_gpa ?? 0, 2) }}</td>
@@ -137,6 +142,7 @@
                                     <td><strong>Credits Earned:</strong></td>
                                     <td>{{ $student->studentProfile->total_credits_earned ?? 0 }}</td>
                                 </tr>
+                                @endif
                                 <tr>
                                     <td><strong>Admission Date:</strong></td>
                                     <td>{{ $student->studentProfile->admission_date ? $student->studentProfile->admission_date->format('M d, Y') : 'N/A' }}</td>
@@ -173,11 +179,13 @@
                                 <i class="fas fa-book"></i> Enrolled Courses
                             </button>
                         </li>
+                        @if(!$isFinanceOfficer)
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades" type="button" role="tab">
                                 <i class="fas fa-chart-line"></i> Grades
                             </button>
                         </li>
+                        @endif
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab">
                                 <i class="fas fa-calendar-check"></i> Attendance
@@ -260,6 +268,7 @@
                             </div>
                         </div>
 
+                        @if(!$isFinanceOfficer)
                         <!-- Grades -->
                         <div class="tab-pane fade" id="grades" role="tabpanel">
                             <div class="card">
@@ -303,6 +312,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
                         <!-- Attendance -->
                         <div class="tab-pane fade" id="attendance" role="tabpanel">
