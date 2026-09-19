@@ -194,6 +194,7 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
     Route::get('/catalogue', [\App\Http\Controllers\LibraryController::class, 'catalogueIndex'])->name('catalogue.index');
     Route::get('/catalogue/create', [\App\Http\Controllers\LibraryController::class, 'create'])->name('catalogue.create')->middleware('permission:library_catalogue,create');
     Route::post('/catalogue', [\App\Http\Controllers\LibraryController::class, 'store'])->name('catalogue.store')->middleware('permission:library_catalogue,create');
+    Route::get('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'show'])->name('catalogue.show');
     Route::get('/catalogue/{item}/edit', [\App\Http\Controllers\LibraryController::class, 'edit'])->name('catalogue.edit')->middleware('permission:library_catalogue,edit');
     Route::put('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'update'])->name('catalogue.update')->middleware('permission:library_catalogue,edit');
     Route::delete('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'destroy'])->name('catalogue.destroy')->middleware('permission:library_catalogue,delete');
@@ -211,7 +212,16 @@ Route::middleware(['auth', 'permission:human_resources,view'])->prefix('human-re
     Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
     Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
     Route::delete('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'destroy'])->name('staff.destroy')->middleware('permission:hr_core,delete');
-    Route::get('/leaves', [\App\Http\Controllers\HumanResourcesController::class, 'leavesIndex'])->name('leaves.index');
+    
+    // Leave Management Routes
+    Route::get('/leaves', [\App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leaves.index');
+    Route::get('/leaves/create', [\App\Http\Controllers\LeaveRequestController::class, 'create'])->name('leaves.create');
+    Route::post('/leaves', [\App\Http\Controllers\LeaveRequestController::class, 'store'])->name('leaves.store');
+    Route::get('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'show'])->name('leaves.show');
+    Route::get('/leaves/{leave}/edit', [\App\Http\Controllers\LeaveRequestController::class, 'edit'])->name('leaves.edit');
+    Route::put('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'update'])->name('leaves.update');
+    Route::delete('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'destroy'])->name('leaves.destroy');
+    Route::patch('/leaves/{leave}/status', [\App\Http\Controllers\LeaveRequestController::class, 'updateStatus'])->name('leaves.status')->middleware('permission:human_resources,view');
     Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('sections.show');
 });
 
@@ -225,6 +235,10 @@ Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')-
     Route::put('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'update'])->name('rooms.update')->middleware('permission:facilities_rooms,edit');
     Route::delete('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:facilities_rooms,delete');
     Route::get('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'bookingsIndex'])->name('bookings.index');
+    Route::post('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'storeBooking'])->name('bookings.store');
+    Route::get('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'showBooking'])->name('bookings.show');
+    Route::put('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'updateBooking'])->name('bookings.update');
+    Route::delete('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'destroyBooking'])->name('bookings.destroy');
 });
 
 // Admin Routes
@@ -338,6 +352,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::post('/', [AdminFeeController::class, 'store'])->name('store')->middleware('permission:fees,create');
             Route::get('/{fee}', [AdminFeeController::class, 'show'])->name('show');
             Route::get('/{fee}/demand-notice', [AdminFeeController::class, 'demandNotice'])->name('demand-notice');
+            Route::post('/{fee}/send-demand-notice', [AdminFeeController::class, 'sendDemandNotice'])->name('send-demand-notice');
             Route::get('/{fee}/receipt', [AdminFeeController::class, 'receipt'])->name('receipt');
             Route::get('/{fee}/edit', [AdminFeeController::class, 'edit'])->name('edit')->middleware('permission:fees,edit');
             Route::put('/{fee}', [AdminFeeController::class, 'update'])->name('update')->middleware('permission:fees,edit');
@@ -432,6 +447,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
             Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate')->middleware('permission:payroll,create');
             Route::get('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showPayroll'])->name('payroll.show');
+            Route::put('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updatePayroll'])->name('payroll.update')->middleware('permission:payroll,edit');
             Route::delete('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyPayroll'])->name('payroll.destroy')->middleware('permission:payroll,delete');
         });
 

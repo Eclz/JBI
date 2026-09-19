@@ -658,8 +658,31 @@ class FeeController extends Controller
     public function demandNotice(FeeRecord $fee)
     {
         $fee->load(['student.studentProfile.department', 'feeStructure.academicYear', 'feeStructure.semester']);
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        return view('admin.fees.demand-notice', compact('fee', 'currencyCode'));
+    }
 
-        return view('admin.fees.demand-notice', compact('fee'));
+    /**
+     * Send Demand Notice to Student Portal
+     */
+    public function sendDemandNotice(FeeRecord $fee)
+    {
+        if ($fee->student) {
+            $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+            $balance = number_format($fee->balance_amount, 2);
+            
+            \App\Models\Notification::create([
+                'user_id' => $fee->student_id,
+                'title' => 'Fee Demand Notice',
+                'message' => "You have an outstanding fee balance of {$currencyCode} {$balance}. Please review your demand notice and make the necessary payments.",
+                'type' => 'payment',
+                'action_url' => route('student.fees.index'),
+            ]);
+            
+            return redirect()->back()->with('success', 'Demand notice sent to student portal successfully.');
+        }
+        
+        return redirect()->back()->with('error', 'Student not found.');
     }
 
     public function receipt(FeeRecord $fee)
