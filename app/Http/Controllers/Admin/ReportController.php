@@ -68,12 +68,15 @@ class ReportController extends Controller
             ->orderBy('date')
             ->get();
 
+        $isFinanceOfficer = auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin();
+
         return view('admin.reports.index', compact(
             'stats',
             'recentEnrollments',
             'recentPayments',
             'enrollmentTrend',
-            'revenueTrend'
+            'revenueTrend',
+            'isFinanceOfficer'
         ));
     }
 
@@ -496,6 +499,15 @@ class ReportController extends Controller
             'departments',
             'academicYears'
         ));
+    }
+
+    /**
+     * Export Enrollment Report
+     */
+    public function exportEnrollment(Request $request)
+    {
+        // This is a placeholder for the export method to fix the missing route target
+        return back()->with('error', 'Export feature is coming soon.');
     }
 
     /**
