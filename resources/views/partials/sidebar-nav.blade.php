@@ -36,7 +36,14 @@
     @auth
     <ul class="sidebar-menu">
         {{-- Dashboard (Anchor Point, pinned at top, no section label) --}}
-        @if(auth()->user()->isAdmin())
+        @if(auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin())
+        <li class="menu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.dashboard') }}" class="menu-link">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        @elseif(auth()->user()->isAdmin())
         <li class="menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link">
                 <i class="bi bi-speedometer2"></i>
@@ -316,7 +323,7 @@
                 <li class="submenu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.structures.index') }}" class="submenu-link">
                         <i class="bi bi-file-earmark-spreadsheet"></i>
-                        <span>Fee Structures</span>
+                        <span>Fees Structures</span>
                     </a>
                 </li>
                 @endif
@@ -324,7 +331,7 @@
                 <li class="submenu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.index') }}" class="submenu-link">
                         <i class="bi bi-receipt"></i>
-                        <span>Student Fee Records</span>
+                        <span>Student Fees Records</span>
                     </a>
                 </li>
                 @endif
