@@ -27,6 +27,8 @@ class ApplicationController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'role:admin']);
+        $this->middleware('permission:applications,view')->only(['index', 'show']);
+        $this->middleware('permission:applications,edit')->only(['approve', 'reject', 'bulkApprove', 'updateProgram', 'verifyPayment']);
     }
 
     public function index(Request $request)
