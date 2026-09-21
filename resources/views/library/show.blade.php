@@ -11,6 +11,9 @@
         </div>
         <div>
             <a href="{{ route('library.catalogue.index') }}" class="btn btn-outline-secondary">Back to Catalogue</a>
+            @if($item->available_copies > 0)
+                <a href="{{ route('library.loans.create', ['item_id' => $item->id]) }}" class="btn btn-success">Borrow Item</a>
+            @endif
             @if(auth()->user()->hasPermission('library_catalogue', 'edit'))
                 <a href="{{ route('library.catalogue.edit', $item) }}" class="btn btn-primary">Edit Item</a>
             @endif
@@ -22,7 +25,11 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <i class="bi bi-book text-secondary" style="font-size: 5rem;"></i>
+                        @if($item->cover_image)
+                            <img src="{{ Storage::url($item->cover_image) }}" alt="Cover Image" class="img-fluid rounded shadow-sm" style="max-height: 250px;">
+                        @else
+                            <i class="bi bi-book text-secondary" style="font-size: 5rem;"></i>
+                        @endif
                     </div>
                     <h4>{{ $item->title }}</h4>
                     <p class="text-muted mb-1">{{ $item->author ?: 'Unknown Author' }}</p>

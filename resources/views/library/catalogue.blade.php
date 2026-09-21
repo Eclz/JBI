@@ -34,6 +34,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
+                            <th>Image</th>
                             <th>Title</th>
                             <th>Author</th>
                             <th>Category</th>
@@ -45,13 +46,23 @@
                     <tbody>
                         @forelse($items as $item)
                             <tr>
-                                <td>{{ $item->title }}</td>
+                                <td>
+                                    @if($item->cover_image)
+                                        <img src="{{ Storage::url($item->cover_image) }}" alt="Cover" class="img-thumbnail" style="height: 50px; width: 40px; object-fit: cover;">
+                                    @else
+                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded" style="height: 50px; width: 40px; font-size: 0.8rem;">No Img</div>
+                                    @endif
+                                </td>
+                                <td class="fw-bold">{{ $item->title }}</td>
                                 <td>{{ $item->author ?: '—' }}</td>
                                 <td>{{ $item->category }}</td>
                                 <td><span class="badge text-bg-{{ $item->available_copies > 0 ? 'success' : 'warning' }}">{{ $item->available_copies > 0 ? 'Available' : 'On loan' }}</span></td>
                                 <td>{{ $item->available_copies }} / {{ $item->total_copies }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('library.catalogue.show', $item) }}" class="btn btn-sm btn-outline-info" title="View Details"><i class="bi bi-eye"></i> View</a>
+                                    @if($item->available_copies > 0)
+                                        <a href="{{ route('library.loans.create', ['item_id' => $item->id]) }}" class="btn btn-sm btn-outline-success" title="Borrow Item"><i class="bi bi-box-arrow-up-right"></i> Borrow</a>
+                                    @endif
                                     @if(auth()->user()->hasPermission('library_catalogue', 'edit'))
                                         <a href="{{ route('library.catalogue.edit', $item) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                     @endif

@@ -9,7 +9,7 @@
         <a href="{{ route('library.catalogue.index') }}" class="btn btn-outline-secondary">Back to catalogue</a>
     </div>
     <div class="card border-0 shadow-sm"><div class="card-body">
-        <form method="POST" action="{{ route('library.catalogue.store') }}">
+        <form method="POST" action="{{ route('library.catalogue.store') }}" enctype="multipart/form-data">
             @csrf
             @include('library.form')
             <button class="btn btn-primary">Save item</button>

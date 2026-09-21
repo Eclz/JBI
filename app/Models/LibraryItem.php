@@ -10,7 +10,7 @@ class LibraryItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'author', 'isbn', 'category', 'total_copies', 'available_copies', 'is_active',
+        'title', 'author', 'isbn', 'category', 'cover_image', 'total_copies', 'available_copies', 'is_active',
     ];
 
     protected $casts = [
