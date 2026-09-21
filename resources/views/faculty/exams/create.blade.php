@@ -124,7 +124,16 @@
 
                         <div class="mb-4">
                             <label for="room_number" class="form-label fw-semibold">Room Number</label>
-                            <input type="text" name="room_number" id="room_number" class="form-control @error('room_number') is-invalid @enderror" value="{{ old('room_number') }}">
+                            <select name="room_number" id="room_number" class="form-select @error('room_number') is-invalid @enderror">
+                                <option value="">Select Room</option>
+                                @if(isset($rooms))
+                                    @foreach($rooms as $room)
+                                        <option value="{{ $room->name }}" {{ old('room_number') == $room->name ? 'selected' : '' }}>
+                                            {{ $room->name }} ({{ $room->building }})
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
                             @error('room_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

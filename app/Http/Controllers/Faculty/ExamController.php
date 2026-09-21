@@ -28,7 +28,11 @@ class ExamController extends Controller
 
     public function create()
     {
+        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
         $courses = Course::where('instructor_id', Auth::id())
+            ->when($currentSemester, function($query) use ($currentSemester) {
+                return $query->where('semester_id', $currentSemester->id);
+            })
             ->with('semester')
             ->orderBy('name')
             ->get();
@@ -36,7 +40,9 @@ class ExamController extends Controller
         $rawTypes = \App\Models\SystemSetting::getSetting('exam_types', 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary');
         $examTypes = array_values(array_filter(array_map('trim', explode(',', $rawTypes))));
 
-        return view('faculty.exams.create', compact('courses', 'examTypes'));
+        $rooms = \App\Models\FacilityRoom::where('status', 'Available')->orderBy('name')->get();
+
+        return view('faculty.exams.create', compact('courses', 'examTypes', 'rooms'));
     }
 
     public function store(Request $request)
@@ -47,7 +53,7 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'exam_type' => 'required|string|max:50',
             'exam_mode' => 'required|in:online,offline,hybrid',
-            'room_number' => 'nullable|string|max:50',
+            'room_number' => 'nullable|string|exists:facility_rooms,name|max:50',
             'exam_date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
@@ -131,7 +137,11 @@ class ExamController extends Controller
     {
         $this->authorizeExam($exam);
 
+        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
         $courses = Course::where('instructor_id', Auth::id())
+            ->when($currentSemester, function($query) use ($currentSemester) {
+                return $query->where('semester_id', $currentSemester->id);
+            })
             ->with('semester')
             ->orderBy('name')
             ->get();
@@ -139,7 +149,9 @@ class ExamController extends Controller
         $rawTypes = \App\Models\SystemSetting::getSetting('exam_types', 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary');
         $examTypes = array_values(array_filter(array_map('trim', explode(',', $rawTypes))));
 
-        return view('faculty.exams.edit', compact('exam', 'courses', 'examTypes'));
+        $rooms = \App\Models\FacilityRoom::where('status', 'Available')->orderBy('name')->get();
+
+        return view('faculty.exams.edit', compact('exam', 'courses', 'examTypes', 'rooms'));
     }
 
     public function update(Request $request, Exam $exam)
@@ -151,7 +163,7 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'exam_type' => 'required|string|max:50',
             'exam_mode' => 'required|in:online,offline,hybrid',
-            'room_number' => 'nullable|string|max:50',
+            'room_number' => 'nullable|string|exists:facility_rooms,name|max:50',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
             'duration_minutes' => 'required|integer|min:1',

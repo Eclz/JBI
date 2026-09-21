@@ -24,7 +24,7 @@
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-white-50 mb-1">Current GPA</h6>
-                        <h2 class="text-white mb-1">{{ number_format($currentGpa ?? 3.85, 2) }}</h2>
+                        <h2 class="text-white mb-1">{{ number_format($currentGPA ?? 0, 2) }}</h2>
                         <small class="text-success">
                             <i class="fa fa-arrow-up"></i> Excellent standing
                         </small>
@@ -56,7 +56,7 @@
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-white-50 mb-1">Attendance Rate</h6>
-                        <h2 class="text-white mb-1">{{ $attendanceRate ?? 94 }}%</h2>
+                        <h2 class="text-white mb-1">{{ number_format($attendanceRate ?? 0, 1) }}%</h2>
                         <small class="text-white-50">Above average</small>
                     </div>
                     <div class="icon-wrapper" style="background: rgba(255,255,255,0.1); color: white;">
@@ -71,8 +71,8 @@
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-white-50 mb-1">Pending Assignments</h6>
-                        <h2 class="text-white mb-1">{{ $pendingAssignments ?? 3 }}</h2>
-                        <small class="text-white-50">Due this week</small>
+                        <h2 class="text-white mb-1">{{ $pendingAssignments ?? 0 }}</h2>
+                        <small class="text-white-50">Due soon</small>
                     </div>
                     <div class="icon-wrapper" style="background: rgba(255,255,255,0.1); color: white;">
                         <i class="fa fa-tasks"></i>
@@ -90,7 +90,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <h5 class="mb-1" style="color: var(--jbi-navy);">Semester Progress</h5>
-                            <p class="text-muted mb-0">{{ $semesterProgress ?? 50 }}% complete - Week 8 of 16</p>
+                            <p class="text-muted mb-0">Your current courses attendance</p>
                         </div>
                         <div class="icon-wrapper icon-primary">
                             <i class="fa fa-chart-line"></i>
@@ -98,29 +98,23 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="progress-bar mb-4">
-                        <div class="progress-fill" style="width: {{ $semesterProgress ?? 50 }}%"></div>
-                    </div>
-
-                    <h6 class="mb-3" style="color: var(--jbi-navy);">Course Performance</h6>
-                    @foreach([
-                        ['name' => 'Biblical Studies 101', 'grade' => 'A-', 'percentage' => 92],
-                        ['name' => 'Theology 301', 'grade' => 'B+', 'percentage' => 87],
-                        ['name' => 'Church History', 'grade' => 'A', 'percentage' => 95]
-                    ] as $course)
+                    <h6 class="mb-3" style="color: var(--jbi-navy);">Course Performance (Attendance)</h6>
+                    @forelse($attendanceByCourse ?? [] as $courseStats)
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div class="d-flex align-items-center">
                                 <div class="icon-wrapper icon-primary me-3" style="width: 32px; height: 32px; font-size: 0.8rem;">
                                     <i class="fa fa-book"></i>
                                 </div>
-                                <span class="fw-medium">{{ $course['name'] }}</span>
+                                <span class="fw-medium">{{ $courseStats['course'] }}</span>
                             </div>
                             <div class="d-flex align-items-center">
-                                <span class="badge me-2" style="background: var(--jbi-accent); color: white;">{{ $course['grade'] }}</span>
-                                <small class="text-muted">{{ $course['percentage'] }}%</small>
+                                <span class="badge me-2" style="background: var(--jbi-accent); color: white;">{{ $courseStats['present'] }}/{{ $courseStats['total'] }} Attended</span>
+                                <small class="text-muted">{{ $courseStats['percentage'] }}%</small>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <p class="text-muted text-center py-3">No course attendance data available.</p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -139,21 +133,20 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @foreach([
-                        ['title' => 'Biblical Hermeneutics Essay', 'course' => 'THEO 301', 'due' => 'Tomorrow', 'urgent' => true],
-                        ['title' => 'Church History Timeline', 'course' => 'HIST 201', 'due' => 'In 3 days', 'urgent' => false],
-                        ['title' => 'Greek Translation', 'course' => 'LANG 101', 'due' => 'Next week', 'urgent' => false]
-                    ] as $assignment)
-                        <div class="d-flex align-items-center mb-3 p-3 rounded" style="background: {{ $assignment['urgent'] ? '#fef2f2' : '#f8fafc' }};">
-                            <div class="icon-wrapper {{ $assignment['urgent'] ? 'icon-warning' : 'icon-primary' }} me-3" style="width: 40px; height: 40px;">
-                                <i class="fa fa-{{ $assignment['urgent'] ? 'exclamation' : 'file-alt' }}"></i>
+                    @forelse($upcomingAssignments ?? [] as $assignment)
+                        @php $urgent = \Carbon\Carbon::parse($assignment->due_date)->diffInDays(now()) <= 2; @endphp
+                        <div class="d-flex align-items-center mb-3 p-3 rounded" style="background: {{ $urgent ? '#fef2f2' : '#f8fafc' }};">
+                            <div class="icon-wrapper {{ $urgent ? 'icon-warning' : 'icon-primary' }} me-3" style="width: 40px; height: 40px;">
+                                <i class="fa fa-{{ $urgent ? 'exclamation' : 'file-alt' }}"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <h6 class="mb-1" style="color: var(--jbi-navy);">{{ $assignment['title'] }}</h6>
-                                <small class="text-muted">{{ $assignment['course'] }} - {{ $assignment['due'] }}</small>
+                                <h6 class="mb-1" style="color: var(--jbi-navy);">{{ $assignment->title }}</h6>
+                                <small class="text-muted">{{ $assignment->course->course_code ?? 'Course' }} - Due {{ \Carbon\Carbon::parse($assignment->due_date)->diffForHumans() }}</small>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <p class="text-muted text-center py-3">No upcoming assignments.</p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -181,7 +174,7 @@
                                 <i class="fa fa-tasks"></i>
                             </div>
                             <h6 style="color: var(--jbi-navy);">View Assignments</h6>
-                            <p class="text-muted small mb-0">{{ $pendingAssignments ?? 3 }} pending</p>
+                            <p class="text-muted small mb-0">{{ $pendingAssignments ?? 0 }} pending</p>
                         </div>
                     </a>
                 </div>
@@ -193,7 +186,7 @@
                                 <i class="fa fa-star"></i>
                             </div>
                             <h6 style="color: var(--jbi-navy);">Check Grades</h6>
-                            <p class="text-muted small mb-0">GPA: {{ number_format($currentGpa ?? 3.85, 2) }}</p>
+                            <p class="text-muted small mb-0">GPA: {{ number_format($currentGPA ?? 0, 2) }}</p>
                         </div>
                     </a>
                 </div>
@@ -218,8 +211,8 @@
                             </div>
                             <h6 style="color: var(--jbi-navy);">Fee Status</h6>
                             <p class="text-muted small mb-0">
-                                @if(($feeBalance ?? 0) > 0)
-                                    {{ $currencyCode }} {{ number_format($feeBalance) }} due
+                                @if(($pendingFees ?? 0) > 0)
+                                    ${{ number_format($pendingFees) }} due
                                 @else
                                     Paid in full
                                 @endif
@@ -232,7 +225,7 @@
     </div>
 
     <!-- Fee Balance Alert -->
-    @if(($feeBalance ?? 0) > 0)
+    @if(($pendingFees ?? 0) > 0)
     <div class="alert alert-warning mt-4" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: none; border-radius: 12px;">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
@@ -241,7 +234,7 @@
                 </div>
                 <div>
                     <h6 class="mb-1" style="color: var(--jbi-navy);">Outstanding Balance</h6>
-                    <p class="mb-0 text-muted">You have a balance of {{ $currencyCode }} {{ number_format($feeBalance) }} due</p>
+                    <p class="mb-0 text-muted">You have a balance of ${{ number_format($pendingFees) }} due</p>
                 </div>
             </div>
             <a href="{{ route('student.fees.index') }}" class="btn" style="background: var(--jbi-accent); color: white; border-radius: 8px;">
