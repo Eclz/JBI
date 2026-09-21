@@ -501,14 +501,7 @@ class ReportController extends Controller
         ));
     }
 
-    /**
-     * Export Enrollment Report
-     */
-    public function exportEnrollment(Request $request)
-    {
-        // This is a placeholder for the export method to fix the missing route target
-        return back()->with('error', 'Export feature is coming soon.');
-    }
+
 
     /**
      * Financial Report

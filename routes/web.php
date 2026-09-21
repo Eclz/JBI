@@ -188,18 +188,29 @@ Route::middleware('auth')->group(function () {
     Route::post('/change-password', [PasswordChangeController::class, 'changePassword'])->name('password.change');
 });
 
-// Library module routes
+// Library routes for all authenticated users
+Route::middleware(['auth'])->prefix('library')->name('library.')->group(function () {
+    Route::get('/catalogue', [\App\Http\Controllers\LibraryController::class, 'catalogueIndex'])->name('catalogue.index');
+    Route::get('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'show'])->name('catalogue.show');
+    Route::get('/my-loans', [\App\Http\Controllers\LibraryController::class, 'myLoans'])->name('my-loans');
+    Route::get('/loans/create', [\App\Http\Controllers\LibraryController::class, 'createLoan'])->name('loans.create');
+    Route::post('/loans', [\App\Http\Controllers\LibraryController::class, 'storeLoan'])->name('loans.store');
+});
+
+// Library management module routes
 Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name('library.')->group(function () {
     Route::get('/', [\App\Http\Controllers\LibraryController::class, 'index'])->name('index');
-    Route::get('/catalogue', [\App\Http\Controllers\LibraryController::class, 'catalogueIndex'])->name('catalogue.index');
     Route::get('/catalogue/create', [\App\Http\Controllers\LibraryController::class, 'create'])->name('catalogue.create')->middleware('permission:library_catalogue,create');
     Route::post('/catalogue', [\App\Http\Controllers\LibraryController::class, 'store'])->name('catalogue.store')->middleware('permission:library_catalogue,create');
-    Route::get('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'show'])->name('catalogue.show');
     Route::get('/catalogue/{item}/edit', [\App\Http\Controllers\LibraryController::class, 'edit'])->name('catalogue.edit')->middleware('permission:library_catalogue,edit');
     Route::put('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'update'])->name('catalogue.update')->middleware('permission:library_catalogue,edit');
     Route::delete('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'destroy'])->name('catalogue.destroy')->middleware('permission:library_catalogue,delete');
     Route::get('/loans', [\App\Http\Controllers\LibraryController::class, 'loansIndex'])->name('loans.index');
-    Route::get('/my-loans', [\App\Http\Controllers\LibraryController::class, 'myLoans'])->name('my-loans');
+    Route::get('/loans/{loan}', [\App\Http\Controllers\LibraryController::class, 'showLoan'])->name('loans.show');
+    Route::get('/loans/{loan}/edit', [\App\Http\Controllers\LibraryController::class, 'editLoan'])->name('loans.edit');
+    Route::put('/loans/{loan}', [\App\Http\Controllers\LibraryController::class, 'updateLoan'])->name('loans.update');
+    Route::put('/loans/{loan}/renew', [\App\Http\Controllers\LibraryController::class, 'renewLoan'])->name('loans.renew');
+    Route::put('/loans/{loan}/return', [\App\Http\Controllers\LibraryController::class, 'returnLoan'])->name('loans.return');
 });
 
 // Human resources module routes
@@ -225,20 +236,24 @@ Route::middleware(['auth', 'permission:human_resources,view'])->prefix('human-re
     Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('sections.show');
 });
 
-// Estates & facilities module routes
-Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')->name('facilities.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\FacilitiesController::class, 'index'])->name('index');
+// Facilities routes for all authenticated users
+Route::middleware(['auth'])->prefix('facilities')->name('facilities.')->group(function () {
     Route::get('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'roomsIndex'])->name('rooms.index');
-    Route::get('/rooms/create', [\App\Http\Controllers\FacilitiesController::class, 'create'])->name('rooms.create')->middleware('permission:facilities_rooms,create');
-    Route::post('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'store'])->name('rooms.store')->middleware('permission:facilities_rooms,create');
-    Route::get('/rooms/{room}/edit', [\App\Http\Controllers\FacilitiesController::class, 'edit'])->name('rooms.edit')->middleware('permission:facilities_rooms,edit');
-    Route::put('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'update'])->name('rooms.update')->middleware('permission:facilities_rooms,edit');
-    Route::delete('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:facilities_rooms,delete');
     Route::get('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'bookingsIndex'])->name('bookings.index');
     Route::post('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'storeBooking'])->name('bookings.store');
     Route::get('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'showBooking'])->name('bookings.show');
     Route::put('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'updateBooking'])->name('bookings.update');
     Route::delete('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'destroyBooking'])->name('bookings.destroy');
+});
+
+// Estates & facilities management routes
+Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')->name('facilities.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FacilitiesController::class, 'index'])->name('index');
+    Route::get('/rooms/create', [\App\Http\Controllers\FacilitiesController::class, 'create'])->name('rooms.create')->middleware('permission:facilities_rooms,create');
+    Route::post('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'store'])->name('rooms.store')->middleware('permission:facilities_rooms,create');
+    Route::get('/rooms/{room}/edit', [\App\Http\Controllers\FacilitiesController::class, 'edit'])->name('rooms.edit')->middleware('permission:facilities_rooms,edit');
+    Route::put('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'update'])->name('rooms.update')->middleware('permission:facilities_rooms,edit');
+    Route::delete('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:facilities_rooms,delete');
 });
 
 // Admin Routes

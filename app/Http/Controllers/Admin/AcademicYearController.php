@@ -26,7 +26,7 @@ class AcademicYearController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'year' => 'required|string|max:9',
+            'year' => 'required|integer|digits:4',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             // 'is_current' => 'nullable|boolean',
@@ -69,7 +69,7 @@ class AcademicYearController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'year' => 'required|string|max:9',
+            'year' => 'required|integer|digits:4',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             // 'is_current' => 'nullable|boolean',
@@ -88,8 +88,8 @@ class AcademicYearController extends Controller
                 'year' => $validated['year'],
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'],
-                'is_current' => $request->boolean('is_current', $academicYear->is_current),
-                'is_active' => $request->boolean('is_active', $academicYear->is_active),
+                'is_current' => $request->boolean('is_current'),
+                'is_active' => $request->boolean('is_active'),
             ]);
 
             DB::commit();

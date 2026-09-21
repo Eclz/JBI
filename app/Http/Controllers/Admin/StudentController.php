@@ -248,20 +248,23 @@ class StudentController extends Controller
             $program = $request->program_id ? Program::find($request->program_id) : null;
             $resolvedDepartmentId = $program?->department_id ?? $request->department_id;
 
-            $student->studentProfile->update([
-                'student_id' => $request->student_id,
-                'department_id' => $resolvedDepartmentId,
-                'program_id' => $program?->id,
-                'program' => $program?->name,
-                'date_of_birth' => $request->date_of_birth,
-                'gender' => $request->gender,
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'emergency_contact' => $request->emergency_contact,
-                'emergency_phone' => $request->emergency_phone,
-                'admission_date' => $request->admission_date,
-                'status' => $request->status ?? 'active',
-            ]);
+            $student->studentProfile()->updateOrCreate(
+                ['user_id' => $student->id],
+                [
+                    'student_id' => $request->student_id,
+                    'department_id' => $resolvedDepartmentId,
+                    'program_id' => $program?->id,
+                    'program' => $program?->name,
+                    'date_of_birth' => $request->date_of_birth,
+                    'gender' => $request->gender,
+                    'phone' => $request->phone,
+                    'address' => $request->address,
+                    'emergency_contact' => $request->emergency_contact,
+                    'emergency_phone' => $request->emergency_phone,
+                    'admission_date' => $request->admission_date,
+                    'status' => $request->status ?? 'active',
+                ]
+            );
 
             DB::commit();
 

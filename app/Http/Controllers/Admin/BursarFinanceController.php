@@ -497,6 +497,10 @@ class BursarFinanceController extends Controller
     {
         $payroll = PayrollRecord::findOrFail($id);
         
+        if ($payroll->user_id === \Illuminate\Support\Facades\Auth::id()) {
+            abort(403, 'You cannot edit your own salary.');
+        }
+        
         $validated = $request->validate([
             'basic_salary' => 'required|numeric|min:0',
             'total_allowances' => 'required|numeric|min:0',

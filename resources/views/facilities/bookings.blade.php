@@ -152,14 +152,14 @@
     </div>
 </div>
 
-<!-- Request Booking Modal -->
+<!-- Register Booking Modal -->
 <div class="modal fade" id="requestBookingModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="{{ route('facilities.bookings.store') }}" method="POST">
                 @csrf
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">Request Booking / Maintenance</h5>
+                    <h5 class="modal-title fw-bold">Register Booking / Maintenance</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">

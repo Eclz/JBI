@@ -32,8 +32,8 @@
                         <tbody>
                             @foreach($requests as $request)
                                 <tr>
-                                    <td>{{ $request->currentProgram->name ?? 'N/A' }}</td>
-                                    <td>{{ $request->requestedProgram->name ?? 'N/A' }}</td>
+                                    <td>{{ $request->currentProgram?->name ?? 'N/A' }}</td>
+                                    <td>{{ $request->requestedProgram?->name ?? 'N/A' }}</td>
                                     <td>
                                         <span class="badge bg-{{ $request->status === 'approved' ? 'success' : ($request->status === 'rejected' ? 'danger' : 'warning') }}">
                                             {{ ucfirst($request->status) }}

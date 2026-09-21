@@ -23,8 +23,8 @@
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="year" class="form-label">Year <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control @error('year') is-invalid @enderror" id="year" name="year" value="{{ old('year') }}" placeholder="2025/2026" required>
+                        <label for="year" class="form-label">Year (Starting Year) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control @error('year') is-invalid @enderror" id="year" name="year" value="{{ old('year') }}" placeholder="2026" min="2000" max="2099" required>
                         @error('year')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>

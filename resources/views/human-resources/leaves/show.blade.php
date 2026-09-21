@@ -39,6 +39,14 @@
                         <div class="col-sm-4 text-muted fw-semibold">Reason</div>
                         <div class="col-sm-8">{{ $leave->reason }}</div>
                     </div>
+                    @if($leave->substitute_id)
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-semibold">Substitute Lecturer</div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-info text-dark">{{ $leave->substitute->full_name }}</span>
+                        </div>
+                    </div>
+                    @endif
                     <div class="row mb-3">
                         <div class="col-sm-4 text-muted fw-semibold">Submitted On</div>
                         <div class="col-sm-8">{{ $leave->created_at->format('M d, Y H:i') }}</div>

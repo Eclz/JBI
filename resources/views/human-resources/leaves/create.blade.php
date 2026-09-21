@@ -41,6 +41,21 @@
                         @error('end_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Substitute Lecturer</label>
+                        <select name="substitute_id" class="form-select @error('substitute_id') is-invalid @enderror">
+                            <option value="">None</option>
+                            @if(isset($faculty) && count($faculty) > 0)
+                                @foreach($faculty as $member)
+                                    <option value="{{ $member->id }}">{{ $member->full_name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <small class="text-muted">Optional: Select a colleague to cover your duties.</small>
+                        @error('substitute_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Reason</label>
                     <textarea name="reason" rows="4" class="form-control @error('reason') is-invalid @enderror" required></textarea>

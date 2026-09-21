@@ -29,7 +29,14 @@ class FacilitiesController extends Controller
 
     public function bookingsIndex()
     {
-        $bookings = \App\Models\FacilityBooking::with(['facilityRoom', 'user'])->latest()->paginate(15);
+        $user = Auth::user();
+        $query = \App\Models\FacilityBooking::with(['facilityRoom', 'user'])->latest();
+        
+        if (!($user->hasPermission('facilities', 'view') || $user->isFacilitiesStaff() || $user->isAdmin())) {
+            $query->where('user_id', $user->id);
+        }
+
+        $bookings = $query->paginate(15);
         $rooms = FacilityRoom::where('status', '!=', 'Retired')->get();
         return view('facilities.bookings', compact('bookings', 'rooms'));
     }
@@ -64,12 +71,24 @@ class FacilitiesController extends Controller
 
     public function updateBooking(Request $request, \App\Models\FacilityBooking $booking)
     {
-        $data = $request->validate([
-            'status' => 'required|in:Pending,Approved,Assigned,In Progress,Completed,Cancelled',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
-            'notes' => 'nullable|string',
-        ]);
+        $user = Auth::user();
+        if (!($user->hasPermission('facilities', 'view') || $user->isFacilitiesStaff() || $user->isAdmin())) {
+            if ($booking->user_id !== $user->id) {
+                abort(403);
+            }
+            $data = $request->validate([
+                'start_time' => 'required|date',
+                'end_time' => 'required|date|after:start_time',
+                'notes' => 'nullable|string',
+            ]);
+        } else {
+            $data = $request->validate([
+                'status' => 'required|in:Pending,Approved,Assigned,In Progress,Completed,Cancelled',
+                'start_time' => 'required|date',
+                'end_time' => 'required|date|after:start_time',
+                'notes' => 'nullable|string',
+            ]);
+        }
         
         $booking->update($data);
         
@@ -78,6 +97,12 @@ class FacilitiesController extends Controller
 
     public function destroyBooking(\App\Models\FacilityBooking $booking)
     {
+        $user = Auth::user();
+        if (!($user->hasPermission('facilities', 'view') || $user->isFacilitiesStaff() || $user->isAdmin())) {
+            if ($booking->user_id !== $user->id) {
+                abort(403);
+            }
+        }
         $booking->delete();
         return redirect()->route('facilities.bookings.index')->with('success', 'Booking deleted successfully.');
     }

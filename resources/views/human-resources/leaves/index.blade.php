@@ -26,6 +26,7 @@
                             <th>Type</th>
                             <th>From</th>
                             <th>To</th>
+                            <th>Substitute</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -37,6 +38,7 @@
                                 <td>{{ $leave->type }}</td>
                                 <td>{{ $leave->start_date->format('M d, Y') }}</td>
                                 <td>{{ $leave->end_date->format('M d, Y') }}</td>
+                                <td>{{ $leave->substitute_id ? $leave->substitute->full_name : '-' }}</td>
                                 <td>
                                     @php
                                         $badgeClass = match($leave->status) {
@@ -61,7 +63,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center text-muted py-4">No leave requests found.</td></tr>
+                            <tr><td colspan="7" class="text-center text-muted py-4">No leave requests found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

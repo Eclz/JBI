@@ -18,6 +18,7 @@ class LeaveRequest extends Model
         'status',
         'manager_id',
         'manager_comment',
+        'substitute_id',
     ];
 
     protected $casts = [
@@ -33,5 +34,10 @@ class LeaveRequest extends Model
     public function manager()
     {
         return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function substitute()
+    {
+        return $this->belongsTo(User::class, 'substitute_id');
     }
 }

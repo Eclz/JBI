@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeaveRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,7 +22,15 @@ class LeaveRequestController extends Controller
 
     public function create()
     {
-        return view('human-resources.leaves.create');
+        $faculty = [];
+        if (Auth::user()->isFaculty()) {
+            $faculty = User::where('role', 'faculty')
+                ->where('id', '!=', Auth::id())
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        }
+        return view('human-resources.leaves.create', compact('faculty'));
     }
 
     public function store(Request $request)
@@ -31,6 +40,7 @@ class LeaveRequestController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string',
+            'substitute_id' => 'nullable|exists:users,id',
         ]);
         
         $data['user_id'] = Auth::id();
@@ -57,7 +67,16 @@ class LeaveRequestController extends Controller
             abort(403);
         }
 
-        return view('human-resources.leaves.edit', compact('leave'));
+        $faculty = [];
+        if (Auth::user()->isFaculty()) {
+            $faculty = User::where('role', 'faculty')
+                ->where('id', '!=', Auth::id())
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('human-resources.leaves.edit', compact('leave', 'faculty'));
     }
 
     public function update(Request $request, LeaveRequest $leave)
@@ -71,6 +90,7 @@ class LeaveRequestController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string',
+            'substitute_id' => 'nullable|exists:users,id',
         ]);
 
         $leave->update($data);

@@ -516,6 +516,14 @@
                 <span>Course Materials</span>
             </a>
         </li>
+
+        {{-- Mailbox --}}
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper"></i>
+                <span>Mailbox</span>
+            </a>
+        </li>
         @endif
 
         {{-- ==================== STUDENT NAVIGATION ==================== --}}
@@ -707,7 +715,7 @@
         </li>
         @endif
 
-        @if(auth()->user()->hasPermission('library', 'view') || auth()->user()->isLibrarian())
+        @if(auth()->user()->hasPermission('library', 'view') || auth()->user()->isLibrarian() || auth()->user()->isStudent())
         <li class="sidebar-group {{ request()->routeIs('library.*') ? 'has-active-child' : '' }}" data-group-id="library-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('library.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'library-module')">
                 <i class="bi bi-book-half group-icon"></i>
@@ -715,26 +723,28 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ request()->routeIs('library.*') ? 'display: block;' : 'display: none;' }}">
+                @if(!auth()->user()->isStudent())
                 <li class="submenu-item {{ request()->routeIs('library.index') ? 'active' : '' }}">
                     <a href="{{ route('library.index') }}" class="submenu-link">
                         <i class="bi bi-house-door"></i>
                         <span>Library Dashboard</span>
                     </a>
                 </li>
-                @if(auth()->user()->hasPermission('library', 'view'))
+                @endif
                 <li class="submenu-item {{ request()->routeIs('library.catalogue.*') ? 'active' : '' }}">
                     <a href="{{ route('library.catalogue.index') }}" class="submenu-link">
                         <i class="bi bi-collection"></i>
                         <span>Catalogue</span>
                     </a>
                 </li>
-                @endif
+                @if(!auth()->user()->isStudent())
                 <li class="submenu-item {{ request()->routeIs('library.loans.*') ? 'active' : '' }}">
                     <a href="{{ route('library.loans.index') }}" class="submenu-link">
                         <i class="bi bi-journal-bookmark"></i>
                         <span>Loans & Returns</span>
                     </a>
                 </li>
+                @endif
                 @if(auth()->user()->isStudent())
                 <li class="submenu-item {{ request()->routeIs('library.my-loans') ? 'active' : '' }}">
                     <a href="{{ route('library.my-loans') }}" class="submenu-link">
@@ -830,7 +840,7 @@
         </li>
         @endif
 
-        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff())
+        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff() || auth()->user()->isStudent())
         <li class="sidebar-group {{ request()->routeIs('facilities.*') ? 'has-active-child' : '' }}" data-group-id="facilities-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('facilities.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'facilities-module')">
                 <i class="bi bi-building group-icon"></i>
@@ -838,12 +848,14 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ request()->routeIs('facilities.*') ? 'display: block;' : 'display: none;' }}">
+                @if(!auth()->user()->isStudent())
                 <li class="submenu-item {{ request()->routeIs('facilities.index') ? 'active' : '' }}">
                     <a href="{{ route('facilities.index') }}" class="submenu-link">
                         <i class="bi bi-speedometer2"></i>
                         <span>Facilities Dashboard</span>
                     </a>
                 </li>
+                @endif
                 <li class="submenu-item {{ request()->routeIs('facilities.rooms.*') ? 'active' : '' }}">
                     <a href="{{ route('facilities.rooms.index') }}" class="submenu-link">
                         <i class="bi bi-door-open"></i>

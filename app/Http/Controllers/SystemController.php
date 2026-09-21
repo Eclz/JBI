@@ -130,6 +130,18 @@ class SystemController extends Controller
 
         if ($request->filled('current_semester_id')) {
             \App\Models\Semester::where('is_current', true)->update(['is_current' => false]);
+            
+            // Auto-close any expired semesters and academic years
+            \App\Models\Semester::where('is_active', true)
+                ->whereNotNull('end_date')
+                ->where('end_date', '<', now()->startOfDay())
+                ->update(['is_active' => false, 'is_current' => false]);
+                
+            AcademicYear::where('is_active', true)
+                ->whereNotNull('end_date')
+                ->where('end_date', '<', now()->startOfDay())
+                ->update(['is_active' => false, 'is_current' => false]);
+
             $semester = \App\Models\Semester::find($request->current_semester_id);
             if ($semester) {
                 $semester->update([
