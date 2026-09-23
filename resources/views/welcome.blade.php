@@ -7,8 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
+        :root {
+            --jbi-primary: #001d48;
+            --jbi-accent: #d89b00;
+        }
         .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--jbi-primary) 0%, #00102a 100%);
             color: white;
             padding: 100px 0;
             min-height: 600px;
@@ -27,6 +31,28 @@
             padding: 15px 40px;
             font-size: 1.2rem;
             font-weight: 600;
+            background-color: var(--jbi-accent);
+            border-color: var(--jbi-accent);
+            color: white !important;
+        }
+        .btn-apply:hover {
+            background-color: #b88400;
+            border-color: #b88400;
+        }
+        .btn-primary, .bg-primary {
+            background-color: var(--jbi-primary) !important;
+            border-color: var(--jbi-primary) !important;
+        }
+        .text-primary, .bi {
+            color: var(--jbi-accent) !important;
+        }
+        .btn-outline-primary {
+            color: var(--jbi-accent);
+            border-color: var(--jbi-accent);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--jbi-accent);
+            color: white !important;
         }
         .stats-section {
             background: #f8f9fa;
@@ -38,7 +64,7 @@
         .stat-number {
             font-size: 3rem;
             font-weight: bold;
-            color: #667eea;
+            color: var(--jbi-accent);
         }
         .program-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -56,14 +82,24 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background-color: rgba(102, 126, 234, 0.12);
-            color: #667eea;
+            background-color: rgba(216, 155, 0, 0.12);
+            color: var(--jbi-accent);
             font-size: 1.35rem;
         }
         .filter-btn.active {
-            background-color: #667eea !important;
-            border-color: #667eea !important;
+            background-color: var(--jbi-primary) !important;
+            border-color: var(--jbi-primary) !important;
             color: #ffffff !important;
+        }
+        .btn-gold {
+            background-color: var(--jbi-accent);
+            border-color: var(--jbi-accent);
+            color: white;
+        }
+        .btn-gold:hover {
+            background-color: #b88400;
+            border-color: #b88400;
+            color: white;
         }
     </style>
 </head>
@@ -95,10 +131,10 @@
                         </li>
                     @else
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login') }}">Login</a>
+                            <a class="btn btn-primary" href="{{ route('login') }}">Sign In</a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-primary ms-2" href="{{ route('applications.create') }}">Apply Now</a>
+                            <a class="btn btn-gold ms-2" href="{{ route('applications.create') }}">Apply Now</a>
                         </li>
                     @endauth
                 </ul>
@@ -312,10 +348,10 @@
     <!-- CTA Section -->
     <section class="py-5 bg-primary text-white" style="background-image: url('{{ asset('images/banner-gold.png') }}'); background-repeat: no-repeat; background-size: cover; background-position: center;" height="100px">
         <div class="container text-center">
-            <h2 class="display-5 fw-bold mb-4">Ready to Start Your Journey?</h2>
-            <p class="lead mb-4">Apply now and take the first step towards your future</p>
-            <a href="{{ route('applications.create') }}" class="btn btn-light btn-lg">
-                <i class="bi bi-file-earmark-text me-2"></i>Apply for Admission
+            <h2 class="display-5 fw-bold mb-4 text-white">Ready to Start Your Journey?</h2>
+            <p class="lead mb-4 text-white">Apply now and take the first step towards your future</p>
+            <a href="{{ route('applications.create') }}" class="btn btn-gold btn-lg">
+                <i class="bi bi-file-earmark-text me-2 text-white"></i>Apply for Admission
             </a>
         </div>
     </section>

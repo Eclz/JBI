@@ -42,7 +42,7 @@
                         <span class="text-muted small fw-semibold text-uppercase">Onboarding</span>
                         <i class="bi bi-clipboard-check fs-4 text-warning"></i>
                     </div>
-                    <h3 class="fw-bold mb-0">0</h3>
+                    <h3 class="fw-bold mb-0">{{ $onboardingCount }}</h3>
                 </div>
             </div>
         </div>
@@ -62,18 +62,22 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Sarah Bassey</td>
-                            <td>Lecturer</td>
-                            <td>Computing</td>
-                            <td><span class="badge text-bg-success">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>Daniel Akpan</td>
-                            <td>HR Specialist</td>
-                            <td>People & Culture</td>
-                            <td><span class="badge text-bg-primary">On duty</span></td>
-                        </tr>
+                        @forelse($recentStaff as $staff)
+                            <tr>
+                                <td>{{ $staff->full_name }}</td>
+                                <td>{{ $staff->hrProfile?->job_title ?? $staff->role_name }}</td>
+                                <td>{{ $staff->hrProfile?->department ?? '—' }}</td>
+                                <td>
+                                    @php
+                                        $status = $staff->hrProfile?->status ?? ($staff->is_active ? 'Active' : 'Inactive');
+                                        $badgeClass = $status === 'Active' ? 'success' : ($status === 'On Leave' ? 'info' : 'warning');
+                                    @endphp
+                                    <span class="badge text-bg-{{ $badgeClass }}">{{ $status }}</span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-muted">No recent staff found.</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

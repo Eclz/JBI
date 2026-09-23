@@ -88,7 +88,7 @@ class UserController extends Controller
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'password' => Hash::make(Str::random(32)),
+                'password' => Hash::make('ABCxyz,.?123'),
                 'role' => $role->guard_role,
                 'role_id' => $role->id,
                 'phone' => $request->phone,

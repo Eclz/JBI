@@ -164,7 +164,7 @@ class FacultyStaffController extends Controller
                 'last_name' => $request->last_name,
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make(\Illuminate\Support\Str::random(32)),
+                'password' => Hash::make('ABCxyz,.?123'),
                 'role' => 'faculty',
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,

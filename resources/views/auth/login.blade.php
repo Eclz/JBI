@@ -16,9 +16,9 @@
 
     <style>
         :root {
-            --jbi-primary: #1e3a8a;
-            --jbi-secondary: #3b82f6;
-            --jbi-accent: #fbbf24;
+            --jbi-primary: #001d48;
+            --jbi-secondary: #00102a;
+            --jbi-accent: #d89b00;
         }
 
 
@@ -141,7 +141,7 @@
                             </div>
 
                             @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:text-blue-500">
+                                <a href="{{ route('password.request') }}" class="text-sm hover:opacity-80 transition-opacity" style="color: var(--jbi-accent);">
                                     Forgot your password?
                                 </a>
                             @endif
@@ -149,7 +149,8 @@
 
                         <button
                             type="submit"
-                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                            class="w-full text-white py-3 px-4 rounded-lg hover:opacity-90 focus:ring-2 focus:ring-offset-2 transition-all font-medium"
+                            style="background-color: var(--jbi-primary); focus:ring-color: var(--jbi-primary);"
                         >
                             Sign In
                         </button>
@@ -159,11 +160,11 @@
                         <p class="text-sm text-gray-600">
                             Don't have an account?
                             @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-500 font-medium">
+                                <a href="{{ route('register') }}" class="hover:opacity-80 transition-opacity font-medium" style="color: var(--jbi-accent);">
                                     Contact Administration
                                 </a>
                             @else
-                                <span class="text-blue-600 font-medium">
+                                <span class="font-medium" style="color: var(--jbi-accent);">
                                     Contact Administration
                                 </span>
                             @endif

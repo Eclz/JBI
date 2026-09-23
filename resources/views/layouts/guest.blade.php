@@ -26,9 +26,9 @@
 
     <style>
         :root {
-            --jbi-primary: #3b5bdb;
+            --jbi-primary: #001d48;
             --jbi-secondary: #1a2236;
-            --jbi-accent: #f59e0b;
+            --jbi-accent: #d89b00;
             --jbi-success: #10b981;
             --jbi-danger: #ef4444;
             --jbi-warning: #f59e0b;

@@ -42,10 +42,12 @@
             --sidebar-width: 250px;
             --header-height: 60px;
             --mobile-header-height: 60px;
-            --primary-color: #3b5bdb;
+            --primary-color: #001d48;
             --secondary-color: #1a2236;
-            --jbi-primary: #3b5bdb;
+            --jbi-primary: #001d48;
             --jbi-secondary: #1a2236;
+            --jbi-accent: #d89b00;
+            --jbi-success: #10b981;
         }
 
         body {

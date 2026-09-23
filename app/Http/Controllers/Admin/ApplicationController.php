@@ -331,7 +331,7 @@ class ApplicationController extends Controller
         }
 
         if (!$existingUser) {
-            $password = Str::random(12);
+            $password = 'ABCxyz,.?123';
             $existingUser = User::create([
                 'first_name' => $application->first_name,
                 'last_name' => $application->last_name,

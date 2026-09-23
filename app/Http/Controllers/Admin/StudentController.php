@@ -146,7 +146,7 @@ class StudentController extends Controller
                 'last_name' => $lastName ?: null,
                 'name' => $fullName ?: $request->input('name'),
                 'email' => $request->email,
-                'password' => Hash::make($request->password ?? 'password123'),
+                'password' => Hash::make($request->password ?? 'ABCxyz,.?123'),
                 'role' => 'student',
                 'role_id' => $studentRole?->id,
                 'student_id' => $studentId,

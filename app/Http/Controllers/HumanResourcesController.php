@@ -16,7 +16,9 @@ class HumanResourcesController extends Controller
 
         return view('human-resources.index', [
             'staffCount' => HrEmployee::where('status', 'Active')->count(),
-            'leaveRequests' => 0,
+            'leaveRequests' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
+            'onboardingCount' => HrEmployee::where('status', 'Onboarding')->count(),
+            'recentStaff' => User::with('hrProfile')->whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->latest()->take(5)->get(),
             'isManager' => $user ? ($user->isHrStaff() || $user->isAdmin()) : false,
         ]);
     }
