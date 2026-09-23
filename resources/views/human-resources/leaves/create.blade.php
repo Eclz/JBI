@@ -16,6 +16,20 @@
         <div class="card-body">
             <form method="POST" action="{{ route('human-resources.leaves.store') }}">
                 @csrf
+                @if(isset($isHrOrAdmin) && $isHrOrAdmin)
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Staff Member</label>
+                    <select name="staff_id" class="form-select @error('staff_id') is-invalid @enderror">
+                        <option value="">Select staff member (or leave blank for yourself)</option>
+                        @if(isset($staffMembers) && count($staffMembers) > 0)
+                            @foreach($staffMembers as $member)
+                                <option value="{{ $member->id }}">{{ $member->full_name }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('staff_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                @endif
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Leave Type</label>
                     <select name="type" class="form-select @error('type') is-invalid @enderror" required>

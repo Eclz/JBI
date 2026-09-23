@@ -757,7 +757,7 @@
         </li>
         @endif
 
-        @if(auth()->user()->hasPermission('human_resources', 'view') || auth()->user()->isHrStaff())
+        @if(auth()->check())
         <li class="sidebar-group {{ request()->routeIs('human-resources.*') ? 'has-active-child' : '' }}" data-group-id="hr-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('human-resources.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'hr-module')">
                 <i class="bi bi-people group-icon"></i>
@@ -765,24 +765,43 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ request()->routeIs('human-resources.*') ? 'display: block;' : 'display: none;' }}">
+                @if(auth()->user()->hasPermission('human_resources', 'view') || auth()->user()->isHrStaff())
                 <li class="submenu-item {{ request()->routeIs('human-resources.index') ? 'active' : '' }}">
                     <a href="{{ route('human-resources.index') }}" class="submenu-link">
                         <i class="bi bi-grid-1x2"></i>
                         <span>HR Dashboard</span>
                     </a>
                 </li>
+                @endif
                 <li class="sidebar-subheading">Core HR & Admin</li>
-                <li class="submenu-item {{ request()->routeIs('human-resources.staff.*') ? 'active' : '' }}">
-                    <a href="{{ route('human-resources.staff.index') }}" class="submenu-link">
+                <li class="submenu-item {{ request()->routeIs('human-resources.directory') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.directory') }}" class="submenu-link">
                         <i class="bi bi-person-lines-fill"></i>
                         <span>Employee Directory</span>
                     </a>
                 </li>
+                <li class="submenu-item {{ request()->routeIs('human-resources.index') && !auth()->user()->isHrStaff() && !auth()->user()->isAdmin() ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.index') }}" class="submenu-link">
+                        <i class="bi bi-person-check"></i>
+                        <span>Self-Service Portal (ESS)</span>
+                    </a>
+                </li>
+                @if(auth()->user()->hasPermission('hr_core', 'view'))
+                <li class="submenu-item {{ request()->routeIs('human-resources.staff.*') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.staff.index') }}" class="submenu-link">
+                        <i class="bi bi-person-vcard"></i>
+                        <span>Personal Profiles & Digital Files</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('human-resources.job-roles.*') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.job-roles.index') }}" class="submenu-link">
+                        <i class="bi bi-tags"></i>
+                        <span>Job Roles & Banding</span>
+                    </a>
+                </li>
+                @endif
                 @foreach([
-                    ['profiles', 'Personal Profiles & Digital Files', 'bi-person-vcard'],
                     ['org-chart', 'Interactive Org Chart', 'bi-diagram-3'],
-                    ['job-roles', 'Job Roles & Banding', 'bi-tags'],
-                    ['ess', 'Self-Service Portal (ESS)', 'bi-person-check'],
                 ] as [$slug, $label, $icon])
                     @if(auth()->user()->hasPermission('hr_core', 'view'))
                         <li class="submenu-item {{ request()->routeIs('human-resources.sections.show') && request('section') === $slug ? 'active' : '' }}">

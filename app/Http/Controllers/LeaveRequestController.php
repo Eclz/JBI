@@ -23,14 +23,25 @@ class LeaveRequestController extends Controller
     public function create()
     {
         $faculty = [];
-        if (Auth::user()->isFaculty()) {
+        $staffMembers = [];
+        $isHrOrAdmin = Auth::user()->hasPermission('human_resources', 'view');
+        
+        if (Auth::user()->isFaculty() || $isHrOrAdmin) {
             $faculty = User::where('role', 'faculty')
                 ->where('id', '!=', Auth::id())
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get();
         }
-        return view('human-resources.leaves.create', compact('faculty'));
+
+        if ($isHrOrAdmin) {
+            $staffMembers = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('human-resources.leaves.create', compact('faculty', 'staffMembers', 'isHrOrAdmin'));
     }
 
     public function store(Request $request)
@@ -41,9 +52,14 @@ class LeaveRequestController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string',
             'substitute_id' => 'nullable|exists:users,id',
+            'staff_id' => 'nullable|exists:users,id',
         ]);
         
         $data['user_id'] = Auth::id();
+        if (Auth::user()->hasPermission('human_resources', 'view') && $request->filled('staff_id')) {
+            $data['user_id'] = $request->staff_id;
+        }
+        
         $data['status'] = 'pending';
 
         LeaveRequest::create($data);

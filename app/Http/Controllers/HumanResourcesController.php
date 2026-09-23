@@ -13,13 +13,18 @@ class HumanResourcesController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $isManager = $user ? ($user->isHrStaff() || $user->isAdmin()) : false;
+
+        if (!$isManager) {
+            return view('human-resources.ess');
+        }
 
         return view('human-resources.index', [
             'staffCount' => HrEmployee::where('status', 'Active')->count(),
             'leaveRequests' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
             'onboardingCount' => HrEmployee::where('status', 'Onboarding')->count(),
             'recentStaff' => User::with('hrProfile')->whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->latest()->take(5)->get(),
-            'isManager' => $user ? ($user->isHrStaff() || $user->isAdmin()) : false,
+            'isManager' => $isManager,
         ]);
     }
 
@@ -36,12 +41,32 @@ class HumanResourcesController extends Controller
     public function show(User $employee)
     {
         $employee->load('hrProfile');
+        if (!$employee->hrProfile) {
+            $employee->hrProfile = new HrEmployee([
+                'employee_number' => 'Not Assigned',
+                'job_title' => $employee->role ?? 'Staff',
+                'department' => 'Not Assigned',
+                'status' => 'Active',
+            ]);
+        }
         return view('human-resources.show', compact('employee'));
     }
 
     public function leavesIndex()
     {
         return view('human-resources.leaves');
+    }
+
+    public function directory()
+    {
+        $employees = User::with('hrProfile')
+            ->whereNotIn('role', ['student', 'applicant', 'parent', ''])
+            ->whereNotNull('role')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+            
+        return view('human-resources.directory', compact('employees'));
     }
 
     public function section(string $section)
@@ -117,7 +142,18 @@ class HumanResourcesController extends Controller
     public function edit(User $employee)
     {
         $hrProfile = $employee->hrProfile;
-        return view('human-resources.edit', compact('employee', 'hrProfile'));
+        if (!$hrProfile) {
+            $hrProfile = new HrEmployee([
+                'employee_number' => 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'job_title' => $employee->role,
+                'status' => 'Active',
+            ]);
+        } elseif (empty($hrProfile->employee_number)) {
+            $hrProfile->employee_number = 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        }
+        
+        $jobRoles = \App\Models\HrJobRole::where('is_active', true)->orderBy('title')->get();
+        return view('human-resources.edit', compact('employee', 'hrProfile', 'jobRoles'));
     }
 
     public function update(Request $request, User $employee)
@@ -151,10 +187,13 @@ class HumanResourcesController extends Controller
         if ($employee->hrProfile) {
             $number = $employee->hrProfile->employee_number;
             $employee->hrProfile->delete();
-            $this->notifyUser($employee->id, 'Employee record removed', "Your HR employee record {$number} was removed.", 'human-resources.index');
+            $employee->update(['is_active' => false]);
+            $this->notifyUser($employee->id, 'Employee record removed', "Your HR employee record {$number} was removed and your account deactivated.", 'human-resources.index');
+        } else {
+            $employee->update(['is_active' => false]);
         }
 
-        return redirect()->route('human-resources.staff.index')->with('success', 'Employee HR profile deleted successfully.');
+        return redirect()->route('human-resources.staff.index')->with('success', 'Employee HR profile deleted and account deactivated successfully.');
     }
 
     private function notify(HrEmployee $employee, string $title, string $message, string $route): void
@@ -173,4 +212,5 @@ class HumanResourcesController extends Controller
             'priority' => 'normal',
         ]);
     }
+
 }

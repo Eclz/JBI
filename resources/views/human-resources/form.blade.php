@@ -24,8 +24,15 @@
         </select>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Salary band</label>
-        <input name="salary_band" class="form-control" value="{{ old('salary_band', $hrProfile?->salary_band ?? '') }}">
+        <label class="form-label">Salary band (Job Role)</label>
+        <select name="salary_band" class="form-select">
+            <option value="">Select Band/Role</option>
+            @foreach($jobRoles as $role)
+                <option value="{{ $role->title }}" @selected(old('salary_band', $hrProfile?->salary_band ?? '') == $role->title)>
+                    {{ $role->title }} ({{ $role->salary_band_min ? '$'.number_format($role->salary_band_min,2) : 'N/A' }} - {{ $role->salary_band_max ? '$'.number_format($role->salary_band_max,2) : 'N/A' }})
+                </option>
+            @endforeach
+        </select>
     </div>
     <div class="col-md-4">
         <label class="form-label">Status</label>

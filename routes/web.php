@@ -214,11 +214,11 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
 });
 
 // Human resources module routes
-Route::middleware(['auth', 'permission:human_resources,view'])->prefix('human-resources')->name('human-resources.')->group(function () {
+Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')->group(function () {
     Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
-    Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index');
+    Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index')->middleware('permission:human_resources,view');
     Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
-    Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show');
+    Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show')->middleware('permission:human_resources,view');
     Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
     Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
     Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
@@ -233,7 +233,15 @@ Route::middleware(['auth', 'permission:human_resources,view'])->prefix('human-re
     Route::put('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'update'])->name('leaves.update');
     Route::delete('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'destroy'])->name('leaves.destroy');
     Route::patch('/leaves/{leave}/status', [\App\Http\Controllers\LeaveRequestController::class, 'updateStatus'])->name('leaves.status')->middleware('permission:human_resources,view');
-    Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('sections.show');
+    
+    // Job Roles
+    Route::resource('sections/job-roles', \App\Http\Controllers\JobRoleController::class)->names('job-roles')->middleware('permission:human_resources,view');
+    
+    // Employee Directory
+    Route::get('/directory', [\App\Http\Controllers\HumanResourcesController::class, 'directory'])->name('directory');
+    
+    // Other Sections placeholder
+    Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('sections.show')->middleware('permission:human_resources,view');
 });
 
 // Facilities routes for all authenticated users

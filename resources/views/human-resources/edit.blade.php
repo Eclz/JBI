@@ -12,7 +12,7 @@
         <form method="POST" action="{{ route('human-resources.staff.update', $employee) }}">
             @csrf
             @method('PUT')
-            @include('human-resources.form', ['employee' => $employee, 'hrProfile' => $hrProfile])
+            @include('human-resources.form', ['employee' => $employee, 'hrProfile' => $hrProfile, 'jobRoles' => $jobRoles ?? []])
             <button class="btn btn-primary">Update employee</button>
         </form>
     </div></div>
