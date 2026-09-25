@@ -102,6 +102,49 @@ class BursarFinanceController extends Controller
             ->with('success', 'Revenue record saved successfully.');
     }
 
+    public function showRevenue($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $revenue = FinanceRevenue::with('receiver')->findOrFail($id);
+        return view('admin.finance.revenue.show', compact('revenue', 'currencyCode'));
+    }
+
+    public function editRevenue($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $revenue = FinanceRevenue::findOrFail($id);
+        return view('admin.finance.revenue.edit', compact('revenue', 'currencyCode'));
+    }
+
+    public function updateRevenue(Request $request, $id)
+    {
+        $revenue = FinanceRevenue::findOrFail($id);
+        $validated = $request->validate([
+            'category' => 'required|string',
+            'title' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0',
+            'transaction_date' => 'required|date',
+            'payment_method' => 'nullable|string',
+            'reference_number' => 'nullable|string',
+            'payer_name' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+        
+        $revenue->update($validated);
+
+        return redirect()->route('admin.finance.revenue.index')
+            ->with('success', 'Revenue record updated successfully.');
+    }
+
+    public function destroyRevenue($id)
+    {
+        $revenue = FinanceRevenue::findOrFail($id);
+        $revenue->delete();
+
+        return redirect()->route('admin.finance.revenue.index')
+            ->with('success', 'Revenue record deleted successfully.');
+    }
+
     /**
      * 2. Budget Management
      */
@@ -130,6 +173,45 @@ class BursarFinanceController extends Controller
 
         return redirect()->route('admin.finance.budgets.index')
             ->with('success', 'Department Budget allocated successfully.');
+    }
+
+    public function showBudget($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $budget = FinanceBudget::with(['department', 'approver'])->findOrFail($id);
+        return view('admin.finance.budgets.show', compact('budget', 'currencyCode'));
+    }
+
+    public function editBudget($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $budget = FinanceBudget::findOrFail($id);
+        $departments = Department::orderBy('name')->get();
+        return view('admin.finance.budgets.edit', compact('budget', 'departments', 'currencyCode'));
+    }
+
+    public function updateBudget(Request $request, $id)
+    {
+        $budget = FinanceBudget::findOrFail($id);
+        $validated = $request->validate([
+            'academic_year' => 'required|string',
+            'department_id' => 'required|exists:departments,id',
+            'allocated_amount' => 'required|numeric|min:0',
+        ]);
+
+        $budget->update($validated);
+
+        return redirect()->route('admin.finance.budgets.index')
+            ->with('success', 'Department Budget updated successfully.');
+    }
+
+    public function destroyBudget($id)
+    {
+        $budget = FinanceBudget::findOrFail($id);
+        $budget->delete();
+
+        return redirect()->route('admin.finance.budgets.index')
+            ->with('success', 'Department Budget deleted successfully.');
     }
 
     /**
@@ -170,6 +252,48 @@ class BursarFinanceController extends Controller
 
         return redirect()->route('admin.finance.expenses.index')
             ->with('success', 'Expense recorded & approved successfully.');
+    }
+
+    public function showExpense($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $expense = FinanceExpense::with(['department', 'requester', 'approver'])->findOrFail($id);
+        return view('admin.finance.expenses.show', compact('expense', 'currencyCode'));
+    }
+
+    public function editExpense($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $expense = FinanceExpense::findOrFail($id);
+        $departments = Department::orderBy('name')->get();
+        return view('admin.finance.expenses.edit', compact('expense', 'departments', 'currencyCode'));
+    }
+
+    public function updateExpense(Request $request, $id)
+    {
+        $expense = FinanceExpense::findOrFail($id);
+        $validated = $request->validate([
+            'department_id' => 'required|exists:departments,id',
+            'category' => 'required|string',
+            'title' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0',
+            'expense_date' => 'required|date',
+            'description' => 'nullable|string',
+        ]);
+
+        $expense->update($validated);
+
+        return redirect()->route('admin.finance.expenses.index')
+            ->with('success', 'Expense updated successfully.');
+    }
+
+    public function destroyExpense($id)
+    {
+        $expense = FinanceExpense::findOrFail($id);
+        $expense->delete();
+
+        return redirect()->route('admin.finance.expenses.index')
+            ->with('success', 'Expense deleted successfully.');
     }
 
     /**
@@ -218,6 +342,79 @@ class BursarFinanceController extends Controller
             ->with('success', 'Vendor Invoice recorded successfully.');
     }
 
+    public function showSupplier($id)
+    {
+        $supplier = Supplier::with('invoices')->findOrFail($id);
+        return view('admin.finance.payables.suppliers.show', compact('supplier'));
+    }
+
+    public function editSupplier($id)
+    {
+        $supplier = Supplier::findOrFail($id);
+        return view('admin.finance.payables.suppliers.edit', compact('supplier'));
+    }
+
+    public function updateSupplier(Request $request, $id)
+    {
+        $supplier = Supplier::findOrFail($id);
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'contact_person' => 'nullable|string',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string',
+            'tax_pin' => 'nullable|string',
+        ]);
+        $supplier->update($validated);
+        return redirect()->route('admin.finance.payables.index')
+            ->with('success', 'Supplier updated successfully.');
+    }
+
+    public function destroySupplier($id)
+    {
+        $supplier = Supplier::findOrFail($id);
+        $supplier->delete();
+        return redirect()->route('admin.finance.payables.index')
+            ->with('success', 'Supplier deleted successfully.');
+    }
+
+    public function showVendorInvoice($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $invoice = VendorInvoice::with('supplier')->findOrFail($id);
+        return view('admin.finance.payables.invoices.show', compact('invoice', 'currencyCode'));
+    }
+
+    public function editVendorInvoice($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $invoice = VendorInvoice::findOrFail($id);
+        $suppliers = Supplier::all();
+        return view('admin.finance.payables.invoices.edit', compact('invoice', 'suppliers', 'currencyCode'));
+    }
+
+    public function updateVendorInvoice(Request $request, $id)
+    {
+        $invoice = VendorInvoice::findOrFail($id);
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'invoice_number' => 'required|string',
+            'amount' => 'required|numeric|min:0',
+            'invoice_date' => 'required|date',
+            'due_date' => 'required|date',
+        ]);
+        $invoice->update($validated);
+        return redirect()->route('admin.finance.payables.index')
+            ->with('success', 'Vendor Invoice updated successfully.');
+    }
+
+    public function destroyVendorInvoice($id)
+    {
+        $invoice = VendorInvoice::findOrFail($id);
+        $invoice->delete();
+        return redirect()->route('admin.finance.payables.index')
+            ->with('success', 'Vendor Invoice deleted successfully.');
+    }
+
     /**
      * 5. Accounts Receivable (Student Debtors & Sponsors)
      */
@@ -232,6 +429,13 @@ class BursarFinanceController extends Controller
         $totalReceivable = FeeRecord::sum('balance_amount');
 
         return view('admin.finance.receivables.index', compact('debtors', 'totalReceivable', 'currencyCode'));
+    }
+
+    public function showReceivable($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $record = FeeRecord::with('student.studentProfile')->findOrFail($id);
+        return view('admin.finance.receivables.show', compact('record', 'currencyCode'));
     }
 
     /**
@@ -282,6 +486,50 @@ class BursarFinanceController extends Controller
             ->with('success', "Payroll generated successfully for {$monthYear}.");
     }
 
+    public function showPayroll($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $payroll = PayrollRecord::with('user')->findOrFail($id);
+        return view('admin.finance.payroll.show', compact('payroll', 'currencyCode'));
+    }
+
+    public function updatePayroll(Request $request, $id)
+    {
+        $payroll = PayrollRecord::findOrFail($id);
+        
+        if ($payroll->user_id === \Illuminate\Support\Facades\Auth::id()) {
+            abort(403, 'You cannot edit your own salary.');
+        }
+        
+        $validated = $request->validate([
+            'basic_salary' => 'required|numeric|min:0',
+            'total_allowances' => 'required|numeric|min:0',
+            'tax_deductions' => 'required|numeric|min:0',
+            'pension_deductions' => 'required|numeric|min:0',
+        ]);
+        
+        $net_salary = $validated['basic_salary'] + $validated['total_allowances'] - $validated['tax_deductions'] - $validated['pension_deductions'];
+        
+        $payroll->update([
+            'basic_salary' => $validated['basic_salary'],
+            'total_allowances' => $validated['total_allowances'],
+            'tax_deductions' => $validated['tax_deductions'],
+            'pension_deductions' => $validated['pension_deductions'],
+            'net_salary' => $net_salary,
+        ]);
+        
+        return redirect()->route('admin.finance.payroll.index')
+            ->with('success', 'Payroll record updated successfully.');
+    }
+
+    public function destroyPayroll($id)
+    {
+        $payroll = PayrollRecord::findOrFail($id);
+        $payroll->delete();
+        return redirect()->route('admin.finance.payroll.index')
+            ->with('success', 'Payroll record deleted successfully.');
+    }
+
     /**
      * 7. Asset Management
      */
@@ -315,6 +563,45 @@ class BursarFinanceController extends Controller
             ->with('success', 'Asset tagged and registered successfully.');
     }
 
+    public function showAsset($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $asset = UniversityAsset::with('department')->findOrFail($id);
+        return view('admin.finance.assets.show', compact('asset', 'currencyCode'));
+    }
+
+    public function editAsset($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $asset = UniversityAsset::findOrFail($id);
+        $departments = Department::orderBy('name')->get();
+        return view('admin.finance.assets.edit', compact('asset', 'departments', 'currencyCode'));
+    }
+
+    public function updateAsset(Request $request, $id)
+    {
+        $asset = UniversityAsset::findOrFail($id);
+        $validated = $request->validate([
+            'asset_name' => 'required|string|max:255',
+            'category' => 'required|string',
+            'department_id' => 'nullable|exists:departments,id',
+            'purchase_cost' => 'required|numeric|min:0',
+            'purchase_date' => 'required|date',
+            'location' => 'nullable|string',
+        ]);
+        $asset->update($validated);
+        return redirect()->route('admin.finance.assets.index')
+            ->with('success', 'Asset updated successfully.');
+    }
+
+    public function destroyAsset($id)
+    {
+        $asset = UniversityAsset::findOrFail($id);
+        $asset->delete();
+        return redirect()->route('admin.finance.assets.index')
+            ->with('success', 'Asset deleted successfully.');
+    }
+
     /**
      * 8. Banking & Cash Management
      */
@@ -342,6 +629,43 @@ class BursarFinanceController extends Controller
 
         return redirect()->route('admin.finance.banking.index')
             ->with('success', 'Bank Account added successfully.');
+    }
+
+    public function showBankAccount($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $account = BankAccount::findOrFail($id);
+        return view('admin.finance.banking.show', compact('account', 'currencyCode'));
+    }
+
+    public function editBankAccount($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $account = BankAccount::findOrFail($id);
+        return view('admin.finance.banking.edit', compact('account', 'currencyCode'));
+    }
+
+    public function updateBankAccount(Request $request, $id)
+    {
+        $account = BankAccount::findOrFail($id);
+        $validated = $request->validate([
+            'bank_name' => 'required|string|max:255',
+            'account_number' => 'required|string',
+            'account_name' => 'required|string|max:255',
+            'branch' => 'nullable|string',
+            'current_balance' => 'required|numeric|min:0',
+        ]);
+        $account->update($validated);
+        return redirect()->route('admin.finance.banking.index')
+            ->with('success', 'Bank Account updated successfully.');
+    }
+
+    public function destroyBankAccount($id)
+    {
+        $account = BankAccount::findOrFail($id);
+        $account->delete();
+        return redirect()->route('admin.finance.banking.index')
+            ->with('success', 'Bank Account deleted successfully.');
     }
 
     /**
@@ -374,6 +698,45 @@ class BursarFinanceController extends Controller
 
         return redirect()->route('admin.finance.grants.index')
             ->with('success', 'Research Grant registered successfully.');
+    }
+
+    public function showGrant($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $grant = ResearchGrant::with('principalInvestigator')->findOrFail($id);
+        return view('admin.finance.grants.show', compact('grant', 'currencyCode'));
+    }
+
+    public function editGrant($id)
+    {
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $grant = ResearchGrant::findOrFail($id);
+        $professors = User::whereIn('role', ['admin', 'faculty'])->get();
+        return view('admin.finance.grants.edit', compact('grant', 'professors', 'currencyCode'));
+    }
+
+    public function updateGrant(Request $request, $id)
+    {
+        $grant = ResearchGrant::findOrFail($id);
+        $validated = $request->validate([
+            'project_title' => 'required|string|max:255',
+            'donor_organization' => 'required|string|max:255',
+            'total_grant_amount' => 'required|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'principal_investigator_id' => 'nullable|exists:users,id',
+        ]);
+        $grant->update($validated);
+        return redirect()->route('admin.finance.grants.index')
+            ->with('success', 'Research Grant updated successfully.');
+    }
+
+    public function destroyGrant($id)
+    {
+        $grant = ResearchGrant::findOrFail($id);
+        $grant->delete();
+        return redirect()->route('admin.finance.grants.index')
+            ->with('success', 'Research Grant deleted successfully.');
     }
 
     /**

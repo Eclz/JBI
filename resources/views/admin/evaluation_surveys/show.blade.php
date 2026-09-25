@@ -78,7 +78,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100 bg-white">
                 <div class="card-body d-flex align-items-center">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-white me-3">
                         <i class="bi bi-people-fill fs-3"></i>
                     </div>
                     <div>
@@ -91,7 +91,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100 bg-white">
                 <div class="card-body d-flex align-items-center">
-                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning me-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-white me-3">
                         <i class="bi bi-star-fill fs-3"></i>
                     </div>
                     <div>
@@ -150,7 +150,7 @@
 
     <!-- Tab Contents -->
     <div class="tab-content" id="surveyTabsContent">
-        
+
         <!-- TAB 1: QUESTION ANALYSIS -->
         <div class="tab-pane fade show active" id="results-content" role="tabpanel">
             @if($survey->questions->count() == 0)
@@ -204,11 +204,11 @@
                                                 {{ $star }} <i class="bi bi-star-fill text-warning"></i>
                                             </div>
                                             <div class="progress flex-grow-1 mx-2" style="height: 10px;">
-                                                <div class="progress-bar bg-{{ match($star) { 5 => 'success', 4 => 'primary', 3 => 'info', 2 => 'warning', 1 => 'danger' } }}" 
-                                                     role="progressbar" 
-                                                     style="width: {{ $pct }}%" 
-                                                     aria-valuenow="{{ $pct }}" 
-                                                     aria-valuemin="0" 
+                                                <div class="progress-bar bg-{{ match($star) { 5 => 'success', 4 => 'primary', 3 => 'info', 2 => 'warning', 1 => 'danger' } }}"
+                                                     role="progressbar"
+                                                     style="width: {{ $pct }}%"
+                                                     aria-valuenow="{{ $pct }}"
+                                                     aria-valuemin="0"
                                                      aria-valuemax="100"></div>
                                             </div>
                                             <div class="small text-muted text-end" style="width: 70px;">

@@ -31,7 +31,13 @@ class AssignmentController extends Controller
     public function create()
     {
         $faculty = Auth::user();
-        $courses = Course::where('instructor_id', $faculty->id)->get();
+        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
+        $courses = Course::where('instructor_id', $faculty->id)
+            ->when($currentSemester, function($query) use ($currentSemester) {
+                return $query->where('semester_id', $currentSemester->id);
+            })
+            ->orderBy('name')
+            ->get();
 
         return view('faculty.assignments.create', compact('courses'));
     }
@@ -93,7 +99,13 @@ class AssignmentController extends Controller
         }
 
         $faculty = Auth::user();
-        $courses = Course::where('instructor_id', $faculty->id)->get();
+        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
+        $courses = Course::where('instructor_id', $faculty->id)
+            ->when($currentSemester, function($query) use ($currentSemester) {
+                return $query->where('semester_id', $currentSemester->id);
+            })
+            ->orderBy('name')
+            ->get();
 
         return view('faculty.assignments.edit', compact('assignment', 'courses'));
     }

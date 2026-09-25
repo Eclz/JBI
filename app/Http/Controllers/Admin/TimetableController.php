@@ -9,6 +9,7 @@ use App\Models\Program;
 use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\User;
+use App\Models\FacilityRoom;
 use Illuminate\Http\Request;
 
 class TimetableController extends Controller
@@ -44,8 +45,9 @@ class TimetableController extends Controller
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::all();
         $facultyMembers = User::where('role', 'faculty')->orderBy('first_name')->get();
+        $rooms = FacilityRoom::orderBy('name')->get();
 
-        return view('admin.timetables.create', compact('courses', 'programs', 'academicYears', 'semesters', 'facultyMembers'));
+        return view('admin.timetables.create', compact('courses', 'programs', 'academicYears', 'semesters', 'facultyMembers', 'rooms'));
     }
 
     public function store(Request $request)
@@ -78,8 +80,9 @@ class TimetableController extends Controller
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::all();
         $facultyMembers = User::where('role', 'faculty')->orderBy('first_name')->get();
+        $rooms = FacilityRoom::orderBy('name')->get();
 
-        return view('admin.timetables.edit', compact('timetable', 'courses', 'programs', 'academicYears', 'semesters', 'facultyMembers'));
+        return view('admin.timetables.edit', compact('timetable', 'courses', 'programs', 'academicYears', 'semesters', 'facultyMembers', 'rooms'));
     }
 
     public function update(Request $request, Timetable $timetable)

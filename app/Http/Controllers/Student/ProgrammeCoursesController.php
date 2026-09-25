@@ -13,9 +13,11 @@ use App\Models\FeeStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Traits\EnforcesSemesterPolicies;
 
 class ProgrammeCoursesController extends Controller
 {
+    use EnforcesSemesterPolicies;
     public function myProgramme()
     {
         $user = Auth::user();
@@ -116,6 +118,15 @@ class ProgrammeCoursesController extends Controller
             'course_ids.*' => 'exists:courses,id',
             'enrollment_types' => 'required|array',
         ]);
+
+        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
+        if (!$currentSemester || !$currentSemester->is_active) {
+            return back()->with('error', 'No active semester is available for enrollment.');
+        }
+        if (!$currentSemester->is_registration_open) {
+            return back()->with('error', 'Course registration is currently closed.');
+        }
+        $this->abortIfPastEnrollmentDeadline($currentSemester);
 
         $user = Auth::user();
         $studentProfile = $user->studentProfile;

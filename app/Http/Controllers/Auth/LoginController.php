@@ -100,7 +100,13 @@ class LoginController extends Controller
         // Redirect based on user role
         switch ($user->role) {
             case 'admin':
-                return redirect()->intended(route('admin.users.index'));
+                if ($user->isSuperAdmin()) {
+                    return redirect()->intended(route('admin.users.index'));
+                }
+                if ($user->isFinanceOfficer()) {
+                    return redirect()->intended(route('admin.finance.dashboard'));
+                }
+                return redirect()->intended(route('dashboard'));
             case 'faculty':
                 return redirect()->intended(route('faculty.courses.index'));
             case 'student':

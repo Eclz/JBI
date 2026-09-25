@@ -105,8 +105,8 @@ class SemesterController extends Controller
                 'end_date' => $validated['end_date'],
                 'registration_start' => $validated['registration_start'],
                 'registration_end' => $validated['registration_end'],
-                'is_current' => $request->boolean('is_current', $semester->is_current),
-                'is_active' => $request->boolean('is_active', $semester->is_active),
+                'is_current' => $request->boolean('is_current'),
+                'is_active' => $request->boolean('is_active'),
             ]);
 
             DB::commit();

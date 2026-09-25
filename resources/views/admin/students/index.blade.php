@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    $isFinanceOfficer = auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin();
+@endphp
+
 @section('title', 'Student Management')
 
 @section('content')
@@ -13,11 +17,11 @@
                     <p class="text-muted mb-0">Manage student records and academic information</p>
                 </div>
                 <div class="d-flex gap-2">
-                    @if(auth()->user()->hasPermission('students', 'create'))
+                    @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="bi bi-upload"></i> Import Students
                     </button>
-                    <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
+                    <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i> Add New Student
                     </a>
                     @endif
@@ -187,7 +191,9 @@
                                     <th class="border-0">Academic Info</th>
                                     <th class="border-0">Contact</th>
                                     <th class="border-0">Status</th>
+                                    @if(!$isFinanceOfficer)
                                     <th class="border-0">Performance</th>
+                                    @endif
                                     <th class="border-0 text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -297,6 +303,7 @@
                                         </span>
                                     </td>
                                     <td>
+                                        @if(!$isFinanceOfficer)
                                         @if($student->studentProfile)
                                             <div>
                                                 <div class="d-flex align-items-center gap-2 mb-1">
@@ -325,6 +332,7 @@
                                         @else
                                             <span class="text-muted small">No profile</span>
                                         @endif
+                                        @endif
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -344,11 +352,13 @@
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
+                                                    @if(!$isFinanceOfficer)
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.academic-record', $student) }}">
                                                             <i class="bi bi-file-text me-2"></i>Academic Record
                                                         </a>
                                                     </li>
+                                                    @endif
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.attendance', $student) }}">
                                                             <i class="bi bi-calendar-check me-2"></i>Attendance
@@ -359,7 +369,7 @@
                                                             <i class="bi bi-credit-card me-2"></i>Fee Records
                                                         </a>
                                                     </li>
-                                                    @if(auth()->user()->hasPermission('enrollments', 'create'))
+                                                    @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('admin.students.enroll-course', $student) }}">
@@ -388,8 +398,8 @@
                                             <i class="bi bi-people fs-1 text-muted mb-3"></i>
                                             <h5 class="text-muted">No students found</h5>
                                             <p class="text-muted mb-3">Get started by adding your first student</p>
-                                            @if(auth()->user()->hasPermission('students', 'create'))
-                                            <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
+                                            @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
+                                            <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
                                                 <i class="bi bi-plus-lg"></i> Add Student
                                             </a>
                                             @endif

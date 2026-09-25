@@ -17,6 +17,21 @@ class StoreUserRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->role_id && !$this->role) {
+            $roleModel = \App\Models\Role::find($this->role_id);
+            if ($roleModel) {
+                $this->merge([
+                    'role' => $roleModel->guard_role,
+                ]);
+            }
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -37,13 +52,6 @@ class StoreUserRequest extends FormRequest
                 'max:255',
                 'unique:users,email',
             ],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'max:255',
-                'confirmed',
-            ],
             'role' => [
                 'nullable',
                 'string',
@@ -52,6 +60,10 @@ class StoreUserRequest extends FormRequest
             'role_id' => [
                 'required',
                 'exists:roles,id',
+            ],
+            'department_id' => [
+                'nullable',
+                'exists:departments,id',
             ],
             'student_id' => [
                 'nullable',
@@ -176,14 +188,6 @@ class StoreUserRequest extends FormRequest
                 }
                 if ($age > 80) {
                     $validator->errors()->add('date_of_birth', 'Please verify the date of birth.');
-                }
-            }
-
-            // Validate email domain for institutional emails
-            if ($this->email && in_array($this->role, ['faculty', 'admin'])) {
-                $domain = substr(strrchr($this->email, "@"), 1);
-                if (!in_array($domain, ['jbiuniversity.com'])) {
-                    $validator->errors()->add('email', 'Faculty and admin users must use institutional email addresses.');
                 }
             }
         });

@@ -11,6 +11,17 @@ use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $user = auth()->user();
+            if ($user && ($user->roleCatalog?->slug === 'finance_officer' || $user->hasRole('finance_officer'))) {
+                abort(403, 'Finance staff are not authorized to manage course enrollments.');
+            }
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $query = CourseEnrollment::with(['student', 'course', 'semester']);

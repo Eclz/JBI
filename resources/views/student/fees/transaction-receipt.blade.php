@@ -37,13 +37,13 @@
             </table>
 
             <div class="row">
-                <div class="col-md-8 small text-muted">
+                <div class="col-7 small text-muted">
                     This receipt confirms only this transaction.
                     <div class="mt-2"><strong>Verification Code:</strong> {{ $verificationCode }}</div>
                     <div class="text-muted">Verify at: {{ $verificationUrl }}</div>
                     <div class="text-muted">Enter receipt number and verification code on the verification page.</div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-5">
                     <table class="table table-sm table-borderless mb-0">
                         <tr><td><strong>Invoice Total:</strong></td><td class="text-end">{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</td></tr>
                         <tr><td><strong>Total Paid:</strong></td><td class="text-end">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td></tr>
@@ -52,16 +52,16 @@
                 </div>
             </div>
 
-            <div class="row mt-5 pt-3 border-top">
-                <div class="col-md-4 text-center">
+            <div class="row mt-4 pt-3 border-top">
+                <div class="col-4 text-center">
                     <div class="signature-line"></div>
                     <div class="small text-muted">Student Signature</div>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-4 text-center">
                     <div class="signature-line"></div>
                     <div class="small text-muted">Finance Officer</div>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-4 text-center">
                     <div class="stamp-box">OFFICIAL STAMP</div>
                 </div>
             </div>
@@ -76,9 +76,20 @@
 .signature-line { height: 34px; border-bottom: 1px solid #333; margin-bottom: 8px; }
 .stamp-box { border: 1px dashed #777; min-height: 56px; padding: 14px 8px; font-size: 12px; color: #666; }
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm;
+    }
     .no-print { display: none !important; }
     body { background: #fff !important; }
-    .container-fluid { padding: 1rem !important; }
+    .container-fluid, .receipt-page { padding: 0 !important; margin: 0 !important; }
+    .printable-receipt {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .card-body { padding: 1.5rem !important; }
 }
 </style>
 @endpush

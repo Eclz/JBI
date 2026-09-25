@@ -93,7 +93,7 @@ class StudentController extends Controller
             'attendanceRecords.course',
             'feeRecords.feeStructure',
             'studentNotes' => function ($query) {
-                $query->orderBy('created_at', 'desc')->limit(10);
+                $query->with('createdBy')->orderBy('created_at', 'desc');
             }
         ]);
 
@@ -137,14 +137,19 @@ class StudentController extends Controller
             $lastName = trim($request->input('last_name', ''));
             $fullName = trim($firstName . ' ' . $lastName);
 
+            $studentId = $request->student_id ?? $this->generateStudentId();
+
             // Create user
+            $studentRole = \App\Models\Role::where('guard_role', 'student')->first();
             $user = User::create([
                 'first_name' => $firstName ?: null,
                 'last_name' => $lastName ?: null,
                 'name' => $fullName ?: $request->input('name'),
                 'email' => $request->email,
-                'password' => Hash::make($request->password ?? 'password123'),
+                'password' => Hash::make($request->password ?? 'ABCxyz,.?123'),
                 'role' => 'student',
+                'role_id' => $studentRole?->id,
+                'student_id' => $studentId,
                 'is_active' => true,
                 'must_change_password' => true,
             ]);
@@ -158,7 +163,6 @@ class StudentController extends Controller
 
             $studentProfile = StudentProfile::create([
                 'user_id' => $user->id,
-                'student_id' => $request->student_id ?? $this->generateStudentId(),
                 'admission_number' => $admissionNumber,
                 'department_id' => $resolvedDepartmentId,
                 'program_id' => $program?->id,
@@ -244,20 +248,23 @@ class StudentController extends Controller
             $program = $request->program_id ? Program::find($request->program_id) : null;
             $resolvedDepartmentId = $program?->department_id ?? $request->department_id;
 
-            $student->studentProfile->update([
-                'student_id' => $request->student_id,
-                'department_id' => $resolvedDepartmentId,
-                'program_id' => $program?->id,
-                'program' => $program?->name,
-                'date_of_birth' => $request->date_of_birth,
-                'gender' => $request->gender,
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'emergency_contact' => $request->emergency_contact,
-                'emergency_phone' => $request->emergency_phone,
-                'admission_date' => $request->admission_date,
-                'status' => $request->status ?? 'active',
-            ]);
+            $student->studentProfile()->updateOrCreate(
+                ['user_id' => $student->id],
+                [
+                    'student_id' => $request->student_id,
+                    'department_id' => $resolvedDepartmentId,
+                    'program_id' => $program?->id,
+                    'program' => $program?->name,
+                    'date_of_birth' => $request->date_of_birth,
+                    'gender' => $request->gender,
+                    'phone' => $request->phone,
+                    'address' => $request->address,
+                    'emergency_contact' => $request->emergency_contact,
+                    'emergency_phone' => $request->emergency_phone,
+                    'admission_date' => $request->admission_date,
+                    'status' => $request->status ?? 'active',
+                ]
+            );
 
             DB::commit();
 
@@ -302,6 +309,11 @@ class StudentController extends Controller
 
     public function showEnrollCourse(User $student)
     {
+        $user = auth()->user();
+        if ($user && ($user->roleCatalog?->slug === 'finance_officer' || $user->hasRole('finance_officer') || !$user->hasPermission('enrollments', 'create'))) {
+            abort(403, 'Finance staff are not authorized to enroll students in courses.');
+        }
+
         if ($student->role !== 'student') {
             abort(404);
         }
@@ -324,6 +336,11 @@ class StudentController extends Controller
 
     public function enrollCourse(Request $request, User $student)
     {
+        $user = auth()->user();
+        if ($user && ($user->roleCatalog?->slug === 'finance_officer' || $user->hasRole('finance_officer') || !$user->hasPermission('enrollments', 'create'))) {
+            abort(403, 'Finance staff are not authorized to enroll students in courses.');
+        }
+
         if ($student->role !== 'student') {
             abort(404);
         }
@@ -357,6 +374,11 @@ class StudentController extends Controller
 
     public function academicRecord(User $student)
     {
+        $user = auth()->user();
+        if ($user && $user->isFinanceOfficer() && !$user->isSuperAdmin()) {
+            abort(403, 'Finance staff are not authorized to view academic records.');
+        }
+
         if ($student->role !== 'student') {
             abort(404);
         }
@@ -527,7 +549,7 @@ class StudentController extends Controller
     {
         do {
             $studentId = 'STU' . date('Y') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        } while (StudentProfile::where('student_id', $studentId)->exists());
+        } while (User::where('student_id', $studentId)->exists());
 
         return $studentId;
     }
@@ -579,5 +601,32 @@ class StudentController extends Controller
         if ($percentage >= 70) return 2.0;
         if ($percentage >= 60) return 1.0;
         return 0.0;
+    }
+
+    public function addNote(Request $request, User $student)
+    {
+        if ($student->role !== 'student') {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|string|in:general,academic,disciplinary,counseling,medical',
+            'priority' => 'required|string|in:low,medium,high,urgent',
+            'note' => 'required|string|max:2000',
+            'is_private' => 'nullable|boolean',
+        ]);
+
+        StudentNote::create([
+            'student_id' => $student->id,
+            'created_by' => auth()->id(),
+            'note' => $validated['note'],
+            'type' => $validated['type'],
+            'priority' => $validated['priority'],
+            'is_private' => $request->boolean('is_private'),
+            'noted_at' => now(),
+        ]);
+
+        return redirect()->to(route('admin.students.show', $student) . '#notes')
+            ->with('success', 'Student note added successfully.');
     }
 }

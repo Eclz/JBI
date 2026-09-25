@@ -87,6 +87,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the HR employee profile associated with the user.
+     */
+    public function hrProfile(): HasOne
+    {
+        return $this->hasOne(HrEmployee::class);
+    }
+
+    /**
      * Get the courses that the user is enrolled in (for students).
      */
     public function enrolledCourses(): BelongsToMany
@@ -249,6 +257,30 @@ class User extends Authenticatable
         return $this->hasMany(StudentNote::class, 'student_id');
     }
 
+    /**
+     * Get the student ID or admission number.
+     */
+    public function getStudentIdAttribute($value)
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+
+        if ($this->relationLoaded('studentProfile')) {
+            return $this->studentProfile?->admission_number ?: null;
+        }
+
+        return $this->studentProfile()->value('admission_number');
+    }
+
+    /**
+     * Alias for student registration/admission number.
+     */
+    public function getStudentNumberAttribute()
+    {
+        return $this->student_id;
+    }
+
     public function roleCatalog(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');
@@ -363,6 +395,38 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is HR staff
+     */
+    public function isHrStaff(): bool
+    {
+        return $this->hasRole('hr') || $this->hasRole('human_resources') || $this->hasPermission('human_resources', 'view');
+    }
+
+    /**
+     * Check if user is Finance Officer
+     */
+    public function isFinanceOfficer(): bool
+    {
+        return $this->hasRole('finance_officer') || $this->hasRole('finance') || $this->hasPermission('finance_hub', 'view');
+    }
+
+    /**
+     * Check if user is Facilities staff
+     */
+    public function isFacilitiesStaff(): bool
+    {
+        return $this->hasRole('facilities') || $this->hasRole('facilities_staff') || $this->hasPermission('facilities', 'view');
+    }
+
+    /**
+     * Check if user is Librarian
+     */
+    public function isLibrarian(): bool
+    {
+        return $this->hasRole('librarian') || $this->hasRole('library_staff') || $this->hasPermission('library', 'view');
+    }
+
+    /**
      * Check if user is active.
      */
     public function isActive(): bool
@@ -473,5 +537,17 @@ class User extends Authenticatable
     public static function generateJBIDefaultPassword(): string
     {
         return 'JBI@' . \Illuminate\Support\Str::random(8);
+    }
+
+    /**
+     * Send password reset notification with custom branded template.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        try {
+            \Illuminate\Support\Facades\Mail::to($this->email)->send(new \App\Mail\ResetPasswordMail($this, $token));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send password reset email: ' . $e->getMessage());
+        }
     }
 }

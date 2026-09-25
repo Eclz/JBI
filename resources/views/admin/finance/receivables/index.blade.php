@@ -37,6 +37,7 @@
                             <th>Total Billed</th>
                             <th>Total Paid</th>
                             <th class="text-end pe-3">Outstanding Balance</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,10 +49,13 @@
                                 <td class="fw-semibold">{{ $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
                                 <td class="fw-semibold text-success">{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
                                 <td class="text-end pe-3 fw-bold text-danger">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <a href="{{ route('admin.finance.receivables.show', $record->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i> View</a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">No student debtors found. All fees settled.</td>
+                                <td colspan="7" class="text-center py-5 text-muted">No student debtors found. All fees settled.</td>
                             </tr>
                         @endforelse
                     </tbody>

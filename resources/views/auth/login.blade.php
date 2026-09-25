@@ -16,10 +16,11 @@
 
     <style>
         :root {
-            --jbi-primary: #1e3a8a;
-            --jbi-secondary: #3b82f6;
-            --jbi-accent: #fbbf24;
+            --jbi-primary: #001d48;
+            --jbi-secondary: #00102a;
+            --jbi-accent: #d89b00;
         }
+
 
         .jbi-gradient {
             background: linear-gradient(135deg, var(--jbi-primary) 0%, var(--jbi-secondary) 100%);
@@ -29,9 +30,9 @@
 <body class="font-sans antialiased bg-gray-50">
     <div class="min-h-screen flex">
         <!-- Left Side - Branding -->
-        <div class="hidden lg:flex lg:w-1/2 jbi-gradient relative overflow-hidden">
-            <div class="absolute inset-0 bg-black opacity-20"></div>
-            <div class="relative z-10 flex flex-col justify-center items-center text-white p-12">
+        <div class="hidden lg:flex lg:w-1/2 jbi-gradient relative overflow-hidden" style="background: url('{{ asset('images/login.png') }}') no-repeat center center; background-size: cover; background-position: center;" height="100px">
+            {{-- <div class="absolute inset-0 bg-black opacity-20"></div>
+            <div class="relative z-20 flex flex-col justify-center items-center text-white p-12">
                 <div class="text-center mb-8">
                     <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="h-32 w-auto mx-auto mb-6">
                     <h1 class="text-4xl font-bold mb-4">JBI University</h1>
@@ -45,7 +46,7 @@
                         Your journey in theological education starts here.
                     </p>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Decorative Elements -->
             <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
@@ -140,7 +141,7 @@
                             </div>
 
                             @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:text-blue-500">
+                                <a href="{{ route('password.request') }}" class="text-sm hover:opacity-80 transition-opacity" style="color: var(--jbi-accent);">
                                     Forgot your password?
                                 </a>
                             @endif
@@ -148,7 +149,8 @@
 
                         <button
                             type="submit"
-                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                            class="w-full text-white py-3 px-4 rounded-lg hover:opacity-90 focus:ring-2 focus:ring-offset-2 transition-all font-medium"
+                            style="background-color: var(--jbi-primary); focus:ring-color: var(--jbi-primary);"
                         >
                             Sign In
                         </button>
@@ -158,11 +160,11 @@
                         <p class="text-sm text-gray-600">
                             Don't have an account?
                             @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-500 font-medium">
+                                <a href="{{ route('register') }}" class="hover:opacity-80 transition-opacity font-medium" style="color: var(--jbi-accent);">
                                     Contact Administration
                                 </a>
                             @else
-                                <span class="text-blue-600 font-medium">
+                                <span class="font-medium" style="color: var(--jbi-accent);">
                                     Contact Administration
                                 </span>
                             @endif

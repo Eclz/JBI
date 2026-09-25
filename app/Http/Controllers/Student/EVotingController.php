@@ -47,7 +47,7 @@ class EVotingController extends Controller
         // Elected Student Leaders
         $electedLeaders = VotingCandidate::where('candidate_status', 'elected_student_leader')
             ->with(['position.session', 'position.faculty', 'user.studentProfile.department.faculty'])
-            ->orderBy('position_id')
+            ->orderBy('voting_position_id')
             ->get();
 
         return view('student.evoting.index', compact(

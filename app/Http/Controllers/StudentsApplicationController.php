@@ -175,7 +175,7 @@ class StudentsApplicationController extends Controller
             }
 
             try {
-                $admins = User::where('role', 'admin')->get();
+                $admins = User::where('role', 'admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
                 foreach ($admins as $admin) {
                     Notification::create([
                         'user_id' => $admin->id,
@@ -240,7 +240,7 @@ class StudentsApplicationController extends Controller
                 'payment_uploaded_at' => now(),
             ]);
 
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::where('role', 'admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
             foreach ($admins as $admin) {
                 Notification::create([
                     'user_id' => $admin->id,

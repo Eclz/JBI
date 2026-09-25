@@ -158,4 +158,20 @@ class StudentProfile extends Model
     {
         return $this->status === 'active';
     }
+
+    /**
+     * Get student ID (falls back to admission number or user's student_id)
+     */
+    public function getStudentIdAttribute($value)
+    {
+        return $value ?: ($this->admission_number ?: ($this->user?->student_id ?: null));
+    }
+
+    /**
+     * Get student registration/admission number
+     */
+    public function getStudentNumberAttribute()
+    {
+        return $this->admission_number ?: ($this->user?->student_id ?: null);
+    }
 }

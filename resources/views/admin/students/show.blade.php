@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    $isFinanceOfficer = auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin();
+@endphp
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -20,7 +24,7 @@
                         <i class="fas fa-edit"></i> Edit Student
                     </a>
                     @endif
-                    @if(auth()->user()->hasPermission('enrollments', 'create'))
+                    @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                     <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-success">
                         <i class="fas fa-plus"></i> Enroll in Course
                     </a>
@@ -125,6 +129,7 @@
                                     <td><strong>Current Semester:</strong></td>
                                     <td>{{ $student->studentProfile->current_semester ?? 'N/A' }}</td>
                                 </tr>
+                                @if(!$isFinanceOfficer)
                                 <tr>
                                     <td><strong>Current GPA:</strong></td>
                                     <td>{{ number_format($student->studentProfile->current_gpa ?? 0, 2) }}</td>
@@ -137,6 +142,7 @@
                                     <td><strong>Credits Earned:</strong></td>
                                     <td>{{ $student->studentProfile->total_credits_earned ?? 0 }}</td>
                                 </tr>
+                                @endif
                                 <tr>
                                     <td><strong>Admission Date:</strong></td>
                                     <td>{{ $student->studentProfile->admission_date ? $student->studentProfile->admission_date->format('M d, Y') : 'N/A' }}</td>
@@ -173,11 +179,13 @@
                                 <i class="fas fa-book"></i> Enrolled Courses
                             </button>
                         </li>
+                        @if(!$isFinanceOfficer)
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades" type="button" role="tab">
                                 <i class="fas fa-chart-line"></i> Grades
                             </button>
                         </li>
+                        @endif
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab">
                                 <i class="fas fa-calendar-check"></i> Attendance
@@ -249,15 +257,18 @@
                                         <div class="text-center py-4">
                                             <i class="fas fa-book fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No courses enrolled yet.</p>
+                                            @if(auth()->user()->hasPermission('enrollments', 'create') && auth()->user()->roleCatalog?->slug !== 'finance_officer' && !auth()->user()->hasRole('finance_officer'))
                                             <a href="{{ route('admin.students.enroll-course', $student) }}" class="btn btn-primary">
                                                 <i class="fas fa-plus"></i> Enroll in Course
                                             </a>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
                             </div>
                         </div>
 
+                        @if(!$isFinanceOfficer)
                         <!-- Grades -->
                         <div class="tab-pane fade" id="grades" role="tabpanel">
                             <div class="card">
@@ -301,6 +312,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
                         <!-- Attendance -->
                         <div class="tab-pane fade" id="attendance" role="tabpanel">
@@ -439,14 +451,14 @@
                                                                         @endif
                                                                     </div>
                                                                     <small class="text-muted">
-                                                                        {{ $note->noted_at->format('M d, Y g:i A') }}
+                                                                        {{ $note->noted_at ? $note->noted_at->format('M d, Y g:i A') : $note->created_at->format('M d, Y g:i A') }}
                                                                     </small>
                                                                 </div>
                                                             </div>
                                                             <div class="card-body py-2">
                                                                 <p class="mb-2">{{ $note->note }}</p>
                                                                 <small class="text-muted">
-                                                                    <i class="fas fa-user"></i> {{ $note->createdBy->name }}
+                                                                    <i class="fas fa-user"></i> {{ $note->createdBy?->full_name ?? ($note->createdBy?->name ?? 'Administrator') }}
                                                                 </small>
                                                             </div>
                                                         </div>
@@ -585,9 +597,18 @@
 </style>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-activate tab based on URL hash (e.g. #notes)
+    if (window.location.hash) {
+        const hashTab = document.querySelector(`button[data-bs-target="${window.location.hash}"]`);
+        if (hashTab && typeof bootstrap !== 'undefined') {
+            const tab = new bootstrap.Tab(hashTab);
+            tab.show();
+        }
+    }
+
     // Character counter for note textarea
     const noteTextarea = document.getElementById('note');
     if (noteTextarea) {
@@ -613,4 +634,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+@endpush

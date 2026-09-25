@@ -25,6 +25,9 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
     <!-- Custom CSS -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
@@ -39,10 +42,12 @@
             --sidebar-width: 250px;
             --header-height: 60px;
             --mobile-header-height: 60px;
-            --primary-color: #3b5bdb;
+            --primary-color: #001d48;
             --secondary-color: #1a2236;
-            --jbi-primary: #3b5bdb;
+            --jbi-primary: #001d48;
             --jbi-secondary: #1a2236;
+            --jbi-accent: #d89b00;
+            --jbi-success: #10b981;
         }
 
         body {
@@ -482,6 +487,59 @@
                 top: var(--mobile-header-height);
             }
         }
+
+        /* Print Styles: Hide all navigation and chrome so printed pages are clean */
+        @media print {
+            .sidebar,
+            .sidebar-overlay,
+            .mobile-nav,
+            .top-header,
+            .navbar,
+            .footer,
+            .no-print,
+            .btn,
+            .quick-actions,
+            .dropdown,
+            .alert {
+                display: none !important;
+            }
+
+            html, body {
+                background: #fff !important;
+                color: #000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                min-height: auto !important;
+            }
+
+            body.guest-user,
+            body.authenticated-user {
+                padding-top: 0 !important;
+            }
+
+            #app,
+            .main-content,
+            .content-area,
+            .guest-content-area,
+            .content-wrapper {
+                margin: 0 !important;
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                display: block !important;
+            }
+
+            .container,
+            .container-fluid {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
     </style>
 </head>
 <body class="{{ auth()->guest() ? 'guest-user' : 'authenticated-user' }}">
@@ -599,13 +657,28 @@
 
                         <!-- Quick action buttons for common tasks -->
                         <div class="quick-actions d-none d-xl-flex">
-                            @if(Auth::user()->role === 'admin' || Auth::user()->role === 'faculty')
-                                <a href="{{ route('admin.students.create') }}" class="quick-action-btn" title="Add Student">
-                                    <i class="bi bi-person-plus"></i>
-                                </a>
-                                <a href="{{ route('admin.courses.create') }}" class="quick-action-btn" title="Add Course">
-                                    <i class="bi bi-journal-plus"></i>
-                                </a>
+                            @if(Auth::user()->isAdmin())
+                                @if(Auth::user()->hasPermission('enrollments', 'view'))
+                                    <a href="{{ route('admin.enrollments.index') }}" class="quick-action-btn" title="Course Enrollments">
+                                        <i class="bi bi-card-checklist"></i>
+                                    </a>
+                                @endif
+                                @if(Auth::user()->hasPermission('courses', 'create'))
+                                    <a href="{{ route('admin.courses.create') }}" class="quick-action-btn" title="Add Course">
+                                        <i class="bi bi-journal-plus"></i>
+                                    </a>
+                                @endif
+                            @elseif(Auth::user()->isFaculty())
+                                @if(Auth::user()->hasPermission('courses', 'view'))
+                                    <a href="{{ route('faculty.courses.index') }}" class="quick-action-btn" title="My Courses">
+                                        <i class="bi bi-journal-text"></i>
+                                    </a>
+                                @endif
+                                @if(Auth::user()->hasPermission('attendance', 'view'))
+                                    <a href="{{ route('faculty.attendance.index') }}" class="quick-action-btn" title="Attendance">
+                                        <i class="bi bi-calendar-check"></i>
+                                    </a>
+                                @endif
                             @endif
                         </div>
 
@@ -741,6 +814,51 @@
 
             <!-- Content Area for Authenticated Users -->
             <div class="content-area">
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if(session('warning'))
+                    <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('warning') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if(session('info'))
+                    <div class="alert alert-info alert-dismissible fade show m-3" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>{{ session('info') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-octagon-fill me-2 mt-1"></i>
+                            <div>
+                                <strong>Please correct the following errors:</strong>
+                                <ul class="mb-0 mt-1 ps-3">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 @yield('content')
             </div>
             @endauth
@@ -801,6 +919,10 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -815,6 +937,31 @@
                     dropdownParent: $(this).closest('.modal').length ? $(this).closest('.modal') : $(document.body)
                 });
             });
+
+            // Global DataTables initialization
+            if ($.fn.DataTable) {
+                // Suppress DataTables alert warnings globally and log to console instead
+                $.fn.dataTable.ext.errMode = 'none';
+                
+                $('.table:not(.no-datatable)').each(function() {
+                    if ($(this).find('thead').length > 0) {
+                        try {
+                            $(this).DataTable({
+                                pageLength: 25,
+                                language: {
+                                    search: "",
+                                    searchPlaceholder: "Search records..."
+                                },
+                                drawCallback: function() {
+                                    $('.dataTables_paginate > .pagination').addClass('pagination-sm');
+                                }
+                            });
+                        } catch (e) {
+                            console.warn("Could not initialize DataTable:", e);
+                        }
+                    }
+                });
+            }
         });
 
         function markAllAsRead(event) {

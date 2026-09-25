@@ -207,6 +207,16 @@
                         <span class="badge bg-primary">{{ ucfirst($exam->exam_type) }}</span>
                     </div>
                     <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Exam Mode</small>
+                        <span class="badge bg-secondary">{{ ucfirst($exam->exam_mode ?? 'online') }}</span>
+                    </div>
+                    @if($exam->room_number)
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Room / Venue</small>
+                        <strong style="color: #1e293b;">{{ $exam->room_number }}</strong>
+                    </div>
+                    @endif
+                    <div class="mb-3">
                         <small class="text-muted d-block mb-1">Start Time</small>
                         <strong style="color: #1e293b;">{{ $exam->start_time->format('M d, Y H:i') }}</strong>
                     </div>

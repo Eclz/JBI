@@ -10,6 +10,7 @@
     </div>
 
     <div class="row">
+        @if(!$isFinanceOfficer)
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
@@ -29,6 +30,8 @@
                 </div>
             </div>
         </div>
+        @endif
+        
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
@@ -48,6 +51,7 @@
                 </div>
             </div>
         </div>
+        @if(!$isFinanceOfficer)
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
@@ -143,6 +147,7 @@
                 </div>
             </div>
         </div>
+        @endif
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">

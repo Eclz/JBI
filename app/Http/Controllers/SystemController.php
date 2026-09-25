@@ -27,7 +27,7 @@ class SystemController extends Controller
     {
         $settings = SystemSetting::all()->keyBy('key');
         $departments = Department::where('is_active', true)->get();
-        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::with('semesters')->orderBy('start_date', 'desc')->get();
         $feeStructures = \App\Models\FeeStructure::where('is_active', true)->orderBy('name')->get();
         $currencyRegions = config('currencies.regions');
         $supportedCurrencies = config('currencies.supported');
@@ -100,6 +100,15 @@ class SystemController extends Controller
             'tuition_min_percent' => 'nullable|numeric|min:0|max:100',
             'tuition_payment_days' => 'nullable|integer|min:1|max:365',
             'exam_types' => 'nullable|string|max:500',
+            
+            // Academic Term specific settings
+            'current_academic_year_id' => 'nullable|exists:academic_years,id',
+            'current_semester_id' => 'nullable|exists:semesters,id',
+            'semester_start_date' => 'nullable|date',
+            'semester_end_date' => 'nullable|date|after:semester_start_date',
+            'semester_registration_start' => 'nullable|date',
+            'semester_registration_end' => 'nullable|date|after:semester_registration_start',
+            'reason_for_change' => 'nullable|string|max:1000',
         ]);
 
         if (!in_array($validated['default_currency'], $validated['accepted_currencies'], true)) {
@@ -113,7 +122,59 @@ class SystemController extends Controller
         $values['admission_enabled'] = $request->boolean('admission_enabled');
         $values['accepted_currencies'] = $request->input('accepted_currencies', []);
 
+        // Handle Academic Term updates
+        if ($request->filled('current_academic_year_id')) {
+            AcademicYear::where('is_current', true)->update(['is_current' => false]);
+            AcademicYear::where('id', $request->current_academic_year_id)->update(['is_current' => true]);
+        }
+
+        if ($request->filled('current_semester_id')) {
+            \App\Models\Semester::where('is_current', true)->update(['is_current' => false]);
+            
+            // Auto-close any expired semesters and academic years
+            \App\Models\Semester::where('is_active', true)
+                ->whereNotNull('end_date')
+                ->where('end_date', '<', now()->startOfDay())
+                ->update(['is_active' => false, 'is_current' => false]);
+                
+            AcademicYear::where('is_active', true)
+                ->whereNotNull('end_date')
+                ->where('end_date', '<', now()->startOfDay())
+                ->update(['is_active' => false, 'is_current' => false]);
+
+            $semester = \App\Models\Semester::find($request->current_semester_id);
+            if ($semester) {
+                $semester->update([
+                    'is_current' => true,
+                    'start_date' => $request->semester_start_date ?? $semester->start_date,
+                    'end_date' => $request->semester_end_date ?? $semester->end_date,
+                    'registration_start' => $request->semester_registration_start ?? $semester->registration_start,
+                    'registration_end' => $request->semester_registration_end ?? $semester->registration_end,
+                ]);
+
+                if ($request->filled('reason_for_change')) {
+                    // Send notification for date change (if reason is provided)
+                    \App\Models\Notification::create([
+                        'user_id' => auth()->id(), // System or Admin
+                        'type' => 'academic_term_update',
+                        'title' => 'Semester Dates Updated',
+                        'message' => 'The semester dates have been updated. Reason: ' . $request->reason_for_change,
+                        'action_url' => '#',
+                        'priority' => 'high',
+                    ]);
+                }
+            }
+        }
+        
+        $excludeKeys = [
+            'current_academic_year_id', 'current_semester_id', 'semester_start_date', 
+            'semester_end_date', 'semester_registration_start', 'semester_registration_end', 
+            'reason_for_change'
+        ];
+
         foreach ($values as $key => $value) {
+            if (in_array($key, $excludeKeys)) continue;
+
             $type = is_array($value) ? 'json' : (is_bool($value) ? 'boolean' : 'string');
             SystemSetting::updateOrCreate(
                 ['key' => $key],

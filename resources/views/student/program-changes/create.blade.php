@@ -23,7 +23,7 @@
 
                 <div class="mb-3">
                     <label class="form-label">Current Program</label>
-                    <input type="text" class="form-control" value="{{ $profile->program->name ?? $profile->program ?? 'Not set' }}" disabled>
+                    <input type="text" class="form-control" value="{{ $profile?->program?->name ?? 'Not set' }}" disabled>
                 </div>
 
                 <div class="mb-3">

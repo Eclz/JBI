@@ -15,14 +15,41 @@ class AdmissionWorkflow
 {
     public static function activateStudent(User $user, ?Application $application = null, ?int $processedBy = null): void
     {
-        $profile = $user->studentProfile;
+        $user->unsetRelation('studentProfile');
+        $profile = $user->studentProfile ?: StudentProfile::where('user_id', $user->id)->first();
+
+        $application = $application ?: Application::where(function($q) use ($user) {
+                $q->where('email', $user->email)->orWhere('email', strtolower(trim($user->email)));
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$profile && $application) {
+            $program = $application->program_id ? Program::with('department')->find($application->program_id) : null;
+            if (!$program && $application->program) {
+                $program = Program::with('department')->where('name', $application->program)->first();
+            }
+            $deptCode = $program?->department?->code ?? 'JBI';
+            $admNumber = $application->admission_number ?: self::generateAdmissionNumber($deptCode);
+            $profile = StudentProfile::create([
+                'user_id' => $user->id,
+                'admission_number' => $admNumber,
+                'admission_date' => now(),
+                'department_id' => $program?->department_id,
+                'program_id' => $program?->id ?? $application->program_id,
+                'program' => $application->program ?? $program?->name,
+                'current_semester' => 1,
+                'year_of_study' => 1,
+                'status' => 'active',
+                'application_status' => 'approved',
+                'previous_school' => $application->previous_school,
+                'previous_gpa' => $application->previous_gpa,
+            ]);
+        }
+
         if (!$profile) {
             return;
         }
-
-        $application = $application ?: Application::where('email', $user->email)
-            ->orderBy('created_at', 'desc')
-            ->first();
 
         $program = null;
         if ($profile->program_id) {
@@ -35,7 +62,7 @@ class AdmissionWorkflow
             $profile->admission_number = self::generateAdmissionNumber($departmentCode);
         }
 
-        $studentNumber = self::generateStudentNumber($departmentCode);
+        $studentNumber = $profile->getRawOriginal('student_id') ?: self::generateStudentNumber($departmentCode);
 
         if (!$profile->registration_fee_paid_at) {
             $profile->registration_fee_paid_at = now();
@@ -44,15 +71,20 @@ class AdmissionWorkflow
             $days = (int) \App\Models\SystemSetting::getSetting('tuition_payment_days', 30);
             $profile->tuition_deadline_at = $profile->registration_fee_paid_at->copy()->addDays($days);
         }
-        $profile->student_id = $studentNumber;
         $profile->status = 'active';
         $profile->application_status = 'approved';
         $profile->save();
+        $user->setRelation('studentProfile', $profile);
 
-        $user->update([
+        $studentRole = \App\Models\Role::where('guard_role', 'student')->first();
+        $userUpdates = [
             'is_active' => true,
             'student_id' => $studentNumber,
-        ]);
+        ];
+        if (!$user->role_id && $studentRole) {
+            $userUpdates['role_id'] = $studentRole->id;
+        }
+        $user->update($userUpdates);
 
         if ($application) {
             $application->update([
@@ -136,10 +168,9 @@ class AdmissionWorkflow
         
         // Find highest sequence among STU{$year}xxxx numbers
         $existingUsers = User::where('student_id', 'like', "STU{$year}%")->pluck('student_id');
-        $existingProfiles = StudentProfile::where('student_id', 'like', "STU{$year}%")->pluck('student_id');
         $existingApps = Application::where('student_number', 'like', "STU{$year}%")->pluck('student_number');
 
-        $all = $existingUsers->concat($existingProfiles)->concat($existingApps)->filter();
+        $all = $existingUsers->concat($existingApps)->filter();
 
         $maxSeq = 0;
         foreach ($all as $num) {

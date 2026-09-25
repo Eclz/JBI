@@ -7,8 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
+        :root {
+            --jbi-primary: #001d48;
+            --jbi-accent: #d89b00;
+        }
         .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--jbi-primary) 0%, #00102a 100%);
             color: white;
             padding: 100px 0;
             min-height: 600px;
@@ -27,6 +31,28 @@
             padding: 15px 40px;
             font-size: 1.2rem;
             font-weight: 600;
+            background-color: var(--jbi-accent);
+            border-color: var(--jbi-accent);
+            color: white !important;
+        }
+        .btn-apply:hover {
+            background-color: #b88400;
+            border-color: #b88400;
+        }
+        .btn-primary, .bg-primary {
+            background-color: var(--jbi-primary) !important;
+            border-color: var(--jbi-primary) !important;
+        }
+        .text-primary, .bi {
+            color: var(--jbi-accent) !important;
+        }
+        .btn-outline-primary {
+            color: var(--jbi-accent);
+            border-color: var(--jbi-accent);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--jbi-accent);
+            color: white !important;
         }
         .stats-section {
             background: #f8f9fa;
@@ -38,7 +64,42 @@
         .stat-number {
             font-size: 3rem;
             font-weight: bold;
-            color: #667eea;
+            color: var(--jbi-accent);
+        }
+        .program-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 14px;
+            background: #ffffff;
+        }
+        .program-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.08) !important;
+        }
+        .program-icon-box {
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(216, 155, 0, 0.12);
+            color: var(--jbi-accent);
+            font-size: 1.35rem;
+        }
+        .filter-btn.active {
+            background-color: var(--jbi-primary) !important;
+            border-color: var(--jbi-primary) !important;
+            color: #ffffff !important;
+        }
+        .btn-gold {
+            background-color: var(--jbi-accent);
+            border-color: var(--jbi-accent);
+            color: white;
+        }
+        .btn-gold:hover {
+            background-color: #b88400;
+            border-color: #b88400;
+            color: white;
         }
     </style>
 </head>
@@ -46,9 +107,9 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                 <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" height="40" class="me-2">
-                <span class="fw-bold">JBI University</span>
+                {{-- <span class="fw-bold">JBI University</span> --}}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -70,10 +131,10 @@
                         </li>
                     @else
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login') }}">Login</a>
+                            <a class="btn btn-primary" href="{{ route('login') }}">Sign In</a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-primary ms-2" href="{{ route('applications.create') }}">Apply Now</a>
+                            <a class="btn btn-gold ms-2" href="{{ route('applications.create') }}">Apply Now</a>
                         </li>
                     @endauth
                 </ul>
@@ -82,7 +143,7 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section">
+    <section class="hero-section" style="background: url('{{ asset('images/jbi-png.png') }}') no-repeat center center; background-size: cover; background-position: center;" height="100px">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
@@ -98,7 +159,7 @@
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="img-fluid">
+                    {{-- <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University" class="img-fluid"> --}}
                 </div>
             </div>
         </div>
@@ -175,57 +236,122 @@
         </div>
     </section>
 
+    @php
+        $programs = $programs ?? \App\Models\Program::with(['department', 'level'])
+            ->withCount('courses')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $levels = $programs->pluck('level')->filter()->unique('id');
+    @endphp
+
     <!-- Programs Section -->
     <section class="py-5 bg-light" id="programs">
         <div class="container">
             <div class="text-center mb-5">
+                <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 mb-2 rounded-pill text-uppercase" style="letter-spacing: 1px; font-size: 0.8rem;">Academic Offerings</span>
                 <h2 class="display-5 fw-bold">Our Programs</h2>
-                <p class="lead text-muted">Explore our wide range of academic programs</p>
+                <p class="lead text-muted">Explore our wide range of accredited academic and professional programs</p>
             </div>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="bi bi-book text-primary me-2"></i>Theology</h5>
-                            <p class="card-text">Comprehensive theological studies with biblical foundations.</p>
+
+            @if($levels->count() > 1)
+                <div class="d-flex justify-content-center flex-wrap gap-2 mb-5">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-4 filter-btn active" data-filter="all">
+                        All Programs ({{ $programs->count() }})
+                    </button>
+                    @foreach($levels as $lvl)
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 filter-btn" data-filter="level-{{ $lvl->id }}">
+                            {{ $lvl->name }}
+                        </button>
+                    @endforeach
+                </div>
+            @endif
+
+            <div class="row g-4" id="programsGrid">
+                @forelse($programs as $program)
+                    @php
+                        $levelFilterClass = $program->level ? 'level-' . $program->level->id : 'level-none';
+                        $nameLower = strtolower($program->name . ' ' . ($program->department->name ?? ''));
+                        
+                        if (str_contains($nameLower, 'theolog') || str_contains($nameLower, 'bibl') || str_contains($nameLower, 'divin') || str_contains($nameLower, 'ministry')) {
+                            $icon = 'bi-book';
+                        } elseif (str_contains($nameLower, 'comput') || str_contains($nameLower, 'tech') || str_contains($nameLower, 'softw') || str_contains($nameLower, 'it') || str_contains($nameLower, 'cyber')) {
+                            $icon = 'bi-laptop';
+                        } elseif (str_contains($nameLower, 'busin') || str_contains($nameLower, 'admin') || str_contains($nameLower, 'manag') || str_contains($nameLower, 'econom') || str_contains($nameLower, 'account')) {
+                            $icon = 'bi-briefcase';
+                        } elseif (str_contains($nameLower, 'health') || str_contains($nameLower, 'nurs') || str_contains($nameLower, 'medic')) {
+                            $icon = 'bi-heart-pulse';
+                        } elseif (str_contains($nameLower, 'educat') || str_contains($nameLower, 'teach')) {
+                            $icon = 'bi-mortarboard';
+                        } else {
+                            $icon = 'bi-journal-bookmark';
+                        }
+                    @endphp
+                    <div class="col-md-6 col-lg-4 program-item {{ $levelFilterClass }}">
+                        <div class="card h-100 program-card border-0 shadow-sm">
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="program-icon-box">
+                                        <i class="bi {{ $icon }}"></i>
+                                    </div>
+                                    <div class="d-flex flex-column align-items-end gap-1">
+                                        @if($program->level)
+                                            <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                                                {{ $program->level->name }}
+                                            </span>
+                                        @endif
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                                            Code: {{ $program->code }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <h5 class="card-title fw-bold text-dark mb-2">{{ $program->name }}</h5>
+
+                                @if($program->department)
+                                    <div class="text-muted small mb-3 d-flex align-items-center">
+                                        <i class="bi bi-diagram-3 me-1.5 text-primary"></i>
+                                        <span>{{ $program->department->name }}</span>
+                                    </div>
+                                @endif
+
+                                <p class="card-text text-muted flex-grow-1 small mb-4">
+                                    {{ $program->description ?: 'Comprehensive academic curriculum equipping students with practical skills, rigorous knowledge, and leadership excellence.' }}
+                                </p>
+
+                                <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="text-muted small">
+                                        <i class="bi bi-journals me-1 text-primary"></i>
+                                        {{ $program->courses_count }} {{ \Illuminate\Support\Str::plural('Course', $program->courses_count) }}
+                                    </span>
+                                    <a href="{{ route('applications.create') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-medium">
+                                        Apply Now <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="bi bi-laptop text-primary me-2"></i>Computer Science</h5>
-                            <p class="card-text">Cutting-edge technology and software development programs.</p>
+                @empty
+                    <div class="col-12 text-center py-5">
+                        <div class="p-5 bg-white rounded-3 shadow-sm">
+                            <i class="bi bi-mortarboard text-muted" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3 text-dark">Programs are currently being updated</h4>
+                            <p class="text-muted mb-4">Our curriculum is being refreshed. Please check back shortly or reach out to our admissions office.</p>
+                            <a href="#contact" class="btn btn-primary rounded-pill px-4">Contact Admissions</a>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="bi bi-briefcase text-primary me-2"></i>Business Administration</h5>
-                            <p class="card-text">Develop leadership skills and business acumen.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="bi bi-heart-pulse text-primary me-2"></i>Healthcare</h5>
-                            <p class="card-text">Professional healthcare and nursing programs.</p>
-                        </div>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="py-5 bg-primary text-white">
+    <section class="py-5 bg-primary text-white" style="background-image: url('{{ asset('images/banner-gold.png') }}'); background-repeat: no-repeat; background-size: cover; background-position: center;" height="100px">
         <div class="container text-center">
-            <h2 class="display-5 fw-bold mb-4">Ready to Start Your Journey?</h2>
-            <p class="lead mb-4">Apply now and take the first step towards your future</p>
-            <a href="{{ route('applications.create') }}" class="btn btn-light btn-lg">
-                <i class="bi bi-file-earmark-text me-2"></i>Apply for Admission
+            <h2 class="display-5 fw-bold mb-4 text-white">Ready to Start Your Journey?</h2>
+            <p class="lead mb-4 text-white">Apply now and take the first step towards your future</p>
+            <a href="{{ route('applications.create') }}" class="btn btn-gold btn-lg">
+                <i class="bi bi-file-earmark-text me-2 text-white"></i>Apply for Admission
             </a>
         </div>
     </section>
@@ -265,5 +391,26 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.filter-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(function(b) {
+                    b.classList.remove('btn-primary', 'active');
+                    b.classList.add('btn-outline-secondary');
+                });
+                this.classList.add('btn-primary', 'active');
+                this.classList.remove('btn-outline-secondary');
+
+                var filter = this.getAttribute('data-filter');
+                document.querySelectorAll('.program-item').forEach(function(item) {
+                    if (filter === 'all' || item.classList.contains(filter)) {
+                        item.classList.remove('d-none');
+                    } else {
+                        item.classList.add('d-none');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

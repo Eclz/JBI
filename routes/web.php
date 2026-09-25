@@ -81,7 +81,13 @@ use App\Http\Controllers\Faculty\LmsController as FacultyLmsController;
 
 // Public routes
 Route::get('/', function () {
-    return view('welcome');
+    $programs = \App\Models\Program::with(['department', 'level'])
+        ->withCount('courses')
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get();
+
+    return view('welcome', compact('programs'));
 })->name('home');
 
 Route::get('generate', function (){
@@ -105,7 +111,9 @@ Route::get('/receipts/verify', [ReceiptVerificationController::class, 'showForm'
 Route::post('/receipts/verify', [ReceiptVerificationController::class, 'verify'])->name('receipts.verify.submit');
 
 // Public Application Routes
-Route::redirect('/apply', '/register')->name('applications.create');
+Route::get('/apply', function () {
+    return redirect()->route('register');
+})->name('applications.create');
 Route::post('/apply', [StudentsApplicationController::class, 'store'])->name('applications.store');
 Route::get('/application/success/{application}', [StudentsApplicationController::class, 'success'])->name('applications.success');
 Route::get('/application/payment/{token}', [StudentsApplicationController::class, 'uploadPayment'])->name('applications.upload-payment');
@@ -180,13 +188,93 @@ Route::middleware('auth')->group(function () {
     Route::post('/change-password', [PasswordChangeController::class, 'changePassword'])->name('password.change');
 });
 
+// Library routes for all authenticated users
+Route::middleware(['auth'])->prefix('library')->name('library.')->group(function () {
+    Route::get('/catalogue', [\App\Http\Controllers\LibraryController::class, 'catalogueIndex'])->name('catalogue.index');
+    Route::get('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'show'])->name('catalogue.show');
+    Route::get('/my-loans', [\App\Http\Controllers\LibraryController::class, 'myLoans'])->name('my-loans');
+    Route::get('/loans/create', [\App\Http\Controllers\LibraryController::class, 'createLoan'])->name('loans.create');
+    Route::post('/loans', [\App\Http\Controllers\LibraryController::class, 'storeLoan'])->name('loans.store');
+});
+
+// Library management module routes
+Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name('library.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\LibraryController::class, 'index'])->name('index');
+    Route::get('/catalogue/create', [\App\Http\Controllers\LibraryController::class, 'create'])->name('catalogue.create')->middleware('permission:library_catalogue,create');
+    Route::post('/catalogue', [\App\Http\Controllers\LibraryController::class, 'store'])->name('catalogue.store')->middleware('permission:library_catalogue,create');
+    Route::get('/catalogue/{item}/edit', [\App\Http\Controllers\LibraryController::class, 'edit'])->name('catalogue.edit')->middleware('permission:library_catalogue,edit');
+    Route::put('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'update'])->name('catalogue.update')->middleware('permission:library_catalogue,edit');
+    Route::delete('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'destroy'])->name('catalogue.destroy')->middleware('permission:library_catalogue,delete');
+    Route::get('/loans', [\App\Http\Controllers\LibraryController::class, 'loansIndex'])->name('loans.index');
+    Route::get('/loans/{loan}', [\App\Http\Controllers\LibraryController::class, 'showLoan'])->name('loans.show');
+    Route::get('/loans/{loan}/edit', [\App\Http\Controllers\LibraryController::class, 'editLoan'])->name('loans.edit');
+    Route::put('/loans/{loan}', [\App\Http\Controllers\LibraryController::class, 'updateLoan'])->name('loans.update');
+    Route::put('/loans/{loan}/renew', [\App\Http\Controllers\LibraryController::class, 'renewLoan'])->name('loans.renew');
+    Route::put('/loans/{loan}/return', [\App\Http\Controllers\LibraryController::class, 'returnLoan'])->name('loans.return');
+});
+
+// Human resources module routes
+Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
+    Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index')->middleware('permission:human_resources,view');
+    Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
+    Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show')->middleware('permission:human_resources,view');
+    Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
+    Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
+    Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
+    Route::delete('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'destroy'])->name('staff.destroy')->middleware('permission:hr_core,delete');
+    
+    // Leave Management Routes
+    Route::get('/leaves', [\App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leaves.index');
+    Route::get('/leaves/create', [\App\Http\Controllers\LeaveRequestController::class, 'create'])->name('leaves.create');
+    Route::post('/leaves', [\App\Http\Controllers\LeaveRequestController::class, 'store'])->name('leaves.store');
+    Route::get('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'show'])->name('leaves.show');
+    Route::get('/leaves/{leave}/edit', [\App\Http\Controllers\LeaveRequestController::class, 'edit'])->name('leaves.edit');
+    Route::put('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'update'])->name('leaves.update');
+    Route::delete('/leaves/{leave}', [\App\Http\Controllers\LeaveRequestController::class, 'destroy'])->name('leaves.destroy');
+    Route::patch('/leaves/{leave}/status', [\App\Http\Controllers\LeaveRequestController::class, 'updateStatus'])->name('leaves.status')->middleware('permission:human_resources,view');
+    
+    // Job Roles
+    Route::resource('sections/job-roles', \App\Http\Controllers\JobRoleController::class)->names('job-roles')->middleware('permission:human_resources,view');
+    
+    // Employee Directory
+    Route::get('/directory', [\App\Http\Controllers\HumanResourcesController::class, 'directory'])->name('directory');
+    
+    // Other Sections placeholder
+    Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('sections.show')->middleware('permission:human_resources,view');
+});
+
+// Facilities routes for all authenticated users
+Route::middleware(['auth'])->prefix('facilities')->name('facilities.')->group(function () {
+    Route::get('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'roomsIndex'])->name('rooms.index');
+    Route::get('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'bookingsIndex'])->name('bookings.index');
+    Route::post('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'storeBooking'])->name('bookings.store');
+    Route::get('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'showBooking'])->name('bookings.show');
+    Route::put('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'updateBooking'])->name('bookings.update');
+    Route::delete('/bookings/{booking}', [\App\Http\Controllers\FacilitiesController::class, 'destroyBooking'])->name('bookings.destroy');
+});
+
+// Estates & facilities management routes
+Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')->name('facilities.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FacilitiesController::class, 'index'])->name('index');
+    Route::get('/rooms/create', [\App\Http\Controllers\FacilitiesController::class, 'create'])->name('rooms.create')->middleware('permission:facilities_rooms,create');
+    Route::post('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'store'])->name('rooms.store')->middleware('permission:facilities_rooms,create');
+    Route::get('/rooms/{room}/edit', [\App\Http\Controllers\FacilitiesController::class, 'edit'])->name('rooms.edit')->middleware('permission:facilities_rooms,edit');
+    Route::put('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'update'])->name('rooms.update')->middleware('permission:facilities_rooms,edit');
+    Route::delete('/rooms/{room}', [\App\Http\Controllers\FacilitiesController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:facilities_rooms,delete');
+});
+
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // User Management
-    Route::resource('users', AdminUserController::class);
-    Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
-    Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
-    Route::resource('roles', AdminRoleController::class)->except(['show']);
+    Route::middleware('permission:users,view')->group(function () {
+        Route::resource('users', AdminUserController::class);
+        Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('permission:users,edit');
+        Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password')->middleware('permission:users,edit');
+    });
+    Route::middleware('permission:roles,view')->group(function () {
+        Route::resource('roles', AdminRoleController::class)->except(['show']);
+    });
 
     // Student Management
     Route::middleware('permission:students,view')->group(function () {
@@ -222,38 +310,44 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/students/{student}/enrollments/{enrollment}', [AdminStudentController::class, 'removeEnrollment'])->name('students.remove-enrollment')->middleware('permission:enrollments,delete');
 
     // Faculty Management (Academic Divisions)
-    Route::get('/faculties', [AdminFacultyController::class, 'index'])->name('faculties.index');
-    Route::get('/faculties/create', [AdminFacultyController::class, 'create'])->name('faculties.create');
-    Route::post('/faculties', [AdminFacultyController::class, 'store'])->name('faculties.store');
-    Route::get('/faculties/{faculty}', [AdminFacultyController::class, 'show'])->name('faculties.show');
-    Route::get('/faculties/{faculty}/edit', [AdminFacultyController::class, 'edit'])->name('faculties.edit');
-    Route::put('/faculties/{faculty}', [AdminFacultyController::class, 'update'])->name('faculties.update');
-    Route::delete('/faculties/{faculty}', [AdminFacultyController::class, 'destroy'])->name('faculties.destroy');
-    Route::post('/faculties/{faculty}/toggle-status', [AdminFacultyController::class, 'toggleStatus'])->name('faculties.toggle-status');
+    Route::middleware('permission:departments,view')->group(function () {
+        Route::get('/faculties', [AdminFacultyController::class, 'index'])->name('faculties.index');
+        Route::get('/faculties/create', [AdminFacultyController::class, 'create'])->name('faculties.create');
+        Route::post('/faculties', [AdminFacultyController::class, 'store'])->name('faculties.store');
+        Route::get('/faculties/{faculty}', [AdminFacultyController::class, 'show'])->name('faculties.show');
+        Route::get('/faculties/{faculty}/edit', [AdminFacultyController::class, 'edit'])->name('faculties.edit');
+        Route::put('/faculties/{faculty}', [AdminFacultyController::class, 'update'])->name('faculties.update');
+        Route::delete('/faculties/{faculty}', [AdminFacultyController::class, 'destroy'])->name('faculties.destroy');
+        Route::post('/faculties/{faculty}/toggle-status', [AdminFacultyController::class, 'toggleStatus'])->name('faculties.toggle-status');
+    });
 
     // Faculty Staff Management (Individual Faculty Members)
-    Route::get('/faculty-staff', [AdminFacultyStaffController::class, 'index'])->name('faculty-staff.index');
-    Route::get('/faculty-staff/create', [AdminFacultyStaffController::class, 'create'])->name('faculty-staff.create');
-    Route::post('/faculty-staff', [AdminFacultyStaffController::class, 'store'])->name('faculty-staff.store');
-    Route::get('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'show'])->name('faculty-staff.show');
-    Route::get('/faculty-staff/{facultyStaff}/edit', [AdminFacultyStaffController::class, 'edit'])->name('faculty-staff.edit');
-    Route::put('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'update'])->name('faculty-staff.update');
-    Route::delete('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'destroy'])->name('faculty-staff.destroy');
-    Route::post('/faculty-staff/{facultyStaff}/toggle-status', [AdminFacultyStaffController::class, 'toggleStatus'])->name('faculty-staff.toggle-status');
-    Route::get('/faculty-staff/{facultyStaff}/courses', [AdminFacultyStaffController::class, 'courses'])->name('faculty-staff.courses');
-    Route::post('/faculty-staff/{facultyStaff}/assign-course', [AdminFacultyStaffController::class, 'assignCourse'])->name('faculty-staff.assign-course');
+    Route::middleware('permission:faculty,view')->group(function () {
+        Route::get('/faculty-staff', [AdminFacultyStaffController::class, 'index'])->name('faculty-staff.index');
+        Route::get('/faculty-staff/create', [AdminFacultyStaffController::class, 'create'])->name('faculty-staff.create');
+        Route::post('/faculty-staff', [AdminFacultyStaffController::class, 'store'])->name('faculty-staff.store');
+        Route::get('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'show'])->name('faculty-staff.show');
+        Route::get('/faculty-staff/{facultyStaff}/edit', [AdminFacultyStaffController::class, 'edit'])->name('faculty-staff.edit');
+        Route::put('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'update'])->name('faculty-staff.update');
+        Route::delete('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'destroy'])->name('faculty-staff.destroy');
+        Route::post('/faculty-staff/{facultyStaff}/toggle-status', [AdminFacultyStaffController::class, 'toggleStatus'])->name('faculty-staff.toggle-status');
+        Route::get('/faculty-staff/{facultyStaff}/courses', [AdminFacultyStaffController::class, 'courses'])->name('faculty-staff.courses');
+        Route::post('/faculty-staff/{facultyStaff}/assign-course', [AdminFacultyStaffController::class, 'assignCourse'])->name('faculty-staff.assign-course');
+    });
 
     // Course Management
-    Route::resource('courses', AdminCourseController::class);
-    Route::get('/courses/{course}/enrollments', [AdminCourseController::class, 'enrollments'])->name('courses.enrollments');
-    Route::get('/courses/{course}/materials', [AdminCourseController::class, 'materials'])->name('courses.materials');
-    Route::post('/courses/{course}/materials', [AdminCourseController::class, 'storeMaterial'])->name('courses.materials.store');
-    Route::delete('/courses/{course}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('courses.materials.destroy');
-    Route::get('/courses/{course}/assignments', [AdminCourseController::class, 'assignments'])->name('courses.assignments');
-    Route::get('/courses/{course}/grades', [AdminCourseController::class, 'grades'])->name('courses.grades');
-    Route::post('/courses/{course}/toggle-status', [AdminCourseController::class, 'toggleStatus'])->name('courses.toggle-status');
-    Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:enrollments,create');
-    Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:enrollments,delete');
+    Route::middleware('permission:courses,view')->group(function () {
+        Route::resource('courses', AdminCourseController::class);
+        Route::get('/courses/{course}/enrollments', [AdminCourseController::class, 'enrollments'])->name('courses.enrollments');
+        Route::get('/courses/{course}/materials', [AdminCourseController::class, 'materials'])->name('courses.materials');
+        Route::post('/courses/{course}/materials', [AdminCourseController::class, 'storeMaterial'])->name('courses.materials.store');
+        Route::delete('/courses/{course}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('courses.materials.destroy');
+        Route::get('/courses/{course}/assignments', [AdminCourseController::class, 'assignments'])->name('courses.assignments');
+        Route::get('/courses/{course}/grades', [AdminCourseController::class, 'grades'])->name('courses.grades');
+        Route::post('/courses/{course}/toggle-status', [AdminCourseController::class, 'toggleStatus'])->name('courses.toggle-status');
+        Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:enrollments,create');
+        Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:enrollments,delete');
+    });
 
     // Enrollment Management
     Route::prefix('enrollments')->name('enrollments.')->middleware('permission:enrollments,view')->group(function () {
@@ -281,6 +375,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::post('/', [AdminFeeController::class, 'store'])->name('store')->middleware('permission:fees,create');
             Route::get('/{fee}', [AdminFeeController::class, 'show'])->name('show');
             Route::get('/{fee}/demand-notice', [AdminFeeController::class, 'demandNotice'])->name('demand-notice');
+            Route::post('/{fee}/send-demand-notice', [AdminFeeController::class, 'sendDemandNotice'])->name('send-demand-notice');
             Route::get('/{fee}/receipt', [AdminFeeController::class, 'receipt'])->name('receipt');
             Route::get('/{fee}/edit', [AdminFeeController::class, 'edit'])->name('edit')->middleware('permission:fees,edit');
             Route::put('/{fee}', [AdminFeeController::class, 'update'])->name('update')->middleware('permission:fees,edit');
@@ -319,44 +414,82 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::middleware('permission:revenue,view')->group(function () {
             Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
             Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store')->middleware('permission:revenue,create');
+            Route::get('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showRevenue'])->name('revenue.show');
+            Route::get('/revenue/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editRevenue'])->name('revenue.edit')->middleware('permission:revenue,update');
+            Route::put('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateRevenue'])->name('revenue.update')->middleware('permission:revenue,update');
+            Route::delete('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyRevenue'])->name('revenue.destroy')->middleware('permission:revenue,delete');
         });
 
         Route::middleware('permission:budgets,view')->group(function () {
             Route::get('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'budgets'])->name('budgets.index');
             Route::post('/budgets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBudget'])->name('budgets.store')->middleware('permission:budgets,create');
+            Route::get('/budgets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showBudget'])->name('budgets.show');
+            Route::get('/budgets/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editBudget'])->name('budgets.edit')->middleware('permission:budgets,update');
+            Route::put('/budgets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateBudget'])->name('budgets.update')->middleware('permission:budgets,update');
+            Route::delete('/budgets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyBudget'])->name('budgets.destroy')->middleware('permission:budgets,delete');
         });
 
         Route::middleware('permission:expenses,view')->group(function () {
             Route::get('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'expenses'])->name('expenses.index');
             Route::post('/expenses', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeExpense'])->name('expenses.store')->middleware('permission:expenses,create');
+            Route::get('/expenses/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showExpense'])->name('expenses.show');
+            Route::get('/expenses/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editExpense'])->name('expenses.edit')->middleware('permission:expenses,update');
+            Route::put('/expenses/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateExpense'])->name('expenses.update')->middleware('permission:expenses,update');
+            Route::delete('/expenses/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyExpense'])->name('expenses.destroy')->middleware('permission:expenses,delete');
             Route::get('/procurement', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'procurement'])->name('procurement.index');
         });
 
         Route::middleware('permission:payables,view')->group(function () {
             Route::get('/payables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payables'])->name('payables.index');
             Route::post('/payables/suppliers', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeSupplier'])->name('payables.suppliers.store')->middleware('permission:payables,create');
+            Route::get('/payables/suppliers/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showSupplier'])->name('payables.suppliers.show');
+            Route::get('/payables/suppliers/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editSupplier'])->name('payables.suppliers.edit')->middleware('permission:payables,update');
+            Route::put('/payables/suppliers/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateSupplier'])->name('payables.suppliers.update')->middleware('permission:payables,update');
+            Route::delete('/payables/suppliers/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroySupplier'])->name('payables.suppliers.destroy')->middleware('permission:payables,delete');
+
             Route::post('/payables/invoices', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeVendorInvoice'])->name('payables.invoices.store')->middleware('permission:payables,create');
+            Route::get('/payables/invoices/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showVendorInvoice'])->name('payables.invoices.show');
+            Route::get('/payables/invoices/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editVendorInvoice'])->name('payables.invoices.edit')->middleware('permission:payables,update');
+            Route::put('/payables/invoices/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateVendorInvoice'])->name('payables.invoices.update')->middleware('permission:payables,update');
+            Route::delete('/payables/invoices/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyVendorInvoice'])->name('payables.invoices.destroy')->middleware('permission:payables,delete');
         });
 
         Route::middleware('permission:receivables,view')->group(function () {
             Route::get('/receivables', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'receivables'])->name('receivables.index');
+            Route::get('/receivables/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showReceivable'])->name('receivables.show');
+            
             Route::get('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'grants'])->name('grants.index');
             Route::post('/grants', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeGrant'])->name('grants.store')->middleware('permission:receivables,create');
+            Route::get('/grants/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showGrant'])->name('grants.show');
+            Route::get('/grants/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editGrant'])->name('grants.edit')->middleware('permission:receivables,update');
+            Route::put('/grants/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateGrant'])->name('grants.update')->middleware('permission:receivables,update');
+            Route::delete('/grants/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyGrant'])->name('grants.destroy')->middleware('permission:receivables,delete');
         });
 
         Route::middleware('permission:payroll,view')->group(function () {
             Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
             Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate')->middleware('permission:payroll,create');
+            Route::get('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showPayroll'])->name('payroll.show');
+            Route::put('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updatePayroll'])->name('payroll.update')->middleware('permission:payroll,edit');
+            Route::delete('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyPayroll'])->name('payroll.destroy')->middleware('permission:payroll,delete');
         });
 
         Route::middleware('permission:assets,view')->group(function () {
             Route::get('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'assets'])->name('assets.index');
             Route::post('/assets', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeAsset'])->name('assets.store')->middleware('permission:assets,create');
+            Route::get('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showAsset'])->name('assets.show');
+            Route::get('/assets/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editAsset'])->name('assets.edit')->middleware('permission:assets,update');
+            Route::put('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateAsset'])->name('assets.update')->middleware('permission:assets,update');
+            Route::delete('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyAsset'])->name('assets.destroy')->middleware('permission:assets,delete');
         });
 
         Route::middleware('permission:banking,view')->group(function () {
             Route::get('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'banking'])->name('banking.index');
             Route::post('/banking', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeBankAccount'])->name('banking.store')->middleware('permission:banking,create');
+            Route::get('/banking/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showBankAccount'])->name('banking.show');
+            Route::get('/banking/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editBankAccount'])->name('banking.edit')->middleware('permission:banking,update');
+            Route::put('/banking/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateBankAccount'])->name('banking.update')->middleware('permission:banking,update');
+            Route::delete('/banking/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyBankAccount'])->name('banking.destroy')->middleware('permission:banking,delete');
         });
 
         Route::get('/reports', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'reports'])->name('reports.index')->middleware('permission:financial_statements,view');
@@ -506,90 +639,90 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // Faculty Routes
 Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')->group(function () {
     Route::get('/dashboard', [FacultyDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index');
-    Route::get('/lms/{course}', [FacultyLmsController::class, 'show'])->name('lms.show');
+    Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index')->middleware('permission:lms,view');
+    Route::get('/lms/{course}', [FacultyLmsController::class, 'show'])->name('lms.show')->middleware('permission:lms,view');
 
     // General overview routes
-    Route::get('/attendance', [FacultyAttendanceController::class, 'overview'])->name('attendance.index');
-    Route::get('/grading', [FacultyGradingController::class, 'overview'])->name('grading.index');
-    Route::get('/materials', [FacultyMaterialController::class, 'overview'])->name('materials.index');
+    Route::get('/attendance', [FacultyAttendanceController::class, 'overview'])->name('attendance.index')->middleware('permission:attendance,view');
+    Route::get('/grading', [FacultyGradingController::class, 'overview'])->name('grading.index')->middleware('permission:grades,view');
+    Route::get('/materials', [FacultyMaterialController::class, 'overview'])->name('materials.index')->middleware('permission:courses,view');
 
     // Course Management
-    Route::get('/courses', [FacultyCourseController::class, 'index'])->name('courses.index');
-    Route::get('/courses/{course}', [FacultyCourseController::class, 'show'])->name('courses.show');
-    Route::put('/courses/{course}', [FacultyCourseController::class, 'update'])->name('courses.update');
-    Route::post('/courses/{course}/enroll-student', [FacultyCourseController::class, 'enrollStudent'])->name('courses.enroll-student');
-    Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [FacultyCourseController::class, 'dropStudent'])->name('courses.drop-student');
+    Route::get('/courses', [FacultyCourseController::class, 'index'])->name('courses.index')->middleware('permission:courses,view');
+    Route::get('/courses/{course}', [FacultyCourseController::class, 'show'])->name('courses.show')->middleware('permission:courses,view');
+    Route::put('/courses/{course}', [FacultyCourseController::class, 'update'])->name('courses.update')->middleware('permission:courses,edit');
+    Route::post('/courses/{course}/enroll-student', [FacultyCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:courses,edit');
+    Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [FacultyCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:courses,edit');
 
     // Material Management
-    Route::get('/courses/{course}/materials', [FacultyMaterialController::class, 'index'])->name('courses.materials.index');
-    Route::get('/courses/{course}/materials/create', [FacultyMaterialController::class, 'create'])->name('courses.materials.create');
-    Route::post('/courses/{course}/materials', [FacultyMaterialController::class, 'store'])->name('courses.materials.store');
-    Route::delete('/courses/{course}/materials/{material}', [FacultyMaterialController::class, 'destroy'])->name('courses.materials.destroy');
+    Route::get('/courses/{course}/materials', [FacultyMaterialController::class, 'index'])->name('courses.materials.index')->middleware('permission:courses,view');
+    Route::get('/courses/{course}/materials/create', [FacultyMaterialController::class, 'create'])->name('courses.materials.create')->middleware('permission:courses,edit');
+    Route::post('/courses/{course}/materials', [FacultyMaterialController::class, 'store'])->name('courses.materials.store')->middleware('permission:courses,edit');
+    Route::delete('/courses/{course}/materials/{material}', [FacultyMaterialController::class, 'destroy'])->name('courses.materials.destroy')->middleware('permission:courses,edit');
 
     // Assignment Management
-    Route::prefix('assignments')->name('assignments.')->group(function () {
+    Route::prefix('assignments')->name('assignments.')->middleware('permission:courses,view')->group(function () {
         Route::get('/', [FacultyAssignmentController::class, 'index'])->name('index');
-        Route::get('/create', [FacultyAssignmentController::class, 'create'])->name('create');
-        Route::post('/', [FacultyAssignmentController::class, 'store'])->name('store');
+        Route::get('/create', [FacultyAssignmentController::class, 'create'])->name('create')->middleware('permission:courses,edit');
+        Route::post('/', [FacultyAssignmentController::class, 'store'])->name('store')->middleware('permission:courses,edit');
         Route::get('/{assignment}', [FacultyAssignmentController::class, 'show'])->name('show');
-        Route::get('/{assignment}/edit', [FacultyAssignmentController::class, 'edit'])->name('edit');
-        Route::put('/{assignment}', [FacultyAssignmentController::class, 'update'])->name('update');
-        Route::delete('/{assignment}', [FacultyAssignmentController::class, 'destroy'])->name('destroy');
+        Route::get('/{assignment}/edit', [FacultyAssignmentController::class, 'edit'])->name('edit')->middleware('permission:courses,edit');
+        Route::put('/{assignment}', [FacultyAssignmentController::class, 'update'])->name('update')->middleware('permission:courses,edit');
+        Route::delete('/{assignment}', [FacultyAssignmentController::class, 'destroy'])->name('destroy')->middleware('permission:courses,edit');
         Route::get('/{assignment}/submissions', [FacultyAssignmentController::class, 'submissions'])->name('submissions');
-        Route::post('/{assignment}/submissions/{submission}/grade', [FacultyAssignmentController::class, 'gradeSubmission'])->name('submissions.grade');
+        Route::post('/{assignment}/submissions/{submission}/grade', [FacultyAssignmentController::class, 'gradeSubmission'])->name('submissions.grade')->middleware('permission:grades,edit');
     });
-    Route::get('/courses/{course}/assignments', [FacultyAssignmentController::class, 'courseAssignments'])->name('courses.assignments.index');
-    Route::post('/courses/{course}/assignments', [FacultyAssignmentController::class, 'store'])->name('courses.assignments.store');
+    Route::get('/courses/{course}/assignments', [FacultyAssignmentController::class, 'courseAssignments'])->name('courses.assignments.index')->middleware('permission:courses,view');
+    Route::post('/courses/{course}/assignments', [FacultyAssignmentController::class, 'store'])->name('courses.assignments.store')->middleware('permission:courses,edit');
 
-    Route::prefix('exams')->name('exams.')->group(function () {
+    Route::prefix('exams')->name('exams.')->middleware('permission:exams,view')->group(function () {
         Route::get('/', [FacultyExamController::class, 'index'])->name('index');
-        Route::get('/create', [FacultyExamController::class, 'create'])->name('create');
-        Route::post('/', [FacultyExamController::class, 'store'])->name('store');
+        Route::get('/create', [FacultyExamController::class, 'create'])->name('create')->middleware('permission:exams,edit');
+        Route::post('/', [FacultyExamController::class, 'store'])->name('store')->middleware('permission:exams,edit');
         Route::get('/{exam}', [FacultyExamController::class, 'show'])->name('show');
-        Route::get('/{exam}/edit', [FacultyExamController::class, 'edit'])->name('edit');
-        Route::put('/{exam}', [FacultyExamController::class, 'update'])->name('update');
-        Route::delete('/{exam}', [FacultyExamController::class, 'destroy'])->name('destroy');
+        Route::get('/{exam}/edit', [FacultyExamController::class, 'edit'])->name('edit')->middleware('permission:exams,edit');
+        Route::put('/{exam}', [FacultyExamController::class, 'update'])->name('update')->middleware('permission:exams,edit');
+        Route::delete('/{exam}', [FacultyExamController::class, 'destroy'])->name('destroy')->middleware('permission:exams,edit');
         Route::get('/{exam}/attempts', [FacultyExamController::class, 'attempts'])->name('attempts');
         Route::get('/{exam}/attempts/{attempt}', [FacultyExamController::class, 'submission'])->name('attempts.show');
-        Route::post('/{exam}/attempts/{attempt}/grade', [FacultyExamController::class, 'gradeAttempt'])->name('attempts.grade');
-        Route::post('/{exam}/grade/{attempt}', [FacultyExamController::class, 'gradeAttempt'])->name('grade');
+        Route::post('/{exam}/attempts/{attempt}/grade', [FacultyExamController::class, 'gradeAttempt'])->name('attempts.grade')->middleware('permission:grades,edit');
+        Route::post('/{exam}/grade/{attempt}', [FacultyExamController::class, 'gradeAttempt'])->name('grade')->middleware('permission:grades,edit');
     });
 
-    Route::prefix('quizzes')->name('quizzes.')->group(function () {
+    Route::prefix('quizzes')->name('quizzes.')->middleware('permission:exams,view')->group(function () {
         Route::get('/', [FacultyQuizController::class, 'index'])->name('index');
-        Route::get('/create', [FacultyQuizController::class, 'create'])->name('create');
-        Route::post('/', [FacultyQuizController::class, 'store'])->name('store');
+        Route::get('/create', [FacultyQuizController::class, 'create'])->name('create')->middleware('permission:exams,edit');
+        Route::post('/', [FacultyQuizController::class, 'store'])->name('store')->middleware('permission:exams,edit');
         Route::get('/{quiz}', [FacultyQuizController::class, 'show'])->name('show');
-        Route::get('/{quiz}/edit', [FacultyQuizController::class, 'edit'])->name('edit');
-        Route::put('/{quiz}', [FacultyQuizController::class, 'update'])->name('update');
-        Route::delete('/{quiz}', [FacultyQuizController::class, 'destroy'])->name('destroy');
+        Route::get('/{quiz}/edit', [FacultyQuizController::class, 'edit'])->name('edit')->middleware('permission:exams,edit');
+        Route::put('/{quiz}', [FacultyQuizController::class, 'update'])->name('update')->middleware('permission:exams,edit');
+        Route::delete('/{quiz}', [FacultyQuizController::class, 'destroy'])->name('destroy')->middleware('permission:exams,edit');
         Route::get('/{quiz}/questions', [FacultyQuizController::class, 'questions'])->name('questions');
-        Route::post('/{quiz}/questions', [FacultyQuizController::class, 'storeQuestion'])->name('questions.store');
-        Route::put('/{quiz}/questions/{question}', [FacultyQuizController::class, 'updateQuestion'])->name('questions.update');
-        Route::delete('/{quiz}/questions/{question}', [FacultyQuizController::class, 'destroyQuestion'])->name('questions.destroy');
+        Route::post('/{quiz}/questions', [FacultyQuizController::class, 'storeQuestion'])->name('questions.store')->middleware('permission:exams,edit');
+        Route::put('/{quiz}/questions/{question}', [FacultyQuizController::class, 'updateQuestion'])->name('questions.update')->middleware('permission:exams,edit');
+        Route::delete('/{quiz}/questions/{question}', [FacultyQuizController::class, 'destroyQuestion'])->name('questions.destroy')->middleware('permission:exams,edit');
         Route::get('/{quiz}/attempts', [FacultyQuizController::class, 'attempts'])->name('attempts');
     });
 
     // Attendance Management
-    Route::get('/courses/{course}/attendance', [FacultyAttendanceController::class, 'index'])->name('courses.attendance.index');
-    Route::get('/courses/{course}/attendance/show', [FacultyAttendanceController::class, 'show'])->name('courses.attendance.show');
-    Route::get('/courses/{course}/attendance/qr', [FacultyAttendanceController::class, 'generateQRCode'])->name('courses.attendance.qr');
-    Route::post('/courses/{course}/attendance', [FacultyAttendanceController::class, 'store'])->name('courses.attendance.store');
-    Route::put('/courses/{course}/attendance/{attendance}', [FacultyAttendanceController::class, 'update'])->name('courses.attendance.update');
+    Route::get('/courses/{course}/attendance', [FacultyAttendanceController::class, 'index'])->name('courses.attendance.index')->middleware('permission:attendance,view');
+    Route::get('/courses/{course}/attendance/show', [FacultyAttendanceController::class, 'show'])->name('courses.attendance.show')->middleware('permission:attendance,view');
+    Route::get('/courses/{course}/attendance/qr', [FacultyAttendanceController::class, 'generateQRCode'])->name('courses.attendance.qr')->middleware('permission:attendance,edit');
+    Route::post('/courses/{course}/attendance', [FacultyAttendanceController::class, 'store'])->name('courses.attendance.store')->middleware('permission:attendance,edit');
+    Route::put('/courses/{course}/attendance/{attendance}', [FacultyAttendanceController::class, 'update'])->name('courses.attendance.update')->middleware('permission:attendance,edit');
 
     // Faculty Timetables
     Route::get('/timetables', [FacultyTimetableController::class, 'index'])->name('timetables.index');
 
     // Grading
-    Route::get('/courses/{course}/grades', [FacultyGradingController::class, 'index'])->name('courses.grades.index');
-    Route::post('/courses/{course}/grades', [FacultyGradingController::class, 'store'])->name('courses.grades.store');
-    Route::put('/courses/{course}/grades/{grade}', [FacultyGradingController::class, 'update'])->name('courses.grades.update');
-    Route::get('/courses/{course}/grading', [FacultyGradingController::class, 'course'])->name('courses.grading');
-    Route::get('/courses/{course}/gradebook', [FacultyGradingController::class, 'gradebook'])->name('courses.gradebook');
-    Route::post('/assignments/{assignment}/grade', [FacultyGradingController::class, 'storeGrade'])->name('grading.store');
-    Route::post('/assignments/{assignment}/bulk-grade', [FacultyGradingController::class, 'bulkGrade'])->name('grading.bulk');
-    Route::post('/assignments/{assignment}/publish', [FacultyGradingController::class, 'publishGrades'])->name('grading.publish');
+    Route::get('/courses/{course}/grades', [FacultyGradingController::class, 'index'])->name('courses.grades.index')->middleware('permission:grades,view');
+    Route::post('/courses/{course}/grades', [FacultyGradingController::class, 'store'])->name('courses.grades.store')->middleware('permission:grades,edit');
+    Route::put('/courses/{course}/grades/{grade}', [FacultyGradingController::class, 'update'])->name('courses.grades.update')->middleware('permission:grades,edit');
+    Route::get('/courses/{course}/grading', [FacultyGradingController::class, 'course'])->name('courses.grading')->middleware('permission:grades,view');
+    Route::get('/courses/{course}/gradebook', [FacultyGradingController::class, 'gradebook'])->name('courses.gradebook')->middleware('permission:grades,view');
+    Route::post('/assignments/{assignment}/grade', [FacultyGradingController::class, 'storeGrade'])->name('grading.store')->middleware('permission:grades,edit');
+    Route::post('/assignments/{assignment}/bulk-grade', [FacultyGradingController::class, 'bulkGrade'])->name('grading.bulk')->middleware('permission:grades,edit');
+    Route::post('/assignments/{assignment}/publish', [FacultyGradingController::class, 'publishGrades'])->name('grading.publish')->middleware('permission:grades,edit');
 
     // Announcements
     Route::resource('announcements', AnnouncementController::class);

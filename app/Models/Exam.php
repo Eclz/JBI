@@ -27,6 +27,7 @@ class Exam extends Model
         'is_published',
         'exam_type',
         'exam_mode',
+        'room_number',
     ];
 
     protected $casts = [

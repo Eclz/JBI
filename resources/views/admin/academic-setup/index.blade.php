@@ -23,7 +23,7 @@
         @php
             $steps = [
                 [1, 'Programme Levels', 'Define Certificate through Doctorate.', 'admin.program-levels.index', 'layers', $counts['levels']],
-                [2, 'Faculties / Schools', 'Create the eight official academic schools.', 'admin.faculties.index', 'building', $counts['faculties']],
+                [2, 'Faculties / Schools', 'Create the eight official academic schools.', 'admin.faculties.index', 'buildings', $counts['faculties']], // ← changed
                 [3, 'Departments', 'Place each academic department under a school.', 'admin.departments.index', 'diagram-2', $counts['departments']],
                 [4, 'Programmes', 'Add each qualification at its correct level.', 'admin.programs.index', 'journal-bookmark', $counts['programs']],
                 [5, 'Fee Structures', 'Assign local ZAR and international USD fees.', 'admin.fees.structures.index', 'cash-stack', $counts['fees']],

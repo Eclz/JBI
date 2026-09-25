@@ -96,6 +96,7 @@
                                 <td><span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1"><i class="bi bi-geo-alt me-1"></i>{{ $slot->room_venue }}</span></td>
                                 <td>{{ $slot->faculty?->full_name ?? 'Unassigned' }}</td>
                                 <td class="text-end">
+                                    <a href="{{ route('admin.timetables.edit', $slot) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
                                     <form action="{{ route('admin.timetables.destroy', $slot) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this timetable entry?');">
                                         @csrf
                                         @method('DELETE')

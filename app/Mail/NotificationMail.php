@@ -5,13 +5,12 @@ namespace App\Mail;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class NotificationMail extends Mailable implements ShouldQueue
+class NotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -26,8 +25,17 @@ class NotificationMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $priority = strtolower($this->notification->priority ?? 'normal');
+        $prefix = match ($priority) {
+            'urgent' => '[URGENT] ',
+            'high' => '[IMPORTANT] ',
+            default => '',
+        };
+
+        $subject = $prefix . ($this->notification->title ?: 'New Notification from ' . config('app.name', 'JBI University'));
+
         return new Envelope(
-            subject: $this->notification->title ?: 'New Notification from JBI University',
+            subject: $subject,
         );
     }
 
@@ -35,6 +43,10 @@ class NotificationMail extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.notification-mail',
+            with: [
+                'notification' => $this->notification,
+                'user' => $this->user,
+            ],
         );
     }
 }

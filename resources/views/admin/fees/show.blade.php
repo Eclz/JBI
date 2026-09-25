@@ -16,8 +16,14 @@
                             </a>
                         @endif
                         <a href="{{ route('admin.fees.records.demand-notice', $fee) }}" class="btn btn-outline-warning me-2" target="_blank">
-                            <i class="fas fa-file-alt"></i> Demand Notice
+                            <i class="fas fa-file-alt"></i> Print Notice
                         </a>
+                        <form action="{{ route('admin.fees.records.send-demand-notice', $fee) }}" method="POST" class="d-inline m-0 p-0">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-info me-2">
+                                <i class="fas fa-paper-plane"></i> Send Notice to Portal
+                            </button>
+                        </form>
                         <a href="{{ route('admin.fees.records.receipt', $fee) }}" class="btn btn-outline-dark me-2" target="_blank">
                             <i class="fas fa-receipt"></i> Receipt
                         </a>

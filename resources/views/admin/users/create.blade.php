@@ -14,6 +14,23 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-exclamation-octagon-fill me-2 mt-1 fs-5"></i>
+                                <div>
+                                    <strong>Failed to create user. Please review the errors below:</strong>
+                                    <ul class="mb-0 mt-2 ps-3">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
                     <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="row">
@@ -71,30 +88,11 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="password" class="form-label">Password *</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                               id="password" name="password" required>
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                    @error('password')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="password_confirmation" class="form-label">Confirm Password *</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control"
-                                               id="password_confirmation" name="password_confirmation" required>
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirmation" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
+                            <div class="col-12">
+                                <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+                                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                    <div>
+                                        <strong>Automated Password Setup:</strong> The administrator does not set a password. Upon saving, a secure account activation link will be emailed to the user to verify their account and create their own password.
                                     </div>
                                 </div>
                             </div>
@@ -103,14 +101,31 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
+                                    <label for="department_id" class="form-label">Department</label>
+                                    <select class="form-control @error('department_id') is-invalid @enderror" id="department_id" name="department_id">
+                                        <option value="">Select Department (Optional for Admin/General)</option>
+                                        @foreach($departments as $dept)
+                                            <option value="{{ $dept->id }}" {{ (int) old('department_id') === $dept->id ? 'selected' : '' }}>
+                                                {{ $dept->name }} ({{ $dept->code }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('department_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
                                     <label for="phone" class="form-label">Phone Number</label>
                                     <input type="text" class="form-control @error('phone') is-invalid @enderror"
-                                           id="phone" name="phone" value="{{ old('phone') }}">
+                                           id="phone" name="phone" value="{{ old('phone') }}" placeholder="+256 700 000000">
                                     @error('phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="profile_picture" class="form-label">Profile Picture</label>

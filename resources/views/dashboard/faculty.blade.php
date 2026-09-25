@@ -24,7 +24,7 @@
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-white-50 mb-1">Teaching Courses</h6>
-                        <h2 class="text-white mb-1">{{ count($myCourses ?? []) }}</h2>
+                        <h2 class="text-white mb-1">{{ $totalCourses ?? 0 }}</h2>
                         <small class="text-white-50">This semester</small>
                     </div>
                     <div class="icon-wrapper" style="background: rgba(255,255,255,0.1); color: white;">
@@ -39,7 +39,7 @@
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-white-50 mb-1">Total Students</h6>
-                        <h2 class="text-white mb-1">{{ $totalStudents ?? 127 }}</h2>
+                        <h2 class="text-white mb-1">{{ $totalStudents ?? 0 }}</h2>
                         <small class="text-white-50">Across all courses</small>
                     </div>
                     <div class="icon-wrapper" style="background: rgba(255,255,255,0.1); color: white;">
@@ -54,7 +54,7 @@
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-white-50 mb-1">Pending Grades</h6>
-                        <h2 class="text-white mb-1">{{ $pendingGrades ?? 23 }}</h2>
+                        <h2 class="text-white mb-1">{{ $pendingAssignments ?? 0 }}</h2>
                         <small class="text-white-50">Assignments to grade</small>
                     </div>
                     <div class="icon-wrapper" style="background: rgba(255,255,255,0.1); color: white;">
@@ -68,56 +68,68 @@
             <div class="card stats-card h-100" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">
                 <div class="card-body d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h6 class="text-white-50 mb-1">Class Average</h6>
-                        <h2 class="text-white mb-1">{{ $classAverage ?? 87 }}%</h2>
-                        <small class="text-white-50">Above target</small>
+                        <h6 class="text-white-50 mb-1">Today's Attendance</h6>
+                        <h2 class="text-white mb-1">{{ $todayAttendance ?? 0 }}</h2>
+                        <small class="text-white-50">Records marked today</small>
                     </div>
                     <div class="icon-wrapper" style="background: rgba(255,255,255,0.1); color: white;">
-                        <i class="fa fa-chart-bar"></i>
+                        <i class="fa fa-check-square"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Grade Distribution and Schedule -->
+    <!-- Submissions and Schedule -->
     <div class="row mb-4">
         <div class="col-lg-8 mb-4">
             <div class="card card-hover h-100">
                 <div class="card-header bg-white border-bottom">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <h5 class="mb-1" style="color: var(--jbi-navy);">Grade Distribution</h5>
-                            <p class="text-muted mb-0">Current semester grade breakdown</p>
+                            <h5 class="mb-1" style="color: var(--jbi-navy);">Recent Submissions</h5>
+                            <p class="text-muted mb-0">Latest student assignment submissions</p>
                         </div>
                         <div class="icon-wrapper icon-primary">
-                            <i class="fa fa-chart-pie"></i>
+                            <i class="fa fa-file-alt"></i>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    @foreach([
-                        ['grade' => 'A', 'count' => 45, 'percentage' => 35, 'color' => '#22c55e'],
-                        ['grade' => 'B', 'count' => 52, 'percentage' => 41, 'color' => '#3b82f6'],
-                        ['grade' => 'C', 'count' => 23, 'percentage' => 18, 'color' => '#f59e0b'],
-                        ['grade' => 'D', 'count' => 6, 'percentage' => 5, 'color' => '#ef4444'],
-                        ['grade' => 'F', 'count' => 1, 'percentage' => 1, 'color' => '#6b7280']
-                    ] as $grade)
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="icon-wrapper me-3" style="background: {{ $grade['color'] }}20; color: {{ $grade['color'] }}; width: 40px; height: 40px;">
-                                    <strong>{{ $grade['grade'] }}</strong>
-                                </div>
-                                <span class="fw-medium">{{ $grade['count'] }} students</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="progress-bar me-3" style="width: 100px;">
-                                    <div class="progress-fill" style="width: {{ $grade['percentage'] }}%; background: {{ $grade['color'] }};"></div>
-                                </div>
-                                <span class="fw-bold" style="color: var(--jbi-navy);">{{ $grade['percentage'] }}%</span>
-                            </div>
-                        </div>
-                    @endforeach
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Assignment</th>
+                                    <th>Course</th>
+                                    <th>Submitted</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentSubmissions ?? [] as $submission)
+                                    <tr>
+                                        <td>{{ $submission->student->name ?? 'N/A' }}</td>
+                                        <td>{{ $submission->assignment->title ?? 'N/A' }}</td>
+                                        <td>{{ $submission->assignment->course->course_code ?? 'N/A' }}</td>
+                                        <td>{{ $submission->submitted_at ? \Carbon\Carbon::parse($submission->submitted_at)->diffForHumans() : 'N/A' }}</td>
+                                        <td>
+                                            @if($submission->score !== null)
+                                                <span class="badge bg-success">Graded</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No recent submissions</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,8 +139,8 @@
                 <div class="card-header bg-white border-bottom">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <h5 class="mb-1" style="color: var(--jbi-navy);">Today's Schedule</h5>
-                            <p class="text-muted mb-0">{{ now()->format('l, F j, Y') }}</p>
+                            <h5 class="mb-1" style="color: var(--jbi-navy);">Upcoming Assignments</h5>
+                            <p class="text-muted mb-0">Due soon</p>
                         </div>
                         <div class="icon-wrapper icon-accent">
                             <i class="fa fa-calendar-day"></i>
@@ -136,22 +148,21 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @foreach([
-                        ['course' => 'Biblical Studies 101', 'room' => 'Room 204', 'time' => '11:00 AM - 12:30 PM', 'students' => 32, 'status' => 'upcoming'],
-                        ['course' => 'Theology 301', 'room' => 'Room 156', 'time' => '2:00 PM - 3:30 PM', 'students' => 28, 'status' => 'later']
-                    ] as $class)
-                        <div class="d-flex align-items-center mb-3 p-3 rounded" style="background: {{ $class['status'] === 'upcoming' ? '#f0fdf4' : '#f8fafc' }};">
-                            <div class="icon-wrapper {{ $class['status'] === 'upcoming' ? 'icon-success' : 'icon-primary' }} me-3" style="width: 40px; height: 40px;">
+                    @forelse($upcomingAssignments ?? [] as $assignment)
+                        <div class="d-flex align-items-center mb-3 p-3 rounded" style="background: #f8fafc;">
+                            <div class="icon-wrapper icon-primary me-3" style="width: 40px; height: 40px;">
                                 <i class="fa fa-clock"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <h6 class="mb-1" style="color: var(--jbi-navy);">{{ $class['course'] }}</h6>
-                                <small class="text-muted">{{ $class['room'] }} - {{ $class['students'] }} students</small>
+                                <h6 class="mb-1" style="color: var(--jbi-navy);">{{ $assignment->title }}</h6>
+                                <small class="text-muted">{{ $assignment->course->course_code ?? 'Course' }}</small>
                                 <br>
-                                <small class="fw-medium" style="color: {{ $class['status'] === 'upcoming' ? '#22c55e' : 'var(--jbi-primary)' }};">{{ $class['time'] }}</small>
+                                <small class="fw-medium text-danger">Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, g:i A') }}</small>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <p class="text-muted text-center py-3">No upcoming assignments.</p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -173,21 +184,19 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <a href="" class="text-decoration-none">
-                        {{-- {{ route('faculty.grading.index') }} --}}
+                    <a href="{{ route('faculty.grading.index') ?? '#' }}" class="text-decoration-none">
                         <div class="quick-action-card text-center">
                             <div class="icon-wrapper icon-warning mx-auto mb-3">
                                 <i class="fa fa-star"></i>
                             </div>
                             <h6 style="color: var(--jbi-navy);">Grade Assignments</h6>
-                            <p class="text-muted small mb-0">{{ $pendingGrades ?? 23 }} pending</p>
+                            <p class="text-muted small mb-0">{{ $pendingAssignments ?? 0 }} pending</p>
                         </div>
                     </a>
                 </div>
 
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <a href="" class="text-decoration-none">
-                        {{-- {{ route('faculty.attendance.index') }} --}}
+                    <a href="{{ route('faculty.attendance.index') ?? '#' }}" class="text-decoration-none">
                         <div class="quick-action-card text-center">
                             <div class="icon-wrapper icon-success mx-auto mb-3">
                                 <i class="fa fa-check-circle"></i>
@@ -199,27 +208,25 @@
                 </div>
 
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <a href="" class="text-decoration-none">
-                        {{-- {{ route('assignments.create') }} --}}
+                    <a href="{{ route('faculty.assignments.index') ?? '#' }}" class="text-decoration-none">
                         <div class="quick-action-card text-center">
                             <div class="icon-wrapper icon-primary mx-auto mb-3">
                                 <i class="fa fa-plus"></i>
                             </div>
-                            <h6 style="color: var(--jbi-navy);">Create Assignment</h6>
-                            <p class="text-muted small mb-0">Add new assignment</p>
+                            <h6 style="color: var(--jbi-navy);">Assignments</h6>
+                            <p class="text-muted small mb-0">Manage assignments</p>
                         </div>
                     </a>
                 </div>
 
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <a href="" class="text-decoration-none">
-                        {{-- {{ route('faculty.materials.index') }} --}}
+                    <a href="{{ route('faculty.courses.index') ?? '#' }}" class="text-decoration-none">
                         <div class="quick-action-card text-center">
                             <div class="icon-wrapper icon-accent mx-auto mb-3">
-                                <i class="fa fa-file-upload"></i>
+                                <i class="fa fa-book-open"></i>
                             </div>
-                            <h6 style="color: var(--jbi-navy);">Course Materials</h6>
-                            <p class="text-muted small mb-0">Upload resources</p>
+                            <h6 style="color: var(--jbi-navy);">My Courses</h6>
+                            <p class="text-muted small mb-0">Manage your courses</p>
                         </div>
                     </a>
                 </div>

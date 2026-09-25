@@ -180,7 +180,19 @@
                         </div>
 
                         <div class="text-end">
-                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold">
+                            @php
+                                $currentSemester = \App\Models\Semester::where('is_current', true)->first();
+                                $canEnroll = $currentSemester && $currentSemester->is_active && $currentSemester->is_registration_open;
+                            @endphp
+                            
+                            @if(!$canEnroll)
+                                <div class="alert alert-warning text-start py-2 px-3 small mb-3">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    Course enrollment is currently unavailable. Ensure there is an active semester with open registration.
+                                </div>
+                            @endif
+                            
+                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold" {{ !$canEnroll ? 'disabled' : '' }}>
                                 <i class="bi bi-check-circle-fill me-2"></i>COMPLETE ENROLLMENT & REGISTER
                             </button>
                         </div>

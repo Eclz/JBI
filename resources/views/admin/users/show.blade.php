@@ -79,6 +79,12 @@
                                 {{ $user->is_active ? 'Deactivate' : 'Activate' }} Account
                             </button>
                         </form>
+                        <form action="{{ route('admin.users.reset-password', $user) }}" method="POST" class="d-inline" onsubmit="return confirm('Send a secure password setup / reset email to {{ $user->email }}?');">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-key"></i> Send Password Link
+                            </button>
+                        </form>
                         @if($user->role === 'student')
                         <button class="btn btn-sm btn-outline-info w-100">
                             <i class="bi bi-envelope"></i> Send Message

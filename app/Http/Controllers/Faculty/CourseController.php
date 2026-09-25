@@ -29,7 +29,7 @@ class CourseController extends Controller
         $course->load([
             'semester',
             'department',
-            'enrollments.student',
+            'enrollments.student.studentProfile',
             'assignments',
             'materials'
         ]);
@@ -43,7 +43,7 @@ class CourseController extends Controller
                       ->where('course_id', $course->id)
                       ->where('status', '!=', 'dropped');
             })
-            ->with('studentProfile')
+            ->with('studentProfile.program')
             ->orderBy('name')
             ->get();
 

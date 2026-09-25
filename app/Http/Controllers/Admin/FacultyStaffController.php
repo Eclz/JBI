@@ -158,16 +158,13 @@ class FacultyStaffController extends Controller
                 $profilePicture = $request->file('profile_picture')->store('profile-pictures', 'public');
             }
 
-            // Generate default password
-            $defaultPassword = $this->generateDefaultPassword();
-
             // Create user
             $user = User::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make($defaultPassword),
+                'password' => Hash::make('ABCxyz,.?123'),
                 'role' => 'faculty',
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,
@@ -177,8 +174,8 @@ class FacultyStaffController extends Controller
                 'emergency_phone' => $request->emergency_phone,
                 'profile_picture' => $profilePicture,
                 'is_active' => true,
-                'email_verified_at' => now(),
-                'must_change_password' => true,
+                'email_verified_at' => null,
+                'must_change_password' => false,
             ]);
 
             // Generate employee ID
@@ -218,6 +215,14 @@ class FacultyStaffController extends Controller
 
             DB::commit();
 
+            // Send account activation and password setup email
+            try {
+                $token = \Illuminate\Support\Facades\Password::broker()->createToken($user);
+                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\AccountCreatedSetupPassword($user, $token));
+            } catch (\Throwable $mailEx) {
+                Log::warning('Failed to send faculty account setup email: ' . $mailEx->getMessage());
+            }
+
             Log::info('Faculty staff member created successfully', [
                 'user_id' => $user->id,
                 'employee_id' => $employeeId,
@@ -225,7 +230,7 @@ class FacultyStaffController extends Controller
             ]);
 
             return redirect()->route('admin.faculty-staff.index')
-                           ->with('success', "Faculty staff member created successfully! Employee ID: {$employeeId}. Default password: {$defaultPassword}");
+                           ->with('success', "Faculty staff member created successfully! Employee ID: {$employeeId}. An activation link has been sent to {$user->email} to set their password.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -364,10 +369,6 @@ class FacultyStaffController extends Controller
             'assigned_courses.*' => 'exists:courses,id',
         ];
 
-        if ($request->filled('password')) {
-            $rules['password'] = 'required|min:8|confirmed';
-        }
-
         $request->merge([
             'is_active' => $request->has('is_active'),
         ]);
@@ -378,7 +379,7 @@ class FacultyStaffController extends Controller
             \Illuminate\Support\Facades\Log::error('FacultyStaff update validation failed', [
                 'user_id' => $facultyStaff->id,
                 'errors' => $validator->errors()->toArray(),
-                'input' => $request->except(['password', 'profile_picture'])
+                'input' => $request->except(['profile_picture'])
             ]);
             return back()->withErrors($validator)->withInput();
         }
@@ -411,13 +412,6 @@ class FacultyStaffController extends Controller
                 'profile_picture' => $profilePicture,
                 'is_active' => $request->has('is_active'),
             ];
-
-            // Update password if provided
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->password);
-                $userData['must_change_password'] = false;
-                $userData['password_changed_at'] = now();
-            }
 
             $facultyStaff->update($userData);
 

@@ -65,6 +65,22 @@ class SystemSetting extends Model
         return $setting ? $setting->typed_value : $default;
     }
 
+    /**
+     * Set or update setting by key
+     */
+    public static function setSetting(string $key, $value, string $type = 'string', string $group = 'general', bool $isPublic = false): self
+    {
+        return static::updateOrCreate(
+            ['key' => $key],
+            [
+                'value' => is_array($value) ? json_encode($value) : (string) $value,
+                'type' => is_array($value) ? 'json' : $type,
+                'group' => $group,
+                'is_public' => $isPublic,
+            ]
+        );
+    }
+
     public static function admissionWindow(): array
     {
         $timezone = static::getSetting('timezone', config('app.timezone'));

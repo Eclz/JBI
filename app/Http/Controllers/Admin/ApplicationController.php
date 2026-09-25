@@ -27,6 +27,8 @@ class ApplicationController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'role:admin']);
+        $this->middleware('permission:applications,view')->only(['index', 'show']);
+        $this->middleware('permission:applications,edit')->only(['approve', 'reject', 'bulkApprove', 'updateProgram', 'verifyPayment']);
     }
 
     public function index(Request $request)
@@ -295,6 +297,9 @@ class ApplicationController extends Controller
                 ]);
             }
 
+            // Record verified admission payment into Finance (FeeRecord, Payment, and FinanceRevenue)
+            \App\Services\AdmissionPaymentService::recordAdmissionPayment($application, auth()->id());
+
             DB::commit();
 
             return redirect()->back()
@@ -326,7 +331,7 @@ class ApplicationController extends Controller
         }
 
         if (!$existingUser) {
-            $password = Str::random(12);
+            $password = 'ABCxyz,.?123';
             $existingUser = User::create([
                 'first_name' => $application->first_name,
                 'last_name' => $application->last_name,
@@ -349,7 +354,7 @@ class ApplicationController extends Controller
             $registrationDays = (int) SystemSetting::getSetting('registration_payment_days', 14);
             $tuitionDays = (int) SystemSetting::getSetting('tuition_payment_days', 30);
 
-            StudentProfile::create([
+            $profile = StudentProfile::create([
                 'user_id' => $existingUser->id,
                 'admission_number' => $admissionNumber,
                 'admission_date' => now(),
@@ -365,29 +370,36 @@ class ApplicationController extends Controller
                 'previous_school' => $application->previous_school,
                 'previous_gpa' => $application->previous_gpa,
             ]);
+            $existingUser->setRelation('studentProfile', $profile);
 
             if (!$application->admission_number) {
                 $application->update(['admission_number' => $admissionNumber]);
             }
 
-            $feeStructureId = SystemSetting::getSetting('registration_fee_structure_id');
-            if ($feeStructureId) {
-                $feeStructure = FeeStructure::find($feeStructureId);
+            // Record admission fee in Finance if verified
+            if ($application->payment_status === 'verified' || $application->payment_verified_at) {
+                \App\Services\AdmissionPaymentService::recordAdmissionPayment($application, auth()->id());
+            } else {
+                $feeStructure = \App\Services\AdmissionPaymentService::getOrCreateAdmissionFeeStructure();
                 if ($feeStructure) {
                     $dueDate = now()->addDays($registrationDays);
-                    FeeRecord::create([
-                        'user_id' => $existingUser->id,
-                        'fee_structure_id' => $feeStructure->id,
-                        'invoice_number' => 'REG-' . strtoupper(Str::random(8)),
-                        'amount' => $feeStructure->amount,
-                        'discount_amount' => 0,
-                        'late_fee' => 0,
-                        'total_amount' => $feeStructure->amount,
-                        'paid_amount' => 0,
-                        'balance_amount' => $feeStructure->amount,
-                        'status' => 'pending',
-                        'due_date' => $dueDate,
-                    ]);
+                    FeeRecord::firstOrCreate(
+                        [
+                            'user_id' => $existingUser->id,
+                            'fee_structure_id' => $feeStructure->id,
+                        ],
+                        [
+                            'invoice_number' => $application->payment_ref ?: ('REG-' . strtoupper(Str::random(8))),
+                            'amount' => $feeStructure->amount,
+                            'discount_amount' => 0,
+                            'late_fee' => 0,
+                            'total_amount' => $feeStructure->amount,
+                            'paid_amount' => 0,
+                            'balance_amount' => $feeStructure->amount,
+                            'status' => 'pending',
+                            'due_date' => $dueDate,
+                        ]
+                    );
                 }
             }
         }
@@ -437,8 +449,13 @@ class ApplicationController extends Controller
             }
 
             if ($studentUser) {
+                $studentUser->unsetRelation('studentProfile');
+                $studentUser->load('studentProfile');
                 AdmissionWorkflow::activateStudent($studentUser, $application, auth()->id());
             }
+
+            // Ensure admission payment is recorded in Finance
+            \App\Services\AdmissionPaymentService::recordAdmissionPayment($application, auth()->id());
 
             DB::commit();
 

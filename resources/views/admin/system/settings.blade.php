@@ -266,6 +266,82 @@
                 </div>
             </div>
 
+            <!-- Academic Term Settings -->
+            <div class="card mt-4 border-info">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="card-title mb-0 text-info-emphasis">
+                        <i class="bi bi-calendar-range me-2"></i>Current Academic Term
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Current Academic Year</label>
+                            <select name="current_academic_year_id" id="current_academic_year_id" class="form-select">
+                                <option value="">Select Academic Year</option>
+                                @foreach($academicYears as $year)
+                                    <option value="{{ $year->id }}" {{ $year->is_current ? 'selected' : '' }}>
+                                        {{ $year->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Current Semester</label>
+                            <select name="current_semester_id" id="current_semester_id" class="form-select">
+                                <option value="">Select Semester</option>
+                                @foreach($academicYears as $year)
+                                    <optgroup label="{{ $year->name }}">
+                                        @foreach($year->semesters as $sem)
+                                            <option value="{{ $sem->id }}" 
+                                                data-start="{{ $sem->start_date ? $sem->start_date->format('Y-m-d') : '' }}"
+                                                data-end="{{ $sem->end_date ? $sem->end_date->format('Y-m-d') : '' }}"
+                                                data-reg-start="{{ $sem->registration_start ? $sem->registration_start->format('Y-m-d') : '' }}"
+                                                data-reg-end="{{ $sem->registration_end ? $sem->registration_end->format('Y-m-d') : '' }}"
+                                                {{ $sem->is_current ? 'selected' : '' }}>
+                                                {{ $sem->name }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="semester_dates_section">
+                        <hr>
+                        <h6 class="mb-3">Semester Dates</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Semester Start Date</label>
+                                <input type="date" name="semester_start_date" id="semester_start_date" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Semester End (Closure) Date</label>
+                                <input type="date" name="semester_end_date" id="semester_end_date" class="form-control">
+                                <small class="text-muted">Semester auto-closes on this date.</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Enrollment Start Date</label>
+                                <input type="date" name="semester_registration_start" id="semester_registration_start" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-danger fw-bold">Enrollment Deadline</label>
+                                <input type="date" name="semester_registration_end" id="semester_registration_end" class="form-control border-danger">
+                                <small class="text-danger">Students cannot enroll after this date.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-none" id="reason_for_change_container">
+                            <label class="form-label text-warning fw-bold">Reason for Date Change</label>
+                            <textarea name="reason_for_change" id="reason_for_change" class="form-control border-warning" rows="2" placeholder="Required when modifying active dates (will notify users)..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Admissions & Payments -->
             <div class="card mt-4">
                 <div class="card-header">
@@ -350,6 +426,70 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     currencyCheckboxes.forEach(checkbox => checkbox.addEventListener('change', syncDefaultCurrency));
     syncDefaultCurrency();
+
+    // Academic Term Settings Logic
+    const currentSemesterSelect = document.getElementById('current_semester_id');
+    const dateInputs = ['semester_start_date', 'semester_end_date', 'semester_registration_start', 'semester_registration_end'];
+    const originalDates = {};
+    const reasonContainer = document.getElementById('reason_for_change_container');
+    const reasonInput = document.getElementById('reason_for_change');
+
+    function populateSemesterDates() {
+        if (!currentSemesterSelect.value) return;
+        const selectedOption = currentSemesterSelect.options[currentSemesterSelect.selectedIndex];
+        
+        dateInputs.forEach(id => {
+            const input = document.getElementById(id);
+            const dataKey = id.replace('semester_', '').replace('_date', '');
+            
+            // Map the data attributes
+            let val = '';
+            if (id === 'semester_start_date') val = selectedOption.dataset.start;
+            if (id === 'semester_end_date') val = selectedOption.dataset.end;
+            if (id === 'semester_registration_start') val = selectedOption.dataset.regStart;
+            if (id === 'semester_registration_end') val = selectedOption.dataset.regEnd;
+            
+            input.value = val;
+            originalDates[id] = val; // Store original values to detect changes
+        });
+        
+        checkDateModifications();
+    }
+
+    function checkDateModifications() {
+        let isModified = false;
+        dateInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input.value !== originalDates[id]) {
+                isModified = true;
+            }
+        });
+
+        if (isModified) {
+            reasonContainer.classList.remove('d-none');
+            reasonInput.setAttribute('required', 'required');
+        } else {
+            reasonContainer.classList.add('d-none');
+            reasonInput.removeAttribute('required');
+        }
+    }
+
+    currentSemesterSelect.addEventListener('change', populateSemesterDates);
+    dateInputs.forEach(id => {
+        document.getElementById(id).addEventListener('change', checkDateModifications);
+    });
+
+    // Initialize on page load
+    populateSemesterDates();
+    
+    // Form confirmation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!reasonContainer.classList.contains('d-none')) {
+            if (!confirm('You are about to modify the active semester dates. Users will be notified with the provided reason. Proceed?')) {
+                e.preventDefault();
+            }
+        }
+    });
 });
 </script>
 @endpush

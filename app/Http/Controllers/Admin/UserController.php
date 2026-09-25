@@ -13,6 +13,10 @@ use App\Models\FacultyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Mail\AccountCreatedSetupPassword;
 
 class UserController extends Controller
 {
@@ -84,7 +88,7 @@ class UserController extends Controller
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => Hash::make('ABCxyz,.?123'),
                 'role' => $role->guard_role,
                 'role_id' => $role->id,
                 'phone' => $request->phone,
@@ -94,6 +98,8 @@ class UserController extends Controller
                 'emergency_contact' => $request->emergency_contact,
                 'emergency_phone' => $request->emergency_phone,
                 'is_active' => $request->input('status', 'active') === 'active',
+                'email_verified_at' => null,
+                'must_change_password' => false,
             ];
 
             if ($request->hasFile('profile_picture')) {
@@ -104,33 +110,52 @@ class UserController extends Controller
 
             // Create role-specific profile
             if ($role->guard_role === 'student') {
+                $deptId = $request->department_id ?: Department::where('is_active', true)->value('id');
+                $admissionNumber = $request->student_id ?: ('ADM' . date('Y') . str_pad($user->id, 4, '0', STR_PAD_LEFT));
                 StudentProfile::create([
                     'user_id' => $user->id,
-                    'student_id' => $request->student_id,
-                    'department_id' => $request->department_id,
-                    'program' => $request->program,
-                    'admission_date' => $request->admission_date,
-                    'academic_status' => 'active',
+                    'admission_number' => $admissionNumber,
+                    'student_id' => $request->student_id ?: $admissionNumber,
+                    'department_id' => $deptId,
+                    'program' => $request->program ?: 'General Studies',
+                    'admission_date' => $request->admission_date ?: now(),
+                    'status' => 'active',
+                    'application_status' => 'approved',
                 ]);
             } elseif ($role->guard_role === 'faculty') {
+                $deptId = $request->department_id ?: Department::where('is_active', true)->value('id');
                 FacultyProfile::create([
                     'user_id' => $user->id,
-                    'employee_id' => $request->employee_id,
-                    'department_id' => $request->department_id,
-                    'position' => $request->position,
-                    'hire_date' => $request->hire_date,
+                    'employee_id' => $request->employee_id ?: ('EMP' . str_pad($user->id, 4, '0', STR_PAD_LEFT)),
+                    'department_id' => $deptId,
+                    'designation' => $role->name ?: 'Lecturer',
+                    'position' => $role->name ?: 'Lecturer',
+                    'qualification' => 'Master\'s / Bachelor\'s',
+                    'joining_date' => $request->hire_date ?: now(),
+                    'hire_date' => $request->hire_date ?: now(),
+                    'employment_type' => 'full_time',
                     'employment_status' => 'active',
+                    'status' => 'active',
                 ]);
             }
 
             DB::commit();
 
-            return redirect()->route('admin.users.show', $user)
-                ->with('success', 'User created successfully.');
+            // Send account creation invitation email with password setup token
+            try {
+                $token = Password::broker()->createToken($user);
+                Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
+            } catch (\Throwable $mailEx) {
+                \Illuminate\Support\Facades\Log::warning('Failed to send account setup email: ' . $mailEx->getMessage());
+            }
 
-        } catch (\Exception $e) {
+            return redirect()->route('admin.users.show', $user)
+                ->with('success', "User created successfully. An activation link has been sent to {$user->email} to set their password.");
+
+        } catch (\Throwable $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Failed to create user.']);
+            \Illuminate\Support\Facades\Log::error('Failed to create user: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withInput()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()]);
         }
     }
 
@@ -151,7 +176,7 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            $role = Role::findOrFail($request->role_id);
+            $role = $request->filled('role_id') ? Role::find($request->role_id) : null;
             $nameParts = preg_split('/\s+/', trim($request->name), 2);
 
             $userData = [
@@ -159,8 +184,6 @@ class UserController extends Controller
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'role' => $role->guard_role,
-                'role_id' => $role->id,
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,
@@ -170,8 +193,9 @@ class UserController extends Controller
                 'is_active' => $request->input('status', 'active') === 'active',
             ];
 
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->password);
+            if ($role) {
+                $userData['role'] = $role->guard_role;
+                $userData['role_id'] = $role->id;
             }
 
             if ($request->hasFile('profile_picture')) {
@@ -191,6 +215,45 @@ class UserController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Failed to update user.']);
+        }
+    }
+
+    /**
+     * Send or resend password setup / reset link to user.
+     */
+    public function sendResetLink(User $user)
+    {
+        return $this->resetPassword($user, request());
+    }
+
+    /**
+     * Trigger password reset link to user's email.
+     */
+    public function resetPassword(User $user, Request $request)
+    {
+        $this->authorize('update', $user);
+
+        try {
+            $token = Password::broker()->createToken($user);
+            Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Password setup link sent to {$user->email} successfully.",
+                ]);
+            }
+
+            return back()->with('success', "Password setup & activation link sent to {$user->email} successfully.");
+        } catch (\Throwable $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to send setup link: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return back()->withErrors(['error' => 'Failed to send setup link: ' . $e->getMessage()]);
         }
     }
 

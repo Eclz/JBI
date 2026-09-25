@@ -40,20 +40,13 @@ class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'password' => [
-                'nullable',
-                'string',
-                'min:8',
-                'max:255',
-                'confirmed',
-            ],
             'role' => [
                 'nullable',
                 'string',
                 Rule::in(['admin', 'faculty', 'student', 'parent']),
             ],
             'role_id' => [
-                'required',
+                'nullable',
                 'exists:roles,id',
             ],
             'student_id' => [

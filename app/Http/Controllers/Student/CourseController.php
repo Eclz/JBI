@@ -92,7 +92,7 @@ class CourseController extends Controller
             return back()->withErrors(['error' => 'Your student profile is incomplete. Please contact the administration office.']);
         }
 
-        if (!$currentSemester) {
+        if (!$currentSemester || !$currentSemester->is_active) {
             return back()->withErrors(['error' => 'No active semester is available for enrollment.']);
         }
 

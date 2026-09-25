@@ -19,8 +19,55 @@ class LmsController extends Controller
 {
     public function index()
     {
-        $facultyId = Auth::id();
+        $faculty = Auth::user();
+        $facultyId = $faculty->id;
+        
+        // --- Dashboard Data ---
+        $courseIds = Course::where('instructor_id', $facultyId)->pluck('id');
+        
+        $totalCourses = $courseIds->count();
+        
+        $totalStudents = CourseEnrollment::whereIn('course_id', $courseIds)
+            ->where('status', 'enrolled')
+            ->distinct('user_id')
+            ->count('user_id');
+            
+        $pendingAssignments = AssignmentSubmission::whereHas('assignment', function ($query) use ($courseIds) {
+                $query->whereIn('course_id', $courseIds);
+            })
+            ->where(function ($query) {
+                $query->where('status', 'submitted')->orWhereNotNull('submitted_at');
+            })
+            ->whereNull('score')
+            ->count();
+            
+        $todayAttendance = \App\Models\Attendance::whereHas('course', function ($query) use ($facultyId) {
+                $query->where('instructor_id', $facultyId);
+            })
+            ->whereDate('attendance_date', today())
+            ->count();
+            
+        $upcomingAssignments = Assignment::whereIn('course_id', $courseIds)
+            ->where('is_published', true)
+            ->whereNotNull('due_date')
+            ->where('due_date', '>=', now())
+            ->with('course')
+            ->orderBy('due_date')
+            ->limit(5)
+            ->get();
+            
+        $recentSubmissions = AssignmentSubmission::whereHas('assignment', function ($query) use ($courseIds) {
+                $query->whereIn('course_id', $courseIds);
+            })
+            ->where(function ($query) {
+                $query->where('status', 'submitted')->orWhereNotNull('submitted_at');
+            })
+            ->with(['assignment', 'student'])
+            ->orderBy('submitted_at', 'desc')
+            ->limit(10)
+            ->get();
 
+        // --- LMS Analytics Data ---
         $courses = Course::with(['semester', 'department'])
             ->where('instructor_id', $facultyId)
             ->orderBy('name')
@@ -48,7 +95,15 @@ class LmsController extends Controller
                 ];
             });
 
-        return view('faculty.lms.index', compact('courses'));
+        return view('faculty.lms.index', compact(
+            'courses',
+            'totalCourses',
+            'totalStudents',
+            'pendingAssignments',
+            'upcomingAssignments',
+            'recentSubmissions',
+            'todayAttendance'
+        ));
     }
 
     public function show(Course $course)

@@ -50,6 +50,7 @@
                             <th>Method & Ref</th>
                             <th>Date</th>
                             <th class="text-end pe-3">Amount</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -68,10 +69,21 @@
                                 </td>
                                 <td class="small">{{ $rev->transaction_date->format('M d, Y') }}</td>
                                 <td class="text-end pe-3 fw-bold text-success">{{ $currencyCode }} {{ number_format($rev->amount, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <a href="{{ route('admin.finance.revenue.show', $rev->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <a href="{{ route('admin.finance.revenue.edit', $rev->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form action="{{ route('admin.finance.revenue.destroy', $rev->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this record?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No revenue records found.</td>
+                                <td colspan="8" class="text-center py-5 text-muted">No revenue records found.</td>
                             </tr>
                         @endforelse
                     </tbody>

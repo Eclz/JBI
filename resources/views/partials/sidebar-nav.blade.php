@@ -36,21 +36,28 @@
     @auth
     <ul class="sidebar-menu">
         {{-- Dashboard (Anchor Point, pinned at top, no section label) --}}
-        @if(auth()->user()->isAdmin())
+        @if(auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin())
+        <li class="menu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.finance.dashboard') }}" class="menu-link">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        @elseif(auth()->user()->isAdmin())
         <li class="menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
         </li>
-        @elseif(auth()->user()->role === 'student')
+        @elseif(auth()->user()->isStudent())
         <li class="menu-item {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
             <a href="{{ route('student.dashboard') }}" class="menu-link">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
         </li>
-        @elseif(auth()->user()->role === 'faculty')
+        @elseif(auth()->user()->isFaculty())
         <li class="menu-item {{ request()->routeIs('faculty.dashboard') ? 'active' : '' }}">
             <a href="{{ route('faculty.dashboard') }}" class="menu-link">
                 <i class="bi bi-speedometer2"></i>
@@ -316,7 +323,7 @@
                 <li class="submenu-item {{ request()->routeIs('admin.fees.structures.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.structures.index') }}" class="submenu-link">
                         <i class="bi bi-file-earmark-spreadsheet"></i>
-                        <span>Fee Structures</span>
+                        <span>Fees Structures</span>
                     </a>
                 </li>
                 @endif
@@ -324,7 +331,7 @@
                 <li class="submenu-item {{ request()->routeIs('admin.fees.index') ? 'active' : '' }}">
                     <a href="{{ route('admin.fees.index') }}" class="submenu-link">
                         <i class="bi bi-receipt"></i>
-                        <span>Student Fee Records</span>
+                        <span>Student Fees Records</span>
                     </a>
                 </li>
                 @endif
@@ -489,14 +496,7 @@
             </a>
         </li>
 
-        <li class="menu-item {{ request()->routeIs('faculty.timetables.*') ? 'active' : '' }}">
-            <a href="{{ route('faculty.timetables.index') }}" class="menu-link">
-                <i class="bi bi-calendar3"></i>
-                <span>Timetable & Schedules</span>
-            </a>
-        </li>
-
-        <li class="menu-item {{ request()->routeIs('faculty.attendance.*') || request()->routeIs('faculty.courses.attendance.*') ? 'active' : '' }}">
+        <li class="menu-item {{ request()->routeIs('faculty.attendance.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.attendance.index') }}" class="menu-link">
                 <i class="bi bi-calendar-check"></i>
                 <span>Attendance</span>
@@ -514,6 +514,14 @@
             <a href="{{ route('faculty.materials.index') }}" class="menu-link">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Course Materials</span>
+            </a>
+        </li>
+
+        {{-- Mailbox --}}
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper"></i>
+                <span>Mailbox</span>
             </a>
         </li>
         @endif
@@ -682,6 +690,14 @@
             </ul>
         </li>
 
+        {{-- 4. Mailbox (flat) --}}
+        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="{{ route('messages.index') }}" class="menu-link">
+                <i class="bi bi-envelope-paper"></i>
+                <span>Mailbox</span>
+            </a>
+        </li>
+
         {{-- 5. E-Voting (flat) --}}
         <li class="menu-item {{ request()->routeIs('student.evoting.*') ? 'active' : '' }}">
             <a href="{{ route('student.evoting.index') }}" class="menu-link">
@@ -699,15 +715,184 @@
         </li>
         @endif
 
+        @if(auth()->user()->hasPermission('library', 'view') || auth()->user()->isLibrarian() || auth()->user()->isStudent())
+        <li class="sidebar-group {{ request()->routeIs('library.*') ? 'has-active-child' : '' }}" data-group-id="library-module">
+            <button type="button" class="sidebar-group-toggle {{ request()->routeIs('library.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'library-module')">
+                <i class="bi bi-book-half group-icon"></i>
+                <span class="group-title">Library Services</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ request()->routeIs('library.*') ? 'display: block;' : 'display: none;' }}">
+                @if(!auth()->user()->isStudent())
+                <li class="submenu-item {{ request()->routeIs('library.index') ? 'active' : '' }}">
+                    <a href="{{ route('library.index') }}" class="submenu-link">
+                        <i class="bi bi-house-door"></i>
+                        <span>Library Dashboard</span>
+                    </a>
+                </li>
+                @endif
+                <li class="submenu-item {{ request()->routeIs('library.catalogue.*') ? 'active' : '' }}">
+                    <a href="{{ route('library.catalogue.index') }}" class="submenu-link">
+                        <i class="bi bi-collection"></i>
+                        <span>Catalogue</span>
+                    </a>
+                </li>
+                @if(!auth()->user()->isStudent())
+                <li class="submenu-item {{ request()->routeIs('library.loans.*') ? 'active' : '' }}">
+                    <a href="{{ route('library.loans.index') }}" class="submenu-link">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Loans & Returns</span>
+                    </a>
+                </li>
+                @endif
+                @if(auth()->user()->isStudent())
+                <li class="submenu-item {{ request()->routeIs('library.my-loans') ? 'active' : '' }}">
+                    <a href="{{ route('library.my-loans') }}" class="submenu-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>My Borrowing</span>
+                    </a>
+                </li>
+                @endif
+            </ul>
+        </li>
+        @endif
+
+        @if(auth()->check() && !auth()->user()->isStudent())
+        <li class="sidebar-group {{ request()->routeIs('human-resources.*') ? 'has-active-child' : '' }}" data-group-id="hr-module">
+            <button type="button" class="sidebar-group-toggle {{ request()->routeIs('human-resources.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'hr-module')">
+                <i class="bi bi-people group-icon"></i>
+                <span class="group-title">Human Resources</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ request()->routeIs('human-resources.*') ? 'display: block;' : 'display: none;' }}">
+                @if(auth()->user()->hasPermission('human_resources', 'view') || auth()->user()->isHrStaff())
+                <li class="submenu-item {{ request()->routeIs('human-resources.index') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.index') }}" class="submenu-link">
+                        <i class="bi bi-grid-1x2"></i>
+                        <span>HR Dashboard</span>
+                    </a>
+                </li>
+                @endif
+                <li class="sidebar-subheading">Core HR & Admin</li>
+                <li class="submenu-item {{ request()->routeIs('human-resources.directory') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.directory') }}" class="submenu-link">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <span>Employee Directory</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('human-resources.index') && !auth()->user()->isHrStaff() && !auth()->user()->isAdmin() ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.index') }}" class="submenu-link">
+                        <i class="bi bi-person-check"></i>
+                        <span>Self-Service Portal (ESS)</span>
+                    </a>
+                </li>
+                @if(auth()->user()->hasPermission('hr_core', 'view'))
+                <li class="submenu-item {{ request()->routeIs('human-resources.staff.*') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.staff.index') }}" class="submenu-link">
+                        <i class="bi bi-person-vcard"></i>
+                        <span>Personal Profiles & Digital Files</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('human-resources.job-roles.*') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.job-roles.index') }}" class="submenu-link">
+                        <i class="bi bi-tags"></i>
+                        <span>Job Roles & Banding</span>
+                    </a>
+                </li>
+                @endif
+                @foreach([
+                    ['org-chart', 'Interactive Org Chart', 'bi-diagram-3'],
+                ] as [$slug, $label, $icon])
+                    @if(auth()->user()->hasPermission('hr_core', 'view'))
+                        <li class="submenu-item {{ request()->routeIs('human-resources.sections.show') && request('section') === $slug ? 'active' : '' }}">
+                            <a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a>
+                        </li>
+                    @endif
+                @endforeach
+                <li class="sidebar-subheading">Time & Attendance</li>
+                @foreach([
+                    ['time-tracking', 'Time Tracking', 'hr_attendance', 'bi-clock-history'],
+                    ['shift-manager', 'Shift Manager', 'hr_attendance', 'bi-calendar2-week'],
+                    ['leave-management', 'Leave Management', 'hr_attendance', 'bi-calendar2-range'],
+                ] as [$slug, $label, $permission, $icon])
+                    @if(auth()->user()->hasPermission($permission, 'view'))
+                        <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
+                    @endif
+                @endforeach
+                <li class="sidebar-subheading">Payroll & Benefits</li>
+                @foreach([
+                    ['payroll', 'Run Payroll', 'bi-cash-stack'],
+                    ['expense-claims', 'Expense Claims', 'bi-receipt'],
+                    ['benefits', 'Benefits Portal', 'bi-heart-pulse'],
+                ] as [$slug, $label, $icon])
+                    @if(auth()->user()->hasPermission('hr_payroll', 'view'))
+                        <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
+                    @endif
+                @endforeach
+                <li class="sidebar-subheading">Talent Sourcing</li>
+                @foreach([
+                    ['recruiting', 'Recruiting (ATS)', 'bi-person-plus'],
+                    ['onboarding', 'Onboarding', 'bi-box-arrow-in-right'],
+                    ['offboarding', 'Offboarding', 'bi-box-arrow-right'],
+                ] as [$slug, $label, $icon])
+                    @if(auth()->user()->hasPermission('hr_recruiting', 'view'))
+                        <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
+                    @endif
+                @endforeach
+                <li class="sidebar-subheading">Talent Management</li>
+                @foreach([
+                    ['performance', 'Performance Reviews', 'bi-graph-up-arrow'],
+                    ['learning', 'Learning (LMS)', 'bi-mortarboard'],
+                    ['succession', 'Succession Planning', 'bi-signpost-split'],
+                ] as [$slug, $label, $icon])
+                    @if(auth()->user()->hasPermission('hr_talent', 'view'))
+                        <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
+                    @endif
+                @endforeach
+                <li class="submenu-item {{ request()->routeIs('human-resources.leaves.*') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.leaves.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar2-range"></i>
+                        <span>Leave Requests & Approvals</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        @endif
+
+        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff())
+        <li class="sidebar-group {{ request()->routeIs('facilities.*') ? 'has-active-child' : '' }}" data-group-id="facilities-module">
+            <button type="button" class="sidebar-group-toggle {{ request()->routeIs('facilities.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'facilities-module')">
+                <i class="bi bi-building group-icon"></i>
+                <span class="group-title">Estates & Facilities</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ request()->routeIs('facilities.*') ? 'display: block;' : 'display: none;' }}">
+                @if(!auth()->user()->isStudent())
+                <li class="submenu-item {{ request()->routeIs('facilities.index') ? 'active' : '' }}">
+                    <a href="{{ route('facilities.index') }}" class="submenu-link">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Facilities Dashboard</span>
+                    </a>
+                </li>
+                @endif
+                <li class="submenu-item {{ request()->routeIs('facilities.rooms.*') ? 'active' : '' }}">
+                    <a href="{{ route('facilities.rooms.index') }}" class="submenu-link">
+                        <i class="bi bi-door-open"></i>
+                        <span>Rooms & Assets</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('facilities.bookings.*') ? 'active' : '' }}">
+                    <a href="{{ route('facilities.bookings.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Bookings & Maintenance</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        @endif
+
         {{-- ==================== COMMON (PINNED AT BOTTOM) ==================== --}}
         <li class="menu-header">Common</li>
-
-        <li class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
-            <a href="{{ route('messages.index') }}" class="menu-link">
-                <i class="bi bi-envelope-paper"></i>
-                <span>Mailbox</span>
-            </a>
-        </li>
 
         <li class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
             <a href="{{ route('profile.show') }}" class="menu-link">
@@ -991,6 +1176,15 @@
 
 .submenu-item {
     position: relative;
+}
+
+.sidebar-subheading {
+    padding: 0.65rem 0.85rem 0.2rem;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .submenu-link {

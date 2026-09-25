@@ -50,6 +50,7 @@
                             <th>Location</th>
                             <th>Purchase Cost</th>
                             <th class="text-end pe-3">Current Value</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,10 +63,21 @@
                                 <td class="small">{{ $ast->location ?? 'Main Campus' }}</td>
                                 <td class="fw-semibold text-muted">{{ $currencyCode }} {{ number_format($ast->purchase_cost, 2) }}</td>
                                 <td class="text-end pe-3 fw-bold text-success">{{ $currencyCode }} {{ number_format($ast->current_value, 2) }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <a href="{{ route('admin.finance.assets.show', $ast->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <a href="{{ route('admin.finance.assets.edit', $ast->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form action="{{ route('admin.finance.assets.destroy', $ast->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this asset?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No university assets registered yet.</td>
+                                <td colspan="8" class="text-center py-5 text-muted">No university assets registered yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

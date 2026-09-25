@@ -68,7 +68,7 @@
         <div class="col-md-9">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3 border-bottom border-primary border-2 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-envelope-open me-2"></i>INBOX MESSAGES</h6>
+                    <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-envelope-open me-2"></i>{{ $type === 'sent' ? 'SENT MESSAGES' : 'INBOX MESSAGES' }}</h6>
                     <span class="badge bg-primary px-3 py-1">{{ $unreadCount }} UNREAD</span>
                 </div>
                 <div class="card-body p-0">
