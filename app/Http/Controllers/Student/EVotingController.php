@@ -70,6 +70,11 @@ class EVotingController extends Controller
                 ->with('error', 'Only fully active students can submit applications for student leadership positions.');
         }
 
+        if (!$session->is_application_open) {
+            return redirect()->route('student.evoting.index')
+                ->with('error', 'The candidate application window is currently closed for this election season.');
+        }
+
         $facultyId = $studentProfile->department?->faculty_id;
 
         // Load positions available to this student: university-wide OR matching student's faculty
@@ -103,7 +108,7 @@ class EVotingController extends Controller
         }
 
         // Check if application period is open
-        if (!$session->is_application_open && $session->status !== 'applications_open') {
+        if (!$session->is_application_open) {
             return back()->with('error', 'The candidate application window is currently closed for this election season.');
         }
 
@@ -226,7 +231,7 @@ class EVotingController extends Controller
                   ->orWhere('percentage', '<', 50);
             })->exists();
 
-        $hasRetakeFee = \App\Models\Fee::where('user_id', $userId)
+        $hasRetakeFee = \App\Models\FeeRecord::where('user_id', $userId)
             ->whereIn('type', ['retake', 'retake_fee', 'missed_paper'])
             ->exists();
 

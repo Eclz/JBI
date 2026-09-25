@@ -859,7 +859,7 @@
         </li>
         @endif
 
-        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff())
+        @if(auth()->check() && !auth()->user()->isStudent() && (auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff()))
         <li class="sidebar-group {{ request()->routeIs('facilities.*') ? 'has-active-child' : '' }}" data-group-id="facilities-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('facilities.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'facilities-module')">
                 <i class="bi bi-building group-icon"></i>
