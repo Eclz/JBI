@@ -286,12 +286,7 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
 });
 
 // Facilities routes for all authenticated users
-Route::middleware(['auth', function ($request, $next) {
-    if (auth()->user() && auth()->user()->isStudent()) {
-        abort(403, 'Students do not have access to Estates & Facilities.');
-    }
-    return $next($request);
-}])->prefix('facilities')->name('facilities.')->group(function () {
+Route::middleware(['auth'])->prefix('facilities')->name('facilities.')->group(function () {
     Route::get('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'roomsIndex'])->name('rooms.index');
     Route::get('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'bookingsIndex'])->name('bookings.index');
     Route::post('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'storeBooking'])->name('bookings.store');
@@ -516,6 +511,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
             Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate')->middleware('permission:payroll,create');
             Route::get('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showPayroll'])->name('payroll.show');
+            Route::get('/payroll/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editPayroll'])->name('payroll.edit')->middleware('permission:payroll,edit');
             Route::put('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updatePayroll'])->name('payroll.update')->middleware('permission:payroll,edit');
             Route::delete('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyPayroll'])->name('payroll.destroy')->middleware('permission:payroll,delete');
         });
