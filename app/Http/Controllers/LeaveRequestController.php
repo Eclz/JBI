@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->isStudent()) {
+                abort(403, 'Students do not have access to the Human Resources module.');
+            }
+            return $next($request);
+        });
+    }
     public function index()
     {
         $user = Auth::user();
