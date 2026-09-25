@@ -120,9 +120,13 @@ class ProgrammeCoursesController extends Controller
         ]);
 
         $currentSemester = \App\Models\Semester::where('is_current', true)->first();
-        if ($currentSemester) {
-            $this->abortIfPastEnrollmentDeadline($currentSemester);
+        if (!$currentSemester || !$currentSemester->is_active) {
+            return back()->with('error', 'No active semester is available for enrollment.');
         }
+        if (!$currentSemester->is_registration_open) {
+            return back()->with('error', 'Course registration is currently closed.');
+        }
+        $this->abortIfPastEnrollmentDeadline($currentSemester);
 
         $user = Auth::user();
         $studentProfile = $user->studentProfile;

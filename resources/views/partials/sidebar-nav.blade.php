@@ -757,7 +757,7 @@
         </li>
         @endif
 
-        @if(auth()->check())
+        @if(auth()->check() && !auth()->user()->isStudent())
         <li class="sidebar-group {{ request()->routeIs('human-resources.*') ? 'has-active-child' : '' }}" data-group-id="hr-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('human-resources.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'hr-module')">
                 <i class="bi bi-people group-icon"></i>
@@ -859,7 +859,7 @@
         </li>
         @endif
 
-        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff() || auth()->user()->isStudent())
+        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff())
         <li class="sidebar-group {{ request()->routeIs('facilities.*') ? 'has-active-child' : '' }}" data-group-id="facilities-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('facilities.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'facilities-module')">
                 <i class="bi bi-building group-icon"></i>
