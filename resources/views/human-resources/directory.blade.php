@@ -14,9 +14,13 @@
             <div class="col">
                 <div class="card h-100 border-0 shadow-sm text-center pt-4 pb-3">
                     <div class="card-body">
-                        <div class="avatar-lg bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
-                            {{ substr($emp->full_name, 0, 1) }}
-                        </div>
+                        @if($emp->profile_picture)
+                            <img src="{{ asset('storage/' . $emp->profile_picture) }}" alt="{{ $emp->full_name }}" class="rounded-circle mx-auto mb-3 object-fit-cover shadow-sm" style="width: 80px; height: 80px;">
+                        @else
+                            <div class="avatar-lg bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 80px; height: 80px; font-size: 2.5rem;">
+                                <i class="bi bi-person text-white"></i>
+                            </div>
+                        @endif
                         <h5 class="fw-bold text-dark mb-1">{{ $emp->full_name }}</h5>
                         <p class="text-muted small mb-2">{{ $emp->hrProfile?->job_title ?? $emp->role_name }}</p>
                         @if($emp->hrProfile?->department)

@@ -44,8 +44,36 @@
                     </thead>
                     <tbody>
                         @forelse($payrolls as $pr)
+                            @php
+                                $staffUser = $pr->user;
+                                $jobRole = null;
+                                if ($staffUser) {
+                                    if ($staffUser->role_id) {
+                                        $jobRole = \App\Models\HrJobRole::where('role_id', $staffUser->role_id)->first();
+                                    }
+                                    if (!$jobRole && $staffUser->hrProfile?->salary_band) {
+                                        $jobRole = \App\Models\HrJobRole::where('title', $staffUser->hrProfile->salary_band)->first();
+                                    }
+                                    if (!$jobRole && $staffUser->hrProfile?->job_title) {
+                                        $jobRole = \App\Models\HrJobRole::where('title', $staffUser->hrProfile->job_title)->first();
+                                    }
+                                    if (!$jobRole && $staffUser->roleCatalog) {
+                                        $jobRole = \App\Models\HrJobRole::where('title', $staffUser->roleCatalog->name)->first();
+                                    }
+                                }
+                            @endphp
                             <tr>
-                                <td class="ps-3 fw-bold text-dark">{{ $pr->user->full_name ?? 'University Staff' }}</td>
+                                <td class="ps-3">
+                                    <div class="fw-bold text-dark">{{ $pr->user->full_name ?? $pr->user->name ?? 'University Staff' }}</div>
+                                    @if($jobRole)
+                                        <div class="small mt-1">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">{{ $jobRole->title }}</span>
+                                            @if($jobRole->salary_band_min || $jobRole->salary_band_max)
+                                                <span class="text-muted small ms-1">({{ $currencyCode }} {{ number_format($jobRole->salary_band_min, 0) }} - {{ number_format($jobRole->salary_band_max, 0) }})</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </td>
                                 <td class="fw-bold text-primary">{{ $pr->month_year }}</td>
                                 <td>{{ $currencyCode }} {{ number_format($pr->basic_salary, 2) }}</td>
                                 <td>{{ $currencyCode }} {{ number_format($pr->total_allowances, 2) }}</td>
@@ -55,7 +83,8 @@
                                 <td class="text-end pe-3">
                                     <div class="btn-group">
                                         <a href="{{ route('admin.finance.payroll.show', $pr->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPayrollModal{{ $pr->id }}" title="Edit"><i class="bi bi-pencil"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPayrollModal{{ $pr->id }}" title="Quick Edit"><i class="bi bi-pencil"></i></button>
+                                        <a href="{{ route('admin.finance.payroll.edit', $pr->id) }}" class="btn btn-sm btn-outline-secondary" title="Full Edit Page"><i class="bi bi-pencil-square"></i></a>
                                         <form action="{{ route('admin.finance.payroll.destroy', $pr->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this payroll record?');">
                                             @csrf
                                             @method('DELETE')
@@ -75,9 +104,43 @@
                                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                                     </div>
                                                     <div class="modal-body">
+                                                        @if($jobRole)
+                                                            <div class="alert alert-info py-2 px-3 mb-3 small">
+                                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                    <strong><i class="bi bi-award me-1"></i>Job Role:</strong> {{ $jobRole->title }}
+                                                                </div>
+                                                                <div class="mb-2">
+                                                                    <strong>Salary Band:</strong>
+                                                                    @if($jobRole->salary_band_min || $jobRole->salary_band_max)
+                                                                        <span class="badge bg-primary text-white ms-1">
+                                                                            {{ $currencyCode }} {{ number_format($jobRole->salary_band_min, 0) }} - {{ number_format($jobRole->salary_band_max, 0) }}
+                                                                        </span>
+                                                                    @else
+                                                                        <span class="text-muted ms-1">Not configured</span>
+                                                                    @endif
+                                                                </div>
+                                                                @if($jobRole->salary_band_min || $jobRole->salary_band_max)
+                                                                    <div class="btn-group btn-group-sm">
+                                                                        @if($jobRole->salary_band_min)
+                                                                            <button type="button" class="btn btn-outline-primary bg-white py-0 px-2"
+                                                                                    onclick="document.getElementById('modal_basic_salary_{{ $pr->id }}').value = '{{ $jobRole->salary_band_min }}'">
+                                                                                Apply Min ({{ $currencyCode }} {{ number_format($jobRole->salary_band_min, 0) }})
+                                                                            </button>
+                                                                        @endif
+                                                                        @if($jobRole->salary_band_max)
+                                                                            <button type="button" class="btn btn-outline-primary bg-white py-0 px-2"
+                                                                                    onclick="document.getElementById('modal_basic_salary_{{ $pr->id }}').value = '{{ $jobRole->salary_band_max }}'">
+                                                                                Apply Max ({{ $currencyCode }} {{ number_format($jobRole->salary_band_max, 0) }})
+                                                                            </button>
+                                                                        @endif
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+
                                                         <div class="mb-3">
                                                             <label class="form-label fw-semibold">Basic Salary ({{ $currencyCode }})</label>
-                                                            <input type="number" step="0.01" name="basic_salary" class="form-control" value="{{ $pr->basic_salary }}" required>
+                                                            <input type="number" step="0.01" name="basic_salary" id="modal_basic_salary_{{ $pr->id }}" class="form-control" value="{{ $pr->basic_salary }}" required>
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label fw-semibold">Total Allowances ({{ $currencyCode }})</label>
@@ -92,9 +155,12 @@
                                                             <input type="number" step="0.01" name="pension_deductions" class="form-control" value="{{ $pr->pension_deductions }}" required>
                                                         </div>
                                                     </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                                                    <div class="modal-footer d-flex justify-content-between">
+                                                        <a href="{{ route('admin.finance.payroll.edit', $pr->id) }}" class="btn btn-outline-secondary btn-sm">Full Edit Page</a>
+                                                        <div>
+                                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                                                        </div>
                                                     </div>
                                                 </form>
                                             </div>

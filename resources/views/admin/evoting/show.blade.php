@@ -561,110 +561,6 @@
                                             </button>
                                         </td>
                                     </tr>
-
-                                    <!-- Candidate Vetting Modal -->
-                                    <div class="modal fade" id="vetModal{{ $cand->id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow">
-                                                <form action="{{ route('admin.evoting.candidates.vet', $cand) }}" method="POST">
-                                                    @csrf
-                                                    <div class="modal-header bg-primary text-white py-3">
-                                                        <h5 class="modal-title fw-bold">
-                                                            <i class="bi bi-person-lines-fill me-2"></i>Candidate Vetting Review: {{ $cand->name }}
-                                                        </h5>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body p-4">
-                                                        <div class="row g-3 mb-4">
-                                                            <div class="col-md-3 text-center">
-                                                                @if($cand->photo)
-                                                                    <img src="{{ asset('storage/' . $cand->photo) }}" class="rounded-3 img-fluid shadow mb-2" style="max-height: 140px;" alt="{{ $cand->name }}">
-                                                                @else
-                                                                    <div class="rounded-3 bg-light text-muted p-4 border text-center mb-2">No Photo</div>
-                                                                @endif
-                                                                <span class="badge bg-{{ $cand->candidate_status_badge }} w-100">
-                                                                    {{ ucfirst(str_replace('_', ' ', $cand->candidate_status)) }}
-                                                                </span>
-                                                            </div>
-                                                            <div class="col-md-9">
-                                                                <h4 class="fw-bold mb-1">{{ $cand->name }}</h4>
-                                                                <p class="text-primary fw-semibold mb-2">Contesting for: {{ $cand->position->title }}</p>
-                                                                <div class="row g-2 small text-muted mb-2">
-                                                                    <div class="col-6"><strong>Faculty:</strong> {{ $cand->faculty->name ?? 'General' }}</div>
-                                                                    <div class="col-6"><strong>Year of Study:</strong> Year {{ $cand->year_of_study }}</div>
-                                                                    <div class="col-6"><strong>Cumulative GPA:</strong> {{ $cand->cgpa ? number_format($cand->cgpa, 2) : 'N/A' }}</div>
-                                                                    <div class="col-6"><strong>Party/Slogan:</strong> {{ $cand->slogan ?: ($cand->party_affiliation ?: 'Independent') }}</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Manifesto -->
-                                                        <div class="card bg-light border mb-3">
-                                                            <div class="card-header bg-white py-2 fw-bold small text-dark">
-                                                                <i class="bi bi-file-earmark-text me-1 text-primary"></i>Candidate Manifesto & Campaign Statement
-                                                            </div>
-                                                            <div class="card-body py-2">
-                                                                <p class="small text-dark mb-0 whitespace-pre-line">{{ $cand->manifesto }}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Supporting Documents -->
-                                                        @if($cand->supporting_documents && is_array($cand->supporting_documents) && count($cand->supporting_documents) > 0)
-                                                            <div class="card bg-light border mb-3">
-                                                                <div class="card-header bg-white py-2 fw-bold small text-dark">
-                                                                    <i class="bi bi-paperclip me-1 text-primary"></i>Submitted Supporting Documents
-                                                                </div>
-                                                                <div class="card-body py-2">
-                                                                    <div class="d-flex gap-2 flex-wrap">
-                                                                        @foreach($cand->supporting_documents as $doc)
-                                                                            <a href="{{ asset('storage/' . ($doc['path'] ?? '')) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                                                                <i class="bi bi-file-earmark-arrow-down me-1"></i>{{ $doc['name'] ?? 'View Document' }}
-                                                                            </a>
-                                                                        @endforeach
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        @endif
-
-                                                        <!-- Vetting Decision Section -->
-                                                        <div class="border-top pt-3">
-                                                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-shield-check me-1"></i>Electoral Commission Vetting Decision</h6>
-                                                            <div class="row g-3">
-                                                                <div class="col-md-6">
-                                                                    <label class="form-label fw-semibold">Vetting Decision *</label>
-                                                                    <select name="application_status" class="form-select" required>
-                                                                        <option value="vetted_approved" {{ $cand->application_status === 'vetted_approved' ? 'selected' : '' }}>
-                                                                            Vetted & Approved (Place on Official Ballot)
-                                                                        </option>
-                                                                        <option value="under_review" {{ $cand->application_status === 'under_review' ? 'selected' : '' }}>
-                                                                            Under Review / Revision Requested
-                                                                        </option>
-                                                                        <option value="rejected" {{ $cand->application_status === 'rejected' ? 'selected' : '' }}>
-                                                                            Rejected (Disqualified from Ballot)
-                                                                        </option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="col-md-6">
-                                                                    <label class="form-label fw-semibold">Vetting Score (0 - 100)</label>
-                                                                    <input type="number" name="vetting_score" class="form-control" value="{{ $cand->vetting_score }}" min="0" max="100" placeholder="e.g. 85">
-                                                                </div>
-                                                                <div class="col-md-12">
-                                                                    <label class="form-label fw-semibold">Vetting Comments & Feedback Notes</label>
-                                                                    <textarea name="vetting_notes" class="form-control" rows="2" placeholder="Commission feedback or reasons for approval/rejection...">{{ $cand->vetting_notes }}</textarea>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer bg-light py-3">
-                                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                                                        <button type="submit" class="btn btn-primary fw-bold px-4">
-                                                            <i class="bi bi-check2-circle me-1"></i>Submit Vetting Verdict
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
                                 @empty
                                     <tr>
                                         <td colspan="8" class="text-center py-4 text-muted">No candidate applications received for this election yet.</td>
@@ -954,6 +850,114 @@
         </div>
     </div>
 </div>
+
+<!-- Candidate Vetting Modals (Rendered outside nested DOM to prevent flickering) -->
+@push('modals')
+@foreach($session->candidates as $cand)
+    <div class="modal fade" id="vetModal{{ $cand->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form action="{{ route('admin.evoting.candidates.vet', $cand) }}" method="POST">
+                    @csrf
+                    <div class="modal-header bg-primary text-white py-3">
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-person-lines-fill me-2"></i>Candidate Vetting Review: {{ $cand->name }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3 text-center">
+                                @if($cand->photo)
+                                    <img src="{{ asset('storage/' . $cand->photo) }}" class="rounded-3 img-fluid shadow mb-2" style="max-height: 140px;" alt="{{ $cand->name }}">
+                                @else
+                                    <div class="rounded-3 bg-light text-muted p-4 border text-center mb-2">No Photo</div>
+                                @endif
+                                <span class="badge bg-{{ $cand->candidate_status_badge }} w-100">
+                                    {{ ucfirst(str_replace('_', ' ', $cand->candidate_status)) }}
+                                </span>
+                            </div>
+                            <div class="col-md-9">
+                                <h4 class="fw-bold mb-1">{{ $cand->name }}</h4>
+                                <p class="text-primary fw-semibold mb-2">Contesting for: {{ $cand->position->title }}</p>
+                                <div class="row g-2 small text-muted mb-2">
+                                    <div class="col-6"><strong>Faculty:</strong> {{ $cand->faculty->name ?? 'General' }}</div>
+                                    <div class="col-6"><strong>Year of Study:</strong> Year {{ $cand->year_of_study }}</div>
+                                    <div class="col-6"><strong>Cumulative GPA:</strong> {{ $cand->cgpa ? number_format($cand->cgpa, 2) : 'N/A' }}</div>
+                                    <div class="col-6"><strong>Party/Slogan:</strong> {{ $cand->slogan ?: ($cand->party_affiliation ?: 'Independent') }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manifesto -->
+                        <div class="card bg-light border mb-3">
+                            <div class="card-header bg-white py-2 fw-bold small text-dark">
+                                <i class="bi bi-file-earmark-text me-1 text-primary"></i>Candidate Manifesto & Campaign Statement
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small text-dark mb-0 whitespace-pre-line">{{ $cand->manifesto }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Supporting Documents -->
+                        @if($cand->supporting_documents && is_array($cand->supporting_documents) && count($cand->supporting_documents) > 0)
+                            <div class="card bg-light border mb-3">
+                                <div class="card-header bg-white py-2 fw-bold small text-dark">
+                                    <i class="bi bi-paperclip me-1 text-primary"></i>Submitted Supporting Documents
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        @foreach($cand->supporting_documents as $doc)
+                                            <a href="{{ asset('storage/' . ($doc['path'] ?? '')) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-file-earmark-arrow-down me-1"></i>{{ $doc['name'] ?? 'View Document' }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Vetting Decision Section -->
+                        <div class="border-top pt-3">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-shield-check me-1"></i>Electoral Commission Vetting Decision</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Vetting Decision *</label>
+                                    <select name="application_status" class="form-select" required>
+                                        <option value="vetted_approved" {{ $cand->application_status === 'vetted_approved' ? 'selected' : '' }}>
+                                            Vetted & Approved (Place on Official Ballot)
+                                        </option>
+                                        <option value="under_review" {{ $cand->application_status === 'under_review' ? 'selected' : '' }}>
+                                            Under Review / Revision Requested
+                                        </option>
+                                        <option value="rejected" {{ $cand->application_status === 'rejected' ? 'selected' : '' }}>
+                                            Rejected (Disqualified from Ballot)
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Vetting Score (0 - 100)</label>
+                                    <input type="number" name="vetting_score" class="form-control" value="{{ $cand->vetting_score }}" min="0" max="100" placeholder="e.g. 85">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">Vetting Comments & Feedback Notes</label>
+                                    <textarea name="vetting_notes" class="form-control" rows="2" placeholder="Commission feedback or reasons for approval/rejection...">{{ $cand->vetting_notes }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">
+                            <i class="bi bi-check2-circle me-1"></i>Submit Vetting Verdict
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endforeach
+@endpush
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

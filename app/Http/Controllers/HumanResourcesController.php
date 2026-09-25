@@ -114,6 +114,156 @@ class HumanResourcesController extends Controller
             return redirect()->route('human-resources.staff.index');
         }
 
+        if ($section === 'org-chart') {
+            $employees = User::with(['hrProfile.manager'])->whereHas('hrProfile')->get();
+            $departments = HrEmployee::select('department')->whereNotNull('department')->distinct()->pluck('department');
+            $stats = [
+                'total_staff' => HrEmployee::count(),
+                'departments' => $departments->count(),
+                'managers' => HrEmployee::whereNotNull('manager_id')->distinct('manager_id')->count('manager_id'), // unique managers
+                'vacancies' => 0 // Placeholder until we build a recruitment module
+            ];
+            
+            // Build the tree data
+            $tree = [];
+            $allEmployees = $employees->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'title' => $user->hrProfile->job_title ?? 'Staff',
+                    'department' => $user->hrProfile->department ?? 'General',
+                    'photo' => $user->profile_picture_url,
+                    'manager_id' => $user->hrProfile->manager_id,
+                    'status' => $user->hrProfile->status ?? 'Active',
+                    'employee_id' => $user->hrProfile->employee_number,
+                    'email' => $user->email,
+                    'phone' => $user->phone
+                ];
+            })->keyBy('id')->toArray();
+
+            return view("human-resources.org-chart", compact('allEmployees', 'departments', 'stats'));
+        }
+
+        if ($section === 'onboarding') {
+            $stats = [
+                'total' => \App\Models\HrOnboarding::count(),
+                'not_started' => \App\Models\HrOnboarding::where('status', 'Not Started')->count(),
+                'in_progress' => \App\Models\HrOnboarding::where('status', 'In Progress')->count(),
+                'completed' => \App\Models\HrOnboarding::where('status', 'Completed')->count(),
+                'overdue' => \App\Models\HrOnboarding::where('status', 'Overdue')->count(),
+            ];
+            $onboardings = \App\Models\HrOnboarding::with(['user.hrProfile', 'hrOfficer'])->latest()->get();
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+
+            return view("human-resources.onboarding", compact('stats', 'onboardings', 'users'));
+        }
+
+        if ($section === 'succession') {
+            $stats = [
+                'critical_positions' => \App\Models\HrSuccessionPlan::count(),
+                'with_successors' => \App\Models\HrSuccessionPlan::has('successors')->count(),
+                'without_successors' => \App\Models\HrSuccessionPlan::doesntHave('successors')->count(),
+                'total_successors' => \App\Models\HrSuccessor::count(),
+            ];
+            $plans = \App\Models\HrSuccessionPlan::with(['currentHolder', 'successors.user'])->latest()->get();
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+            
+            return view("human-resources.succession", compact('stats', 'plans', 'users'));
+        }
+
+        if ($section === 'recruiting') {
+            $stats = [
+                'open_vacancies' => \App\Models\HrVacancy::where('status', 'Open')->count(),
+                'total_applications' => \App\Models\HrApplicant::count(),
+                'shortlisted' => \App\Models\HrApplicant::where('status', 'Shortlisted')->count(),
+                'hired' => \App\Models\HrApplicant::where('status', 'Hired')->count(),
+            ];
+            $vacancies = \App\Models\HrVacancy::withCount(['applicants' => function($q) {
+                $q->whereNotIn('status', ['Rejected']);
+            }])->with('hiringManager')->latest()->get();
+
+            return view("human-resources.recruiting", compact('stats', 'vacancies'));
+        }
+
+        if ($section === 'shift-manager') {
+            $shifts = \App\Models\HrShift::withCount('assignments')->get();
+            $assignments = \App\Models\HrShiftAssignment::with(['user.hrProfile', 'shift'])->latest()->get();
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+            
+            $stats = [
+                'total_shifts' => $shifts->count(),
+                'total_assignments' => $assignments->count(),
+                'active_assignments' => \App\Models\HrShiftAssignment::where(function($q) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
+                })->count(),
+            ];
+
+            return view("human-resources.shift-manager", compact('shifts', 'assignments', 'users', 'stats'));
+        }
+
+        if ($section === 'expense-claims') {
+            $claims = \App\Models\HrExpenseClaim::with(['user.hrProfile', 'approver'])->latest()->get();
+            $stats = [
+                'pending' => $claims->where('status', 'Pending')->count(),
+                'approved' => $claims->where('status', 'Approved')->count(),
+                'paid' => $claims->where('status', 'Paid')->count(),
+                'rejected' => $claims->where('status', 'Rejected')->count(),
+                'total_pending_amount' => $claims->where('status', 'Pending')->sum('amount'),
+            ];
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+
+            return view("human-resources.expense-claims", compact('claims', 'stats', 'users'));
+        }
+
+        if ($section === 'benefits') {
+            $plans = \App\Models\HrBenefitPlan::withCount('enrollments')->get();
+            $enrollments = \App\Models\HrBenefitEnrollment::with(['user.hrProfile', 'plan'])->latest()->get();
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+            
+            $stats = [
+                'total_plans' => $plans->count(),
+                'active_enrollments' => $enrollments->where('status', 'Active')->count(),
+                'monthly_company_cost' => $plans->sum('company_cost') * $enrollments->where('status', 'Active')->count(), // basic estimate
+            ];
+
+            return view("human-resources.benefits", compact('plans', 'enrollments', 'users', 'stats'));
+        }
+
+        if ($section === 'performance') {
+            $reviews = \App\Models\HrPerformanceReview::with(['user.hrProfile', 'reviewer'])->latest()->get();
+            $goals = \App\Models\HrPerformanceGoal::with('user.hrProfile')->latest()->get();
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+            
+            $stats = [
+                'active_goals' => $goals->whereNotIn('status', ['Completed', 'Cancelled'])->count(),
+                'completed_goals' => $goals->where('status', 'Completed')->count(),
+                'pending_reviews' => $reviews->where('status', 'Draft')->count(),
+                'avg_rating' => round($reviews->where('status', 'Completed')->avg('overall_rating') ?? 0, 1),
+            ];
+
+            return view("human-resources.performance", compact('reviews', 'goals', 'users', 'stats'));
+        }
+
+        if ($section === 'learning') {
+            $courses = \App\Models\HrTrainingCourse::withCount(['enrollments' => function($q) {
+                $q->whereNotIn('status', ['Failed', 'Cancelled']);
+            }])->where('status', 'Active')->get();
+            
+            $enrollments = \App\Models\HrTrainingEnrollment::with(['user.hrProfile', 'course'])->latest()->get();
+            $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
+
+            $stats = [
+                'active_courses' => $courses->count(),
+                'active_learners' => $enrollments->whereIn('status', ['Enrolled', 'In Progress'])->count(),
+                'completed_trainings' => $enrollments->where('status', 'Completed')->count(),
+                'total_hours' => $enrollments->where('status', 'Completed')->sum(function($enr) {
+                    return $enr->course->duration_hours ?? 0;
+                }),
+            ];
+
+            return view("human-resources.learning", compact('courses', 'enrollments', 'users', 'stats'));
+        }
+
         if (view()->exists("human-resources.{$section}")) {
             return view("human-resources.{$section}");
         }
@@ -146,6 +296,28 @@ class HumanResourcesController extends Controller
         $this->notify($employee, 'Employee record created', "HR created employee record {$employee->employee_number}.", 'human-resources.staff.index');
 
         return redirect()->route('human-resources.staff.index')->with('success', 'Employee record created successfully.');
+    }
+
+    public function updateManager(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:users,id',
+            'manager_id' => 'nullable|exists:users,id'
+        ]);
+
+        if ($request->employee_id == $request->manager_id) {
+            return back()->with('error', 'An employee cannot be their own manager.');
+        }
+
+        $employee = User::findOrFail($request->employee_id);
+        
+        if ($employee->hrProfile) {
+            $employee->hrProfile->update(['manager_id' => $request->manager_id]);
+        } else {
+            return back()->with('error', 'Employee HR profile not found.');
+        }
+
+        return back()->with('success', 'Reporting manager updated successfully.');
     }
 
     public function edit(User $employee)

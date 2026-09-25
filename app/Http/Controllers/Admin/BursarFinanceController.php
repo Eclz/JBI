@@ -20,6 +20,7 @@ use App\Models\FinanceAuditLog;
 use App\Models\Department;
 use App\Models\User;
 use App\Models\SystemSetting;
+use App\Models\HrJobRole;
 use Illuminate\Http\Request;
 
 class BursarFinanceController extends Controller
@@ -444,7 +445,7 @@ class BursarFinanceController extends Controller
     public function payroll()
     {
         $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
-        $payrolls = PayrollRecord::with('user')->latest()->paginate(15);
+        $payrolls = PayrollRecord::with(['user.roleCatalog', 'user.hrProfile'])->latest()->paginate(15);
         $staffCount = User::whereIn('role', ['admin', 'faculty', 'bursar'])->count();
 
         return view('admin.finance.payroll.index', compact('payrolls', 'staffCount', 'currencyCode'));
@@ -457,10 +458,32 @@ class BursarFinanceController extends Controller
         ]);
 
         $monthYear = $request->month_year;
-        $staffMembers = User::whereIn('role', ['admin', 'faculty', 'bursar'])->get();
+        $staffMembers = User::whereIn('role', ['admin', 'faculty', 'bursar'])->with(['roleCatalog', 'hrProfile'])->get();
 
         foreach ($staffMembers as $staff) {
-            $basic = $staff->role === 'admin' ? 3500000 : 2800000;
+            // Check for configured salary band in HrJobRole
+            $jobRole = null;
+            if ($staff->role_id) {
+                $jobRole = HrJobRole::where('role_id', $staff->role_id)->first();
+            }
+            if (!$jobRole && $staff->hrProfile?->salary_band) {
+                $jobRole = HrJobRole::where('title', $staff->hrProfile->salary_band)->first();
+            }
+            if (!$jobRole && $staff->hrProfile?->job_title) {
+                $jobRole = HrJobRole::where('title', $staff->hrProfile->job_title)->first();
+            }
+            if (!$jobRole && $staff->roleCatalog) {
+                $jobRole = HrJobRole::where('title', $staff->roleCatalog->name)->first();
+            }
+
+            if ($staff->hrProfile && is_numeric($staff->hrProfile->salary_band) && (float)$staff->hrProfile->salary_band > 0) {
+                $basic = (float) $staff->hrProfile->salary_band;
+            } elseif ($jobRole && ($jobRole->salary_band_min || $jobRole->salary_band_max)) {
+                $basic = (float) ($jobRole->salary_band_min ?: $jobRole->salary_band_max);
+            } else {
+                $basic = $staff->role === 'admin' ? 3500000 : 2800000;
+            }
+
             $allowances = 500000;
             $gross = $basic + $allowances;
             $tax = $gross * 0.10; // 10% PAYE
@@ -484,6 +507,31 @@ class BursarFinanceController extends Controller
 
         return redirect()->route('admin.finance.payroll.index')
             ->with('success', "Payroll generated successfully for {$monthYear}.");
+    }
+
+    public function editPayroll($id)
+    {
+        $payroll = PayrollRecord::with(['user.roleCatalog', 'user.hrProfile'])->findOrFail($id);
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+
+        $jobRole = null;
+        if ($payroll->user) {
+            $staff = $payroll->user;
+            if ($staff->role_id) {
+                $jobRole = HrJobRole::where('role_id', $staff->role_id)->first();
+            }
+            if (!$jobRole && $staff->hrProfile?->salary_band) {
+                $jobRole = HrJobRole::where('title', $staff->hrProfile->salary_band)->first();
+            }
+            if (!$jobRole && $staff->hrProfile?->job_title) {
+                $jobRole = HrJobRole::where('title', $staff->hrProfile->job_title)->first();
+            }
+            if (!$jobRole && $staff->roleCatalog) {
+                $jobRole = HrJobRole::where('title', $staff->roleCatalog->name)->first();
+            }
+        }
+
+        return view('admin.finance.payroll.edit', compact('payroll', 'currencyCode', 'jobRole'));
     }
 
     public function showPayroll($id)

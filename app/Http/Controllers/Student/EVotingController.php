@@ -70,6 +70,11 @@ class EVotingController extends Controller
                 ->with('error', 'Only fully active students can submit applications for student leadership positions.');
         }
 
+        if (!$session->is_application_open) {
+            return redirect()->route('student.evoting.index')
+                ->with('error', 'The candidate application window is currently closed for this election season.');
+        }
+
         $facultyId = $studentProfile->department?->faculty_id;
 
         // Load positions available to this student: university-wide OR matching student's faculty
@@ -103,7 +108,7 @@ class EVotingController extends Controller
         }
 
         // Check if application period is open
-        if (!$session->is_application_open && $session->status !== 'applications_open') {
+        if (!$session->is_application_open) {
             return back()->with('error', 'The candidate application window is currently closed for this election season.');
         }
 
@@ -226,7 +231,7 @@ class EVotingController extends Controller
                   ->orWhere('percentage', '<', 50);
             })->exists();
 
-        $hasRetakeFee = \App\Models\Fee::where('user_id', $userId)
+        $hasRetakeFee = \App\Models\FeeRecord::where('user_id', $userId)
             ->whereIn('type', ['retake', 'retake_fee', 'missed_paper'])
             ->exists();
 
@@ -248,9 +253,9 @@ class EVotingController extends Controller
     {
         $user = Auth::user();
 
-        // Enforce student role
-        if ($user->role !== 'student') {
-            return redirect()->route('dashboard')->with('error', 'Only registered students are eligible to vote in student elections.');
+        // Enforce student role and admitted status
+        if ($user->role !== 'student' || !$user->isAdmitted()) {
+            return redirect()->route('dashboard')->with('error', 'Only fully admitted and active students are eligible to vote in student elections.');
         }
 
         $studentProfile = $user->studentProfile;
@@ -292,8 +297,8 @@ class EVotingController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'student') {
-            return response()->json(['success' => false, 'message' => 'Only students are permitted to cast votes.'], 403);
+        if ($user->role !== 'student' || !$user->isAdmitted()) {
+            return response()->json(['success' => false, 'message' => 'Only fully admitted and active students are permitted to cast votes.'], 403);
         }
 
         if (!$session->is_voting_open) {
