@@ -161,6 +161,7 @@
 </div>
 
 <!-- Manifesto Modals (Rendered outside nested loops to prevent flickering) -->
+@push('modals')
 @foreach($positions as $position)
     @foreach($position->approvedCandidates as $candidate)
         <div class="modal fade" id="manifestoModal{{ $candidate->id }}" tabindex="-1" aria-hidden="true">
@@ -226,6 +227,7 @@
         </div>
     </div>
 </div>
+@endpush
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

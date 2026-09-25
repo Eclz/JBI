@@ -852,6 +852,7 @@
 </div>
 
 <!-- Candidate Vetting Modals (Rendered outside nested DOM to prevent flickering) -->
+@push('modals')
 @foreach($session->candidates as $cand)
     <div class="modal fade" id="vetModal{{ $cand->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -956,6 +957,7 @@
         </div>
     </div>
 @endforeach
+@endpush
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

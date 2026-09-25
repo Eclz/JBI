@@ -253,9 +253,9 @@ class EVotingController extends Controller
     {
         $user = Auth::user();
 
-        // Enforce student role
-        if ($user->role !== 'student') {
-            return redirect()->route('dashboard')->with('error', 'Only registered students are eligible to vote in student elections.');
+        // Enforce student role and admitted status
+        if ($user->role !== 'student' || !$user->isAdmitted()) {
+            return redirect()->route('dashboard')->with('error', 'Only fully admitted and active students are eligible to vote in student elections.');
         }
 
         $studentProfile = $user->studentProfile;
@@ -297,8 +297,8 @@ class EVotingController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'student') {
-            return response()->json(['success' => false, 'message' => 'Only students are permitted to cast votes.'], 403);
+        if ($user->role !== 'student' || !$user->isAdmitted()) {
+            return response()->json(['success' => false, 'message' => 'Only fully admitted and active students are permitted to cast votes.'], 403);
         }
 
         if (!$session->is_voting_open) {

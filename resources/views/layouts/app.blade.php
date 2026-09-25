@@ -1042,6 +1042,9 @@
         }, 5000);
     </script>
 
+    <!-- Modals -->
+    @stack('modals')
+
     <!-- Page specific JS -->
     @stack('scripts')
 </body>

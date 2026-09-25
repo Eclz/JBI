@@ -534,13 +534,13 @@
             $isAcademicsActive = request()->routeIs('student.courses.*') ||
                                 request()->routeIs('student.lms.*') ||
                                 request()->routeIs('student.assignments.*') ||
-                                request()->routeIs('student.program-changes.*') ||
                                 request()->routeIs('student.exams.*') ||
                                 request()->routeIs('student.attendance.*');
 
             $isProgrammeActive = request()->routeIs('student.my-programme') ||
                                  request()->routeIs('student.enrollment.*') ||
                                  request()->routeIs('student.timetables.*') ||
+                                 request()->routeIs('student.program-changes.*') ||
                                  request()->routeIs('academic-calendar.*');
 
             $isPaymentsActive = request()->routeIs('student.fees.*');
@@ -572,12 +572,7 @@
                         <span>Assignments</span>
                     </a>
                 </li>
-                <li class="submenu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
-                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link">
-                        <i class="bi bi-arrow-repeat"></i>
-                        <span>Program Change</span>
-                    </a>
-                </li>
+
                 <li class="submenu-item {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
                     <a href="{{ route('student.exams.index') }}" class="submenu-link">
                         <i class="bi bi-pencil-square"></i>
@@ -644,6 +639,12 @@
                     <a href="{{ route('student.enrollment.index') }}" class="submenu-link">
                         <i class="bi bi-person-plus-fill"></i>
                         <span>Enrollment & Registration</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Program Change</span>
                     </a>
                 </li>
                 <li class="submenu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">

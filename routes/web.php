@@ -220,6 +220,47 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
     Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show')->middleware('permission:human_resources,view');
     Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
+    Route::post('/org-chart/update-manager', [\App\Http\Controllers\HumanResourcesController::class, 'updateManager'])->name('org-chart.update-manager')->middleware('permission:hr_core,edit');
+    
+    // Onboarding
+    Route::post('/onboarding', [\App\Http\Controllers\HrOnboardingController::class, 'store'])->name('onboarding.store')->middleware('permission:hr_recruiting,create');
+    Route::get('/onboarding/{onboarding}', [\App\Http\Controllers\HrOnboardingController::class, 'show'])->name('onboarding.show')->middleware('permission:hr_recruiting,view');
+    Route::post('/onboarding/tasks/{task}', [\App\Http\Controllers\HrOnboardingController::class, 'updateTask'])->name('onboarding.tasks.update')->middleware('permission:hr_recruiting,edit');
+    
+    // Succession
+    Route::post('/succession', [\App\Http\Controllers\HrSuccessionController::class, 'store'])->name('succession.store')->middleware('permission:hr_talent,create');
+    Route::get('/succession/{succession}', [\App\Http\Controllers\HrSuccessionController::class, 'show'])->name('succession.show')->middleware('permission:hr_talent,view');
+    Route::post('/succession/{succession}/add-successor', [\App\Http\Controllers\HrSuccessionController::class, 'addSuccessor'])->name('succession.add-successor')->middleware('permission:hr_talent,edit');
+    
+    // Recruiting
+    Route::post('/recruiting', [\App\Http\Controllers\HrRecruitingController::class, 'store'])->name('recruiting.store')->middleware('permission:hr_recruiting,create');
+    Route::get('/recruiting/{vacancy}', [\App\Http\Controllers\HrRecruitingController::class, 'show'])->name('recruiting.show')->middleware('permission:hr_recruiting,view');
+    Route::post('/recruiting/applicants/{applicant}', [\App\Http\Controllers\HrRecruitingController::class, 'updateApplicantStatus'])->name('recruiting.applicants.update')->middleware('permission:hr_recruiting,edit');
+    
+    // Shifts
+    Route::post('/shifts', [\App\Http\Controllers\HrShiftController::class, 'storeShift'])->name('shifts.store')->middleware('permission:hr_attendance,create');
+    Route::post('/shifts/assign', [\App\Http\Controllers\HrShiftController::class, 'assignShift'])->name('shifts.assign')->middleware('permission:hr_attendance,edit');
+    
+    // Expense Claims
+    Route::post('/expense-claims', [\App\Http\Controllers\HrExpenseController::class, 'store'])->name('expense-claims.store')->middleware('permission:hr_payroll,create');
+    Route::post('/expense-claims/{claim}', [\App\Http\Controllers\HrExpenseController::class, 'updateStatus'])->name('expense-claims.update')->middleware('permission:hr_payroll,edit');
+    
+    // Benefits
+    Route::post('/benefits/plans', [\App\Http\Controllers\HrBenefitController::class, 'storePlan'])->name('benefits.plans.store')->middleware('permission:hr_payroll,create');
+    Route::post('/benefits/enroll', [\App\Http\Controllers\HrBenefitController::class, 'assignBenefit'])->name('benefits.enroll')->middleware('permission:hr_payroll,create');
+    Route::post('/benefits/enrollments/{enrollment}/terminate', [\App\Http\Controllers\HrBenefitController::class, 'terminateEnrollment'])->name('benefits.terminate')->middleware('permission:hr_payroll,edit');
+    
+    // Performance
+    Route::post('/performance/reviews', [\App\Http\Controllers\HrPerformanceController::class, 'storeReview'])->name('performance.reviews.store')->middleware('permission:hr_talent,create');
+    Route::post('/performance/reviews/{review}', [\App\Http\Controllers\HrPerformanceController::class, 'updateReview'])->name('performance.reviews.update')->middleware('permission:hr_talent,edit');
+    Route::post('/performance/goals', [\App\Http\Controllers\HrPerformanceController::class, 'storeGoal'])->name('performance.goals.store')->middleware('permission:hr_talent,create');
+    Route::post('/performance/goals/{goal}', [\App\Http\Controllers\HrPerformanceController::class, 'updateGoalProgress'])->name('performance.goals.update')->middleware('permission:hr_talent,edit');
+    
+    // Learning
+    Route::post('/learning/courses', [\App\Http\Controllers\HrLearningController::class, 'storeCourse'])->name('learning.courses.store')->middleware('permission:hr_talent,create');
+    Route::post('/learning/enroll', [\App\Http\Controllers\HrLearningController::class, 'enrollUser'])->name('learning.enroll')->middleware('permission:hr_talent,create');
+    Route::post('/learning/enrollments/{enrollment}', [\App\Http\Controllers\HrLearningController::class, 'updateEnrollment'])->name('learning.enrollments.update')->middleware('permission:hr_talent,edit');
+    
     Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
     Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
     Route::delete('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'destroy'])->name('staff.destroy')->middleware('permission:hr_core,delete');
@@ -245,7 +286,12 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
 });
 
 // Facilities routes for all authenticated users
-Route::middleware(['auth'])->prefix('facilities')->name('facilities.')->group(function () {
+Route::middleware(['auth', function ($request, $next) {
+    if (auth()->user() && auth()->user()->isStudent()) {
+        abort(403, 'Students do not have access to Estates & Facilities.');
+    }
+    return $next($request);
+}])->prefix('facilities')->name('facilities.')->group(function () {
     Route::get('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'roomsIndex'])->name('rooms.index');
     Route::get('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'bookingsIndex'])->name('bookings.index');
     Route::post('/bookings', [\App\Http\Controllers\FacilitiesController::class, 'storeBooking'])->name('bookings.store');
