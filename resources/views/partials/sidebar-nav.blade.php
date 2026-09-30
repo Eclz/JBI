@@ -165,6 +165,12 @@
                         <span>System User Logs</span>
                     </a>
                 </li>
+                <li class="submenu-item {{ request()->routeIs('notifications.index') ? 'active' : '' }}">
+                    <a href="{{ route('notifications.index') }}" class="submenu-link">
+                        <i class="bi bi-broadcast"></i>
+                        <span>System Notifications</span>
+                    </a>
+                </li>
                 @endif
                 @if($canViewRoles)
                 <li class="submenu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">

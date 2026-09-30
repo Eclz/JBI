@@ -322,6 +322,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password')->middleware('permission:users,edit');
         Route::get('/user-logs', [AdminUserController::class, 'userLogs'])->name('user-logs')->middleware('permission:users,view');
     });
+    
+    Route::middleware('permission:users,edit')->group(function () {
+        Route::get('/notifications/manage', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/manage', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('notifications.store');
+    });
     Route::middleware('permission:roles,view')->group(function () {
         Route::resource('roles', AdminRoleController::class)->except(['show']);
     });
