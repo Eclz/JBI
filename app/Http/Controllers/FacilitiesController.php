@@ -22,11 +22,18 @@ class FacilitiesController extends Controller
     {
         $user = Auth::user();
 
+        $upcomingBookings = \App\Models\FacilityBooking::with(['facilityRoom', 'user'])
+            ->where('start_time', '>=', now())
+            ->orderBy('start_time', 'asc')
+            ->take(5)
+            ->get();
+
         return view('facilities.index', [
             'rooms' => FacilityRoom::where('status', '!=', 'Retired')->count(),
-            'bookings' => 0,
+            'bookings' => \App\Models\FacilityBooking::where('start_time', '>=', now())->count(),
             'maintenance' => FacilityRoom::where('status', 'Maintenance')->count(),
-            'canManage' => $user ? ($user->isFacilitiesStaff() || $user->isAdmin()) : false,
+            'canManage' => $user ? ($user->isFacilitiesStaff() || $user->isAdmin() || $user->hasPermission('facilities', 'view')) : false,
+            'upcomingBookings' => $upcomingBookings,
         ]);
     }
 
