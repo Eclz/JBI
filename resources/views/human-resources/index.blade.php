@@ -157,7 +157,7 @@
                     </div>
                     <div class="d-flex align-items-center">
                         <span class="text-muted small">New hires in progress</span>
-                        <a href="{{ route('human-resources.sections', 'onboarding') }}" class="btn btn-sm btn-link ms-auto text-decoration-none">View Pipeline <i class="bi bi-arrow-right"></i></a>
+                        <a href="{{ route('human-resources.sections.show', 'onboarding') }}" class="btn btn-sm btn-link ms-auto text-decoration-none">View Pipeline <i class="bi bi-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@
             <div class="row g-3">
                 <!-- Org Chart -->
                 <div class="col-md-4 col-sm-6">
-                    <a href="{{ route('human-resources.sections', 'org-chart') }}" class="module-card p-4 d-block h-100">
+                    <a href="{{ route('human-resources.sections.show', 'org-chart') }}" class="module-card p-4 d-block h-100">
                         <div class="icon-wrapper icon-shape bg-primary text-white fs-4 shadow-sm mb-3">
                             <i class="bi bi-diagram-3-fill"></i>
                         </div>
@@ -183,7 +183,7 @@
                 </div>
                 <!-- Performance -->
                 <div class="col-md-4 col-sm-6">
-                    <a href="{{ route('human-resources.sections', 'performance') }}" class="module-card p-4 d-block h-100">
+                    <a href="{{ route('human-resources.sections.show', 'performance') }}" class="module-card p-4 d-block h-100">
                         <div class="icon-wrapper icon-shape bg-success text-white fs-4 shadow-sm mb-3">
                             <i class="bi bi-bullseye"></i>
                         </div>
@@ -193,7 +193,7 @@
                 </div>
                 <!-- Shift Manager -->
                 <div class="col-md-4 col-sm-6">
-                    <a href="{{ route('human-resources.sections', 'shift-manager') }}" class="module-card p-4 d-block h-100">
+                    <a href="{{ route('human-resources.sections.show', 'shift-manager') }}" class="module-card p-4 d-block h-100">
                         <div class="icon-wrapper icon-shape bg-warning text-white fs-4 shadow-sm mb-3">
                             <i class="bi bi-clock-fill"></i>
                         </div>
@@ -203,7 +203,7 @@
                 </div>
                 <!-- Time & Attendance -->
                 <div class="col-md-4 col-sm-6">
-                    <a href="{{ route('human-resources.sections', 'time-tracking') }}" class="module-card p-4 d-block h-100">
+                    <a href="{{ route('human-resources.sections.show', 'time-tracking') }}" class="module-card p-4 d-block h-100">
                         <div class="icon-wrapper icon-shape bg-info text-white fs-4 shadow-sm mb-3">
                             <i class="bi bi-calendar2-week-fill"></i>
                         </div>
@@ -213,7 +213,7 @@
                 </div>
                 <!-- Expense Claims -->
                 <div class="col-md-4 col-sm-6">
-                    <a href="{{ route('human-resources.sections', 'expense-claims') }}" class="module-card p-4 d-block h-100">
+                    <a href="{{ route('human-resources.sections.show', 'expense-claims') }}" class="module-card p-4 d-block h-100">
                         <div class="icon-wrapper icon-shape bg-danger text-white fs-4 shadow-sm mb-3">
                             <i class="bi bi-receipt"></i>
                         </div>
@@ -223,7 +223,7 @@
                 </div>
                 <!-- Leaves -->
                 <div class="col-md-4 col-sm-6">
-                    <a href="{{ route('human-resources.sections', 'leave-management') }}" class="module-card p-4 d-block h-100">
+                    <a href="{{ route('human-resources.leaves.index') }}" class="module-card p-4 d-block h-100">
                         <div class="icon-wrapper icon-shape bg-secondary text-white fs-4 shadow-sm mb-3">
                             <i class="bi bi-airplane-fill"></i>
                         </div>
