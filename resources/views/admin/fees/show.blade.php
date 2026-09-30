@@ -45,18 +45,11 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-3">
-                                        @if($fee->student->profile_picture)
-                                            <img src="{{ asset('storage/' . $fee->student->profile_picture) }}"
-                                                 class="rounded-circle me-3" width="64" height="64">
-                                        @else
-                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
-                                                 style="width: 64px; height: 64px;">
-                                                <span class="text-white h4 mb-0">{{ substr($fee->student->first_name, 0, 1) }}</span>
-                                            </div>
-                                        @endif
+                                        <img src="{{ $fee->student->avatar_url }}"
+                                             class="rounded-circle me-3 border shadow-sm" width="64" height="64" alt="{{ $fee->student->full_name }}" style="object-fit: cover;">
                                         <div>
-                                            <h5 class="mb-1">{{ $fee->student->first_name }} {{ $fee->student->last_name }}</h5>
-                                            <p class="text-muted mb-0">{{ $fee->student->email }}</p>
+                                            <h5 class="mb-1 fw-bold text-primary">{{ $fee->student->full_name }}</h5>
+                                            <p class="text-muted mb-0"><i class="bi bi-envelope me-1"></i>{{ $fee->student->email }}</p>
                                         </div>
                                     </div>
 
