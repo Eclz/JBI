@@ -86,5 +86,57 @@
             </div>
         </div>
     </div>
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Transfer & Loan Logs</h5>
+                    <span class="badge bg-secondary">{{ $loans->count() }} Records</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Borrowed By</th>
+                                    <th>Status</th>
+                                    <th>Borrow Date</th>
+                                    <th>Due Date</th>
+                                    <th>Return Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($loans as $loan)
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">{{ $loan->user->name ?? 'Unknown User' }}</div>
+                                            <small class="text-muted">{{ $loan->user->email ?? '' }}</small>
+                                        </td>
+                                        <td>
+                                            @php
+                                                $badge = 'secondary';
+                                                if($loan->status == 'Active') $badge = 'primary';
+                                                if($loan->status == 'Overdue') $badge = 'danger';
+                                                if($loan->status == 'Returned') $badge = 'success';
+                                                if($loan->status == 'Lost') $badge = 'dark';
+                                            @endphp
+                                            <span class="badge text-bg-{{ $badge }}">{{ $loan->status }}</span>
+                                        </td>
+                                        <td>{{ $loan->borrow_date ? \Carbon\Carbon::parse($loan->borrow_date)->format('M d, Y') : '—' }}</td>
+                                        <td>{{ $loan->due_date ? \Carbon\Carbon::parse($loan->due_date)->format('M d, Y') : '—' }}</td>
+                                        <td>{{ $loan->return_date ? \Carbon\Carbon::parse($loan->return_date)->format('M d, Y h:i A') : '—' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">No loan history for this book.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

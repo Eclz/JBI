@@ -159,6 +159,12 @@
                         <span>User Management</span>
                     </a>
                 </li>
+                <li class="submenu-item {{ request()->routeIs('user-logs') ? 'active' : '' }}">
+                    <a href="{{ route('user-logs') }}" class="submenu-link">
+                        <i class="bi bi-clock-history"></i>
+                        <span>System User Logs</span>
+                    </a>
+                </li>
                 @endif
                 @if($canViewRoles)
                 <li class="submenu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">

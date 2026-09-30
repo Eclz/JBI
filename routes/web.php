@@ -320,6 +320,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::resource('users', AdminUserController::class);
         Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('permission:users,edit');
         Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password')->middleware('permission:users,edit');
+        Route::get('/user-logs', [AdminUserController::class, 'userLogs'])->name('user-logs')->middleware('permission:users,view');
     });
     Route::middleware('permission:roles,view')->group(function () {
         Route::resource('roles', AdminRoleController::class)->except(['show']);
