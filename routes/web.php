@@ -393,6 +393,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::delete('/courses/{course}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('courses.materials.destroy');
         Route::get('/courses/{course}/assignments', [AdminCourseController::class, 'assignments'])->name('courses.assignments');
         Route::get('/courses/{course}/grades', [AdminCourseController::class, 'grades'])->name('courses.grades');
+        Route::get('/courses/{course}/grades/export', [AdminCourseController::class, 'exportGrades'])->name('courses.export-grades');
         Route::post('/courses/{course}/toggle-status', [AdminCourseController::class, 'toggleStatus'])->name('courses.toggle-status');
         Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:enrollments,create');
         Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:enrollments,delete');
