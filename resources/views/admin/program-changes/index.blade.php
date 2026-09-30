@@ -9,6 +9,11 @@
             <h1 class="h3 mb-0">Program Change Requests</h1>
             <p class="text-muted">Review and approve student program changes</p>
         </div>
+        <div>
+            <a href="{{ route('admin.program-changes.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Initiate Request
+            </a>
+        </div>
     </div>
 
     <div class="card mb-4">

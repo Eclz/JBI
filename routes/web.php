@@ -552,6 +552,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('program-levels', AdminProgramLevelController::class)->except(['show']);
     Route::resource('programs', AdminProgramController::class);
     Route::get('/program-changes', [AdminProgramChangeController::class, 'index'])->name('program-changes.index');
+    Route::get('/program-changes/create', [AdminProgramChangeController::class, 'create'])->name('program-changes.create');
+    Route::post('/program-changes', [AdminProgramChangeController::class, 'store'])->name('program-changes.store');
     Route::post('/program-changes/{programChange}/approve', [AdminProgramChangeController::class, 'approve'])->name('program-changes.approve');
     Route::post('/program-changes/{programChange}/reject', [AdminProgramChangeController::class, 'reject'])->name('program-changes.reject');
 

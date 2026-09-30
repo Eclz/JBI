@@ -108,6 +108,8 @@ class SystemController extends Controller
             'semester_end_date' => 'nullable|date|after:semester_start_date',
             'semester_registration_start' => 'nullable|date',
             'semester_registration_end' => 'nullable|date|after:semester_registration_start',
+            'program_change_start' => 'nullable|date',
+            'program_change_end' => 'nullable|date|after:program_change_start',
             'reason_for_change' => 'nullable|string|max:1000',
         ]);
 

@@ -71,6 +71,87 @@
                 </div>
             </div>
         </div>
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom border-2">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar3 me-2"></i>MASTER CALENDAR</h6>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
+
+@push('styles')
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+<style>
+    /* Premium tweaks for FullCalendar */
+    .fc-theme-standard .fc-scrollgrid {
+        border-color: #dee2e6;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    .fc-header-toolbar {
+        margin-bottom: 1.5rem !important;
+    }
+    .fc-toolbar-title {
+        font-weight: 700;
+        font-size: 1.25rem !important;
+    }
+    .fc-event {
+        cursor: pointer;
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-size: 0.75rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        border: none !important;
+    }
+    .fc-daygrid-day.fc-day-today {
+        background-color: rgba(13, 110, 253, 0.05) !important;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var eventsData = @json($events);
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listMonth'
+            },
+            themeSystem: 'bootstrap5',
+            events: eventsData,
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            height: 'auto',
+            navLinks: true, // can click day/week names to navigate views
+            dayMaxEvents: true, // allow "more" link when too many events
+            eventClick: function(info) {
+                // Could open a modal with info here
+                if(info.event.url) {
+                    window.open(info.event.url);
+                    info.jsEvent.preventDefault();
+                }
+            }
+        });
+
+        calendar.render();
+    });
+</script>
+@endpush

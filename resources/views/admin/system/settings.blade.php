@@ -358,6 +358,19 @@
                                 </div>
                             </div>
 
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Program Change Window</h6>
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Program Change Opens</label>
+                                    <input type="date" name="program_change_start" id="program_change_start" class="form-control" value="{{ old('program_change_start', $settings->get('program_change_start')->value ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-clock-history me-1"></i>Program Change Deadline</label>
+                                    <input type="date" name="program_change_end" id="program_change_end" class="form-control" value="{{ old('program_change_end', $settings->get('program_change_end')->value ?? '') }}">
+                                    <small class="text-muted d-block mt-1">Students cannot request program changes after this date.</small>
+                                </div>
+                            </div>
+
                             <div class="d-none mt-4 p-3 border border-warning rounded bg-warning bg-opacity-10" id="reason_for_change_container">
                                 <label class="form-label text-warning-emphasis fw-bold"><i class="bi bi-info-circle me-2"></i>Reason for Date Change</label>
                                 <textarea name="reason_for_change" id="reason_for_change" class="form-control border-warning" rows="2" placeholder="Required when modifying active dates (will notify users)..."></textarea>
