@@ -468,16 +468,35 @@ class HumanResourcesController extends Controller
         $hrProfile = $employee->hrProfile;
         if (!$hrProfile) {
             $hrProfile = new HrEmployee([
-                'employee_number' => 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'employee_number' => '',
                 'job_title' => $employee->role,
                 'status' => 'Active',
             ]);
-        } elseif (empty($hrProfile->employee_number)) {
-            $hrProfile->employee_number = 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
         }
         
         $jobRoles = \App\Models\HrJobRole::where('is_active', true)->orderBy('title')->get();
         return view('human-resources.edit', compact('employee', 'hrProfile', 'jobRoles'));
+    }
+
+    public function generateId(User $employee)
+    {
+        $hrProfile = $employee->hrProfile;
+        
+        if (!$hrProfile) {
+            $hrProfile = HrEmployee::create([
+                'user_id' => $employee->id,
+                'employee_number' => 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'job_title' => $employee->role,
+                'status' => 'Active',
+                'employment_type' => 'Full-time'
+            ]);
+        } else {
+            $hrProfile->update([
+                'employee_number' => 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT)
+            ]);
+        }
+
+        return back()->with('success', 'Employee ID automatically generated successfully.');
     }
 
     public function update(Request $request, User $employee)

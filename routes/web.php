@@ -271,6 +271,7 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
     Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
     Route::delete('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'destroy'])->name('staff.destroy')->middleware('permission:hr_core,delete');
+    Route::post('/staff/{employee}/generate-id', [\App\Http\Controllers\HumanResourcesController::class, 'generateId'])->name('staff.generate-id')->middleware('permission:hr_core,edit');
     
     // Leave Management Routes
     Route::get('/leaves', [\App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leaves.index');
