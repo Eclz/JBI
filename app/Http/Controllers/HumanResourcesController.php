@@ -29,7 +29,7 @@ class HumanResourcesController extends Controller
         }
 
         return view('human-resources.index', [
-            'staffCount' => HrEmployee::where('status', 'Active')->count(),
+            'staffCount' => User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->where('is_active', true)->count(),
             'leaveRequests' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
             'onboardingCount' => HrEmployee::where('status', 'Onboarding')->count(),
             'recentStaff' => User::with('hrProfile')->whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->latest()->take(5)->get(),
@@ -193,7 +193,7 @@ class HumanResourcesController extends Controller
             $employees = User::with(['hrProfile.manager'])->whereHas('hrProfile')->get();
             $departments = HrEmployee::select('department')->whereNotNull('department')->distinct()->pluck('department');
             $stats = [
-                'total_staff' => HrEmployee::count(),
+                'total_staff' => User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->where('is_active', true)->count(),
                 'departments' => $departments->count(),
                 'managers' => HrEmployee::whereNotNull('manager_id')->distinct('manager_id')->count('manager_id'), // unique managers
                 'vacancies' => 0 // Placeholder until we build a recruitment module
