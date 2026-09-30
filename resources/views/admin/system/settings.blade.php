@@ -86,7 +86,7 @@
         <!-- Settings Content -->
         <div class="col-md-9 mb-5 pb-5">
             <div class="tab-content" id="settings-tabContent">
-                
+
                 <!-- General Tab -->
                 <div class="tab-pane fade show active" id="content-general" role="tabpanel">
                     <div class="mb-4 d-flex justify-content-between align-items-start">
@@ -103,7 +103,7 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Institution Details</h6>
-                            
+
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Application Name <span class="text-danger">*</span></label>
@@ -146,7 +146,7 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Localization</h6>
-                            
+
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Timezone</label>
@@ -166,9 +166,9 @@
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Currencies</h6>
-                            
+
                             <div class="mb-4">
                                 <label class="form-label fw-semibold">Default Currency</label>
                                 <div class="row">
@@ -191,12 +191,12 @@
                                         <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none" id="clearCurrencies">Clear All</button>
                                     </div>
                                 </div>
-                                
+
                                 @php
                                     $savedCurrencies = $settings->get('accepted_currencies')->typed_value ?? ['ZAR', 'USD'];
                                     $selectedCurrencies = old('accepted_currencies', is_array($savedCurrencies) ? $savedCurrencies : ['ZAR', 'USD']);
                                 @endphp
-                                
+
                                 <div class="row g-2" style="max-height: 250px; overflow-y: auto;">
                                     @foreach($supportedCurrencies as $code => $name)
                                         <div class="col-lg-3 col-md-4 col-sm-6">
@@ -248,7 +248,7 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-4 border-bottom pb-2">General Academic Settings</h6>
-                            
+
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Maximum Students per Course</label>
@@ -257,7 +257,7 @@
                             </div>
 
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Academic Year</h6>
-                            
+
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Academic Year Start Date</label>
@@ -270,7 +270,7 @@
                             </div>
 
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Examinations</h6>
-                            
+
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Configured Exam Types</label>
                                 <input type="text" name="exam_types" class="form-control" value="{{ old('exam_types', $settings->get('exam_types')->value ?? 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary') }}">
@@ -296,7 +296,7 @@
                     <div class="card border-info shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold text-info mb-4 border-bottom border-info pb-2"><i class="bi bi-calendar-event me-2"></i>Active Academic Period</h6>
-                            
+
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Academic Year</label>
@@ -314,7 +314,7 @@
                                         @foreach($academicYears as $year)
                                             <optgroup label="{{ $year->name }}">
                                                 @foreach($year->semesters as $sem)
-                                                    <option value="{{ $sem->id }}" 
+                                                    <option value="{{ $sem->id }}"
                                                         data-start="{{ $sem->start_date ? $sem->start_date->format('Y-m-d') : '' }}"
                                                         data-end="{{ $sem->end_date ? $sem->end_date->format('Y-m-d') : '' }}"
                                                         data-reg-start="{{ $sem->registration_start ? $sem->registration_start->format('Y-m-d') : '' }}"
@@ -395,7 +395,7 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Application Window</h6>
-                            
+
                             <div class="alert alert-info py-3 mb-4">
                                 <div class="d-flex align-items-center">
                                     <i class="bi bi-info-circle fs-4 me-3"></i>
@@ -444,7 +444,7 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Registration</h6>
-                            
+
                             <div class="row g-4 mb-4">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">Registration Fee Structure</label>
@@ -459,7 +459,7 @@
                                     </select>
                                     <small class="text-muted d-block mt-1">This fee must be paid before activation and admission numbers are issued.</small>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Registration Payment Deadline</label>
                                     <div class="input-group">
@@ -491,7 +491,7 @@
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>
@@ -586,22 +586,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function populateSemesterDates() {
         if (!currentSemesterSelect.value) return;
         const selectedOption = currentSemesterSelect.options[currentSemesterSelect.selectedIndex];
-        
+
         dateInputs.forEach(id => {
             const input = document.getElementById(id);
             const dataKey = id.replace('semester_', '').replace('_date', '');
-            
+
             // Map the data attributes
             let val = '';
             if (id === 'semester_start_date') val = selectedOption.dataset.start;
             if (id === 'semester_end_date') val = selectedOption.dataset.end;
             if (id === 'semester_registration_start') val = selectedOption.dataset.regStart;
             if (id === 'semester_registration_end') val = selectedOption.dataset.regEnd;
-            
+
             input.value = val;
             originalDates[id] = val; // Store original values to detect changes
         });
-        
+
         checkDateModifications();
     }
 
@@ -630,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize on page load
     populateSemesterDates();
-    
+
     // Form confirmation
     document.querySelector('form').addEventListener('submit', function(e) {
         if (!reasonContainer.classList.contains('d-none')) {
