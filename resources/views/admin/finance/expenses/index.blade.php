@@ -53,7 +53,15 @@
                                 </td>
                                 <td>{{ $exp->department->name ?? 'General Department' }}</td>
                                 <td class="small">{{ $exp->expense_date ? $exp->expense_date->format('M d, Y') : '-' }}</td>
-                                <td><span class="badge bg-success px-2.5 py-1.5 text-uppercase">{{ $exp->status }}</span></td>
+                                <td>
+                                    @if($exp->status === 'approved')
+                                        <span class="badge bg-success px-2.5 py-1.5 text-uppercase">Approved</span>
+                                    @elseif($exp->status === 'rejected')
+                                        <span class="badge bg-danger px-2.5 py-1.5 text-uppercase">Rejected</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark px-2.5 py-1.5 text-uppercase">Pending</span>
+                                    @endif
+                                </td>
                                 <td class="text-end pe-3 fw-bold text-danger">{{ $currencyCode }} {{ number_format($exp->amount, 2) }}</td>
                                 <td class="text-end pe-3">
                                     <div class="btn-group">
