@@ -32,7 +32,7 @@
     @endif
 
     <!-- Election Header Card -->
-    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+    <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4 bg-white">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>

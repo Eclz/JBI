@@ -164,6 +164,8 @@
 
         /* Navbar Styles */
         .navbar {
+            position: relative;
+            z-index: 1040;
             height: var(--header-height);
             background-color: white;
             border-bottom: 1px solid #e9ecef;
