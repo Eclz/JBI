@@ -33,7 +33,7 @@
                             <h6 class="text-muted mb-1">Total Staff</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['total_staff'] }}</h3>
                         </div>
-                        <div class="p-3 bg-primary bg-opacity-10 rounded text-primary fs-4">
+                        <div class="p-3 bg-primary rounded text-white fs-4">
                             <i class="bi bi-people"></i>
                         </div>
                     </div>
@@ -48,7 +48,7 @@
                             <h6 class="text-muted mb-1">Departments</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['departments'] }}</h3>
                         </div>
-                        <div class="p-3 bg-info bg-opacity-10 rounded text-info fs-4">
+                        <div class="p-3 bg-info rounded text-white fs-4">
                             <i class="bi bi-diagram-3"></i>
                         </div>
                     </div>
@@ -63,7 +63,7 @@
                             <h6 class="text-muted mb-1">Managers</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['managers'] }}</h3>
                         </div>
-                        <div class="p-3 bg-success bg-opacity-10 rounded text-success fs-4">
+                        <div class="p-3 bg-success rounded text-white fs-4">
                             <i class="bi bi-person-badge"></i>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                             <h6 class="text-muted mb-1">Vacancies</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['vacancies'] }}</h3>
                         </div>
-                        <div class="p-3 bg-warning bg-opacity-10 rounded text-warning fs-4">
+                        <div class="p-3 bg-warning rounded text-white fs-4">
                             <i class="bi bi-person-x"></i>
                         </div>
                     </div>
@@ -286,7 +286,10 @@
                                 <option value="{{ $emp['id'] }}">{{ $emp['name'] }} ({{ $emp['title'] }})</option>
                             @endforeach
                         </select>
-                        <div class="form-text">Choose an existing staff member to place under this manager.</div>
+                        <div class="form-text d-flex justify-content-between">
+                            <span>Choose an existing staff member to place under this manager.</span>
+                            <a href="{{ route('human-resources.staff.create') }}" class="text-decoration-none"><i class="bi bi-person-plus"></i> Create New Staff</a>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">New Job Title</label>
@@ -398,7 +401,44 @@
             };
         });
 
-        // Add a virtual root if there are multiple root nodes
+        // Ensure all parentIds exist in the dataset, fallback to 'root' if missing
+        const allIds = new Set(data.map(d => d.id));
+        allIds.add('root');
+        allIds.add('');
+        
+        data.forEach(d => {
+            if (!allIds.has(d.parentId)) {
+                console.warn(`Parent ID ${d.parentId} not found for node ${d.id}. Defaulting to root.`);
+                d.parentId = 'root';
+            }
+        });
+
+        // Break circular dependencies to prevent D3 stratify crash
+        let parentMap = {};
+        data.forEach(d => parentMap[d.id] = d.parentId);
+
+        data.forEach(d => {
+            let current = d.id;
+            let visited = new Set([current]);
+            let hasCycle = false;
+            
+            while (parentMap[current] && parentMap[current] !== 'root' && parentMap[current] !== '') {
+                current = parentMap[current];
+                if (visited.has(current)) {
+                    hasCycle = true;
+                    break;
+                }
+                visited.add(current);
+            }
+            
+            if (hasCycle) {
+                console.warn(`Cycle detected for node ${d.id}. Breaking cycle by moving to root.`);
+                d.parentId = 'root';
+                parentMap[d.id] = 'root';
+            }
+        });
+
+        // Add a virtual root if there are multiple root nodes (or if we fallback to root)
         const rootNodesCount = data.filter(d => d.parentId === 'root').length;
         if (rootNodesCount > 0) {
             data.push({
@@ -409,7 +449,15 @@
                 department: 'Administration',
                 photo: 'https://ui-avatars.com/api/?name=UB&background=0d6efd&color=fff',
                 status: 'Active',
-                _isVirtual: true
+                _isVirtual: true,
+                _raw: {
+                    id: 'root',
+                    name: 'University Board',
+                    title: 'Governing Body',
+                    department: 'Administration',
+                    status: 'Active',
+                    manager_id: null
+                }
             });
         }
         
@@ -443,7 +491,6 @@
                 `;
             })
             .onNodeClick(d => {
-                if (d.data._isVirtual) return;
                 showEmployeeModal(d.data._raw);
             })
             .render();
@@ -496,7 +543,16 @@
             }
             document.getElementById('empModalManager').textContent = managerName;
             
-            document.getElementById('empModalFullProfileBtn').href = `/human-resources/staff/${emp.id}`;
+            if (emp.id === 'root') {
+                document.getElementById('empModalFullProfileBtn').classList.add('d-none');
+                document.getElementById('empModalChangeManagerBtn').classList.add('d-none');
+                document.getElementById('empModalUpdateRoleBtn').classList.add('d-none');
+            } else {
+                document.getElementById('empModalFullProfileBtn').classList.remove('d-none');
+                document.getElementById('empModalChangeManagerBtn').classList.remove('d-none');
+                document.getElementById('empModalUpdateRoleBtn').classList.remove('d-none');
+                document.getElementById('empModalFullProfileBtn').href = `/human-resources/staff/${emp.id}`;
+            }
             
             document.getElementById('empModalChangeManagerBtn').onclick = () => {
                 empModal.hide();
@@ -524,7 +580,7 @@
 
             document.getElementById('empModalAddReportBtn').onclick = () => {
                 empModal.hide();
-                document.getElementById('addReportManagerId').value = emp.id;
+                document.getElementById('addReportManagerId').value = emp.id === 'root' ? '' : emp.id;
                 document.getElementById('addReportManagerName').value = emp.name;
                 new bootstrap.Modal(document.getElementById('addReportModal')).show();
             };

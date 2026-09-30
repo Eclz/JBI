@@ -781,8 +781,8 @@
                         <span>Employee Directory</span>
                     </a>
                 </li>
-                <li class="submenu-item {{ request()->routeIs('human-resources.index') && !auth()->user()->isHrStaff() && !auth()->user()->isAdmin() ? 'active' : '' }}">
-                    <a href="{{ route('human-resources.index') }}" class="submenu-link">
+                <li class="submenu-item {{ request()->routeIs('human-resources.ess') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.ess') }}" class="submenu-link">
                         <i class="bi bi-person-check"></i>
                         <span>Self-Service Portal (ESS)</span>
                     </a>

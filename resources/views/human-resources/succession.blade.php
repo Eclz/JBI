@@ -36,7 +36,7 @@
                             <h6 class="text-muted mb-1">Critical Positions</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['critical_positions'] }}</h3>
                         </div>
-                        <div class="p-3 bg-primary bg-opacity-10 rounded text-primary fs-4">
+                        <div class="p-3 bg-primary bg-opacity-10 rounded text-white fs-4">
                             <i class="bi bi-briefcase"></i>
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                             <h6 class="text-muted mb-1">Without Successors</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['without_successors'] }}</h3>
                         </div>
-                        <div class="p-3 bg-danger bg-opacity-10 rounded text-danger fs-4">
+                        <div class="p-3 bg-danger bg-opacity-10 rounded text-white fs-4">
                             <i class="bi bi-person-exclamation"></i>
                         </div>
                     </div>
@@ -134,10 +134,10 @@
                                         @if($plan->successors->count() > 0)
                                             <div class="d-flex align-items-center gap-1">
                                                 @foreach($plan->successors->take(3) as $successor)
-                                                    <img src="{{ $successor->user->profile_picture_url ?? 'https://ui-avatars.com/api/?name='.urlencode($successor->user->name).'&background=random' }}" 
-                                                         alt="{{ $successor->user->name }}" 
+                                                    <img src="{{ $successor->user->profile_picture_url ?? 'https://ui-avatars.com/api/?name='.urlencode($successor->user->name).'&background=random' }}"
+                                                         alt="{{ $successor->user->name }}"
                                                          title="{{ $successor->user->name }} - {{ $successor->readiness_level }}"
-                                                         class="rounded-circle border border-2 border-white shadow-sm" 
+                                                         class="rounded-circle border border-2 border-white shadow-sm"
                                                          style="width: 32px; height: 32px; object-fit: cover; margin-right: -10px;">
                                                 @endforeach
                                                 @if($plan->successors->count() > 3)

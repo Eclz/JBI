@@ -22,6 +22,20 @@ class HrShiftController extends Controller
         return back()->with('success', 'Shift created successfully.');
     }
 
+    public function updateShift(Request $request, HrShift $shift)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:150',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i',
+            'grace_period_minutes' => 'required|integer|min:0',
+        ]);
+
+        $shift->update($data);
+
+        return back()->with('success', 'Shift pattern updated successfully.');
+    }
+
     public function assignShift(Request $request)
     {
         $request->validate([

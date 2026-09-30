@@ -27,22 +27,29 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @forelse($logs as $log)
                         <tr>
-                            <td>{{ date('M d, Y') }}</td>
-                            <td>Sarah Bassey</td>
-                            <td>08:00 AM</td>
-                            <td>05:00 PM</td>
-                            <td>9.0</td>
-                            <td><span class="badge bg-success">Approved</span></td>
+                            <td>{{ \Carbon\Carbon::parse($log->date)->format('M d, Y') }}</td>
+                            <td>
+                                <div class="fw-bold">{{ $log->user->name }}</div>
+                                <small class="text-muted">{{ $log->user->hrProfile->department ?? 'General' }}</small>
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($log->clock_in)->format('h:i A') }}</td>
+                            <td>{{ $log->clock_out ? \Carbon\Carbon::parse($log->clock_out)->format('h:i A') : '—' }}</td>
+                            <td>{{ $log->total_hours ? $log->total_hours . ' hrs' : '—' }}</td>
+                            <td>
+                                @if($log->clock_out)
+                                    <span class="badge bg-success">Completed</span>
+                                @else
+                                    <span class="badge bg-warning text-dark">Active Shift</span>
+                                @endif
+                            </td>
                         </tr>
+                        @empty
                         <tr>
-                            <td>{{ date('M d, Y') }}</td>
-                            <td>Daniel Akpan</td>
-                            <td>09:15 AM</td>
-                            <td>—</td>
-                            <td>—</td>
-                            <td><span class="badge bg-warning text-dark">Active Shift</span></td>
+                            <td colspan="6" class="text-center text-muted py-4">No time logs found.</td>
                         </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

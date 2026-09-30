@@ -105,10 +105,55 @@
                                         <h6 class="mb-0 fw-bold">{{ $shift->name }}</h6>
                                         <span class="badge bg-light text-dark border">{{ $shift->assignments_count }} Staff</span>
                                     </div>
-                                    <div class="d-flex gap-2 text-muted small">
-                                        <span><i class="bi bi-clock me-1"></i> {{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}</span>
-                                        <span>•</span>
-                                        <span><i class="bi bi-stopwatch me-1"></i> {{ $shift->grace_period_minutes }}m grace</span>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex gap-2 text-muted small">
+                                            <span><i class="bi bi-clock me-1"></i> {{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}</span>
+                                            <span>•</span>
+                                            <span><i class="bi bi-stopwatch me-1"></i> {{ $shift->grace_period_minutes }}m grace</span>
+                                        </div>
+                                        <button class="btn btn-sm text-primary py-0 px-1 border-0" data-bs-toggle="modal" data-bs-target="#editShiftModal{{ $shift->id }}" title="Edit Shift">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Edit Shift Modal -->
+                                <div class="modal fade" id="editShiftModal{{ $shift->id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form action="{{ route('human-resources.shifts.update', $shift->id) }}" method="POST">
+                                                @csrf
+                                                @method('PUT')
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Edit Shift Pattern</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Shift Name</label>
+                                                        <input type="text" name="name" class="form-control" required value="{{ $shift->name }}">
+                                                    </div>
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-6">
+                                                            <label class="form-label">Start Time</label>
+                                                            <input type="time" name="start_time" class="form-control" required value="{{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }}">
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label">End Time</label>
+                                                            <input type="time" name="end_time" class="form-control" required value="{{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Grace Period (Minutes)</label>
+                                                        <input type="number" name="grace_period_minutes" class="form-control" required min="0" value="{{ $shift->grace_period_minutes }}">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach

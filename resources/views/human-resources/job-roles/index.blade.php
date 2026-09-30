@@ -55,7 +55,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     @if($role->role)
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">
+                                        <span class="badge bg-primary text-white px-2 py-1">
                                             <i class="bi bi-shield-lock me-1"></i>{{ $role->role->name }}
                                         </span>
                                     @else
@@ -79,7 +79,7 @@
                                             @endforeach
                                         </div>
                                     @else
-                                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25" 
+                                        <span class="badge bg-info text-white" 
                                               title="{{ implode(', ', $depts) }}" data-bs-toggle="tooltip">
                                             <i class="bi bi-building me-1"></i>{{ $depts[0] }}, {{ $depts[1] }} +{{ count($depts) - 2 }} more
                                         </span>
@@ -95,7 +95,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="badge bg-{{ $role->is_active ? 'success' : 'danger' }} bg-opacity-10 text-{{ $role->is_active ? 'success' : 'danger' }} px-3 py-1 rounded-pill">
+                                    <span class="badge bg-{{ $role->is_active ? 'success' : 'danger' }} text-white px-3 py-1 rounded-pill">
                                         {{ $role->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>

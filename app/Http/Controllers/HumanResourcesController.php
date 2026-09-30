@@ -25,7 +25,7 @@ class HumanResourcesController extends Controller
         $isManager = $user ? ($user->isHrStaff() || $user->isAdmin()) : false;
 
         if (!$isManager) {
-            return view('human-resources.ess');
+            return redirect()->route('human-resources.ess');
         }
 
         return view('human-resources.index', [
@@ -35,6 +35,81 @@ class HumanResourcesController extends Controller
             'recentStaff' => User::with('hrProfile')->whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->latest()->take(5)->get(),
             'isManager' => $isManager,
         ]);
+    }
+    public function ess()
+    {
+        $activeLog = \App\Models\HrTimeLog::where('user_id', auth()->id())
+            ->where('date', date('Y-m-d'))
+            ->whereNull('clock_out')
+            ->first();
+
+        return view('human-resources.ess', compact('activeLog'));
+    }
+
+    public function clockIn(Request $request)
+    {
+        $existing = \App\Models\HrTimeLog::where('user_id', auth()->id())
+            ->where('date', date('Y-m-d'))
+            ->whereNull('clock_out')
+            ->first();
+
+        if ($existing) {
+            return back()->withErrors('You are already clocked in.');
+        }
+
+        \App\Models\HrTimeLog::create([
+            'user_id' => auth()->id(),
+            'date' => date('Y-m-d'),
+            'clock_in' => now(),
+        ]);
+
+        return back()->with('success', 'You have successfully clocked in.');
+    }
+
+    public function clockOut(Request $request)
+    {
+        $activeLog = \App\Models\HrTimeLog::where('user_id', auth()->id())
+            ->where('date', date('Y-m-d'))
+            ->whereNull('clock_out')
+            ->first();
+
+        if (!$activeLog) {
+            return back()->withErrors('You are not clocked in.');
+        }
+
+        $clockIn = \Carbon\Carbon::parse($activeLog->clock_in);
+        $clockOut = now();
+        $totalHours = $clockOut->diffInMinutes($clockIn) / 60;
+
+        $activeLog->update([
+            'clock_out' => $clockOut,
+            'total_hours' => round($totalHours, 2),
+            'status' => 'Completed',
+        ]);
+
+        return back()->with('success', 'You have successfully clocked out.');
+    }
+
+    public function storeEssExpense(Request $request)
+    {
+        $data = $request->validate([
+            'claim_date' => 'required|date',
+            'category' => 'required|string',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ]);
+
+        $data['user_id'] = auth()->id();
+        $data['status'] = 'Pending';
+        
+        if ($request->hasFile('receipt')) {
+            $data['receipt_path'] = $request->file('receipt')->store('expenses', 'public');
+        }
+
+        \App\Models\HrExpenseClaim::create($data);
+
+        return back()->with('success', 'Your expense claim has been submitted successfully and is pending review.');
     }
 
     public function staffIndex()
@@ -190,6 +265,11 @@ class HumanResourcesController extends Controller
             }])->with('hiringManager')->latest()->get();
 
             return view("human-resources.recruiting", compact('stats', 'vacancies'));
+        }
+
+        if ($section === 'time-tracking') {
+            $logs = \App\Models\HrTimeLog::with('user.hrProfile')->orderBy('date', 'desc')->orderBy('clock_in', 'desc')->get();
+            return view("human-resources.time-tracking", compact('logs'));
         }
 
         if ($section === 'shift-manager') {
@@ -352,13 +432,13 @@ class HumanResourcesController extends Controller
     public function addDirectReport(Request $request)
     {
         $request->validate([
-            'manager_id' => 'required|exists:users,id',
+            'manager_id' => 'nullable|exists:users,id',
             'employee_id' => 'required|exists:users,id',
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150'
         ]);
 
-        if ($request->employee_id == $request->manager_id) {
+        if ($request->manager_id && $request->employee_id == $request->manager_id) {
             return back()->with('error', 'An employee cannot report to themselves.');
         }
 

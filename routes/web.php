@@ -216,6 +216,10 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
 // Human resources module routes
 Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')->group(function () {
     Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
+    Route::get('/ess', [\App\Http\Controllers\HumanResourcesController::class, 'ess'])->name('ess');
+    Route::post('/ess/expense-claims', [\App\Http\Controllers\HumanResourcesController::class, 'storeEssExpense'])->name('ess.expense-claims.store');
+    Route::post('/ess/clock-in', [\App\Http\Controllers\HumanResourcesController::class, 'clockIn'])->name('ess.clock-in');
+    Route::post('/ess/clock-out', [\App\Http\Controllers\HumanResourcesController::class, 'clockOut'])->name('ess.clock-out');
     Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index')->middleware('permission:human_resources,view');
     Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
     Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show')->middleware('permission:human_resources,view');
@@ -241,6 +245,7 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     
     // Shifts
     Route::post('/shifts', [\App\Http\Controllers\HrShiftController::class, 'storeShift'])->name('shifts.store')->middleware('permission:hr_attendance,create');
+    Route::put('/shifts/{shift}', [\App\Http\Controllers\HrShiftController::class, 'updateShift'])->name('shifts.update')->middleware('permission:hr_attendance,edit');
     Route::post('/shifts/assign', [\App\Http\Controllers\HrShiftController::class, 'assignShift'])->name('shifts.assign')->middleware('permission:hr_attendance,edit');
     
     // Expense Claims
@@ -586,6 +591,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Admin Evaluation Surveys
+    Route::get('evaluation-surveys/rankings', [AdminEvaluationSurveyController::class, 'rankings'])->name('evaluation-surveys.rankings');
     Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class)->parameters([
         'evaluation-surveys' => 'survey'
     ]);

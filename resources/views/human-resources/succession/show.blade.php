@@ -8,13 +8,13 @@
             <h2 class="h4 mb-1">Succession Plan Details</h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('human-resources.section', 'succession') }}">Succession Planning</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('human-resources.sections.show', 'succession') }}">Succession Planning</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $succession->position_name }}</li>
                 </ol>
             </nav>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('human-resources.section', 'succession') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('human-resources.sections.show', 'succession') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
             @if($succession->status === 'Active')

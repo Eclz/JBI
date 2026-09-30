@@ -9,6 +9,9 @@
             <p class="text-muted mb-0">Track employee goals and manage periodic performance reviews.</p>
         </div>
         <div class="d-flex gap-2">
+            <a href="{{ route('admin.evaluation-surveys.rankings') }}" class="btn btn-outline-info">
+                <i class="bi bi-bar-chart-fill me-1"></i> Lecturer Rankings
+            </a>
             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#assignGoalModal">
                 <i class="bi bi-bullseye me-1"></i> Assign Goal
             </button>

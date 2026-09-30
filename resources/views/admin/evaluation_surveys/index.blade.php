@@ -9,9 +9,14 @@
             <h1 class="h3 mb-0 text-primary"><i class="bi bi-clipboard2-check me-2"></i>Lecturer Evaluation Surveys</h1>
             <p class="text-muted mb-0">Manage semester lecturer performance evaluations and review feedback</p>
         </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSurveyModal">
-            <i class="bi bi-plus-lg me-2"></i>Create New Survey
-        </button>
+        <div>
+            <a href="{{ route('admin.evaluation-surveys.rankings') }}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-bar-chart-fill me-2"></i>Lecturer Rankings
+            </a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSurveyModal">
+                <i class="bi bi-plus-lg me-2"></i>Create New Survey
+            </button>
+        </div>
     </div>
 
     @if(session('success'))

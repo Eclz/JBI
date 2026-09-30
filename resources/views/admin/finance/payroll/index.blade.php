@@ -67,7 +67,7 @@
                                     <div class="fw-bold text-dark">{{ $pr->user->full_name ?? $pr->user->name ?? 'University Staff' }}</div>
                                     @if($jobRole)
                                         <div class="small mt-1">
-                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">{{ $jobRole->title }}</span>
+                                            <span class="badge bg-primary text-white">{{ $jobRole->title }}</span>
                                             @if($jobRole->salary_band_min || $jobRole->salary_band_max)
                                                 <span class="text-muted small ms-1">({{ $currencyCode }} {{ number_format($jobRole->salary_band_min, 0) }} - {{ number_format($jobRole->salary_band_max, 0) }})</span>
                                             @endif
