@@ -141,7 +141,14 @@ class HumanResourcesController extends Controller
                 ];
             })->keyBy('id')->toArray();
 
-            return view("human-resources.org-chart", compact('allEmployees', 'departments', 'stats'));
+            $unassignedStaff = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])
+                ->whereNotNull('role')
+                ->where('is_active', true)
+                ->whereDoesntHave('hrProfile')
+                ->orderBy('first_name')
+                ->get();
+
+            return view("human-resources.org-chart", compact('allEmployees', 'departments', 'stats', 'unassignedStaff'));
         }
 
         if ($section === 'onboarding') {
@@ -318,6 +325,62 @@ class HumanResourcesController extends Controller
         }
 
         return back()->with('success', 'Reporting manager updated successfully.');
+    }
+
+    public function updateRole(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:users,id',
+            'job_title' => 'required|string|max:150',
+            'department' => 'nullable|string|max:150'
+        ]);
+
+        $employee = User::findOrFail($request->employee_id);
+        
+        if ($employee->hrProfile) {
+            $employee->hrProfile->update([
+                'job_title' => $request->job_title,
+                'department' => $request->department
+            ]);
+            $this->notifyUser($employee->id, 'Role Updated', "Your role has been updated to {$request->job_title} in {$request->department}.", 'human-resources.index');
+            return back()->with('success', 'Employee role updated successfully.');
+        }
+
+        return back()->with('error', 'Employee HR profile not found.');
+    }
+
+    public function addDirectReport(Request $request)
+    {
+        $request->validate([
+            'manager_id' => 'required|exists:users,id',
+            'employee_id' => 'required|exists:users,id',
+            'job_title' => 'required|string|max:150',
+            'department' => 'nullable|string|max:150'
+        ]);
+
+        if ($request->employee_id == $request->manager_id) {
+            return back()->with('error', 'An employee cannot report to themselves.');
+        }
+
+        $employee = User::findOrFail($request->employee_id);
+        
+        $data = [
+            'manager_id' => $request->manager_id,
+            'job_title' => $request->job_title,
+            'department' => $request->department,
+            'status' => 'Active',
+            'employment_type' => 'Full-time'
+        ];
+
+        if ($employee->hrProfile) {
+            $employee->hrProfile->update($data);
+        } else {
+            $data['user_id'] = $employee->id;
+            $data['employee_number'] = 'EMP-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            HrEmployee::create($data);
+        }
+
+        return back()->with('success', 'Direct report added successfully.');
     }
 
     public function edit(User $employee)

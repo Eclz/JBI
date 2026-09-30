@@ -221,6 +221,8 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show')->middleware('permission:human_resources,view');
     Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
     Route::post('/org-chart/update-manager', [\App\Http\Controllers\HumanResourcesController::class, 'updateManager'])->name('org-chart.update-manager')->middleware('permission:hr_core,edit');
+    Route::post('/org-chart/update-role', [\App\Http\Controllers\HumanResourcesController::class, 'updateRole'])->name('org-chart.update-role')->middleware('permission:hr_core,edit');
+    Route::post('/org-chart/add-report', [\App\Http\Controllers\HumanResourcesController::class, 'addDirectReport'])->name('org-chart.add-report')->middleware('permission:hr_core,edit');
     
     // Onboarding
     Route::post('/onboarding', [\App\Http\Controllers\HrOnboardingController::class, 'store'])->name('onboarding.store')->middleware('permission:hr_recruiting,create');

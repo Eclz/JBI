@@ -178,7 +178,11 @@
 
                 <div class="d-grid gap-2">
                     <a href="#" id="empModalFullProfileBtn" class="btn btn-primary">View Full Employee Profile</a>
-                    <button class="btn btn-outline-secondary" type="button" id="empModalChangeManagerBtn">Change Manager</button>
+                    <div class="btn-group w-100">
+                        <button class="btn btn-outline-secondary" type="button" id="empModalChangeManagerBtn">Change Manager</button>
+                        <button class="btn btn-outline-secondary" type="button" id="empModalUpdateRoleBtn">Update Role</button>
+                    </div>
+                    <button class="btn btn-outline-success" type="button" id="empModalAddReportBtn"><i class="bi bi-plus-circle me-1"></i> Add Direct Report / Branch</button>
                 </div>
             </div>
         </div>
@@ -215,6 +219,87 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Role Modal -->
+<div class="modal fade" id="updateRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="updateRoleForm" action="{{ route('human-resources.org-chart.update-role') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Promote / Demote / Update Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employee_id" id="updateRoleEmployeeId">
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <input type="text" class="form-control bg-light" id="updateRoleEmployeeName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Job Title</label>
+                        <input type="text" name="job_title" class="form-control" id="updateRoleJobTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" name="department" class="form-control" id="updateRoleDepartment">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Direct Report Modal -->
+<div class="modal fade" id="addReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="addReportForm" action="{{ route('human-resources.org-chart.add-report') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Direct Report / Branch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="manager_id" id="addReportManagerId">
+                    <div class="mb-3">
+                        <label class="form-label">Reporting To</label>
+                        <input type="text" class="form-control bg-light" id="addReportManagerName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Select Staff Member</label>
+                        <select name="employee_id" class="form-select" required>
+                            <option value="">-- Select Staff --</option>
+                            @foreach($unassignedStaff ?? [] as $staff)
+                                <option value="{{ $staff->id }}">{{ $staff->full_name }} ({{ $staff->email }})</option>
+                            @endforeach
+                            @foreach($allEmployees ?? [] as $emp)
+                                <option value="{{ $emp['id'] }}">{{ $emp['name'] }} ({{ $emp['title'] }})</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Choose an existing staff member to place under this manager.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Job Title</label>
+                        <input type="text" name="job_title" class="form-control" required placeholder="e.g. Lecturer">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" name="department" class="form-control" placeholder="e.g. Computing">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Report</button>
                 </div>
             </form>
         </div>
@@ -286,9 +371,10 @@
 @endpush
 
 @push('scripts')
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-org-chart@3.1.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js"></script>
 <script>
-    // A simple Vanilla JS interactive Org Chart implementation using positioned divs and lines.
-    // D3.js or OrgChart.js would be ideal, but building a custom robust CSS/JS one ensures no external heavy deps.
     document.addEventListener('DOMContentLoaded', function() {
         const dataContainer = document.getElementById('chartDataContainer');
         if (!dataContainer) return;
@@ -296,205 +382,97 @@
         const rawData = JSON.parse(dataContainer.getAttribute('data-employees'));
         const canvas = document.getElementById('orgChartCanvas');
         
-        let zoomLevel = 1;
-        let panX = 0;
-        let panY = 0;
-        let isDragging = false;
-        let startX, startY;
-        
-        // Build hierarchy tree
-        const buildTree = (data) => {
-            let tree = [];
-            let mappedArr = {};
-            
-            // First pass: create map
-            Object.values(data).forEach(emp => {
-                mappedArr[emp.id] = { ...emp, children: [] };
-            });
-            
-            // Second pass: wire children
-            Object.values(mappedArr).forEach(emp => {
-                if (emp.manager_id && mappedArr[emp.manager_id]) {
-                    mappedArr[emp.manager_id].children.push(emp);
-                } else {
-                    tree.push(emp);
-                }
-            });
-            return tree;
-        };
-        
-        const treeData = buildTree(rawData);
-        
-        // We'll create a single wrapper that gets transformed (panned/zoomed)
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.transformOrigin = '0 0';
-        wrapper.style.width = '10000px'; // large canvas
-        wrapper.style.height = '10000px';
-        wrapper.style.transition = 'transform 0.1s ease-out';
-        canvas.appendChild(wrapper);
-        
-        // Layout constants
-        const NODE_WIDTH = 250;
-        const NODE_HEIGHT = 85;
-        const H_SPACING = 40;
-        const V_SPACING = 80;
-        
-        let nodes = [];
-        let edges = [];
-        
-        // Recursive layout function
-        const layoutTree = (node, depth, offset) => {
-            if (!node) return 0;
-            
-            let childrenWidth = 0;
-            let childXOffsets = [];
-            
-            if (node.children && node.children.length > 0) {
-                node.children.forEach(child => {
-                    let w = layoutTree(child, depth + 1, offset + childrenWidth);
-                    childXOffsets.push(offset + childrenWidth + (w / 2));
-                    childrenWidth += w + H_SPACING;
-                });
-                childrenWidth -= H_SPACING; // remove last spacing
-            }
-            
-            const width = Math.max(NODE_WIDTH, childrenWidth);
-            const x = offset + (width / 2);
-            const y = depth * (NODE_HEIGHT + V_SPACING) + 50;
-            
-            nodes.push({ ...node, x, y });
-            
-            if (node.children && node.children.length > 0) {
-                node.children.forEach((child, idx) => {
-                    edges.push({
-                        startX: x,
-                        startY: y + NODE_HEIGHT,
-                        endX: childXOffsets[idx],
-                        endY: y + NODE_HEIGHT + V_SPACING
-                    });
-                });
-            }
-            
-            return width;
-        };
-        
-        // Calculate layouts for all roots
-        let totalOffset = 500; // Start with some padding
-        treeData.forEach(rootNode => {
-            let w = layoutTree(rootNode, 0, totalOffset);
-            totalOffset += w + H_SPACING * 2;
+        let data = Object.values(rawData).map(emp => {
+            return {
+                id: emp.id.toString(),
+                parentId: emp.manager_id ? emp.manager_id.toString() : 'root',
+                name: emp.name,
+                title: emp.title,
+                department: emp.department,
+                photo: emp.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(emp.name) + '&background=e0e7ff&color=1e3a8a',
+                status: emp.status,
+                employee_id: emp.employee_id,
+                email: emp.email,
+                phone: emp.phone,
+                _raw: emp // keep raw reference for modals
+            };
         });
-        
-        // Render edges (lines)
-        edges.forEach(edge => {
-            // vertical line down from parent
-            const vLine1 = document.createElement('div');
-            vLine1.className = 'org-line';
-            vLine1.style.width = '2px';
-            vLine1.style.height = (V_SPACING / 2) + 'px';
-            vLine1.style.left = edge.startX + 'px';
-            vLine1.style.top = edge.startY + 'px';
-            wrapper.appendChild(vLine1);
-            
-            // horizontal line to child x
-            const hLine = document.createElement('div');
-            hLine.className = 'org-line';
-            hLine.style.height = '2px';
-            const hStart = Math.min(edge.startX, edge.endX);
-            const hWidth = Math.abs(edge.startX - edge.endX) + 2;
-            hLine.style.left = hStart + 'px';
-            hLine.style.width = hWidth + 'px';
-            hLine.style.top = (edge.startY + V_SPACING / 2) + 'px';
-            wrapper.appendChild(hLine);
-            
-            // vertical line down to child
-            const vLine2 = document.createElement('div');
-            vLine2.className = 'org-line';
-            vLine2.style.width = '2px';
-            vLine2.style.height = (V_SPACING / 2) + 'px';
-            vLine2.style.left = edge.endX + 'px';
-            vLine2.style.top = (edge.startY + V_SPACING / 2) + 'px';
-            wrapper.appendChild(vLine2);
-        });
-        
-        // Render nodes
-        nodes.forEach(node => {
-            const el = document.createElement('div');
-            el.className = 'org-node';
-            el.style.left = (node.x - NODE_WIDTH / 2) + 'px';
-            el.style.top = node.y + 'px';
-            el.dataset.id = node.id;
-            
-            let badgeColor = node.status === 'Active' ? 'bg-success' : (node.status === 'On Leave' ? 'bg-warning' : 'bg-secondary');
-            
-            el.innerHTML = `
-                <img src="${node.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(node.name) + '&background=e0e7ff&color=1e3a8a'}" alt="${node.name}">
-                <div class="org-node-info">
-                    <h6 class="org-node-name">${node.name}</h6>
-                    <div class="org-node-title">${node.title}</div>
-                    <div class="org-node-dept">${node.department}</div>
-                </div>
-            `;
-            
-            el.addEventListener('click', () => {
-                showEmployeeModal(node);
-            });
-            
-            wrapper.appendChild(el);
-        });
-        
-        // Default Pan to first root node
-        if (nodes.length > 0) {
-            panX = -nodes[0].x + canvas.clientWidth / 2;
-            panY = 0;
-            updateTransform();
-        }
 
-        // Panning Logic
-        canvas.addEventListener('mousedown', e => {
-            if (e.target.closest('.org-node')) return; // don't pan if clicking node
-            isDragging = true;
-            startX = e.clientX - panX;
-            startY = e.clientY - panY;
-            canvas.style.cursor = 'grabbing';
-        });
-        
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            canvas.style.cursor = 'grab';
-        });
-        
-        window.addEventListener('mousemove', e => {
-            if (!isDragging) return;
-            panX = e.clientX - startX;
-            panY = e.clientY - startY;
-            updateTransform();
-        });
-        
-        // Zooming Logic
-        document.getElementById('zoomIn').addEventListener('click', () => {
-            zoomLevel = Math.min(zoomLevel + 0.1, 2);
-            updateTransform();
-        });
-        document.getElementById('zoomOut').addEventListener('click', () => {
-            zoomLevel = Math.max(zoomLevel - 0.1, 0.4);
-            updateTransform();
-        });
-        document.getElementById('resetZoom').addEventListener('click', () => {
-            zoomLevel = 1;
-            if (nodes.length > 0) {
-                panX = -nodes[0].x + canvas.clientWidth / 2;
-                panY = 0;
-            }
-            updateTransform();
-        });
-        
-        function updateTransform() {
-            wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+        // Add a virtual root if there are multiple root nodes
+        const rootNodesCount = data.filter(d => d.parentId === 'root').length;
+        if (rootNodesCount > 0) {
+            data.push({
+                id: 'root',
+                parentId: '',
+                name: 'University Board',
+                title: 'Governing Body',
+                department: 'Administration',
+                photo: 'https://ui-avatars.com/api/?name=UB&background=0d6efd&color=fff',
+                status: 'Active',
+                _isVirtual: true
+            });
         }
         
-        // Modal Logic
+        let chart = new d3.OrgChart()
+            .container(canvas)
+            .data(data)
+            .nodeWidth(d => 250)
+            .nodeHeight(d => 120)
+            .childrenMargin(d => 50)
+            .compactMarginBetween(d => 25)
+            .compactMarginPair(d => 50)
+            .nodeContent(function(d, i, arr, state) {
+                const colors = {
+                    'Active': '#198754',
+                    'On Leave': '#ffc107',
+                    'Inactive': '#6c757d'
+                };
+                const statusColor = colors[d.data.status] || '#198754';
+                return `
+                <div style="font-family: 'Inter', sans-serif; background-color: white; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 15px; width: ${d.width}px; height: ${d.height}px; position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 5px; background-color: ${statusColor}; border-top-left-radius: 8px; border-top-right-radius: 8px;"></div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-top: 5px;">
+                        <img src="${d.data.photo}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #f8f9fa;">
+                        <div style="overflow: hidden;">
+                            <div style="font-weight: bold; font-size: 15px; color: #212529; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${d.data.name}</div>
+                            <div style="font-size: 12px; color: #0d6efd; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin-bottom: 3px;">${d.data.title}</div>
+                            <div style="font-size: 11px; color: #6c757d;">${d.data.department || ''}</div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            })
+            .onNodeClick(d => {
+                if (d.data._isVirtual) return;
+                showEmployeeModal(d.data._raw);
+            })
+            .render();
+
+        // Custom Zoom Controls
+        document.getElementById('zoomIn').addEventListener('click', () => chart.zoomIn());
+        document.getElementById('zoomOut').addEventListener('click', () => chart.zoomOut());
+        document.getElementById('resetZoom').addEventListener('click', () => {
+            chart.fit();
+        });
+
+        // Search functionality
+        document.getElementById('orgSearch').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            if(!val) {
+                chart.clearHighlighting();
+            } else {
+                chart.clearHighlighting();
+                const matched = data.filter(d => 
+                    d.name.toLowerCase().includes(val) || 
+                    d.title.toLowerCase().includes(val) || 
+                    (d.department && d.department.toLowerCase().includes(val))
+                );
+                matched.forEach(m => chart.setHighlighted(m.id));
+                chart.render();
+            }
+        });
+
+        // Modals logic
         const empModal = new bootstrap.Modal(document.getElementById('employeeProfileModal'));
         const changeManagerModal = new bootstrap.Modal(document.getElementById('changeManagerModal'));
         
@@ -502,17 +480,17 @@
             document.getElementById('empModalPhoto').src = emp.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(emp.name) + '&background=e0e7ff&color=1e3a8a';
             document.getElementById('empModalName').textContent = emp.name;
             document.getElementById('empModalTitle').textContent = emp.title;
-            document.getElementById('empModalDept').textContent = emp.department;
+            document.getElementById('empModalDept').textContent = emp.department || 'General';
             
             let statusBadge = document.getElementById('empModalStatus');
-            statusBadge.textContent = emp.status;
-            statusBadge.className = 'badge ' + (emp.status === 'Active' ? 'bg-success' : (emp.status === 'On Leave' ? 'bg-warning' : 'bg-secondary'));
+            statusBadge.textContent = emp.status || 'Active';
+            statusBadge.className = 'badge ' + ((emp.status === 'Active' || !emp.status) ? 'bg-success' : (emp.status === 'On Leave' ? 'bg-warning' : 'bg-secondary'));
             
             document.getElementById('empModalId').textContent = emp.employee_id || 'N/A';
-            document.getElementById('empModalEmail').textContent = emp.email;
+            document.getElementById('empModalEmail').textContent = emp.email || 'N/A';
             document.getElementById('empModalPhone').textContent = emp.phone || 'N/A';
             
-            let managerName = 'None (Top Level)';
+            let managerName = 'University Board (Top Level)';
             if (emp.manager_id && rawData[emp.manager_id]) {
                 managerName = rawData[emp.manager_id].name;
             }
@@ -533,6 +511,22 @@
                 });
                 
                 changeManagerModal.show();
+            };
+            
+            document.getElementById('empModalUpdateRoleBtn').onclick = () => {
+                empModal.hide();
+                document.getElementById('updateRoleEmployeeId').value = emp.id;
+                document.getElementById('updateRoleEmployeeName').value = emp.name;
+                document.getElementById('updateRoleJobTitle').value = emp.title;
+                document.getElementById('updateRoleDepartment').value = emp.department;
+                new bootstrap.Modal(document.getElementById('updateRoleModal')).show();
+            };
+
+            document.getElementById('empModalAddReportBtn').onclick = () => {
+                empModal.hide();
+                document.getElementById('addReportManagerId').value = emp.id;
+                document.getElementById('addReportManagerName').value = emp.name;
+                new bootstrap.Modal(document.getElementById('addReportModal')).show();
             };
             
             empModal.show();
