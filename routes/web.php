@@ -773,9 +773,6 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     Route::post('/assignments/{assignment}/grade', [FacultyGradingController::class, 'storeGrade'])->name('grading.store')->middleware('permission:grades,edit');
     Route::post('/assignments/{assignment}/bulk-grade', [FacultyGradingController::class, 'bulkGrade'])->name('grading.bulk')->middleware('permission:grades,edit');
     Route::post('/assignments/{assignment}/publish', [FacultyGradingController::class, 'publishGrades'])->name('grading.publish')->middleware('permission:grades,edit');
-
-    // Announcements
-    Route::resource('announcements', AnnouncementController::class);
 });
 
 // Student Routes
@@ -903,5 +900,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create')->middleware('permission:announcements,create');
+    Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store')->middleware('permission:announcements,create');
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+    Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit')->middleware('permission:announcements,edit');
+    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update')->middleware('permission:announcements,edit');
+    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy')->middleware('permission:announcements,delete');
 });

@@ -27,6 +27,7 @@ return [
         'exams' => 'Exams & Quizzes',
         'reports' => 'Reports',
         'settings' => 'System Settings',
+        'announcements' => 'System Announcements',
         'evoting' => 'E-Voting & Student Leadership',
         'library' => 'Library Services',
         'human_resources' => 'Human Resources',
