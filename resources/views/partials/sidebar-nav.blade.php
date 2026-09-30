@@ -810,7 +810,9 @@
                         </li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Time & Attendance</li>
+                @if(auth()->user()->hasPermission('hr_attendance', 'view'))
+                    <li class="sidebar-subheading">Time & Attendance</li>
+                @endif
                 @foreach([
                     ['time-tracking', 'Time Tracking', 'hr_attendance', 'bi-clock-history'],
                     ['shift-manager', 'Shift Manager', 'hr_attendance', 'bi-calendar2-week'],
@@ -820,7 +822,10 @@
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Payroll & Benefits</li>
+                
+                @if(auth()->user()->hasPermission('hr_payroll', 'view'))
+                    <li class="sidebar-subheading">Payroll & Benefits</li>
+                @endif
                 @foreach([
                     ['payroll', 'Run Payroll', 'bi-cash-stack'],
                     ['expense-claims', 'Expense Claims', 'bi-receipt'],
@@ -830,7 +835,10 @@
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Talent Sourcing</li>
+                
+                @if(auth()->user()->hasPermission('hr_recruiting', 'view'))
+                    <li class="sidebar-subheading">Talent Sourcing</li>
+                @endif
                 @foreach([
                     ['recruiting', 'Recruiting (ATS)', 'bi-person-plus'],
                     ['onboarding', 'Onboarding', 'bi-box-arrow-in-right'],
@@ -840,7 +848,10 @@
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Talent Management</li>
+                
+                @if(auth()->user()->hasPermission('hr_talent', 'view'))
+                    <li class="sidebar-subheading">Talent Management</li>
+                @endif
                 @foreach([
                     ['performance', 'Performance Reviews', 'bi-graph-up-arrow'],
                     ['learning', 'Learning (LMS)', 'bi-mortarboard'],
