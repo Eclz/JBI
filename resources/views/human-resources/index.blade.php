@@ -101,7 +101,7 @@
                             <p class="text-muted fw-semibold text-uppercase mb-1 tracking-wider" style="font-size: 0.8rem; letter-spacing: 1px;">Total Active Staff</p>
                             <h2 class="fw-bolder mb-0 display-5 text-dark">{{ $staffCount }}</h2>
                         </div>
-                        <div class="icon-shape bg-primary bg-opacity-10 text-primary fs-3 shadow-sm">
+                        <div class="icon-shape bg-primary bg-opacity-10 text-white fs-3 shadow-sm">
                             <i class="bi bi-people-fill"></i>
                         </div>
                     </div>
@@ -123,7 +123,7 @@
                             <p class="text-muted fw-semibold text-uppercase mb-1 tracking-wider" style="font-size: 0.8rem; letter-spacing: 1px;">Leave Requests</p>
                             <h2 class="fw-bolder mb-0 display-5 text-dark">{{ $leaveRequests }}</h2>
                         </div>
-                        <div class="icon-shape bg-warning bg-opacity-10 text-warning fs-3 shadow-sm">
+                        <div class="icon-shape bg-warning bg-opacity-10 text-white fs-3 shadow-sm">
                             <i class="bi bi-calendar-check-fill"></i>
                         </div>
                     </div>
