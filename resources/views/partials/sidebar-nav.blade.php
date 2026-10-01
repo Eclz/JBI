@@ -159,6 +159,18 @@
                         <span>User Management</span>
                     </a>
                 </li>
+                <li class="submenu-item {{ request()->routeIs('admin.user-logs') ? 'active' : '' }}">
+                    <a href="{{ route('admin.user-logs') }}" class="submenu-link">
+                        <i class="bi bi-clock-history"></i>
+                        <span>System User Logs</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('notifications.index') ? 'active' : '' }}">
+                    <a href="{{ route('notifications.index') }}" class="submenu-link">
+                        <i class="bi bi-broadcast"></i>
+                        <span>System Notifications</span>
+                    </a>
+                </li>
                 @endif
                 @if($canViewRoles)
                 <li class="submenu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
@@ -534,13 +546,13 @@
             $isAcademicsActive = request()->routeIs('student.courses.*') ||
                                 request()->routeIs('student.lms.*') ||
                                 request()->routeIs('student.assignments.*') ||
-                                request()->routeIs('student.program-changes.*') ||
                                 request()->routeIs('student.exams.*') ||
                                 request()->routeIs('student.attendance.*');
 
             $isProgrammeActive = request()->routeIs('student.my-programme') ||
                                  request()->routeIs('student.enrollment.*') ||
                                  request()->routeIs('student.timetables.*') ||
+                                 request()->routeIs('student.program-changes.*') ||
                                  request()->routeIs('academic-calendar.*');
 
             $isPaymentsActive = request()->routeIs('student.fees.*');
@@ -572,12 +584,7 @@
                         <span>Assignments</span>
                     </a>
                 </li>
-                <li class="submenu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
-                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link">
-                        <i class="bi bi-arrow-repeat"></i>
-                        <span>Program Change</span>
-                    </a>
-                </li>
+
                 <li class="submenu-item {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
                     <a href="{{ route('student.exams.index') }}" class="submenu-link">
                         <i class="bi bi-pencil-square"></i>
@@ -644,6 +651,12 @@
                     <a href="{{ route('student.enrollment.index') }}" class="submenu-link">
                         <i class="bi bi-person-plus-fill"></i>
                         <span>Enrollment & Registration</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('student.program-changes.*') ? 'active' : '' }}">
+                    <a href="{{ route('student.program-changes.index') }}" class="submenu-link">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Program Change</span>
                     </a>
                 </li>
                 <li class="submenu-item {{ request()->routeIs('student.timetables.*') ? 'active' : '' }}">
@@ -780,8 +793,8 @@
                         <span>Employee Directory</span>
                     </a>
                 </li>
-                <li class="submenu-item {{ request()->routeIs('human-resources.index') && !auth()->user()->isHrStaff() && !auth()->user()->isAdmin() ? 'active' : '' }}">
-                    <a href="{{ route('human-resources.index') }}" class="submenu-link">
+                <li class="submenu-item {{ request()->routeIs('human-resources.ess') ? 'active' : '' }}">
+                    <a href="{{ route('human-resources.ess') }}" class="submenu-link">
                         <i class="bi bi-person-check"></i>
                         <span>Self-Service Portal (ESS)</span>
                     </a>
@@ -809,7 +822,9 @@
                         </li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Time & Attendance</li>
+                @if(auth()->user()->hasPermission('hr_attendance', 'view'))
+                    <li class="sidebar-subheading">Time & Attendance</li>
+                @endif
                 @foreach([
                     ['time-tracking', 'Time Tracking', 'hr_attendance', 'bi-clock-history'],
                     ['shift-manager', 'Shift Manager', 'hr_attendance', 'bi-calendar2-week'],
@@ -819,7 +834,10 @@
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Payroll & Benefits</li>
+                
+                @if(auth()->user()->hasPermission('hr_payroll', 'view'))
+                    <li class="sidebar-subheading">Payroll & Benefits</li>
+                @endif
                 @foreach([
                     ['payroll', 'Run Payroll', 'bi-cash-stack'],
                     ['expense-claims', 'Expense Claims', 'bi-receipt'],
@@ -829,7 +847,10 @@
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Talent Sourcing</li>
+                
+                @if(auth()->user()->hasPermission('hr_recruiting', 'view'))
+                    <li class="sidebar-subheading">Talent Sourcing</li>
+                @endif
                 @foreach([
                     ['recruiting', 'Recruiting (ATS)', 'bi-person-plus'],
                     ['onboarding', 'Onboarding', 'bi-box-arrow-in-right'],
@@ -839,7 +860,10 @@
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
-                <li class="sidebar-subheading">Talent Management</li>
+                
+                @if(auth()->user()->hasPermission('hr_talent', 'view'))
+                    <li class="sidebar-subheading">Talent Management</li>
+                @endif
                 @foreach([
                     ['performance', 'Performance Reviews', 'bi-graph-up-arrow'],
                     ['learning', 'Learning (LMS)', 'bi-mortarboard'],
@@ -859,7 +883,7 @@
         </li>
         @endif
 
-        @if(auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff())
+        @if(auth()->check() && !auth()->user()->isStudent() && (auth()->user()->hasPermission('facilities', 'view') || auth()->user()->isFacilitiesStaff()))
         <li class="sidebar-group {{ request()->routeIs('facilities.*') ? 'has-active-child' : '' }}" data-group-id="facilities-module">
             <button type="button" class="sidebar-group-toggle {{ request()->routeIs('facilities.*') ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'facilities-module')">
                 <i class="bi bi-building group-icon"></i>

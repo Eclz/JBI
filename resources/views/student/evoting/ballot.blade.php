@@ -140,38 +140,7 @@
                             </div>
                         </div>
 
-                        <!-- Manifesto Modal -->
-                        <div class="modal fade" id="manifestoModal{{ $candidate->id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-primary text-white py-3">
-                                        <h5 class="modal-title fw-bold">{{ $candidate->name }} &mdash; Manifesto</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <div class="d-flex align-items-center gap-3 mb-3">
-                                            @if($candidate->photo)
-                                                <img src="{{ asset('storage/' . $candidate->photo) }}" class="rounded-circle" width="55" height="55">
-                                            @endif
-                                            <div>
-                                                <h5 class="fw-bold mb-0">{{ $candidate->name }}</h5>
-                                                <div class="text-primary small fw-semibold">{{ $candidate->position->title }}</div>
-                                            </div>
-                                        </div>
-                                        @if($candidate->slogan)
-                                            <div class="p-2 bg-light rounded mb-3 small fw-bold text-center text-dark">
-                                                "{{ $candidate->slogan }}"
-                                            </div>
-                                        @endif
-                                        <h6 class="fw-bold text-dark small mb-1">Vision & Commitments:</h6>
-                                        <p class="small text-muted mb-0 whitespace-pre-line">{{ $candidate->manifesto }}</p>
-                                    </div>
-                                    <div class="modal-footer bg-light py-2">
-                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                     @empty
                         <div class="col-12">
                             <p class="text-muted small mb-0 text-center py-3">No approved candidates available for this position on the ballot.</p>
@@ -190,6 +159,44 @@
         </div>
     @endforelse
 </div>
+
+<!-- Manifesto Modals (Rendered outside nested loops to prevent flickering) -->
+@push('modals')
+@foreach($positions as $position)
+    @foreach($position->approvedCandidates as $candidate)
+        <div class="modal fade" id="manifestoModal{{ $candidate->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white py-3">
+                        <h5 class="modal-title fw-bold">{{ $candidate->name }} &mdash; Manifesto</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            @if($candidate->photo)
+                                <img src="{{ asset('storage/' . $candidate->photo) }}" class="rounded-circle" width="55" height="55">
+                            @endif
+                            <div>
+                                <h5 class="fw-bold mb-0">{{ $candidate->name }}</h5>
+                                <div class="text-primary small fw-semibold">{{ $candidate->position->title }}</div>
+                            </div>
+                        </div>
+                        @if($candidate->slogan)
+                            <div class="p-2 bg-light rounded mb-3 small fw-bold text-center text-dark">
+                                "{{ $candidate->slogan }}"
+                            </div>
+                        @endif
+                        <h6 class="fw-bold text-dark small mb-1">Vision & Commitments:</h6>
+                        <p class="small text-muted mb-0 whitespace-pre-line">{{ $candidate->manifesto }}</p>
+                    </div>
+                    <div class="modal-footer bg-light py-2">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+@endforeach
 
 <!-- Vote Confirmation Modal -->
 <div class="modal fade" id="confirmVoteModal" tabindex="-1" aria-hidden="true">
@@ -220,6 +227,7 @@
         </div>
     </div>
 </div>
+@endpush
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

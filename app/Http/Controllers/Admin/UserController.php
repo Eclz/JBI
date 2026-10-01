@@ -277,4 +277,14 @@ class UserController extends Controller
 
         return back()->with('success', "User {$status} successfully.");
     }
+
+    public function userLogs()
+    {
+        $logs = \App\Models\AuditLog::whereIn('action', ['login', 'logout'])
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        return view('admin.users.logs', compact('logs'));
+    }
 }

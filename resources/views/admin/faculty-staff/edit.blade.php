@@ -32,7 +32,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('first_name') is-invalid @enderror"
-                                       id="first_name" name="first_name" value="{{ old('first_name', $facultyStaff->first_name) }}" required>
+                                       id="first_name" name="first_name" value="{{ old('first_name', $facultyStaff->first_name ?? explode(' ', $facultyStaff->name)[0] ?? '') }}" required>
                                 @error('first_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -41,7 +41,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('last_name') is-invalid @enderror"
-                                       id="last_name" name="last_name" value="{{ old('last_name', $facultyStaff->last_name) }}" required>
+                                       id="last_name" name="last_name" value="{{ old('last_name', $facultyStaff->last_name ?? (count(explode(' ', $facultyStaff->name)) > 1 ? implode(' ', array_slice(explode(' ', $facultyStaff->name), 1)) : '')) }}" required>
                                 @error('last_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

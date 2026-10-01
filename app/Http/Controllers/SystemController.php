@@ -108,6 +108,8 @@ class SystemController extends Controller
             'semester_end_date' => 'nullable|date|after:semester_start_date',
             'semester_registration_start' => 'nullable|date',
             'semester_registration_end' => 'nullable|date|after:semester_registration_start',
+            'program_change_start' => 'nullable|date',
+            'program_change_end' => 'nullable|date|after:program_change_start',
             'reason_for_change' => 'nullable|string|max:1000',
         ]);
 
@@ -124,6 +126,16 @@ class SystemController extends Controller
 
         // Handle Academic Term updates
         if ($request->filled('current_academic_year_id')) {
+            $oldCurrent = AcademicYear::where('is_current', true)->first();
+            if ($oldCurrent && $oldCurrent->id != $request->current_academic_year_id) {
+                // Changing to a new academic year. 
+                // Automatically close all semesters from previous academic years
+                \App\Models\Semester::where('academic_year_id', '!=', $request->current_academic_year_id)
+                    ->update(['is_active' => false, 'is_current' => false]);
+                
+                $oldCurrent->update(['is_active' => false]);
+            }
+
             AcademicYear::where('is_current', true)->update(['is_current' => false]);
             AcademicYear::where('id', $request->current_academic_year_id)->update(['is_current' => true]);
         }

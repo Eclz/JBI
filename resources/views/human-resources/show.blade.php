@@ -46,7 +46,19 @@
                     @if($employee->hrProfile)
                         <div class="row mb-3">
                             <div class="col-sm-4 text-muted fw-semibold">Employee Number</div>
-                            <div class="col-sm-8">{{ $employee->hrProfile->employee_number }}</div>
+                            <div class="col-sm-8 d-flex align-items-center">
+                                @if($employee->hrProfile->employee_number)
+                                    {{ $employee->hrProfile->employee_number }}
+                                @else
+                                    <span class="text-warning me-2"><i class="bi bi-exclamation-triangle"></i> Not Assigned</span>
+                                    @if(auth()->user()->hasPermission('hr_core', 'edit'))
+                                        <form action="{{ route('human-resources.staff.generate-id', $employee) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Generate ID</button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-sm-4 text-muted fw-semibold">Job Title</div>

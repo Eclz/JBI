@@ -34,11 +34,19 @@ class ProfileController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|string|in:Male,Female,Other',
             'address' => 'nullable|string',
+            'emergency_contact' => 'nullable|string|max:255',
+            'emergency_phone' => 'nullable|string|max:20',
             'profile_picture' => 'nullable|image|max:2048',
         ]);
 
-        $userData = $request->only(['first_name', 'last_name', 'email', 'phone', 'address']);
+        $userData = $request->only([
+            'first_name', 'last_name', 'email', 'phone', 
+            'date_of_birth', 'gender', 'address', 
+            'emergency_contact', 'emergency_phone'
+        ]);
 
         if ($request->hasFile('profile_picture')) {
             if ($user->profile_picture) {

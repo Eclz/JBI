@@ -164,6 +164,8 @@
 
         /* Navbar Styles */
         .navbar {
+            position: relative;
+            z-index: 1040;
             height: var(--header-height);
             background-color: white;
             border-bottom: 1px solid #e9ecef;
@@ -1041,6 +1043,9 @@
             });
         }, 5000);
     </script>
+
+    <!-- Modals -->
+    @stack('modals')
 
     <!-- Page specific JS -->
     @stack('scripts')

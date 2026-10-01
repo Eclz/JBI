@@ -334,6 +334,9 @@ class DatabaseSeeder extends Seeder
         // Create some audit logs
         AuditLog::factory()->count(100)->create();
 
+        // Seed HR Job Roles
+        $this->call(HrJobRolesSeeder::class);
+
         // Output summary
         $this->command->info('Database seeded successfully with realistic JBI University data!');
         $this->command->info('Created:');

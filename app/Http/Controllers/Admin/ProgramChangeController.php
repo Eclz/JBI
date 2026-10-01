@@ -29,6 +29,54 @@ class ProgramChangeController extends Controller
         return view('admin.program-changes.index', compact('requests'));
     }
 
+    public function create()
+    {
+        $programs = Program::with('department')->where('is_active', true)->get();
+        $students = \App\Models\User::where('role', 'student')->has('studentProfile')->with('studentProfile.program')->get();
+        return view('admin.program-changes.create', compact('programs', 'students'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'requested_program_id' => 'required|exists:programs,id',
+            'reason' => 'required|string',
+            'auto_approve' => 'nullable|boolean',
+        ]);
+
+        $student = \App\Models\User::with('studentProfile')->findOrFail($request->user_id);
+        if (!$student->studentProfile) {
+            return back()->withErrors(['error' => 'Student profile not found.']);
+        }
+        if ($student->studentProfile->program_id == $request->requested_program_id) {
+            return back()->withErrors(['error' => 'Student is already in this program.']);
+        }
+
+        $existing = ProgramChangeRequest::where('user_id', $student->id)
+            ->where('status', 'pending')
+            ->first();
+            
+        if ($existing) {
+            return back()->withErrors(['error' => 'This student already has a pending program change request.']);
+        }
+
+        $change = ProgramChangeRequest::create([
+            'user_id' => $student->id,
+            'current_program_id' => $student->studentProfile->program_id,
+            'requested_program_id' => $request->requested_program_id,
+            'reason' => $request->reason,
+            'status' => 'pending',
+        ]);
+
+        if ($request->boolean('auto_approve')) {
+            $request->merge(['review_notes' => 'Auto-approved by admin upon creation.']);
+            return $this->approve($request, $change);
+        }
+
+        return redirect()->route('admin.program-changes.index')->with('success', 'Program change request created successfully.');
+    }
+
     public function approve(Request $request, ProgramChangeRequest $programChange)
     {
         $request->validate([
