@@ -315,6 +315,20 @@ Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')-
 
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Approval Hub (Registrar/SuperAdmin)
+    Route::prefix('approval-hub')->name('approval-hub.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'index'])->name('index');
+        Route::post('/quality/{quality}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approveQuality'])->name('quality.approve');
+        Route::post('/quality/{quality}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectQuality'])->name('quality.reject');
+        Route::post('/evaluation/{evaluation}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approveEvaluation'])->name('evaluation.approve');
+        Route::post('/evaluation/{evaluation}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectEvaluation'])->name('evaluation.reject');
+        Route::post('/budget/{budget}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approveBudget'])->name('budget.approve');
+        Route::post('/budget/{budget}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectBudget'])->name('budget.reject');
+        Route::post('/student-issue/{issue}/resolve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'resolveIssue'])->name('student-issue.resolve');
+        Route::post('/partnership/{partnership}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approvePartnership'])->name('partnership.approve');
+        Route::post('/partnership/{partnership}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectPartnership'])->name('partnership.reject');
+    });
+
     // User Management
     Route::middleware('permission:users,view')->group(function () {
         Route::resource('users', AdminUserController::class);
@@ -698,6 +712,33 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 // Faculty Routes
 Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')->group(function () {
+    // Dean Administration Routes
+    Route::prefix('dean')->name('dean.')->group(function () {
+        Route::middleware('permission:academic_quality,view')->group(function () {
+            Route::resource('/quality', \App\Http\Controllers\Faculty\Dean\QualityReviewController::class);
+            Route::post('/quality/{quality}/submit', [\App\Http\Controllers\Faculty\Dean\QualityReviewController::class, 'submit'])->name('quality.submit');
+        });
+        Route::middleware('permission:faculty_evaluations,view')->group(function () {
+            Route::resource('/evaluations', \App\Http\Controllers\Faculty\Dean\FacultyEvaluationController::class);
+            Route::post('/evaluations/{evaluation}/submit', [\App\Http\Controllers\Faculty\Dean\FacultyEvaluationController::class, 'submit'])->name('evaluations.submit');
+        });
+        Route::middleware('permission:budget_requests,view')->group(function () {
+            Route::get('/budgets', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'index'])->name('budgets.index');
+            Route::get('/budgets/create', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'create'])->name('budgets.create');
+            Route::post('/budgets', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'store'])->name('budgets.store');
+            Route::get('/budgets/{budget}', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'show'])->name('budgets.show');
+            Route::get('/budgets/{budget}/edit', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'edit'])->name('budgets.edit');
+            Route::put('/budgets/{budget}', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'update'])->name('budgets.update');
+            Route::post('/budgets/{budget}/submit', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'submit'])->name('budgets.submit');
+            Route::delete('/budgets/{budget}', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'destroy'])->name('budgets.destroy');
+        });
+        Route::middleware('permission:student_support,view')->group(function () {
+            Route::resource('/student-issues', App\Http\Controllers\Faculty\Dean\StudentIssueController::class);
+        });
+        Route::middleware('permission:external_relations,view')->group(function () {
+            Route::resource('/partnerships', App\Http\Controllers\Faculty\Dean\PartnershipController::class);
+        });
+    });
     Route::get('/dashboard', [FacultyDashboardController::class, 'index'])->name('dashboard');
     Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index')->middleware('permission:lms,view');
     Route::get('/lms/{course}', [FacultyLmsController::class, 'show'])->name('lms.show')->middleware('permission:lms,view');

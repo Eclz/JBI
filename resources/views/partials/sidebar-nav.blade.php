@@ -79,12 +79,14 @@
             // Group 1: Administration
             $isAdminActive = request()->routeIs('admin.users.*') ||
                              request()->routeIs('admin.roles.*') ||
-                             request()->routeIs('admin.settings*');
+                             request()->routeIs('admin.settings*') ||
+                             request()->routeIs('admin.approval-hub.*');
 
+            $canViewApprovalHub = auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('registrar') || auth()->user()->hasRole('admin');
             $canViewUsers = auth()->user()->hasPermission('users', 'view');
             $canViewRoles = auth()->user()->hasPermission('roles', 'view');
             $canViewSettings = auth()->user()->hasPermission('settings', 'view');
-            $canViewAdminGroup = $canViewUsers || $canViewRoles || $canViewSettings;
+            $canViewAdminGroup = $canViewUsers || $canViewRoles || $canViewSettings || $canViewApprovalHub;
 
             // Group 2: Admissions & People
             $isAdmissionsActive = request()->routeIs('admin.applications.*') ||
@@ -134,6 +136,7 @@
 
             // Group 5: Operations & Engagement
             $isOperationsActive = request()->routeIs('admin.timetables.*') ||
+                                  request()->routeIs('academic-calendar.*') ||
                                   request()->routeIs('admin.evoting.*') ||
                                   request()->routeIs('admin.evaluation-surveys.*');
 
@@ -152,6 +155,14 @@
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-group-menu" style="{{ $isAdminActive ? 'display: block;' : 'display: none;' }}">
+                @if($canViewApprovalHub)
+                <li class="submenu-item {{ request()->routeIs('admin.approval-hub.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.approval-hub.index') }}" class="submenu-link fw-semibold text-primary-light">
+                        <i class="bi bi-inboxes"></i>
+                        <span>Central Approval Hub</span>
+                    </a>
+                </li>
+                @endif
                 @if($canViewUsers)
                 <li class="submenu-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.users.index') }}" class="submenu-link">
@@ -447,6 +458,12 @@
                         <span>Timetable Management</span>
                     </a>
                 </li>
+                <li class="submenu-item {{ request()->routeIs('academic-calendar.*') ? 'active' : '' }}">
+                    <a href="{{ route('academic-calendar.index') }}" class="submenu-link">
+                        <i class="bi bi-calendar-week"></i>
+                        <span>Master Calendar</span>
+                    </a>
+                </li>
                 @endif
                 @if($canViewEvoting)
                 <li class="submenu-item {{ request()->routeIs('admin.evoting.*') ? 'active' : '' }}">
@@ -472,6 +489,69 @@
         {{-- ==================== FACULTY NAVIGATION ==================== --}}
         @if(auth()->user()->isFaculty())
         <li class="menu-header">Faculty</li>
+
+        @php
+            $isDeanActive = request()->routeIs('faculty.dean.*');
+            $canViewDean = auth()->user()->hasRole('dean') || 
+                           auth()->user()->hasPermission('academic_quality', 'view') || 
+                           auth()->user()->hasPermission('faculty_evaluations', 'view') || 
+                           auth()->user()->hasPermission('budget_requests', 'view') || 
+                           auth()->user()->hasPermission('student_support', 'view') || 
+                           auth()->user()->hasPermission('external_relations', 'view');
+        @endphp
+
+        @if($canViewDean)
+        {{-- Dean Administration (collapsible) --}}
+        <li class="sidebar-group {{ $isDeanActive ? 'has-active-child' : '' }}" data-group-id="dean-admin">
+            <button type="button" class="sidebar-group-toggle {{ $isDeanActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'dean-admin')">
+                <i class="bi bi-briefcase-fill group-icon"></i>
+                <span class="group-title">Dean Administration</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isDeanActive ? 'display: block;' : 'display: none;' }}">
+                @if(auth()->user()->hasPermission('academic_quality', 'view'))
+                <li class="submenu-item {{ request()->routeIs('faculty.dean.quality.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.dean.quality.index') }}" class="submenu-link">
+                        <i class="bi bi-award"></i>
+                        <span>Academic Quality</span>
+                    </a>
+                </li>
+                @endif
+                @if(auth()->user()->hasPermission('faculty_evaluations', 'view'))
+                <li class="submenu-item {{ request()->routeIs('faculty.dean.evaluations.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.dean.evaluations.index') }}" class="submenu-link">
+                        <i class="bi bi-person-check"></i>
+                        <span>Faculty Evaluations</span>
+                    </a>
+                </li>
+                @endif
+                @if(auth()->user()->hasPermission('budget_requests', 'view'))
+                <li class="submenu-item {{ request()->routeIs('faculty.dean.budgets.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.dean.budgets.index') }}" class="submenu-link">
+                        <i class="bi bi-wallet2"></i>
+                        <span>Budget Requests</span>
+                    </a>
+                </li>
+                @endif
+                @if(auth()->user()->hasPermission('student_support', 'view'))
+                <li class="submenu-item {{ request()->routeIs('faculty.dean.student-issues.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.dean.student-issues.index') }}" class="submenu-link">
+                        <i class="bi bi-life-preserver"></i>
+                        <span>Student Support</span>
+                    </a>
+                </li>
+                @endif
+                @if(auth()->user()->hasPermission('external_relations', 'view'))
+                <li class="submenu-item {{ request()->routeIs('faculty.dean.partnerships.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.dean.partnerships.index') }}" class="submenu-link">
+                        <i class="bi bi-globe"></i>
+                        <span>External Relations</span>
+                    </a>
+                </li>
+                @endif
+            </ul>
+        </li>
+        @endif
 
         <li class="menu-item {{ request()->routeIs('faculty.courses.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.courses.index') }}" class="menu-link">

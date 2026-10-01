@@ -46,6 +46,11 @@ class DashboardController extends Controller
         $isAdmitted = ($studentProfile && $studentProfile->status === 'active') || ($application && in_array($application->status, ['admitted', 'approved']));
         $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null) || ($studentProfile && $studentProfile->status === 'active' && !$application);
 
+        // Prevent active and admitted students who have acknowledged from returning to the admissions page
+        if ($requestedAdmissionView && $studentProfile && $studentProfile->status === 'active' && $hasAcknowledged) {
+            return redirect()->route('student.dashboard');
+        }
+
         // Check if student is not admitted, or has not yet acknowledged admission onboarding, or explicitly requested admission view
         if (!$studentProfile || $studentProfile->status !== 'active' || ($isAdmitted && !$hasAcknowledged) || $requestedAdmissionView) {
             $programs = \App\Models\Program::where('is_active', true)

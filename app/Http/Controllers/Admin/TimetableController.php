@@ -30,12 +30,23 @@ class TimetableController extends Controller
             $query->where('year_of_study', $request->year_of_study);
         }
 
-        $timetables = $query->orderBy('day_of_week')->orderBy('start_time')->paginate(20);
+        $timetables = (clone $query)->orderBy('day_of_week')->orderBy('start_time')->paginate(20);
+        $allSlots = $query->orderBy('day_of_week')->orderBy('start_time')->get();
         $programs = Program::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::all();
 
-        return view('admin.timetables.index', compact('timetables', 'programs', 'academicYears', 'semesters'));
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        $timeSlots = [
+            '06:00 - 06:30', '06:30 - 07:00', '07:00 - 07:30', '07:30 - 08:00',
+            '08:00 - 08:30', '08:30 - 09:00', '09:00 - 09:30', '09:30 - 10:00',
+            '10:00 - 10:30', '10:30 - 11:00', '11:00 - 11:30', '11:30 - 12:00',
+            '12:00 - 12:30', '12:30 - 13:00', '13:00 - 13:30', '13:30 - 14:00',
+            '14:00 - 14:30', '14:30 - 15:00', '15:00 - 15:30', '15:30 - 16:00',
+            '16:00 - 17:00',
+        ];
+
+        return view('admin.timetables.index', compact('timetables', 'allSlots', 'programs', 'academicYears', 'semesters', 'days', 'timeSlots'));
     }
 
     public function create()

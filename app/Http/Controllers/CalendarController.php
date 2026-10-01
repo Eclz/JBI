@@ -44,6 +44,10 @@ class CalendarController extends Controller
                     'end' => $exam->end_time->toIso8601String(),
                     'backgroundColor' => '#dc3545', // danger
                     'borderColor' => '#dc3545',
+                    'extendedProps' => [
+                        'description' => 'Course: ' . ($exam->course->name ?? '') . '<br>Duration: ' . ($exam->duration_minutes ?? 120) . ' mins',
+                        'type' => 'Examination'
+                    ]
                 ];
             }
         }
@@ -58,6 +62,10 @@ class CalendarController extends Controller
                     'allDay' => true,
                     'backgroundColor' => '#0d6efd', // primary
                     'borderColor' => '#0d6efd',
+                    'extendedProps' => [
+                        'description' => 'Course: ' . ($assign->course->name ?? '') . '<br>Max Score: ' . ($assign->max_score ?? 100),
+                        'type' => 'Assignment'
+                    ]
                 ];
             }
         }
@@ -74,13 +82,17 @@ class CalendarController extends Controller
                         'allDay' => true,
                         'backgroundColor' => '#198754', // success
                         'borderColor' => '#198754',
+                        'extendedProps' => [
+                            'description' => 'Staff: ' . ($leave->user->full_name ?? '') . '<br>Type: ' . ($leave->leave_type ?? 'Leave') . '<br>Status: Approved',
+                            'type' => 'Staff Leave'
+                        ]
                     ];
                 }
             }
         }
 
         // System configuration dates (Semester, Registration, Program Change)
-        $settings = \App\Models\SystemSettings::pluck('value', 'key');
+        $settings = \App\Models\SystemSetting::pluck('value', 'key');
         
         if (isset($settings['semester_start_date']) && isset($settings['semester_end_date'])) {
             $events[] = [
@@ -90,6 +102,10 @@ class CalendarController extends Controller
                 'allDay' => true,
                 'backgroundColor' => '#0dcaf0', // info
                 'borderColor' => '#0dcaf0',
+                'extendedProps' => [
+                    'description' => 'Official academic semester duration.',
+                    'type' => 'Academic Event'
+                ]
             ];
         }
 
@@ -101,6 +117,10 @@ class CalendarController extends Controller
                 'allDay' => true,
                 'backgroundColor' => '#ffc107', // warning
                 'borderColor' => '#ffc107',
+                'extendedProps' => [
+                    'description' => 'Period for students to register for courses.',
+                    'type' => 'Academic Event'
+                ]
             ];
         }
         
@@ -112,6 +132,10 @@ class CalendarController extends Controller
                 'allDay' => true,
                 'backgroundColor' => '#6610f2', // purple
                 'borderColor' => '#6610f2',
+                'extendedProps' => [
+                    'description' => 'Period for students to request program changes.',
+                    'type' => 'Academic Event'
+                ]
             ];
         }
 

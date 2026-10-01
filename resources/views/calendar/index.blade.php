@@ -83,6 +83,36 @@
             </div>
         </div>
     </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" id="eventModalHeader">
+                <h5 class="modal-title fw-bold" id="eventDetailsModalLabel"><i class="bi bi-calendar-event me-2"></i>Event Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h4 id="eventModalTitle" class="fw-bold text-dark mb-3"></h4>
+                <div class="mb-3 d-flex align-items-center text-muted small">
+                    <i class="bi bi-tag-fill me-2 text-primary"></i>
+                    <span id="eventModalType" class="fw-semibold"></span>
+                </div>
+                <div class="mb-3 d-flex align-items-center text-muted small">
+                    <i class="bi bi-clock-fill me-2 text-danger"></i>
+                    <span id="eventModalTime"></span>
+                </div>
+                <div class="p-3 bg-light rounded-3 small text-secondary" id="eventModalDescription">
+                    <!-- Description goes here -->
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -143,9 +173,25 @@
             navLinks: true, // can click day/week names to navigate views
             dayMaxEvents: true, // allow "more" link when too many events
             eventClick: function(info) {
-                // Could open a modal with info here
+                // Populate Modal with Event Data
+                var title = info.event.title;
+                var start = info.event.start ? info.event.start.toLocaleString() : '';
+                var end = info.event.end ? ' - ' + info.event.end.toLocaleString() : '';
+                var type = info.event.extendedProps.type || 'Event';
+                var description = info.event.extendedProps.description || 'No additional details provided.';
+                var bgColor = info.event.backgroundColor || '#0d6efd';
+
+                document.getElementById('eventModalTitle').innerText = title;
+                document.getElementById('eventModalType').innerText = type;
+                document.getElementById('eventModalTime').innerText = info.event.allDay ? 'All Day Event' : start + end;
+                document.getElementById('eventModalDescription').innerHTML = description;
+                document.getElementById('eventModalHeader').style.backgroundColor = bgColor;
+
+                // Show Modal
+                var eventModal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
+                eventModal.show();
+                
                 if(info.event.url) {
-                    window.open(info.event.url);
                     info.jsEvent.preventDefault();
                 }
             }

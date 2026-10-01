@@ -51,6 +51,11 @@ return [
         'assets' => 'Asset Management',
         'banking' => 'Banking & Cash',
         'financial_statements' => 'Financial Statements',
+        'academic_quality' => 'Academic Quality & Reviews',
+        'faculty_evaluations' => 'Faculty Evaluations',
+        'budget_requests' => 'Budget Requests',
+        'student_support' => 'Student Support & Issues',
+        'external_relations' => 'External Relations & Partnerships',
     ],
 
     'defaults' => [

@@ -26,7 +26,7 @@ class PermissionMiddleware
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Access denied. You do not have permission to perform this action.'], 403);
             }
-            return redirect()->route('dashboard')->with('error', 'Access denied. You do not have permission to access this area.');
+            abort(403, 'Access denied. You do not have permission to access this area.');
         }
 
         return $next($request);

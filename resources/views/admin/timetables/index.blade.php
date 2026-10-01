@@ -119,5 +119,57 @@
             @endif
         </div>
     </div>
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function toggleTimetableView(view) {
+        const gridView = document.getElementById('grid-view');
+        const listView = document.getElementById('list-view');
+        const btnGrid = document.getElementById('btnGrid').nextElementSibling;
+        const btnList = document.getElementById('btnList').nextElementSibling;
+
+        if (view === 'grid') {
+            if(gridView) gridView.classList.remove('d-none');
+            if(listView) listView.classList.add('d-none');
+            
+            if(btnGrid) {
+                btnGrid.classList.remove('bg-white');
+                btnGrid.classList.add('btn-primary', 'text-white');
+            }
+            if(btnList) {
+                btnList.classList.add('bg-white');
+                btnList.classList.remove('btn-primary', 'text-white');
+            }
+        } else {
+            if(gridView) gridView.classList.add('d-none');
+            if(listView) listView.classList.remove('d-none');
+            
+            if(btnList) {
+                btnList.classList.remove('bg-white');
+                btnList.classList.add('btn-primary', 'text-white');
+            }
+            if(btnGrid) {
+                btnGrid.classList.add('bg-white');
+                btnGrid.classList.remove('btn-primary', 'text-white');
+            }
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        if(document.getElementById('btnGrid')) {
+            document.getElementById('btnGrid').nextElementSibling.classList.remove('bg-white');
+            document.getElementById('btnGrid').nextElementSibling.classList.add('btn-primary', 'text-white');
+        }
+    });
+</script>
+<style>
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+</style>
+@endpush
