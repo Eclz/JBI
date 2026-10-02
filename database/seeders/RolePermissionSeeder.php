@@ -21,7 +21,7 @@ class RolePermissionSeeder extends Seeder
         $rolePermissions = [
             'super_administrator' => $all,
             'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports'], $actions),
-            'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
+            'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports', 'academic_quality', 'faculty_evaluations', 'budget_requests', 'student_support', 'external_relations'], ['view', 'create', 'edit', 'approve', 'export']),
             'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
             'lecturer' => $this->matrix(['courses', 'attendance', 'grades', 'lms', 'exams'], ['view', 'create', 'edit']),
             'finance_officer' => array_merge_recursive(
