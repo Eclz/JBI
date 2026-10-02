@@ -50,6 +50,14 @@
                 <span>Dashboard</span>
             </a>
         </li>
+        @if(auth()->user()->isAdmin() && auth()->user()->hasPermission('students', 'view'))
+        <li class="menu-item {{ request()->routeIs('admin.registrar.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.registrar.dashboard') }}" class="menu-link">
+                <i class="bi bi-bank2"></i>
+                <span>Registrar Hub</span>
+            </a>
+        </li>
+        @endif
         @elseif(auth()->user()->isStudent())
         <li class="menu-item {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
             <a href="{{ route('student.dashboard') }}" class="menu-link">

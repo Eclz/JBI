@@ -315,6 +315,11 @@ Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')-
 
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Registrar Hub
+    Route::middleware('permission:students,view')->prefix('registrar')->name('registrar.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'dashboard'])->name('dashboard');
+    });
+
     // Approval Hub (Registrar/SuperAdmin)
     Route::prefix('approval-hub')->name('approval-hub.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'index'])->name('index');
