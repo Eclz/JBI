@@ -739,6 +739,17 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
             Route::resource('/partnerships', App\Http\Controllers\Faculty\Dean\PartnershipController::class);
         });
     });
+
+    // HOD Administration Routes
+    Route::prefix('hod')->name('hod.')->group(function () {
+        Route::get('/department', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'index'])->name('department.index');
+        Route::get('/department/programs', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'programs'])->name('department.programs');
+        Route::get('/department/lecturers', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'lecturers'])->name('department.lecturers');
+        Route::get('/department/courses', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'courses'])->name('department.courses');
+        
+        Route::get('/students', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'index'])->name('students.index');
+        Route::get('/students/{id}', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'show'])->name('students.show');
+    });
     Route::get('/dashboard', [FacultyDashboardController::class, 'index'])->name('dashboard');
     Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index')->middleware('permission:lms,view');
     Route::get('/lms/{course}', [FacultyLmsController::class, 'show'])->name('lms.show')->middleware('permission:lms,view');

@@ -553,6 +553,48 @@
         </li>
         @endif
 
+        @php
+            $isHodActive = request()->routeIs('faculty.hod.*');
+            $canViewHod = auth()->user()->hasRole('hod');
+        @endphp
+
+        @if($canViewHod)
+        {{-- HOD Administration (collapsible) --}}
+        <li class="sidebar-group {{ $isHodActive ? 'has-active-child' : '' }}" data-group-id="hod-admin">
+            <button type="button" class="sidebar-group-toggle {{ $isHodActive ? 'has-active-child is-open' : '' }}" onclick="toggleSidebarGroup(this, 'hod-admin')">
+                <i class="bi bi-diagram-3-fill group-icon"></i>
+                <span class="group-title">HOD Administration</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-group-menu" style="{{ $isHodActive ? 'display: block;' : 'display: none;' }}">
+                <li class="submenu-item {{ request()->routeIs('faculty.hod.department.index') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.hod.department.index') }}" class="submenu-link">
+                        <i class="bi bi-building"></i>
+                        <span>Department Overview</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('faculty.hod.students.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.hod.students.index') }}" class="submenu-link">
+                        <i class="bi bi-people"></i>
+                        <span>Student Management</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('faculty.hod.department.lecturers') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.hod.department.lecturers') }}" class="submenu-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Faculty Members</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('faculty.hod.department.programs') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.hod.department.programs') }}" class="submenu-link">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Programmes</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        @endif
+
         <li class="menu-item {{ request()->routeIs('faculty.courses.*') ? 'active' : '' }}">
             <a href="{{ route('faculty.courses.index') }}" class="menu-link">
                 <i class="bi bi-journal-text"></i>
