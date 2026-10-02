@@ -746,6 +746,7 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         Route::get('/department/programs', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'programs'])->name('department.programs');
         Route::get('/department/lecturers', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'lecturers'])->name('department.lecturers');
         Route::get('/department/courses', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'courses'])->name('department.courses');
+        Route::post('/department/courses/{course}/assign', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'assignLecturer'])->name('department.courses.assign');
         
         Route::get('/students', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'index'])->name('students.index');
         Route::get('/students/{id}', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'show'])->name('students.show');

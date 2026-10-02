@@ -53,7 +53,31 @@ class DepartmentController extends Controller
     public function courses()
     {
         $department = $this->getDepartment();
-        $courses = Course::where('department_id', $department->id)->paginate(15);
-        return view('faculty.hod.department.courses', compact('department', 'courses'));
+        $courses = Course::with('instructor')->where('department_id', $department->id)->paginate(15);
+        
+        // Get available lecturers for this department
+        $lecturers = \App\Models\User::where('role', 'faculty')
+            ->whereHas('facultyProfile', function($query) use ($department) {
+                $query->where('department_id', $department->id);
+            })->get();
+
+        return view('faculty.hod.department.courses', compact('department', 'courses', 'lecturers'));
+    }
+
+    public function assignLecturer(Request $request, Course $course)
+    {
+        $department = $this->getDepartment();
+        
+        // Ensure the course belongs to the HOD's department
+        if ($course->department_id !== $department->id) {
+            abort(403, 'Unauthorized access to this course.');
+        }
+
+        $request->validate([
+            'instructor_id' => 'required|exists:users,id',
+        ]);
+
+        $course->update(['instructor_id' => $request->instructor_id]);
+        return back()->with('success', 'Lecturer assigned to course successfully.');
     }
 }
