@@ -320,6 +320,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/dashboard', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'dashboard'])->name('dashboard');
     });
 
+    // Hostel Management
+    Route::middleware('permission:students,view')->prefix('hostel')->name('hostel.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\HostelController::class, 'index'])->name('index');
+        Route::post('/hostel', [\App\Http\Controllers\Admin\HostelController::class, 'storeHostel'])->name('storeHostel');
+        Route::post('/hostel/{hostel}/room', [\App\Http\Controllers\Admin\HostelController::class, 'storeRoom'])->name('storeRoom');
+        Route::post('/allocation/{allocation}/approve', [\App\Http\Controllers\Admin\HostelController::class, 'approveAllocation'])->name('approveAllocation');
+        Route::post('/allocation/{allocation}/reject', [\App\Http\Controllers\Admin\HostelController::class, 'rejectAllocation'])->name('rejectAllocation');
+    });
+
     // Approval Hub (Registrar/SuperAdmin)
     Route::prefix('approval-hub')->name('approval-hub.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'index'])->name('index');
@@ -944,6 +953,10 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::delete('/enrollment/unenroll/{course}', [StudentProgrammeCoursesController::class, 'unenroll'])->name('enrollment.unenroll');
     Route::get('/admission-letter', [StudentDashboardController::class, 'showAdmissionLetter'])->name('admission-letter.show');
     Route::match(['get', 'post'], '/dashboard/acknowledge', [StudentDashboardController::class, 'acknowledgeAdmission'])->name('dashboard.acknowledge');
+
+    // Hostel Management
+    Route::get('/hostel', [\App\Http\Controllers\Student\HostelController::class, 'index'])->name('hostel.index');
+    Route::post('/hostel/request', [\App\Http\Controllers\Student\HostelController::class, 'requestRoom'])->name('hostel.request');
 });
 
 

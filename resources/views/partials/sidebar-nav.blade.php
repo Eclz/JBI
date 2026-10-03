@@ -1045,6 +1045,15 @@
         </li>
         @endif
 
+        @if(auth()->user()->isStudent())
+        <li class="menu-item {{ request()->routeIs('student.hostel.*') ? 'active' : '' }}">
+            <a href="{{ route('student.hostel.index') }}" class="menu-link">
+                <i class="bi bi-building"></i>
+                <span>Accommodation & Hostels</span>
+            </a>
+        </li>
+        @endif
+
         {{-- ==================== COMMON (PINNED AT BOTTOM) ==================== --}}
         <li class="menu-header">Common</li>
 
