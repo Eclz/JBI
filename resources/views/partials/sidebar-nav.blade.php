@@ -57,6 +57,12 @@
                 <span>Registrar Hub</span>
             </a>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.hostel.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.hostel.index') }}" class="menu-link">
+                <i class="bi bi-building-gear"></i>
+                <span>Hostel Management</span>
+            </a>
+        </li>
         @endif
         @elseif(auth()->user()->isStudent())
         <li class="menu-item {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
@@ -597,6 +603,12 @@
                     <a href="{{ route('faculty.hod.department.programs') }}" class="submenu-link">
                         <i class="bi bi-journal-bookmark"></i>
                         <span>Programmes</span>
+                    </a>
+                </li>
+                <li class="submenu-item {{ request()->routeIs('faculty.hod.operations.*') ? 'active' : '' }}">
+                    <a href="{{ route('faculty.hod.operations.index') }}" class="submenu-link" style="border-left: 2px solid #ffc107;">
+                        <i class="bi bi-briefcase text-warning"></i>
+                        <span class="fw-bold">Operations Hub</span>
                     </a>
                 </li>
             </ul>
