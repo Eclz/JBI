@@ -566,6 +566,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::get('/assets/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editAsset'])->name('assets.edit')->middleware('permission:assets,update');
             Route::put('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateAsset'])->name('assets.update')->middleware('permission:assets,update');
             Route::delete('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyAsset'])->name('assets.destroy')->middleware('permission:assets,delete');
+
+            // Procurement & Requisitions
+            Route::get('/procurement', [\App\Http\Controllers\Admin\ProcurementController::class, 'index'])->name('procurement.index');
+            Route::post('/procurement/{requisition}/approve', [\App\Http\Controllers\Admin\ProcurementController::class, 'approve'])->name('procurement.approve');
+            Route::post('/procurement/{requisition}/reject', [\App\Http\Controllers\Admin\ProcurementController::class, 'reject'])->name('procurement.reject');
         });
 
         Route::middleware('permission:banking,view')->group(function () {
@@ -764,6 +769,17 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         
         Route::get('/students', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'index'])->name('students.index');
         Route::get('/students/{id}', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'show'])->name('students.show');
+
+        // HOD Operations Hub
+        Route::get('/operations', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'index'])->name('operations.index');
+        Route::post('/operations/leave/{leave}/approve', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'approveLeave'])->name('operations.leave.approve');
+        Route::post('/operations/leave/{leave}/reject', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'rejectLeave'])->name('operations.leave.reject');
+        Route::post('/operations/program-change/{programChange}/endorse', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'endorseProgramChange'])->name('operations.program-change.endorse');
+        Route::post('/operations/moderate-grades/{assignment}', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'moderateGrades'])->name('operations.moderate-grades');
+
+        // HOD Procurement Requisitions
+        Route::get('/requisitions', [\App\Http\Controllers\Faculty\HOD\RequisitionController::class, 'index'])->name('requisitions.index');
+        Route::post('/requisitions', [\App\Http\Controllers\Faculty\HOD\RequisitionController::class, 'store'])->name('requisitions.store');
     });
     Route::get('/dashboard', [FacultyDashboardController::class, 'index'])->name('dashboard');
     Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index')->middleware('permission:lms,view');
@@ -855,6 +871,7 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
 // Student Routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/id-card', [StudentDashboardController::class, 'idCard'])->name('id-card');
     Route::get('/lms', [StudentLmsController::class, 'index'])->name('lms.index');
     Route::get('/lms/{course}', [StudentLmsController::class, 'show'])->name('lms.show');
     Route::post('/lms/{course}/complete', [StudentLmsController::class, 'markComplete'])->name('lms.complete');
