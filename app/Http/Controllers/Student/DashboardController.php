@@ -328,4 +328,21 @@ class DashboardController extends Controller
 
         return redirect()->route('student.dashboard')->with('success', 'Welcome to your Student Portal!');
     }
+
+    public function idCard()
+    {
+        $student = Auth::user();
+        $studentProfile = $student->studentProfile()->with('department')->first();
+        
+        if (!$studentProfile || !$studentProfile->isActive()) {
+            return redirect()->route('student.dashboard')->with('error', 'Your student profile is not active. ID Card cannot be generated.');
+        }
+
+        $program = $studentProfile->program ?? 'N/A';
+        $department = $studentProfile->department->name ?? 'N/A';
+        $bloodGroup = 'O+'; // Normally from medical records, placeholder for now
+        $emergencyContact = $studentProfile->guardian_phone ?? 'N/A';
+
+        return view('student.id_card', compact('student', 'studentProfile', 'program', 'department', 'bloodGroup', 'emergencyContact'));
+    }
 }
