@@ -28,7 +28,7 @@ class HostelController extends Controller
         ]);
 
         Hostel::create($request->all());
-        return back()->with('success', 'Hostel created successfully.');
+        return back()->with('success', 'Hall of Residence created successfully.');
     }
 
     public function storeRoom(Request $request, Hostel $hostel)
@@ -40,7 +40,7 @@ class HostelController extends Controller
         ]);
 
         $hostel->rooms()->create($request->all());
-        return back()->with('success', 'Room added to hostel successfully.');
+        return back()->with('success', 'Room added to hall successfully.');
     }
 
     public function approveAllocation(HostelAllocation $allocation)

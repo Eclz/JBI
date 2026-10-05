@@ -7,7 +7,7 @@
         <div class="col-12">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                 <div class="card-body p-4 text-white">
-                    <h3 class="mb-2 fw-bold"><i class="bi bi-building me-2"></i>Hostel & Accommodation</h3>
+                    <h3 class="mb-2 fw-bold"><i class="bi bi-building me-2"></i>Hall of Residence & Accommodation</h3>
                     <p class="mb-0" style="color: rgba(255, 255, 255, 0.9);">
                         Manage your campus living arrangements and request accommodation.
                     </p>
@@ -49,7 +49,7 @@
                             <div class="col-md-9">
                                 <div class="row g-3">
                                     <div class="col-sm-6">
-                                        <p class="text-muted mb-1 small text-uppercase fw-semibold">Hostel Name</p>
+                                        <p class="text-muted mb-1 small text-uppercase fw-semibold">Hall Name</p>
                                         <p class="fw-bold mb-0 fs-5">{{ $allocation->room->hostel->name }}</p>
                                     </div>
                                     <div class="col-sm-6">
@@ -84,7 +84,7 @@
             </div>
         </div>
 
-        <!-- Available Hostels -->
+        <!-- Available Halls -->
         @if(!$allocation || in_array($allocation->status, ['rejected', 'vacated']))
         <div class="col-lg-12">
             <h5 class="fw-bold mb-3" style="color: #212529;">Request Accommodation</h5>
@@ -125,7 +125,7 @@
                 @empty
                     <div class="col-12">
                         <div class="alert alert-info border-0 shadow-sm">
-                            <i class="bi bi-info-circle-fill me-2"></i> No hostels with available rooms found at this time.
+                            <i class="bi bi-info-circle-fill me-2"></i> No halls of residence with available rooms found at this time.
                         </div>
                     </div>
                 @endforelse

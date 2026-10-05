@@ -60,7 +60,7 @@
         <li class="menu-item {{ request()->routeIs('admin.hostel.*') ? 'active' : '' }}">
             <a href="{{ route('admin.hostel.index') }}" class="menu-link">
                 <i class="bi bi-building-gear"></i>
-                <span>Hostel Management</span>
+                <span>Halls of Residence</span>
             </a>
         </li>
         @endif
@@ -1061,7 +1061,7 @@
         <li class="menu-item {{ request()->routeIs('student.hostel.*') ? 'active' : '' }}">
             <a href="{{ route('student.hostel.index') }}" class="menu-link">
                 <i class="bi bi-building"></i>
-                <span>Accommodation & Hostels</span>
+                <span>Accommodation & Halls</span>
             </a>
         </li>
         @endif

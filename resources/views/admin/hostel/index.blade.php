@@ -5,11 +5,11 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="mb-1 fw-bold text-dark"><i class="bi bi-building-gear me-2"></i>Hostel Management</h3>
-            <p class="text-muted mb-0">Manage university hostels, rooms, and student allocations.</p>
+            <h3 class="mb-1 fw-bold text-dark"><i class="bi bi-building-gear me-2"></i>Hall of Residence Management</h3>
+            <p class="text-muted mb-0">Manage university halls, rooms, and student allocations.</p>
         </div>
         <button type="button" class="btn btn-primary shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#createHostelModal">
-            <i class="bi bi-plus-lg me-1"></i> Add New Hostel
+            <i class="bi bi-plus-lg me-1"></i> Add New Hall
         </button>
     </div>
 
@@ -42,7 +42,7 @@
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="mb-0 fw-bold" style="color: #212529;">University Hostels</h5>
+                    <h5 class="mb-0 fw-bold" style="color: #212529;">University Halls</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
@@ -112,8 +112,8 @@
                             <div class="col-12">
                                 <div class="text-center py-5 text-muted">
                                     <i class="bi bi-building-x fs-1 mb-3 d-block"></i>
-                                    <h5>No Hostels Found</h5>
-                                    <p>Get started by adding a new hostel to the system.</p>
+                                    <h5>No Halls Found</h5>
+                                    <p>Get started by adding a new hall to the system.</p>
                                 </div>
                             </div>
                         @endforelse
@@ -134,7 +134,7 @@
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-4">Student</th>
-                                    <th>Hostel & Room</th>
+                                    <th>Hall & Room</th>
                                     <th>Semester</th>
                                     <th>Request Date</th>
                                     <th>Status</th>
@@ -219,11 +219,11 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Hostel Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Hall Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="name" required placeholder="e.g. Mandela Hall">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Hostel Type <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Hall Type <span class="text-danger">*</span></label>
                             <select class="form-select" name="type" required>
                                 <option value="male">Male Only</option>
                                 <option value="female">Female Only</option>
@@ -240,13 +240,13 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Description</label>
-                            <textarea class="form-control" name="description" rows="3" placeholder="Brief details about the hostel amenities..."></textarea>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Brief details about the hall amenities..."></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary fw-bold px-4">Create Hostel</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Create Hall</button>
                 </div>
             </div>
         </form>
