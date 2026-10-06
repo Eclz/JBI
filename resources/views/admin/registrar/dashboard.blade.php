@@ -32,7 +32,7 @@
                             <h3 class="mb-0 text-dark">{{ number_format($totalStudents) }}</h3>
                         </div>
                         <div class="p-3 bg-primary bg-opacity-10 rounded">
-                            <i class="bi bi-people-fill fs-4 text-primary"></i>
+                            <i class="bi bi-people-fill fs-4 text-white"></i>
                         </div>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
                             <h3 class="mb-0 text-dark">{{ $totalPrograms }}</h3>
                         </div>
                         <div class="p-3 bg-warning bg-opacity-10 rounded">
-                            <i class="bi bi-journal-bookmark-fill fs-4 text-warning"></i>
+                            <i class="bi bi-journal-bookmark-fill fs-4 text-white"></i>
                         </div>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm me-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center" style="width: 32px; height: 32px;">
+                                                <div class="avatar avatar-sm me-3 bg-primary bg-opacity-10 text-whiterounded-circle d-flex justify-content-center align-items-center" style="width: 32px; height: 32px;">
                                                     {{ strtoupper(substr($student->first_name, 0, 1)) }}
                                                 </div>
                                                 <div>
@@ -160,7 +160,7 @@
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
                         <a href="{{ route('admin.approval-hub.index') }}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                            <div class="p-2 bg-primary bg-opacity-10 text-primary rounded me-3">
+                            <div class="p-2 bg-primary bg-opacity-10 text-white rounded me-3">
                                 <i class="bi bi-check-circle-fill"></i>
                             </div>
                             <div>
@@ -190,7 +190,7 @@
                             <i class="bi bi-chevron-right ms-auto text-muted"></i>
                         </a>
                         <a href="{{ route('admin.faculties.index') }}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                            <div class="p-2 bg-warning bg-opacity-10 text-warning rounded me-3">
+                            <div class="p-2 bg-warning bg-opacity-10 text-white rounded me-3">
                                 <i class="bi bi-building"></i>
                             </div>
                             <div>
