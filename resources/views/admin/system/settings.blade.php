@@ -19,7 +19,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <i class="bi bi-person-lines-fill fs-4 text-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }} me-2"></i>
-                        <h6 class="mb-0 fw-bold">Admissions</h6>
+                        <h6 class="mb-0 fw-bold">Admission applications</h6>
                     </div>
                     <div class="h5 mb-1 text-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }} fw-bold text-uppercase">{{ $admissionWindow['status'] }}</div>
                     <div class="small text-muted">Prospective students applying to JBI</div>
@@ -34,7 +34,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <i class="bi bi-journal-check fs-4 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }} me-2"></i>
-                        <h6 class="mb-0 fw-bold">Registration</h6>
+                        <h6 class="mb-0 fw-bold">Semester registration</h6>
                     </div>
                     <div class="h5 mb-1 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }} fw-bold text-uppercase">{{ $courseRegistrationOpen ? 'Open' : 'Closed' }}</div>
                     <div class="small text-muted">Admitted students enrolling in courses</div>
@@ -383,7 +383,7 @@
                 <div class="tab-pane fade" id="content-admissions" role="tabpanel">
                     <div class="mb-4 d-flex justify-content-between align-items-start">
                         <div>
-                            <h3 class="h5 fw-bold mb-1">Admissions</h3>
+                            <h3 class="h5 fw-bold mb-1">Admission applications</h3>
                             <p class="text-muted mb-0">Manage prospective student application windows.</p>
                         </div>
                         <div class="d-flex gap-2 flex-shrink-0">
@@ -394,7 +394,7 @@
 
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
-                            <h6 class="fw-bold mb-4 border-bottom pb-2">Application Window</h6>
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Admission Application Window</h6>
 
                             <div class="alert alert-info py-3 mb-4">
                                 <div class="d-flex align-items-center">
