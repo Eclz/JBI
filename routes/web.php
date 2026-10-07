@@ -216,6 +216,8 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
 // Human resources module routes
 Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')->group(function () {
     Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
+    Route::get('/section/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('section');
+    Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('human-resources.sections.show');
     Route::get('/ess', [\App\Http\Controllers\HumanResourcesController::class, 'ess'])->name('ess');
     Route::post('/ess/expense-claims', [\App\Http\Controllers\HumanResourcesController::class, 'storeEssExpense'])->name('ess.expense-claims.store');
     Route::post('/ess/clock-in', [\App\Http\Controllers\HumanResourcesController::class, 'clockIn'])->name('ess.clock-in');

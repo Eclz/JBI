@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Faculty\Dean;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Faculty\Dean\Concerns\LoadsDeanScopedData;
 use App\Models\StudentIssue;
 use Illuminate\Http\Request;
 
 class StudentIssueController extends Controller
 {
+    use LoadsDeanScopedData;
+
     public function index()
     {
         $issues = StudentIssue::with('student')->where('reported_by', auth()->id())->latest()->paginate(15);
@@ -16,17 +19,10 @@ class StudentIssueController extends Controller
 
     public function create()
     {
-        $deanId = auth()->id();
-        $students = \App\Models\User::where(function($query) {
-                $query->where('role', 'student')
-                      ->orWhereHas('roleCatalog', function ($q) {
-                          $q->where('guard_role', 'student');
-                      });
-            })
-            ->whereHas('studentProfile.department.faculty', function($q) use ($deanId) {
-                $q->where('dean_id', $deanId);
-            })
-            ->orderBy('first_name')->get();
+        $students = $this->deanStudentsQuery()
+            ->orderBy('first_name')
+            ->orderBy('name')
+            ->get();
 
         return view('faculty.dean.student-issues.create', compact('students'));
     }
@@ -57,17 +53,10 @@ class StudentIssueController extends Controller
     {
         if ($studentIssue->reported_by !== auth()->id()) abort(403);
         
-        $deanId = auth()->id();
-        $students = \App\Models\User::where(function($query) {
-                $query->where('role', 'student')
-                      ->orWhereHas('roleCatalog', function ($q) {
-                          $q->where('guard_role', 'student');
-                      });
-            })
-            ->whereHas('studentProfile.department.faculty', function($q) use ($deanId) {
-                $q->where('dean_id', $deanId);
-            })
-            ->orderBy('first_name')->get();
+        $students = $this->deanStudentsQuery()
+            ->orderBy('first_name')
+            ->orderBy('name')
+            ->get();
 
         return view('faculty.dean.student-issues.edit', compact('studentIssue', 'students'));
     }

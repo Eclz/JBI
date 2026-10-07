@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Faculty\Dean;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Faculty\Dean\Concerns\LoadsDeanScopedData;
 use App\Models\QualityReview;
-use App\Models\Program;
 use Illuminate\Http\Request;
 
 class QualityReviewController extends Controller
 {
+    use LoadsDeanScopedData;
+
     public function index()
     {
         $reviews = QualityReview::with('program')
@@ -20,10 +22,10 @@ class QualityReviewController extends Controller
 
     public function create()
     {
-        $deanId = auth()->id();
-        $programs = Program::whereHas('department.faculty', function($q) use ($deanId) {
-            $q->where('dean_id', $deanId);
-        })->get();
+        $programs = $this->deanProgramsQuery()
+            ->orderBy('name')
+            ->get();
+
         return view('faculty.dean.quality.create', compact('programs'));
     }
 
@@ -57,10 +59,10 @@ class QualityReviewController extends Controller
             return redirect()->route('faculty.dean.quality.index')->with('error', 'Only draft reviews can be edited.');
         }
 
-        $deanId = auth()->id();
-        $programs = Program::whereHas('department.faculty', function($q) use ($deanId) {
-            $q->where('dean_id', $deanId);
-        })->get();
+        $programs = $this->deanProgramsQuery()
+            ->orderBy('name')
+            ->get();
+
         return view('faculty.dean.quality.edit', compact('quality', 'programs'));
     }
 

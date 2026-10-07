@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Faculty\Dean;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Faculty\Dean\Concerns\LoadsDeanScopedData;
 use App\Models\FacultyEvaluation;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class FacultyEvaluationController extends Controller
 {
+    use LoadsDeanScopedData;
+
     public function index()
     {
         $evaluations = FacultyEvaluation::with('faculty')
@@ -20,17 +22,11 @@ class FacultyEvaluationController extends Controller
 
     public function create()
     {
-        $deanId = auth()->id();
-        $facultyMembers = User::where(function($query) {
-                $query->where('role', 'faculty')
-                      ->orWhereHas('roleCatalog', function($q) {
-                          $q->where('guard_role', 'faculty')
-                            ->orWhere('slug', 'faculty');
-                      });
-            })
-            ->whereHas('facultyProfile.department.faculty', function($q) use ($deanId) {
-                $q->where('dean_id', $deanId);
-            })->get();
+        $facultyMembers = $this->deanFacultyMembersQuery()
+            ->orderBy('first_name')
+            ->orderBy('name')
+            ->get();
+
         return view('faculty.dean.evaluations.create', compact('facultyMembers'));
     }
 
@@ -64,17 +60,10 @@ class FacultyEvaluationController extends Controller
             return redirect()->route('faculty.dean.evaluations.index')->with('error', 'Only draft evaluations can be edited.');
         }
 
-        $deanId = auth()->id();
-        $facultyMembers = User::where(function($query) {
-                $query->where('role', 'faculty')
-                      ->orWhereHas('roleCatalog', function($q) {
-                          $q->where('guard_role', 'faculty')
-                            ->orWhere('slug', 'faculty');
-                      });
-            })
-            ->whereHas('facultyProfile.department.faculty', function($q) use ($deanId) {
-                $q->where('dean_id', $deanId);
-            })->get();
+        $facultyMembers = $this->deanFacultyMembersQuery()
+            ->orderBy('first_name')
+            ->orderBy('name')
+            ->get();
         
         return view('faculty.dean.evaluations.edit', compact('evaluation', 'facultyMembers'));
     }

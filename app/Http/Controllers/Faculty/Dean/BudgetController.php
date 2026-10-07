@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Faculty\Dean;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Faculty\Dean\Concerns\LoadsDeanScopedData;
 use App\Models\BudgetRequest;
 use Illuminate\Http\Request;
 
 class BudgetController extends Controller
 {
+    use LoadsDeanScopedData;
+
     public function index()
     {
         $budgets = BudgetRequest::with('department')->where('requested_by', auth()->id())->latest()->paginate(15);
@@ -16,11 +19,14 @@ class BudgetController extends Controller
 
     public function create()
     {
-        $deanId = auth()->id();
-        $departments = \App\Models\Department::whereHas('faculty', function($q) use ($deanId) {
-            $q->where('dean_id', $deanId);
-        })->orderBy('name')->get();
-        return view('faculty.dean.budgets.create', compact('departments'));
+        $departments = $this->deanDepartmentsQuery()->orderBy('name')->get();
+        $facultyMembers = $this->deanFacultyMembersQuery()
+            ->orderBy('first_name')
+            ->orderBy('name')
+            ->get();
+        $currencyCode = $this->systemCurrencyCode();
+
+        return view('faculty.dean.budgets.create', compact('departments', 'facultyMembers', 'currencyCode'));
     }
 
     public function store(Request $request)
@@ -53,11 +59,10 @@ class BudgetController extends Controller
             return back()->with('error', 'Only drafts or rejected budgets can be edited.');
         }
 
-        $deanId = auth()->id();
-        $departments = \App\Models\Department::whereHas('faculty', function($q) use ($deanId) {
-            $q->where('dean_id', $deanId);
-        })->orderBy('name')->get();
-        return view('faculty.dean.budgets.edit', compact('budget', 'departments'));
+        $departments = $this->deanDepartmentsQuery()->orderBy('name')->get();
+        $currencyCode = $this->systemCurrencyCode();
+
+        return view('faculty.dean.budgets.edit', compact('budget', 'departments', 'currencyCode'));
     }
 
     public function update(Request $request, BudgetRequest $budget)
