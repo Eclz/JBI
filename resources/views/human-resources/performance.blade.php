@@ -48,7 +48,7 @@
                             <h6 class="text-muted mb-1">Active Goals</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['active_goals'] }}</h3>
                         </div>
-                        <div class="p-3 bg-primary bg-opacity-10 rounded text-primary fs-4">
+                        <div class="p-3 bg-primary rounded text-white fs-4">
                             <i class="bi bi-bullseye"></i>
                         </div>
                     </div>
@@ -63,7 +63,7 @@
                             <h6 class="text-muted mb-1">Goals Completed</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['completed_goals'] }}</h3>
                         </div>
-                        <div class="p-3 bg-success bg-opacity-10 rounded text-success fs-4">
+                        <div class="p-3 bg-success rounded text-white fs-4">
                             <i class="bi bi-check2-circle"></i>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                             <h6 class="text-muted mb-1">Pending Reviews</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['pending_reviews'] }}</h3>
                         </div>
-                        <div class="p-3 bg-warning bg-opacity-10 rounded text-warning fs-4">
+                        <div class="p-3 bg-warning rounded text-white fs-4">
                             <i class="bi bi-hourglass-split"></i>
                         </div>
                     </div>
@@ -90,10 +90,10 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <h6 class="text-muted mb-1">Company Avg Rating</h6>
+                            <h6 class="text-muted mb-1">Institution Avg Rating</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['avg_rating'] }} <small class="text-muted fs-6">/ 5</small></h3>
                         </div>
-                        <div class="p-3 bg-info bg-opacity-10 rounded text-info fs-4">
+                        <div class="p-3 bg-info rounded text-white fs-4">
                             <i class="bi bi-star-fill"></i>
                         </div>
                     </div>
@@ -133,7 +133,10 @@
                                         <tr>
                                             <td class="px-4">
                                                 <div class="d-flex align-items-center">
-                                                    <img src="{{ $review->user->profile_picture_url ?? 'https://ui-avatars.com/api/?name='.urlencode($review->user->name).'&background=random' }}" alt="{{ $review->user->name }}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                                    <img src="{{ $review->user->profile_picture_url ?? 'https://ui-avatars.com/api/?name='.urlencode($review->user->name).'&background=random' }}"
+                                                         alt="{{ $review->user->name }}"
+                                                         class="rounded-circle me-2"
+                                                         style="width: 32px; height: 32px; object-fit: cover;">
                                                     <div>
                                                         <h6 class="mb-0" style="font-size: 0.9rem;">{{ $review->user->name }}</h6>
                                                         <small class="text-muted">{{ $review->user->hrProfile->department ?? 'General' }}</small>
@@ -155,7 +158,7 @@
                                             <td class="px-4">
                                                 @if($review->overall_rating)
                                                     <div class="text-warning">
-                                                        @for($i=1; $i<=5; $i++)
+                                                        @for($i = 1; $i <= 5; $i++)
                                                             @if($i <= $review->overall_rating)
                                                                 <i class="bi bi-star-fill"></i>
                                                             @else
@@ -168,48 +171,14 @@
                                                 @endif
                                             </td>
                                             <td class="px-4 text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal{{ $review->id }}">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editReviewModal{{ $review->id }}">
                                                     Manage
                                                 </button>
                                             </td>
                                         </tr>
-
-                                        <!-- Edit Review Modal -->
-                                        <div class="modal fade" id="editReviewModal{{ $review->id }}" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <form action="{{ route('human-resources.performance.reviews.update', $review->id) }}" method="POST">
-                                                        @csrf
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title">Update Review: {{ $review->user->name }}</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label">Review Status</label>
-                                                                <select name="status" class="form-select">
-                                                                    <option value="Draft" {{ $review->status == 'Draft' ? 'selected' : '' }}>Draft (Preparing)</option>
-                                                                    <option value="Scheduled" {{ $review->status == 'Scheduled' ? 'selected' : '' }}>Scheduled / In Progress</option>
-                                                                    <option value="Completed" {{ $review->status == 'Completed' ? 'selected' : '' }}>Completed</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label">Overall Rating (1-5)</label>
-                                                                <input type="number" name="overall_rating" class="form-control" min="1" max="5" value="{{ $review->overall_rating }}" {{ $review->status == 'Completed' ? '' : 'placeholder="Leave blank until completed"' }}>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label">Reviewer Comments / Summary</label>
-                                                                <textarea name="comments" class="form-control" rows="4" placeholder="Feedback...">{{ $review->comments }}</textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                                                            <button type="submit" class="btn btn-primary">Save Updates</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
                                     @endforeach
                                 </tbody>
                             </table>
@@ -242,11 +211,14 @@
                                                 Assigned to: <span class="fw-semibold">{{ $goal->user->name }}</span>
                                             </div>
                                         </div>
-                                        <button class="btn btn-sm btn-light border" data-bs-toggle="modal" data-bs-target="#updateGoalModal{{ $goal->id }}">
+                                        <button type="button"
+                                                class="btn btn-sm btn-light border"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#updateGoalModal{{ $goal->id }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                     </div>
-                                    
+
                                     <div class="d-flex justify-content-between align-items-center mb-1 small text-muted">
                                         <span>Progress: {{ $goal->progress_percentage }}%</span>
                                         <span class="{{ $goal->due_date < now() && $goal->status != 'Completed' ? 'text-danger fw-bold' : '' }}">
@@ -254,43 +226,9 @@
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar {{ $goal->progress_percentage == 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ $goal->progress_percentage }}%;"></div>
-                                    </div>
-                                </div>
-
-                                <!-- Update Goal Modal -->
-                                <div class="modal fade" id="updateGoalModal{{ $goal->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <form action="{{ route('human-resources.performance.goals.update', $goal->id) }}" method="POST">
-                                                @csrf
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Update Goal Progress</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <h6 class="mb-3">{{ $goal->title }}</h6>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Status</label>
-                                                        <select name="status" class="form-select">
-                                                            <option value="Not Started" {{ $goal->status == 'Not Started' ? 'selected' : '' }}>Not Started</option>
-                                                            <option value="In Progress" {{ $goal->status == 'In Progress' ? 'selected' : '' }}>In Progress</option>
-                                                            <option value="Completed" {{ $goal->status == 'Completed' ? 'selected' : '' }}>Completed</option>
-                                                            <option value="Cancelled" {{ $goal->status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Progress (%)</label>
-                                                        <input type="range" class="form-range" name="progress_percentage" min="0" max="100" step="5" value="{{ $goal->progress_percentage }}" oninput="this.nextElementSibling.value = this.value + '%'">
-                                                        <output class="d-block text-center fw-bold mt-2">{{ $goal->progress_percentage }}%</output>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-primary">Save Progress</button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                        <div class="progress-bar {{ $goal->progress_percentage == 100 ? 'bg-success' : 'bg-primary' }}"
+                                             role="progressbar"
+                                             style="width: {{ $goal->progress_percentage }}%;"></div>
                                     </div>
                                 </div>
                             @endforeach
@@ -302,7 +240,99 @@
     </div>
 </div>
 
-<!-- Initiate Review Modal -->
+{{-- ===================== ALL MODALS (outside loops / tables) ===================== --}}
+
+{{-- Edit Review Modals --}}
+@foreach($reviews as $review)
+<div class="modal fade" id="editReviewModal{{ $review->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="{{ route('human-resources.performance.reviews.update', $review->id) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Review: {{ $review->user->name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Review Status</label>
+                        <select name="status" class="form-select">
+                            <option value="Draft" {{ $review->status == 'Draft' ? 'selected' : '' }}>Draft (Preparing)</option>
+                            <option value="Scheduled" {{ $review->status == 'Scheduled' ? 'selected' : '' }}>Scheduled / In Progress</option>
+                            <option value="Completed" {{ $review->status == 'Completed' ? 'selected' : '' }}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Overall Rating (1-5)</label>
+                        <input type="number"
+                               name="overall_rating"
+                               class="form-control"
+                               min="1"
+                               max="5"
+                               value="{{ $review->overall_rating }}"
+                               {{ $review->status == 'Completed' ? '' : 'placeholder="Leave blank until completed"' }}>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reviewer Comments / Summary</label>
+                        <textarea name="comments" class="form-control" rows="4" placeholder="Feedback...">{{ $review->comments }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+{{-- Update Goal Modals --}}
+@foreach($goals as $goal)
+<div class="modal fade" id="updateGoalModal{{ $goal->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="{{ route('human-resources.performance.goals.update', $goal->id) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Goal Progress</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="mb-3">{{ $goal->title }}</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="Not Started" {{ $goal->status == 'Not Started' ? 'selected' : '' }}>Not Started</option>
+                            <option value="In Progress" {{ $goal->status == 'In Progress' ? 'selected' : '' }}>In Progress</option>
+                            <option value="Completed" {{ $goal->status == 'Completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="Cancelled" {{ $goal->status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Progress (%)</label>
+                        <input type="range"
+                               class="form-range"
+                               name="progress_percentage"
+                               min="0"
+                               max="100"
+                               step="5"
+                               value="{{ $goal->progress_percentage }}"
+                               oninput="this.nextElementSibling.value = this.value + '%'">
+                        <output class="d-block text-center fw-bold mt-2">{{ $goal->progress_percentage }}%</output>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Progress</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+{{-- Initiate Review Modal --}}
 <div class="modal fade" id="initiateReviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -353,7 +383,7 @@
     </div>
 </div>
 
-<!-- Assign Goal Modal -->
+{{-- Assign Goal Modal --}}
 <div class="modal fade" id="assignGoalModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

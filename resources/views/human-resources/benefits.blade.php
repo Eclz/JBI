@@ -51,7 +51,7 @@
                             <h6 class="text-muted mb-1">Available Plans</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['total_plans'] }}</h3>
                         </div>
-                        <div class="p-3 bg-primary bg-opacity-10 rounded text-primary fs-4">
+                        <div class="p-3 bg-primary bg-opacity-10 rounded text-white fs-4">
                             <i class="bi bi-shield-check"></i>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                             <h6 class="text-muted mb-1">Monthly Co. Cost (Est.)</h6>
                             <h3 class="mb-0 fw-bold">${{ number_format($stats['monthly_company_cost'], 2) }}</h3>
                         </div>
-                        <div class="p-3 bg-warning bg-opacity-10 rounded text-warning fs-4">
+                        <div class="p-3 bg-warning bg-opacity-10 rounded text-white fs-4">
                             <i class="bi bi-currency-dollar"></i>
                         </div>
                     </div>
