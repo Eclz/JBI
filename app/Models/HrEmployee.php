@@ -11,7 +11,8 @@ class HrEmployee extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'employee_number', 'job_title', 'department', 'employment_type',
+        'user_id', 'source_applicant_id', 'employee_number', 'job_title', 'department', 'department_id',
+        'workspace', 'employment_type',
         'salary_band', 'emergency_contact', 'status', 'notes',
         'manager_id', 'next_of_kin', 'next_of_kin_contact',
     ];
@@ -19,6 +20,11 @@ class HrEmployee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function departmentRecord(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function manager(): BelongsTo

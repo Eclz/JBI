@@ -28,7 +28,7 @@ class HumanResourcesController extends Controller
             return redirect()->route('human-resources.ess');
         }
 
-        return view('human-resources.index', [
+        return view('human-resources.dashboard', [
             'staffCount' => User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->where('is_active', true)->count(),
             'leaveRequests' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
             'onboardingCount' => HrEmployee::where('status', 'Onboarding')->count(),
@@ -168,7 +168,7 @@ class HumanResourcesController extends Controller
             'expense-claims' => 'hr_payroll',
             'benefits' => 'hr_payroll',
             'recruiting' => 'hr_recruiting',
-            'onboarding' => 'hr_recruiting',
+            'onboarding' => 'hr_onboarding',
             'offboarding' => 'hr_recruiting',
             'performance' => 'hr_talent',
             'learning' => 'hr_talent',
@@ -263,8 +263,13 @@ class HumanResourcesController extends Controller
             $vacancies = \App\Models\HrVacancy::withCount(['applicants' => function($q) {
                 $q->whereNotIn('status', ['Rejected']);
             }])->with('hiringManager')->latest()->get();
+            $roles = \App\Models\Role::where('is_active', true)
+                ->whereNotIn('guard_role', ['student', 'parent', 'applicant'])
+                ->orderBy('name')
+                ->get();
+            $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
 
-            return view("human-resources.recruiting", compact('stats', 'vacancies'));
+            return view("human-resources.recruiting", compact('stats', 'vacancies', 'roles', 'departments'));
         }
 
         if ($section === 'time-tracking') {

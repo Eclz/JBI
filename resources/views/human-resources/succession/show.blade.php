@@ -17,6 +17,11 @@
             <a href="{{ route('human-resources.sections.show', 'succession') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
+            @if($succession->hr_vacancy_id)
+                <a href="{{ route('human-resources.recruiting.show', $succession->hr_vacancy_id) }}" class="btn btn-outline-primary">View linked vacancy</a>
+            @elseif($succession->status === 'Active' && auth()->user()->hasPermission('hr_recruiting', 'create'))
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createVacancyModal">Create vacancy</button>
+            @endif
             @if($succession->status === 'Active')
                 <button type="button" class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addSuccessorModal">
                     <i class="bi bi-person-plus me-1"></i> Add Successor
@@ -146,6 +151,70 @@
         </div>
     </div>
 </div>
+
+@if(!$succession->hr_vacancy_id && $succession->status === 'Active' && auth()->user()->hasPermission('hr_recruiting', 'create'))
+<div class="modal fade" id="createVacancyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ route('human-resources.succession.vacancy.store', $succession) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Publish {{ $succession->position_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">This creates a public vacancy linked to this succession plan. Applicants will enter the HR recruitment pipeline.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Portal role</label>
+                            <select name="role_id" class="form-select" required>
+                                <option value="">Select staff role</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <select name="department_id" class="form-select" required>
+                                <option value="">Select department</option>
+                                @foreach($departments as $department)
+                                    <option value="{{ $department->id }}" @selected($succession->department === $department->name)>{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Employment type</label>
+                            <select name="employment_type" class="form-select" required>
+                                <option>Full-time</option>
+                                <option>Part-time</option>
+                                <option>Contract</option>
+                                <option>Temporary</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Closing date (optional)</label>
+                            <input type="date" name="closing_date" class="form-control" min="{{ today()->toDateString() }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Job description</label>
+                            <textarea name="job_description" class="form-control" rows="3">{{ $succession->notes }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Requirements</label>
+                            <textarea name="requirements" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Publish and link vacancy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- Add Successor Modal -->
 <div class="modal fade" id="addSuccessorModal" tabindex="-1" aria-hidden="true">

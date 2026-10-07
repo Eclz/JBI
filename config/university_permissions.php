@@ -56,6 +56,10 @@ return [
         'budget_requests' => 'Budget Requests',
         'student_support' => 'Student Support & Issues',
         'external_relations' => 'External Relations & Partnerships',
+        'halls_of_residence' => 'Halls of Residence',
+        'registrar_hub' => 'Registrar Hub',
+        'dean_administration' => 'Dean Administration',
+        'hr_onboarding' => 'HR Onboarding',
     ],
 
     'defaults' => [

@@ -79,6 +79,7 @@ class DatabaseSeeder extends Seeder
 
         // Seed Roles and Permissions
         $this->call(RolePermissionSeeder::class);
+        $this->call(FunctionalAreaPermissionsSeeder::class);
 
         // Seed Faculties and link departments
         $this->call(FacultySeeder::class);

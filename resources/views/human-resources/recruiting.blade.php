@@ -144,6 +144,11 @@
                                         <a href="{{ route('human-resources.recruiting.show', $vacancy->id) }}" class="btn btn-sm btn-outline-primary">
                                             View ATS
                                         </a>
+                                        @if($vacancy->status === 'Open')
+                                            <a href="{{ route('careers.show', $vacancy) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">
+                                                Public listing
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -173,7 +178,21 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Department</label>
-                            <input type="text" name="department" class="form-control" placeholder="e.g. Faculty of Science">
+                            <select name="department_id" class="form-select" required>
+                                <option value="">Select department</option>
+                                @foreach($departments as $department)
+                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Account role after hire</label>
+                            <select name="role_id" class="form-select" required>
+                                <option value="">Select staff role</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         
                         <div class="col-md-4">
@@ -197,6 +216,21 @@
                         <div class="col-12">
                             <label class="form-label">Job Description</label>
                             <textarea name="job_description" class="form-control" rows="4" placeholder="Describe the responsibilities..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Requirements</label>
+                            <textarea name="requirements" class="form-control" rows="3" placeholder="Qualifications and experience required..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Salary range (optional)</label>
+                            <input type="text" name="salary_range" class="form-control" maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Listing status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="Open">Publish now</option>
+                                <option value="Draft">Save as draft</option>
+                            </select>
                         </div>
                     </div>
                 </div>

@@ -50,13 +50,15 @@
                 <span>Dashboard</span>
             </a>
         </li>
-        @if(auth()->user()->isAdmin() && auth()->user()->hasPermission('students', 'view'))
+        @if(auth()->user()->isAdmin() && auth()->user()->hasPermission('registrar_hub', 'view'))
         <li class="menu-item {{ request()->routeIs('admin.registrar.*') ? 'active' : '' }}">
             <a href="{{ route('admin.registrar.dashboard') }}" class="menu-link">
                 <i class="bi bi-bank2"></i>
                 <span>Registrar Hub</span>
             </a>
         </li>
+        @endif
+        @if(auth()->user()->isAdmin() && auth()->user()->hasPermission('halls_of_residence', 'view'))
         <li class="menu-item {{ request()->routeIs('admin.hostel.*') ? 'active' : '' }}">
             <a href="{{ route('admin.hostel.index') }}" class="menu-link">
                 <i class="bi bi-building-gear"></i>
@@ -506,12 +508,7 @@
 
         @php
             $isDeanActive = request()->routeIs('faculty.dean.*');
-            $canViewDean = auth()->user()->hasRole('dean') || 
-                           auth()->user()->hasPermission('academic_quality', 'view') || 
-                           auth()->user()->hasPermission('faculty_evaluations', 'view') || 
-                           auth()->user()->hasPermission('budget_requests', 'view') || 
-                           auth()->user()->hasPermission('student_support', 'view') || 
-                           auth()->user()->hasPermission('external_relations', 'view');
+            $canViewDean = auth()->user()->hasPermission('dean_administration', 'view');
         @endphp
 
         @if($canViewDean)
@@ -995,13 +992,15 @@
                 @endif
                 @foreach([
                     ['recruiting', 'Recruiting (ATS)', 'bi-person-plus'],
-                    ['onboarding', 'Onboarding', 'bi-box-arrow-in-right'],
                     ['offboarding', 'Offboarding', 'bi-box-arrow-right'],
                 ] as [$slug, $label, $icon])
                     @if(auth()->user()->hasPermission('hr_recruiting', 'view'))
                         <li class="submenu-item"><a href="{{ route('human-resources.sections.show', $slug) }}" class="submenu-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a></li>
                     @endif
                 @endforeach
+                @if(auth()->user()->hasPermission('hr_onboarding', 'view'))
+                    <li class="submenu-item"><a href="{{ route('human-resources.sections.show', 'onboarding') }}" class="submenu-link"><i class="bi bi-box-arrow-in-right"></i><span>Onboarding</span></a></li>
+                @endif
                 
                 @if(auth()->user()->hasPermission('hr_talent', 'view'))
                     <li class="sidebar-subheading">Talent Management</li>

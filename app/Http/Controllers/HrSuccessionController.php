@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\HrSuccessionPlan;
 use App\Models\HrSuccessor;
+use App\Models\Department;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -26,9 +28,15 @@ class HrSuccessionController extends Controller
 
     public function show(HrSuccessionPlan $succession)
     {
-        $succession->load(['currentHolder', 'successors.user.hrProfile']);
+        $succession->load(['currentHolder', 'successors.user.hrProfile', 'vacancy']);
         $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
-        return view('human-resources.succession.show', compact('succession', 'users'));
+        $roles = Role::where('is_active', true)
+            ->whereNotIn('guard_role', ['student', 'parent', 'applicant'])
+            ->orderBy('name')
+            ->get();
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+
+        return view('human-resources.succession.show', compact('succession', 'users', 'roles', 'departments'));
     }
 
     public function addSuccessor(Request $request, HrSuccessionPlan $succession)

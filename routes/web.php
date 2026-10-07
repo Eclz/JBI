@@ -19,6 +19,7 @@ use App\Http\Controllers\HelpController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\ReceiptVerificationController;
+use App\Http\Controllers\CareerPortalController;
 
 // Faculty Controllers
 use App\Http\Controllers\Faculty\DashboardController as FacultyDashboardController;
@@ -119,6 +120,15 @@ Route::get('/application/success/{application}', [StudentsApplicationController:
 Route::get('/application/payment/{token}', [StudentsApplicationController::class, 'uploadPayment'])->name('applications.upload-payment');
 Route::post('/application/payment/{token}', [StudentsApplicationController::class, 'storePayment'])->name('applications.store-payment');
 Route::get('/application/payment-success/{token}', [StudentsApplicationController::class, 'paymentSuccess'])->name('applications.payment-success');
+
+Route::get('/careers', [CareerPortalController::class, 'index'])->name('careers.index');
+Route::get('/careers/{vacancy}', [CareerPortalController::class, 'show'])->name('careers.show');
+Route::post('/careers/{vacancy}/apply', [CareerPortalController::class, 'apply'])
+    ->middleware('throttle:5,1')
+    ->name('careers.apply');
+Route::get('/careers/applications/{token}', [CareerPortalController::class, 'track'])
+    ->middleware('throttle:20,1')
+    ->name('careers.track');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -231,19 +241,22 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     Route::post('/org-chart/add-report', [\App\Http\Controllers\HumanResourcesController::class, 'addDirectReport'])->name('org-chart.add-report')->middleware('permission:hr_core,edit');
     
     // Onboarding
-    Route::post('/onboarding', [\App\Http\Controllers\HrOnboardingController::class, 'store'])->name('onboarding.store')->middleware('permission:hr_recruiting,create');
-    Route::get('/onboarding/{onboarding}', [\App\Http\Controllers\HrOnboardingController::class, 'show'])->name('onboarding.show')->middleware('permission:hr_recruiting,view');
-    Route::post('/onboarding/tasks/{task}', [\App\Http\Controllers\HrOnboardingController::class, 'updateTask'])->name('onboarding.tasks.update')->middleware('permission:hr_recruiting,edit');
+    Route::post('/onboarding', [\App\Http\Controllers\HrOnboardingController::class, 'store'])->name('onboarding.store')->middleware('permission:hr_onboarding,create');
+    Route::get('/onboarding/{onboarding}', [\App\Http\Controllers\HrOnboardingController::class, 'show'])->name('onboarding.show')->middleware('permission:hr_onboarding,view');
+    Route::post('/onboarding/tasks/{task}', [\App\Http\Controllers\HrOnboardingController::class, 'updateTask'])->name('onboarding.tasks.update')->middleware('permission:hr_onboarding,edit');
     
     // Succession
     Route::post('/succession', [\App\Http\Controllers\HrSuccessionController::class, 'store'])->name('succession.store')->middleware('permission:hr_talent,create');
     Route::get('/succession/{succession}', [\App\Http\Controllers\HrSuccessionController::class, 'show'])->name('succession.show')->middleware('permission:hr_talent,view');
     Route::post('/succession/{succession}/add-successor', [\App\Http\Controllers\HrSuccessionController::class, 'addSuccessor'])->name('succession.add-successor')->middleware('permission:hr_talent,edit');
+    Route::post('/succession/{succession}/vacancy', [\App\Http\Controllers\HrRecruitingController::class, 'storeFromSuccession'])->name('succession.vacancy.store')->middleware(['permission:hr_talent,edit', 'permission:hr_recruiting,create']);
     
     // Recruiting
     Route::post('/recruiting', [\App\Http\Controllers\HrRecruitingController::class, 'store'])->name('recruiting.store')->middleware('permission:hr_recruiting,create');
     Route::get('/recruiting/{vacancy}', [\App\Http\Controllers\HrRecruitingController::class, 'show'])->name('recruiting.show')->middleware('permission:hr_recruiting,view');
+    Route::get('/recruiting/applicants/{applicant}/documents/{document}', [\App\Http\Controllers\HrRecruitingController::class, 'downloadDocument'])->name('recruiting.applicants.documents.download')->middleware('permission:hr_recruiting,view');
     Route::post('/recruiting/applicants/{applicant}', [\App\Http\Controllers\HrRecruitingController::class, 'updateApplicantStatus'])->name('recruiting.applicants.update')->middleware('permission:hr_recruiting,edit');
+    Route::post('/recruiting/applicants/{applicant}/approve-hire', [\App\Http\Controllers\HrRecruitingController::class, 'approveHire'])->name('recruiting.applicants.approve-hire')->middleware('permission:hr_recruiting,approve');
     
     // Shifts
     Route::post('/shifts', [\App\Http\Controllers\HrShiftController::class, 'storeShift'])->name('shifts.store')->middleware('permission:hr_attendance,create');
@@ -318,17 +331,17 @@ Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')-
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Registrar Hub
-    Route::middleware('permission:students,view')->prefix('registrar')->name('registrar.')->group(function () {
+    Route::middleware('permission:registrar_hub,view')->prefix('registrar')->name('registrar.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'dashboard'])->name('dashboard');
     });
 
     // Hostel Management
-    Route::middleware('permission:students,view')->prefix('hostel')->name('hostel.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\HostelController::class, 'index'])->name('index');
-        Route::post('/hostel', [\App\Http\Controllers\Admin\HostelController::class, 'storeHostel'])->name('storeHostel');
-        Route::post('/hostel/{hostel}/room', [\App\Http\Controllers\Admin\HostelController::class, 'storeRoom'])->name('storeRoom');
-        Route::post('/allocation/{allocation}/approve', [\App\Http\Controllers\Admin\HostelController::class, 'approveAllocation'])->name('approveAllocation');
-        Route::post('/allocation/{allocation}/reject', [\App\Http\Controllers\Admin\HostelController::class, 'rejectAllocation'])->name('rejectAllocation');
+    Route::prefix('hostel')->name('hostel.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\HostelController::class, 'index'])->name('index')->middleware('permission:halls_of_residence,view');
+        Route::post('/hostel', [\App\Http\Controllers\Admin\HostelController::class, 'storeHostel'])->name('storeHostel')->middleware('permission:halls_of_residence,create');
+        Route::post('/hostel/{hostel}/room', [\App\Http\Controllers\Admin\HostelController::class, 'storeRoom'])->name('storeRoom')->middleware('permission:halls_of_residence,create');
+        Route::post('/allocation/{allocation}/approve', [\App\Http\Controllers\Admin\HostelController::class, 'approveAllocation'])->name('approveAllocation')->middleware('permission:halls_of_residence,approve');
+        Route::post('/allocation/{allocation}/reject', [\App\Http\Controllers\Admin\HostelController::class, 'rejectAllocation'])->name('rejectAllocation')->middleware('permission:halls_of_residence,approve');
     });
 
     // Approval Hub (Registrar/SuperAdmin)
@@ -735,6 +748,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')->group(function () {
     // Dean Administration Routes
     Route::prefix('dean')->name('dean.')->group(function () {
+        Route::middleware('permission:dean_administration,view')->group(function () {
         Route::middleware('permission:academic_quality,view')->group(function () {
             Route::resource('/quality', \App\Http\Controllers\Faculty\Dean\QualityReviewController::class);
             Route::post('/quality/{quality}/submit', [\App\Http\Controllers\Faculty\Dean\QualityReviewController::class, 'submit'])->name('quality.submit');
@@ -758,6 +772,7 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         });
         Route::middleware('permission:external_relations,view')->group(function () {
             Route::resource('/partnerships', App\Http\Controllers\Faculty\Dean\PartnershipController::class);
+        });
         });
     });
 

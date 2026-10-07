@@ -20,9 +20,11 @@
             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#vacancyDetailsModal">
                 <i class="bi bi-info-circle me-1"></i> Vacancy Info
             </button>
-            <button class="btn btn-primary fw-bold" onclick="alert('In a real app, this would open a public job link.')">
-                <i class="bi bi-link-45deg me-1"></i> Job Link
-            </button>
+            @if($vacancy->status === 'Open')
+                <a class="btn btn-primary fw-bold" href="{{ route('careers.show', $vacancy) }}" target="_blank" rel="noopener">
+                    <i class="bi bi-link-45deg me-1"></i> Public job link
+                </a>
+            @endif
         </div>
     </div>
 
@@ -32,11 +34,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+    @if(session('warning'))
+        <div class="alert alert-warning">{{ session('warning') }}</div>
+    @endif
 
     <!-- Kanban Board Container -->
     <div class="d-flex gap-3 overflow-auto flex-grow-1 pb-3 kanban-board" style="min-height: 500px;">
         
-        @foreach(['Applied', 'Screening', 'Shortlisted', 'Interview', 'Offer', 'Hired', 'Rejected'] as $stage)
+        @foreach(['Applied', 'Screening', 'Shortlisted', 'Interview', 'Assessment', 'Reference Check', 'Offer', 'Hired', 'Rejected'] as $stage)
             <div class="kanban-column bg-light rounded shadow-sm d-flex flex-column flex-shrink-0" style="width: 280px;">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-bold text-uppercase" style="font-size: 0.85rem;">{{ $stage }}</h6>
@@ -49,17 +54,38 @@
                             <div class="card-body p-3">
                                 <h6 class="fw-bold mb-1">{{ $applicant->full_name }}</h6>
                                 <p class="text-muted small mb-2"><i class="bi bi-envelope me-1"></i> {{ $applicant->email }}</p>
+                                @if($applicant->phone)
+                                    <p class="text-muted small mb-2"><i class="bi bi-telephone me-1"></i> {{ $applicant->phone }}</p>
+                                @endif
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    @if($applicant->cv_path)
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('human-resources.recruiting.applicants.documents.download', [$applicant, 'cv']) }}">
+                                            <i class="bi bi-file-earmark-person me-1"></i> CV
+                                        </a>
+                                    @endif
+                                    @foreach($applicant->documents ?? [] as $documentIndex => $documentPath)
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('human-resources.recruiting.applicants.documents.download', [$applicant, $documentIndex]) }}">
+                                            <i class="bi bi-paperclip me-1"></i> Document {{ $documentIndex + 1 }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                                @if($applicant->cover_letter)
+                                    <details class="small mb-2">
+                                        <summary class="text-primary">Cover letter</summary>
+                                        <p class="text-muted mt-2 mb-0">{{ $applicant->cover_letter }}</p>
+                                    </details>
+                                @endif
                                 
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <small class="text-muted" style="font-size: 0.7rem;">{{ $applicant->created_at->diffForHumans() }}</small>
-                                    
+                                    @if($stage !== 'Hired')
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-light border p-1 py-0 shadow-none text-muted" type="button" data-bs-toggle="dropdown">
                                             <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 text-sm">
                                             <li><h6 class="dropdown-header">Move to...</h6></li>
-                                            @foreach(['Applied', 'Screening', 'Shortlisted', 'Interview', 'Offer', 'Hired', 'Rejected'] as $s)
+                                            @foreach(['Applied', 'Screening', 'Shortlisted', 'Interview', 'Assessment', 'Reference Check', 'Offer', 'Rejected'] as $s)
                                                 @if($s !== $stage)
                                                     <li>
                                                         <form action="{{ route('human-resources.recruiting.applicants.update', $applicant->id) }}" method="POST">
@@ -72,7 +98,37 @@
                                             @endforeach
                                         </ul>
                                     </div>
+                                    @endif
                                 </div>
+                                @if($stage === 'Offer' && auth()->user()->hasPermission('hr_recruiting', 'approve') && !$applicant->hired_user_id)
+                                    <details class="mt-3">
+                                        <summary class="btn btn-sm btn-success w-100">Approve hire and start onboarding</summary>
+                                        <form action="{{ route('human-resources.recruiting.applicants.approve-hire', $applicant) }}" method="POST" class="mt-3">
+                                            @csrf
+                                            <label class="form-label small">Staff role / portal</label>
+                                            <select name="role_id" class="form-select form-select-sm mb-2" required>
+                                                <option value="">Select role</option>
+                                                @foreach($roles as $role)
+                                                    <option value="{{ $role->id }}" @selected($vacancy->role_id === $role->id)>{{ $role->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <label class="form-label small">Department</label>
+                                            <select name="department_id" class="form-select form-select-sm mb-2" required>
+                                                <option value="">Select department</option>
+                                                @foreach($departments as $department)
+                                                    <option value="{{ $department->id }}" @selected($vacancy->department_id === $department->id)>{{ $department->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <label class="form-label small">Workspace / office</label>
+                                            <input name="workspace" class="form-control form-control-sm mb-2" required maxlength="150">
+                                            <label class="form-label small">Onboarding due date</label>
+                                            <input type="date" name="due_date" class="form-control form-control-sm mb-3" min="{{ today()->toDateString() }}" value="{{ today()->addDays(14)->toDateString() }}" required>
+                                            <button type="submit" class="btn btn-success btn-sm w-100" onclick="return confirm('Create the staff account and onboarding plan for this applicant?')">Approve and create account</button>
+                                        </form>
+                                    </details>
+                                @elseif($applicant->hired_user_id)
+                                    <div class="small text-success mt-2">Account created: {{ $applicant->hiredUser->name }}</div>
+                                @endif
                             </div>
                         </div>
                     @endforeach

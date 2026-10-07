@@ -9,6 +9,8 @@ class HrVacancy extends Model
     protected $fillable = [
         'position_title',
         'department',
+        'role_id',
+        'department_id',
         'job_description',
         'requirements',
         'num_openings',
@@ -16,7 +18,9 @@ class HrVacancy extends Model
         'location',
         'salary_range',
         'hiring_manager_id',
+        'source_succession_plan_id',
         'opening_date',
+        'published_at',
         'closing_date',
         'status',
     ];
@@ -24,6 +28,7 @@ class HrVacancy extends Model
     protected $casts = [
         'opening_date' => 'date',
         'closing_date' => 'date',
+        'published_at' => 'datetime',
     ];
 
     public function hiringManager()
@@ -34,5 +39,20 @@ class HrVacancy extends Model
     public function applicants()
     {
         return $this->hasMany(HrApplicant::class, 'hr_vacancy_id');
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function departmentRecord()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function successionPlan()
+    {
+        return $this->belongsTo(HrSuccessionPlan::class, 'source_succession_plan_id');
     }
 }
