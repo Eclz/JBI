@@ -111,7 +111,8 @@ class HODAccessTest extends TestCase
         $lecturer = User::factory()->create(['role' => 'faculty']);
         
         $course = Course::factory()->create([
-            'department_id' => $otherDepartment->id
+            'department_id' => $otherDepartment->id,
+            'instructor_id' => null,
         ]);
 
         $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);

@@ -47,9 +47,9 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="amount" class="form-label fw-medium">Requested Amount (GHS) <span class="text-danger">*</span></label>
+                    <label for="amount" class="form-label fw-medium">Requested Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>
                     <div class="input-group" style="max-width: 300px;">
-                        <span class="input-group-text">₵</span>
+                        <span class="input-group-text">{{ $currencyCode }}</span>
                         <input type="number" name="amount" id="amount" class="form-control @error('amount') is-invalid @enderror" value="{{ old('amount', $budget->amount) }}" step="0.01" min="0.01" required>
                     </div>
                     @error('amount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
