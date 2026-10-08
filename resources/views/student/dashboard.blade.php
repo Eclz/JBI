@@ -402,7 +402,7 @@
                             <span class="text-success fw-bold">{{ $currencyCode }} {{ number_format($paidFees, 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Pending:</span>
+                            <span class="text-muted">Balance Due:</span>
                             <span class="text-danger fw-bold">{{ $currencyCode }} {{ number_format($pendingFees, 2) }}</span>
                         </div>
                     </div>
@@ -411,13 +411,13 @@
                         <div class="progress mb-3" style="height: 10px;">
                             <div class="progress-bar bg-success"
                                  role="progressbar"
-                                 style="width: {{ ($paidFees / $totalFees) * 100 }}%"
-                                 aria-valuenow="{{ ($paidFees / $totalFees) * 100 }}"
+                                 style="width: {{ min(($paidFees / $totalFees) * 100, 100) }}%"
+                                 aria-valuenow="{{ min(($paidFees / $totalFees) * 100, 100) }}"
                                  aria-valuemin="0"
                                  aria-valuemax="100">
                             </div>
                         </div>
-                        <p class="small text-muted mb-3">{{ number_format(($paidFees / $totalFees) * 100, 1) }}% paid</p>
+                        <p class="small text-muted mb-3">{{ number_format(min(($paidFees / $totalFees) * 100, 100), 1) }}% paid</p>
                     @endif
 
                     <a href="{{ route('student.fees.index') }}" class="btn btn-primary w-100">

@@ -9,7 +9,10 @@
             <h2 class="mb-1 fw-bold text-dark">Estates & Facilities</h2>
             <p class="text-muted mb-0">Rooms, bookings, maintenance, and campus asset oversight.</p>
         </div>
-        <a href="{{ route('facilities.rooms.index') }}" class="btn btn-primary">Manage facilities</a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('facilities.buildings.index') }}" class="btn btn-outline-primary">Campus facilities</a>
+            <a href="{{ route('facilities.rooms.index') }}" class="btn btn-primary">Manage rooms</a>
+        </div>
     </div>
 
     <div class="row g-4 mb-4">

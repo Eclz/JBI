@@ -11,6 +11,7 @@
         </div>
         <div>
             <a href="{{ route('facilities.index') }}" class="btn btn-outline-secondary">Back to facilities</a>
+            <a href="{{ route('facilities.buildings.index') }}" class="btn btn-outline-primary">Manage facilities</a>
             @if(auth()->user()->hasPermission('facilities_rooms', 'create'))
                 <a href="{{ route('facilities.rooms.create') }}" class="btn btn-primary">Add room</a>
             @endif
@@ -24,7 +25,7 @@
                     <thead>
                         <tr>
                             <th>Room</th>
-                            <th>Block</th>
+                            <th>Facility / Block</th>
                             <th>Capacity</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -34,7 +35,12 @@
                         @forelse($rooms as $room)
                             <tr>
                                 <td>{{ $room->name }}</td>
-                                <td>{{ $room->building ?: '—' }}</td>
+                                <td>
+                                    {{ $room->campusFacility->name ?? $room->building ?? '—' }}
+                                    @if($room->campusFacility && $room->building)
+                                        <small class="d-block text-muted">{{ $room->building }}</small>
+                                    @endif
+                                </td>
                                 <td>{{ $room->capacity }}</td>
                                 <td><span class="badge text-bg-{{ $room->status === 'Available' ? 'success' : 'warning' }}">{{ $room->status }}</span></td>
                                 <td class="text-end">

@@ -21,7 +21,9 @@ class FunctionalAreaPermissionsSeederTest extends TestCase
         $this->assertSame('HR Onboarding', config('university_permissions.modules.hr_onboarding'));
 
         $this->assertTrue(Role::where('slug', 'registrar')->firstOrFail()->hasPermission('registrar_hub', 'view'));
-        $this->assertTrue(Role::where('slug', 'dean')->firstOrFail()->hasPermission('dean_administration', 'approve'));
+        $dean = Role::where('slug', 'dean')->firstOrFail();
+        $this->assertTrue($dean->hasPermission('dean_administration', 'approve'));
+        $this->assertTrue($dean->hasPermission('faculty', 'view'));
         $this->assertTrue(Role::where('slug', 'hr_manager')->firstOrFail()->hasPermission('hr_onboarding', 'approve'));
         $this->assertTrue(Role::where('slug', 'hr_specialist')->firstOrFail()->hasPermission('hr_onboarding', 'edit'));
         $this->assertFalse(Role::where('slug', 'hr_specialist')->firstOrFail()->hasPermission('hr_onboarding', 'approve'));

@@ -321,6 +321,11 @@ Route::middleware(['auth'])->prefix('facilities')->name('facilities.')->group(fu
 // Estates & facilities management routes
 Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')->name('facilities.')->group(function () {
     Route::get('/', [\App\Http\Controllers\FacilitiesController::class, 'index'])->name('index');
+    Route::get('/buildings', [\App\Http\Controllers\FacilitiesController::class, 'facilitiesIndex'])->name('buildings.index');
+    Route::get('/buildings/create', [\App\Http\Controllers\FacilitiesController::class, 'createFacility'])->name('buildings.create')->middleware('permission:facilities,create');
+    Route::post('/buildings', [\App\Http\Controllers\FacilitiesController::class, 'storeFacility'])->name('buildings.store')->middleware('permission:facilities,create');
+    Route::get('/buildings/{facility}/edit', [\App\Http\Controllers\FacilitiesController::class, 'editFacility'])->name('buildings.edit')->middleware('permission:facilities,edit');
+    Route::put('/buildings/{facility}', [\App\Http\Controllers\FacilitiesController::class, 'updateFacility'])->name('buildings.update')->middleware('permission:facilities,edit');
     Route::get('/rooms/create', [\App\Http\Controllers\FacilitiesController::class, 'create'])->name('rooms.create')->middleware('permission:facilities_rooms,create');
     Route::post('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'store'])->name('rooms.store')->middleware('permission:facilities_rooms,create');
     Route::get('/rooms/{room}/edit', [\App\Http\Controllers\FacilitiesController::class, 'edit'])->name('rooms.edit')->middleware('permission:facilities_rooms,edit');
@@ -339,7 +344,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::prefix('hostel')->name('hostel.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\HostelController::class, 'index'])->name('index')->middleware('permission:halls_of_residence,view');
         Route::post('/hostel', [\App\Http\Controllers\Admin\HostelController::class, 'storeHostel'])->name('storeHostel')->middleware('permission:halls_of_residence,create');
-        Route::post('/hostel/{hostel}/room', [\App\Http\Controllers\Admin\HostelController::class, 'storeRoom'])->name('storeRoom')->middleware('permission:halls_of_residence,create');
+        Route::get('/hall/{hostel}/edit', [\App\Http\Controllers\Admin\HostelController::class, 'editHostel'])->name('edit')->middleware('permission:halls_of_residence,edit');
+        Route::put('/hall/{hostel}', [\App\Http\Controllers\Admin\HostelController::class, 'updateHostel'])->name('update')->middleware('permission:halls_of_residence,edit');
+        Route::post('/hall/{hostel}/room', [\App\Http\Controllers\Admin\HostelController::class, 'storeRoom'])->name('storeRoom')->middleware('permission:halls_of_residence,create');
         Route::post('/allocation/{allocation}/approve', [\App\Http\Controllers\Admin\HostelController::class, 'approveAllocation'])->name('approveAllocation')->middleware('permission:halls_of_residence,approve');
         Route::post('/allocation/{allocation}/reject', [\App\Http\Controllers\Admin\HostelController::class, 'rejectAllocation'])->name('rejectAllocation')->middleware('permission:halls_of_residence,approve');
     });
@@ -747,8 +754,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // Faculty Routes
 Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')->group(function () {
     // Dean Administration Routes
-    Route::prefix('dean')->name('dean.')->group(function () {
-        Route::middleware('permission:dean_administration,view')->group(function () {
+    Route::middleware('permission:dean_administration,view')->prefix('dean')->name('dean.')->group(function () {
         Route::middleware('permission:academic_quality,view')->group(function () {
             Route::resource('/quality', \App\Http\Controllers\Faculty\Dean\QualityReviewController::class);
             Route::post('/quality/{quality}/submit', [\App\Http\Controllers\Faculty\Dean\QualityReviewController::class, 'submit'])->name('quality.submit');
@@ -772,7 +778,6 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         });
         Route::middleware('permission:external_relations,view')->group(function () {
             Route::resource('/partnerships', App\Http\Controllers\Faculty\Dean\PartnershipController::class);
-        });
         });
     });
 

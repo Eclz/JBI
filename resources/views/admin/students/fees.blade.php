@@ -68,7 +68,7 @@
         <div class="col-md-3">
             <div class="card text-center border-warning">
                 <div class="card-body">
-                    <h6 class="text-muted mb-2">Pending</h6>
+                    <h6 class="text-muted mb-2">Balance Due</h6>
                     <h3 class="mb-0 text-warning">{{ $currencyCode }} {{ number_format($stats['pending_fees'] ?? 0, 2) }}</h3>
                 </div>
             </div>
@@ -110,10 +110,10 @@
                                     <td>
                                         <strong>{{ $record->invoice_number }}</strong>
                                     </td>
-                                    <td>{{ $record->feeStructure->fee_name ?? 'N/A' }}</td>
-                                    <td>{{ $currencyCode }} {{ number_format($record->amount, 2) }}</td>
-                                    <td>{{ $currencyCode }} {{ number_format($record->amount_paid, 2) }}</td>
-                                    <td>{{ $currencyCode }} {{ number_format($record->amount - $record->amount_paid, 2) }}</td>
+                                    <td>{{ $record->feeStructure->name ?? 'N/A' }}</td>
+                                    <td>{{ $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
+                                    <td>{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                                    <td>{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                                     <td>{{ \Carbon\Carbon::parse($record->due_date)->format('M d, Y') }}</td>
                                     <td>
                                         @if($record->status === 'paid')

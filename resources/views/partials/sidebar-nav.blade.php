@@ -987,7 +987,7 @@
                     @endif
                 @endforeach
                 
-                @if(auth()->user()->hasPermission('hr_recruiting', 'view'))
+                @if(auth()->user()->hasPermission('hr_recruiting', 'view') || auth()->user()->hasPermission('hr_onboarding', 'view'))
                     <li class="sidebar-subheading">Talent Sourcing</li>
                 @endif
                 @foreach([

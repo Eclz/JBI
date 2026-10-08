@@ -20,8 +20,8 @@ class RolePermissionSeeder extends Seeder
 
         $rolePermissions = [
             'super_administrator' => $all,
-            'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports'], $actions),
-            'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports', 'academic_quality', 'faculty_evaluations', 'budget_requests', 'student_support', 'external_relations'], ['view', 'create', 'edit', 'approve', 'export']),
+            'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports', 'registrar_hub'], $actions),
+            'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports', 'academic_quality', 'faculty_evaluations', 'budget_requests', 'student_support', 'external_relations', 'dean_administration'], ['view', 'create', 'edit', 'approve', 'export']),
             'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
             'lecturer' => $this->matrix(['courses', 'attendance', 'grades', 'lms', 'exams'], ['view', 'create', 'edit']),
             'finance_officer' => array_merge_recursive(
@@ -36,10 +36,10 @@ class RolePermissionSeeder extends Seeder
             'parent_guardian' => $this->matrix(['fees', 'attendance', 'grades', 'reports'], ['view']),
             'librarian' => $this->matrix(['library', 'library_catalogue', 'library_circulation', 'students', 'reports'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
             'assistant_librarian' => $this->matrix(['library', 'library_catalogue', 'library_circulation'], ['view', 'create', 'edit']),
-            'hr_manager' => $this->matrix(['human_resources', 'hr_core', 'hr_attendance', 'hr_payroll', 'hr_recruiting', 'hr_talent', 'faculty', 'students', 'reports'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
-            'hr_specialist' => $this->matrix(['human_resources', 'hr_core', 'hr_attendance', 'hr_recruiting', 'hr_talent'], ['view', 'create', 'edit']),
-            'estates_manager' => $this->matrix(['facilities', 'facilities_rooms', 'facilities_requests', 'departments', 'students', 'faculty', 'reports'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
-            'facilities_officer' => $this->matrix(['facilities', 'facilities_rooms', 'facilities_requests'], ['view', 'create', 'edit']),
+            'hr_manager' => $this->matrix(['human_resources', 'hr_core', 'hr_attendance', 'hr_payroll', 'hr_recruiting', 'hr_talent', 'hr_onboarding', 'faculty', 'students', 'reports'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
+            'hr_specialist' => $this->matrix(['human_resources', 'hr_core', 'hr_attendance', 'hr_recruiting', 'hr_talent', 'hr_onboarding'], ['view', 'create', 'edit']),
+            'estates_manager' => $this->matrix(['facilities', 'facilities_rooms', 'facilities_requests', 'halls_of_residence', 'departments', 'students', 'faculty', 'reports'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
+            'facilities_officer' => $this->matrix(['facilities', 'facilities_rooms', 'facilities_requests', 'halls_of_residence'], ['view', 'create', 'edit']),
         ];
 
         foreach (config('university_permissions.defaults', []) as $slug => $roleConfig) {

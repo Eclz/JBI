@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Hostel;
+use App\Models\CampusFacility;
 use App\Models\HostelRoom;
 use App\Models\HostelAllocation;
 use App\Models\Semester;
@@ -22,8 +22,9 @@ class HostelController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        $hostels = Hostel::where('is_active', true)
-            ->with(['rooms' => function($q) {
+        $hostels = CampusFacility::where('type', 'hall')
+            ->where('is_active', true)
+            ->with(['hostelRooms' => function ($q) {
                 $q->where('status', 'available')->whereColumn('occupancy', '<', 'capacity');
             }])
             ->get();

@@ -90,13 +90,13 @@
             <h5 class="fw-bold mb-3" style="color: #212529;">Request Accommodation</h5>
             <div class="row g-4">
                 @forelse($hostels as $hostel)
-                    @if($hostel->rooms->count() > 0)
+                    @if($hostel->hostelRooms->count() > 0)
                         <div class="col-md-6 col-lg-4">
                             <div class="card border-0 shadow-sm h-100">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <h5 class="fw-bold mb-0">{{ $hostel->name }}</h5>
-                                        <span class="badge bg-primary rounded-pill">{{ ucfirst($hostel->type) }}</span>
+                                        <span class="badge bg-primary rounded-pill">{{ ucfirst($hostel->hall_type) }}</span>
                                     </div>
                                     <p class="text-muted small mb-3"><i class="bi bi-geo-alt me-1"></i>{{ $hostel->location ?? 'Campus' }}</p>
                                     <p class="small">{{ $hostel->description }}</p>
@@ -109,7 +109,7 @@
                                             <label class="form-label small fw-semibold text-muted">Select Available Room</label>
                                             <select class="form-select border-0 bg-light" name="hostel_room_id" required>
                                                 <option value="">-- Choose Room --</option>
-                                                @foreach($hostel->rooms as $room)
+                                                @foreach($hostel->hostelRooms as $room)
                                                     <option value="{{ $room->id }}">Room {{ $room->room_number }} (Fee: ${{ number_format($room->fee_per_semester, 2) }})</option>
                                                 @endforeach
                                             </select>

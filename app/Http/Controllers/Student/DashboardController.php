@@ -134,9 +134,9 @@ class DashboardController extends Controller
             : ($studentProfile->current_gpa ?? 0);
 
         // Get fee statistics
-        $totalFees = FeeRecord::where('user_id', $student->id)->sum('amount');
+        $totalFees = FeeRecord::where('user_id', $student->id)->sum('total_amount');
         $paidFees = FeeRecord::where('user_id', $student->id)->sum('paid_amount');
-        $pendingFees = $totalFees - $paidFees;
+        $pendingFees = FeeRecord::where('user_id', $student->id)->sum('balance_amount');
 
         // Get unread notifications
         $unreadNotifications = Notification::where('user_id', $student->id)

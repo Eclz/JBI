@@ -11,6 +11,8 @@ JBI is a web-based university management and learning platform built for Johnson
 - Manage course enrollment, fees, and student records
 - View academic, attendance, enrollment, faculty, course, and financial reports
 - Publish announcements and configure institutional settings
+- Manage campus facilities and associate rooms with named facilities
+- Manage halls of residence as facilities with type `hall`; other campus facilities use type `facility`
 
 ### Faculty
 
@@ -171,6 +173,16 @@ The fixed demo accounts all use the password `password123`:
 | Parent | `parent@jbiuniversity.com` |
 
 These credentials are for local testing only. Never deploy them to production.
+
+### Functional-area permissions
+
+Role permissions include dedicated modules for Halls of Residence, Registrar Hub, Dean Administration, and HR Onboarding. To add or refresh these grants in an existing database without reseeding demo data, run:
+
+```bash
+php artisan db:seed --class="Database\\Seeders\\FunctionalAreaPermissionsSeeder"
+```
+
+The seeder grants each area to its corresponding operational roles and preserves each role's permissions for other modules.
 
 Only on a brand-new, empty production database, initialize essential academic structure and the administrator account with:
 

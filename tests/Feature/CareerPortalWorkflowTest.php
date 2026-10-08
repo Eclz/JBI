@@ -94,7 +94,9 @@ class CareerPortalWorkflowTest extends TestCase
                 'workspace' => 'Science Building, Office 12',
                 'due_date' => today()->addDays(14)->toDateString(),
             ])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
 
         $applicant->refresh();
         $this->assertSame('Hired', $applicant->status);
