@@ -19,6 +19,7 @@ use App\Http\Controllers\HelpController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\ReceiptVerificationController;
+use App\Http\Controllers\CareerPortalController;
 
 // Faculty Controllers
 use App\Http\Controllers\Faculty\DashboardController as FacultyDashboardController;
@@ -120,6 +121,15 @@ Route::get('/application/payment/{token}', [StudentsApplicationController::class
 Route::post('/application/payment/{token}', [StudentsApplicationController::class, 'storePayment'])->name('applications.store-payment');
 Route::get('/application/payment-success/{token}', [StudentsApplicationController::class, 'paymentSuccess'])->name('applications.payment-success');
 
+Route::get('/careers', [CareerPortalController::class, 'index'])->name('careers.index');
+Route::get('/careers/{vacancy}', [CareerPortalController::class, 'show'])->name('careers.show');
+Route::post('/careers/{vacancy}/apply', [CareerPortalController::class, 'apply'])
+    ->middleware('throttle:5,1')
+    ->name('careers.apply');
+Route::get('/careers/applications/{token}', [CareerPortalController::class, 'track'])
+    ->middleware('throttle:20,1')
+    ->name('careers.track');
+
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -216,13 +226,67 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
 // Human resources module routes
 Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')->group(function () {
     Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
+    Route::get('/section/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('section');
+    Route::get('/sections/{section}', [\App\Http\Controllers\HumanResourcesController::class, 'section'])->name('human-resources.sections.show');
+    Route::get('/ess', [\App\Http\Controllers\HumanResourcesController::class, 'ess'])->name('ess');
+    Route::post('/ess/expense-claims', [\App\Http\Controllers\HumanResourcesController::class, 'storeEssExpense'])->name('ess.expense-claims.store');
+    Route::post('/ess/clock-in', [\App\Http\Controllers\HumanResourcesController::class, 'clockIn'])->name('ess.clock-in');
+    Route::post('/ess/clock-out', [\App\Http\Controllers\HumanResourcesController::class, 'clockOut'])->name('ess.clock-out');
     Route::get('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'staffIndex'])->name('staff.index')->middleware('permission:human_resources,view');
     Route::get('/staff/create', [\App\Http\Controllers\HumanResourcesController::class, 'create'])->name('staff.create')->middleware('permission:hr_core,create');
     Route::get('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'show'])->name('staff.show')->middleware('permission:human_resources,view');
     Route::post('/staff', [\App\Http\Controllers\HumanResourcesController::class, 'store'])->name('staff.store')->middleware('permission:hr_core,create');
+    Route::post('/org-chart/update-manager', [\App\Http\Controllers\HumanResourcesController::class, 'updateManager'])->name('org-chart.update-manager')->middleware('permission:hr_core,edit');
+    Route::post('/org-chart/update-role', [\App\Http\Controllers\HumanResourcesController::class, 'updateRole'])->name('org-chart.update-role')->middleware('permission:hr_core,edit');
+    Route::post('/org-chart/add-report', [\App\Http\Controllers\HumanResourcesController::class, 'addDirectReport'])->name('org-chart.add-report')->middleware('permission:hr_core,edit');
+    
+    // Onboarding
+    Route::post('/onboarding', [\App\Http\Controllers\HrOnboardingController::class, 'store'])->name('onboarding.store')->middleware('permission:hr_onboarding,create');
+    Route::get('/onboarding/{onboarding}', [\App\Http\Controllers\HrOnboardingController::class, 'show'])->name('onboarding.show')->middleware('permission:hr_onboarding,view');
+    Route::post('/onboarding/tasks/{task}', [\App\Http\Controllers\HrOnboardingController::class, 'updateTask'])->name('onboarding.tasks.update')->middleware('permission:hr_onboarding,edit');
+    
+    // Succession
+    Route::post('/succession', [\App\Http\Controllers\HrSuccessionController::class, 'store'])->name('succession.store')->middleware('permission:hr_talent,create');
+    Route::get('/succession/{succession}', [\App\Http\Controllers\HrSuccessionController::class, 'show'])->name('succession.show')->middleware('permission:hr_talent,view');
+    Route::post('/succession/{succession}/add-successor', [\App\Http\Controllers\HrSuccessionController::class, 'addSuccessor'])->name('succession.add-successor')->middleware('permission:hr_talent,edit');
+    Route::post('/succession/{succession}/vacancy', [\App\Http\Controllers\HrRecruitingController::class, 'storeFromSuccession'])->name('succession.vacancy.store')->middleware(['permission:hr_talent,edit', 'permission:hr_recruiting,create']);
+    
+    // Recruiting
+    Route::post('/recruiting', [\App\Http\Controllers\HrRecruitingController::class, 'store'])->name('recruiting.store')->middleware('permission:hr_recruiting,create');
+    Route::get('/recruiting/{vacancy}', [\App\Http\Controllers\HrRecruitingController::class, 'show'])->name('recruiting.show')->middleware('permission:hr_recruiting,view');
+    Route::get('/recruiting/applicants/{applicant}/documents/{document}', [\App\Http\Controllers\HrRecruitingController::class, 'downloadDocument'])->name('recruiting.applicants.documents.download')->middleware('permission:hr_recruiting,view');
+    Route::post('/recruiting/applicants/{applicant}', [\App\Http\Controllers\HrRecruitingController::class, 'updateApplicantStatus'])->name('recruiting.applicants.update')->middleware('permission:hr_recruiting,edit');
+    Route::post('/recruiting/applicants/{applicant}/approve-hire', [\App\Http\Controllers\HrRecruitingController::class, 'approveHire'])->name('recruiting.applicants.approve-hire')->middleware('permission:hr_recruiting,approve');
+    
+    // Shifts
+    Route::post('/shifts', [\App\Http\Controllers\HrShiftController::class, 'storeShift'])->name('shifts.store')->middleware('permission:hr_attendance,create');
+    Route::put('/shifts/{shift}', [\App\Http\Controllers\HrShiftController::class, 'updateShift'])->name('shifts.update')->middleware('permission:hr_attendance,edit');
+    Route::post('/shifts/assign', [\App\Http\Controllers\HrShiftController::class, 'assignShift'])->name('shifts.assign')->middleware('permission:hr_attendance,edit');
+    
+    // Expense Claims
+    Route::post('/expense-claims', [\App\Http\Controllers\HrExpenseController::class, 'store'])->name('expense-claims.store')->middleware('permission:hr_payroll,create');
+    Route::post('/expense-claims/{claim}', [\App\Http\Controllers\HrExpenseController::class, 'updateStatus'])->name('expense-claims.update')->middleware('permission:hr_payroll,edit');
+    
+    // Benefits
+    Route::post('/benefits/plans', [\App\Http\Controllers\HrBenefitController::class, 'storePlan'])->name('benefits.plans.store')->middleware('permission:hr_payroll,create');
+    Route::post('/benefits/enroll', [\App\Http\Controllers\HrBenefitController::class, 'assignBenefit'])->name('benefits.enroll')->middleware('permission:hr_payroll,create');
+    Route::post('/benefits/enrollments/{enrollment}/terminate', [\App\Http\Controllers\HrBenefitController::class, 'terminateEnrollment'])->name('benefits.terminate')->middleware('permission:hr_payroll,edit');
+    
+    // Performance
+    Route::post('/performance/reviews', [\App\Http\Controllers\HrPerformanceController::class, 'storeReview'])->name('performance.reviews.store')->middleware('permission:hr_talent,create');
+    Route::post('/performance/reviews/{review}', [\App\Http\Controllers\HrPerformanceController::class, 'updateReview'])->name('performance.reviews.update')->middleware('permission:hr_talent,edit');
+    Route::post('/performance/goals', [\App\Http\Controllers\HrPerformanceController::class, 'storeGoal'])->name('performance.goals.store')->middleware('permission:hr_talent,create');
+    Route::post('/performance/goals/{goal}', [\App\Http\Controllers\HrPerformanceController::class, 'updateGoalProgress'])->name('performance.goals.update')->middleware('permission:hr_talent,edit');
+    
+    // Learning
+    Route::post('/learning/courses', [\App\Http\Controllers\HrLearningController::class, 'storeCourse'])->name('learning.courses.store')->middleware('permission:hr_talent,create');
+    Route::post('/learning/enroll', [\App\Http\Controllers\HrLearningController::class, 'enrollUser'])->name('learning.enroll')->middleware('permission:hr_talent,create');
+    Route::post('/learning/enrollments/{enrollment}', [\App\Http\Controllers\HrLearningController::class, 'updateEnrollment'])->name('learning.enrollments.update')->middleware('permission:hr_talent,edit');
+    
     Route::get('/staff/{employee}/edit', [\App\Http\Controllers\HumanResourcesController::class, 'edit'])->name('staff.edit')->middleware('permission:hr_core,edit');
     Route::put('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'update'])->name('staff.update')->middleware('permission:hr_core,edit');
     Route::delete('/staff/{employee}', [\App\Http\Controllers\HumanResourcesController::class, 'destroy'])->name('staff.destroy')->middleware('permission:hr_core,delete');
+    Route::post('/staff/{employee}/generate-id', [\App\Http\Controllers\HumanResourcesController::class, 'generateId'])->name('staff.generate-id')->middleware('permission:hr_core,edit');
     
     // Leave Management Routes
     Route::get('/leaves', [\App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leaves.index');
@@ -257,6 +321,11 @@ Route::middleware(['auth'])->prefix('facilities')->name('facilities.')->group(fu
 // Estates & facilities management routes
 Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')->name('facilities.')->group(function () {
     Route::get('/', [\App\Http\Controllers\FacilitiesController::class, 'index'])->name('index');
+    Route::get('/buildings', [\App\Http\Controllers\FacilitiesController::class, 'facilitiesIndex'])->name('buildings.index');
+    Route::get('/buildings/create', [\App\Http\Controllers\FacilitiesController::class, 'createFacility'])->name('buildings.create')->middleware('permission:facilities,create');
+    Route::post('/buildings', [\App\Http\Controllers\FacilitiesController::class, 'storeFacility'])->name('buildings.store')->middleware('permission:facilities,create');
+    Route::get('/buildings/{facility}/edit', [\App\Http\Controllers\FacilitiesController::class, 'editFacility'])->name('buildings.edit')->middleware('permission:facilities,edit');
+    Route::put('/buildings/{facility}', [\App\Http\Controllers\FacilitiesController::class, 'updateFacility'])->name('buildings.update')->middleware('permission:facilities,edit');
     Route::get('/rooms/create', [\App\Http\Controllers\FacilitiesController::class, 'create'])->name('rooms.create')->middleware('permission:facilities_rooms,create');
     Route::post('/rooms', [\App\Http\Controllers\FacilitiesController::class, 'store'])->name('rooms.store')->middleware('permission:facilities_rooms,create');
     Route::get('/rooms/{room}/edit', [\App\Http\Controllers\FacilitiesController::class, 'edit'])->name('rooms.edit')->middleware('permission:facilities_rooms,edit');
@@ -266,11 +335,47 @@ Route::middleware(['auth', 'permission:facilities,view'])->prefix('facilities')-
 
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Registrar Hub
+    Route::middleware('permission:registrar_hub,view')->prefix('registrar')->name('registrar.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'dashboard'])->name('dashboard');
+    });
+
+    // Hostel Management
+    Route::prefix('hostel')->name('hostel.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\HostelController::class, 'index'])->name('index')->middleware('permission:halls_of_residence,view');
+        Route::post('/hostel', [\App\Http\Controllers\Admin\HostelController::class, 'storeHostel'])->name('storeHostel')->middleware('permission:halls_of_residence,create');
+        Route::get('/hall/{hostel}/edit', [\App\Http\Controllers\Admin\HostelController::class, 'editHostel'])->name('edit')->middleware('permission:halls_of_residence,edit');
+        Route::put('/hall/{hostel}', [\App\Http\Controllers\Admin\HostelController::class, 'updateHostel'])->name('update')->middleware('permission:halls_of_residence,edit');
+        Route::post('/hall/{hostel}/room', [\App\Http\Controllers\Admin\HostelController::class, 'storeRoom'])->name('storeRoom')->middleware('permission:halls_of_residence,create');
+        Route::post('/allocation/{allocation}/approve', [\App\Http\Controllers\Admin\HostelController::class, 'approveAllocation'])->name('approveAllocation')->middleware('permission:halls_of_residence,approve');
+        Route::post('/allocation/{allocation}/reject', [\App\Http\Controllers\Admin\HostelController::class, 'rejectAllocation'])->name('rejectAllocation')->middleware('permission:halls_of_residence,approve');
+    });
+
+    // Approval Hub (Registrar/SuperAdmin)
+    Route::prefix('approval-hub')->name('approval-hub.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'index'])->name('index');
+        Route::post('/quality/{quality}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approveQuality'])->name('quality.approve');
+        Route::post('/quality/{quality}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectQuality'])->name('quality.reject');
+        Route::post('/evaluation/{evaluation}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approveEvaluation'])->name('evaluation.approve');
+        Route::post('/evaluation/{evaluation}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectEvaluation'])->name('evaluation.reject');
+        Route::post('/budget/{budget}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approveBudget'])->name('budget.approve');
+        Route::post('/budget/{budget}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectBudget'])->name('budget.reject');
+        Route::post('/student-issue/{issue}/resolve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'resolveIssue'])->name('student-issue.resolve');
+        Route::post('/partnership/{partnership}/approve', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'approvePartnership'])->name('partnership.approve');
+        Route::post('/partnership/{partnership}/reject', [\App\Http\Controllers\Admin\ApprovalHubController::class, 'rejectPartnership'])->name('partnership.reject');
+    });
+
     // User Management
     Route::middleware('permission:users,view')->group(function () {
         Route::resource('users', AdminUserController::class);
         Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('permission:users,edit');
         Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password')->middleware('permission:users,edit');
+        Route::get('/user-logs', [AdminUserController::class, 'userLogs'])->name('user-logs')->middleware('permission:users,view');
+    });
+    
+    Route::middleware('permission:users,edit')->group(function () {
+        Route::get('/notifications/manage', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/manage', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('notifications.store');
     });
     Route::middleware('permission:roles,view')->group(function () {
         Route::resource('roles', AdminRoleController::class)->except(['show']);
@@ -344,6 +449,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::delete('/courses/{course}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('courses.materials.destroy');
         Route::get('/courses/{course}/assignments', [AdminCourseController::class, 'assignments'])->name('courses.assignments');
         Route::get('/courses/{course}/grades', [AdminCourseController::class, 'grades'])->name('courses.grades');
+        Route::get('/courses/{course}/grades/export', [AdminCourseController::class, 'exportGrades'])->name('courses.export-grades');
         Route::post('/courses/{course}/toggle-status', [AdminCourseController::class, 'toggleStatus'])->name('courses.toggle-status');
         Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:enrollments,create');
         Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:enrollments,delete');
@@ -470,6 +576,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::get('/payroll', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'payroll'])->name('payroll.index');
             Route::post('/payroll/generate', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'generatePayroll'])->name('payroll.generate')->middleware('permission:payroll,create');
             Route::get('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showPayroll'])->name('payroll.show');
+            Route::get('/payroll/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editPayroll'])->name('payroll.edit')->middleware('permission:payroll,edit');
             Route::put('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updatePayroll'])->name('payroll.update')->middleware('permission:payroll,edit');
             Route::delete('/payroll/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyPayroll'])->name('payroll.destroy')->middleware('permission:payroll,delete');
         });
@@ -481,6 +588,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::get('/assets/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editAsset'])->name('assets.edit')->middleware('permission:assets,update');
             Route::put('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateAsset'])->name('assets.update')->middleware('permission:assets,update');
             Route::delete('/assets/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyAsset'])->name('assets.destroy')->middleware('permission:assets,delete');
+
+            // Procurement & Requisitions
+            Route::get('/procurement', [\App\Http\Controllers\Admin\ProcurementController::class, 'index'])->name('procurement.index');
+            Route::post('/procurement/{requisition}/approve', [\App\Http\Controllers\Admin\ProcurementController::class, 'approve'])->name('procurement.approve');
+            Route::post('/procurement/{requisition}/reject', [\App\Http\Controllers\Admin\ProcurementController::class, 'reject'])->name('procurement.reject');
         });
 
         Route::middleware('permission:banking,view')->group(function () {
@@ -503,6 +615,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('program-levels', AdminProgramLevelController::class)->except(['show']);
     Route::resource('programs', AdminProgramController::class);
     Route::get('/program-changes', [AdminProgramChangeController::class, 'index'])->name('program-changes.index');
+    Route::get('/program-changes/create', [AdminProgramChangeController::class, 'create'])->name('program-changes.create');
+    Route::post('/program-changes', [AdminProgramChangeController::class, 'store'])->name('program-changes.store');
     Route::post('/program-changes/{programChange}/approve', [AdminProgramChangeController::class, 'approve'])->name('program-changes.approve');
     Route::post('/program-changes/{programChange}/reject', [AdminProgramChangeController::class, 'reject'])->name('program-changes.reject');
 
@@ -542,6 +656,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Admin Evaluation Surveys
+    Route::get('evaluation-surveys/rankings', [AdminEvaluationSurveyController::class, 'rankings'])->name('evaluation-surveys.rankings');
     Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class)->parameters([
         'evaluation-surveys' => 'survey'
     ]);
@@ -638,6 +753,56 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 // Faculty Routes
 Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')->group(function () {
+    // Dean Administration Routes
+    Route::middleware('permission:dean_administration,view')->prefix('dean')->name('dean.')->group(function () {
+        Route::middleware('permission:academic_quality,view')->group(function () {
+            Route::resource('/quality', \App\Http\Controllers\Faculty\Dean\QualityReviewController::class);
+            Route::post('/quality/{quality}/submit', [\App\Http\Controllers\Faculty\Dean\QualityReviewController::class, 'submit'])->name('quality.submit');
+        });
+        Route::middleware('permission:faculty_evaluations,view')->group(function () {
+            Route::resource('/evaluations', \App\Http\Controllers\Faculty\Dean\FacultyEvaluationController::class);
+            Route::post('/evaluations/{evaluation}/submit', [\App\Http\Controllers\Faculty\Dean\FacultyEvaluationController::class, 'submit'])->name('evaluations.submit');
+        });
+        Route::middleware('permission:budget_requests,view')->group(function () {
+            Route::get('/budgets', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'index'])->name('budgets.index');
+            Route::get('/budgets/create', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'create'])->name('budgets.create');
+            Route::post('/budgets', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'store'])->name('budgets.store');
+            Route::get('/budgets/{budget}', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'show'])->name('budgets.show');
+            Route::get('/budgets/{budget}/edit', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'edit'])->name('budgets.edit');
+            Route::put('/budgets/{budget}', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'update'])->name('budgets.update');
+            Route::post('/budgets/{budget}/submit', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'submit'])->name('budgets.submit');
+            Route::delete('/budgets/{budget}', [App\Http\Controllers\Faculty\Dean\BudgetController::class, 'destroy'])->name('budgets.destroy');
+        });
+        Route::middleware('permission:student_support,view')->group(function () {
+            Route::resource('/student-issues', App\Http\Controllers\Faculty\Dean\StudentIssueController::class);
+        });
+        Route::middleware('permission:external_relations,view')->group(function () {
+            Route::resource('/partnerships', App\Http\Controllers\Faculty\Dean\PartnershipController::class);
+        });
+    });
+
+    // HOD Administration Routes
+    Route::prefix('hod')->name('hod.')->group(function () {
+        Route::get('/department', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'index'])->name('department.index');
+        Route::get('/department/programs', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'programs'])->name('department.programs');
+        Route::get('/department/lecturers', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'lecturers'])->name('department.lecturers');
+        Route::get('/department/courses', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'courses'])->name('department.courses');
+        Route::post('/department/courses/{course}/assign', [\App\Http\Controllers\Faculty\HOD\DepartmentController::class, 'assignLecturer'])->name('department.courses.assign');
+        
+        Route::get('/students', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'index'])->name('students.index');
+        Route::get('/students/{id}', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'show'])->name('students.show');
+
+        // HOD Operations Hub
+        Route::get('/operations', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'index'])->name('operations.index');
+        Route::post('/operations/leave/{leave}/approve', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'approveLeave'])->name('operations.leave.approve');
+        Route::post('/operations/leave/{leave}/reject', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'rejectLeave'])->name('operations.leave.reject');
+        Route::post('/operations/program-change/{programChange}/endorse', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'endorseProgramChange'])->name('operations.program-change.endorse');
+        Route::post('/operations/moderate-grades/{assignment}', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'moderateGrades'])->name('operations.moderate-grades');
+
+        // HOD Procurement Requisitions
+        Route::get('/requisitions', [\App\Http\Controllers\Faculty\HOD\RequisitionController::class, 'index'])->name('requisitions.index');
+        Route::post('/requisitions', [\App\Http\Controllers\Faculty\HOD\RequisitionController::class, 'store'])->name('requisitions.store');
+    });
     Route::get('/dashboard', [FacultyDashboardController::class, 'index'])->name('dashboard');
     Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index')->middleware('permission:lms,view');
     Route::get('/lms/{course}', [FacultyLmsController::class, 'show'])->name('lms.show')->middleware('permission:lms,view');
@@ -723,14 +888,12 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     Route::post('/assignments/{assignment}/grade', [FacultyGradingController::class, 'storeGrade'])->name('grading.store')->middleware('permission:grades,edit');
     Route::post('/assignments/{assignment}/bulk-grade', [FacultyGradingController::class, 'bulkGrade'])->name('grading.bulk')->middleware('permission:grades,edit');
     Route::post('/assignments/{assignment}/publish', [FacultyGradingController::class, 'publishGrades'])->name('grading.publish')->middleware('permission:grades,edit');
-
-    // Announcements
-    Route::resource('announcements', AnnouncementController::class);
 });
 
 // Student Routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/id-card', [StudentDashboardController::class, 'idCard'])->name('id-card');
     Route::get('/lms', [StudentLmsController::class, 'index'])->name('lms.index');
     Route::get('/lms/{course}', [StudentLmsController::class, 'show'])->name('lms.show');
     Route::post('/lms/{course}/complete', [StudentLmsController::class, 'markComplete'])->name('lms.complete');
@@ -829,6 +992,10 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::delete('/enrollment/unenroll/{course}', [StudentProgrammeCoursesController::class, 'unenroll'])->name('enrollment.unenroll');
     Route::get('/admission-letter', [StudentDashboardController::class, 'showAdmissionLetter'])->name('admission-letter.show');
     Route::match(['get', 'post'], '/dashboard/acknowledge', [StudentDashboardController::class, 'acknowledgeAdmission'])->name('dashboard.acknowledge');
+
+    // Hostel Management
+    Route::get('/hostel', [\App\Http\Controllers\Student\HostelController::class, 'index'])->name('hostel.index');
+    Route::post('/hostel/request', [\App\Http\Controllers\Student\HostelController::class, 'requestRoom'])->name('hostel.request');
 });
 
 
@@ -853,5 +1020,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create')->middleware('permission:announcements,create');
+    Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store')->middleware('permission:announcements,create');
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+    Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit')->middleware('permission:announcements,edit');
+    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update')->middleware('permission:announcements,edit');
+    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy')->middleware('permission:announcements,delete');
 });

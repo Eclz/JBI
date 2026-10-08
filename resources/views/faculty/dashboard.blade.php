@@ -101,22 +101,27 @@
                 <div class="card-body">
                     <h5 class="card-title mb-3" style="color: #1e293b; font-weight: 600;">Quick Actions</h5>
                     <div class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col">
                             <a href="{{ route('faculty.assignments.create') }}" class="btn btn-outline-primary w-100">
                                 <i class="bi bi-file-earmark-plus me-2"></i>Create Assignment
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col">
                             <a href="{{ route('faculty.exams.create') }}" class="btn btn-outline-success w-100">
                                 <i class="bi bi-clipboard-check me-2"></i>Create Exam
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col">
+                            <a href="{{ route('messages.index') }}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-envelope-paper me-2"></i>Mailbox
+                            </a>
+                        </div>
+                        <div class="col">
                             <a href="{{ route('faculty.quizzes.create') }}" class="btn btn-outline-info w-100">
                                 <i class="bi bi-question-circle me-2"></i>Create Quiz
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col">
                             <a href="{{ route('faculty.courses.index') }}" class="btn btn-outline-secondary w-100">
                                 <i class="bi bi-book me-2"></i>My Courses
                             </a>

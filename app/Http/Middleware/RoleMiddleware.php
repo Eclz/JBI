@@ -24,17 +24,7 @@ class RoleMiddleware
 
 
         if (!$user->hasRole($role)) {
-            // Redirect based on user's actual role
-            switch ($user->role) {
-                case 'admin':
-                    return redirect()->route('dashboard')->with('error', 'Access denied. You do not have permission to access this area.');
-                case 'faculty':
-                    return redirect()->route('dashboard')->with('error', 'Access denied. You do not have permission to access this area.');
-                case 'student':
-                    return redirect()->route('dashboard')->with('error', 'Access denied. You do not have permission to access this area.');
-                default:
-                    return redirect()->route('dashboard')->with('error', 'Access denied. Invalid user role.');
-            }
+            abort(403, 'Access denied. You do not have permission to access this area.');
         }
 
         return $next($request);

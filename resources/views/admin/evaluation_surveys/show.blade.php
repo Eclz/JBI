@@ -11,25 +11,7 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
 
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Please fix the following errors:</strong>
-            <ul class="mb-0 mt-1">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
 
     <!-- Header & Action Bar -->
     <div class="card border-0 shadow-sm mb-4">
@@ -78,7 +60,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100 bg-white">
                 <div class="card-body d-flex align-items-center">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-white me-3">
+                    <div class="rounded-circle bg-primary p-3 text-white me-3">
                         <i class="bi bi-people-fill fs-3"></i>
                     </div>
                     <div>

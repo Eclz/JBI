@@ -55,6 +55,12 @@ class DashboardController extends Controller
                 if ($user->isFinanceOfficer() && !$user->isSuperAdmin()) {
                     return redirect()->route('admin.finance.dashboard');
                 }
+                if (!$user->isSuperAdmin() && $user->isHrStaff()) {
+                    return redirect()->route('human-resources.index');
+                }
+                if ($user->hasRole('librarian') || $user->hasRole('assistant_librarian')) {
+                    return redirect()->route('library.index');
+                }
                 
                 $data['totalStudents'] = User::where('role', 'student')->count();
                 $data['totalFaculty'] = User::where('role', 'faculty')->count();
@@ -107,6 +113,13 @@ class DashboardController extends Controller
                 return view('dashboard.admin', $data);
 
             case 'faculty':
+                if ($user->hasRole('dean')) {
+                    return redirect()->route('faculty.dean.quality.index');
+                }
+                if ($user->hasRole('head_of_department')) {
+                    return redirect()->route('faculty.hod.department.index');
+                }
+
                 $facultyId = $user->id;
                 $data['myCourses'] = Course::where('instructor_id', $facultyId)->get();
                 $data['pendingAssignments'] = Assignment::where('course_id', $facultyId)->count();

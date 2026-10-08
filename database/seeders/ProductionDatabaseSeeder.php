@@ -28,6 +28,11 @@ class ProductionDatabaseSeeder extends Seeder
             ]
         );
 
+        $this->call([
+            RolePermissionSeeder::class,
+            FunctionalAreaPermissionsSeeder::class,
+        ]);
+
         foreach ([
             'institution_name' => 'JBI University',
             'institution_address' => 'South Africa',

@@ -20,7 +20,7 @@ class SemesterController extends Controller
 
     public function create()
     {
-        $academicYears = AcademicYear::where('is_active', true)->orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return view('admin.semesters.create', compact('academicYears'));
     }
@@ -71,7 +71,7 @@ class SemesterController extends Controller
 
     public function edit(Semester $semester)
     {
-        $academicYears = AcademicYear::where('is_active', true)->orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return view('admin.semesters.edit', compact('semester', 'academicYears'));
     }

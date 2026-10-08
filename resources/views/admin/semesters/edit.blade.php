@@ -20,7 +20,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="academic_year_id" class="form-label">Academic Year <span class="text-danger">*</span></label>
-                        <select class="form-select @error('academic_year_id') is-invalid @enderror" id="academic_year_id" name="academic_year_id" required>
+                        <select class="form-select select2 @error('academic_year_id') is-invalid @enderror" id="academic_year_id" name="academic_year_id" required>
                             <option value="">Select Academic Year</option>
                             @foreach($academicYears as $year)
                                 <option value="{{ $year->id }}" {{ old('academic_year_id', $semester->academic_year_id) == $year->id ? 'selected' : '' }}>{{ $year->name }}</option>

@@ -393,7 +393,7 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                                                    <span class="badge bg-primary text-white">
                                                         {{ $tx->payment_method ?: 'Bank Transfer' }}
                                                     </span>
                                                 </td>

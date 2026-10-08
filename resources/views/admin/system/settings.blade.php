@@ -3,12 +3,56 @@
 @section('title', 'System Settings')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-0 text-primary">
-            <i class="bi bi-gear me-2"></i>System Settings
-        </h1>
-        <p class="text-muted mb-0">Configure system-wide settings and preferences</p>
+<div class="container-fluid px-4 py-4">
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">System Settings</h1>
+            <p class="text-muted mb-0">Manage your institution's configuration, academic periods, admissions, payments and system preferences.</p>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100 border-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }} shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-person-lines-fill fs-4 text-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }} me-2"></i>
+                        <h6 class="mb-0 fw-bold">Admission applications</h6>
+                    </div>
+                    <div class="h5 mb-1 text-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }} fw-bold text-uppercase">{{ $admissionWindow['status'] }}</div>
+                    <div class="small text-muted">Prospective students applying to JBI</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            @php
+                $courseRegistrationOpen = $currentSemester?->is_registration_open ?? false;
+            @endphp
+            <div class="card h-100 border-{{ $courseRegistrationOpen ? 'success' : 'secondary' }} shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-journal-check fs-4 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }} me-2"></i>
+                        <h6 class="mb-0 fw-bold">Semester registration</h6>
+                    </div>
+                    <div class="h5 mb-1 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }} fw-bold text-uppercase">{{ $courseRegistrationOpen ? 'Open' : 'Closed' }}</div>
+                    <div class="small text-muted">Admitted students enrolling in courses</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-primary shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-clock-history fs-4 text-primary me-2"></i>
+                        <h6 class="mb-0 fw-bold">System Time</h6>
+                    </div>
+                    <div class="h5 mb-1 text-primary fw-bold">{{ $admissionWindow['now']->format('d M Y') }}</div>
+                    <div class="small text-muted">{{ $admissionWindow['now']->format('H:i') }} — {{ old('timezone', $settings->get('timezone')->value ?? 'Africa/Johannesburg') }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -19,384 +63,462 @@
     </div>
 @endif
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card h-100 border-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }}">
-            <div class="card-body d-flex align-items-center gap-3">
-                <i class="bi bi-person-lines-fill fs-2 text-{{ $admissionWindow['isOpen'] ? 'success' : 'warning' }}"></i>
-                <div>
-                    <div class="small text-muted">Admission applications</div>
-                    <div class="fw-bold text-capitalize">{{ $admissionWindow['status'] }}</div>
-                    <div class="small">Prospective students applying to JBI</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        @php
-            $courseRegistrationOpen = $currentSemester?->is_registration_open ?? false;
-        @endphp
-        <div class="card h-100 border-{{ $courseRegistrationOpen ? 'success' : 'secondary' }}">
-            <div class="card-body d-flex align-items-center gap-3">
-                <i class="bi bi-journal-check fs-2 text-{{ $courseRegistrationOpen ? 'success' : 'secondary' }}"></i>
-                <div>
-                    <div class="small text-muted">Semester registration</div>
-                    <div class="fw-bold">{{ $courseRegistrationOpen ? 'Open' : 'Closed' }}</div>
-                    <div class="small">Admitted students enrolling in courses</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100 border-primary">
-            <div class="card-body d-flex align-items-center gap-3">
-                <i class="bi bi-clock-history fs-2 text-primary"></i>
-                <div>
-                    <div class="small text-muted">System time</div>
-                    <div class="fw-bold">{{ $admissionWindow['now']->format('d M Y, H:i') }}</div>
-                    <div class="small">South African Standard Time</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="alert alert-light border mb-4">
-    <strong>Admission</strong> is the application and approval process for prospective students.
-    <strong>Registration</strong> happens after admission, when students pay required fees and enrol in semester courses.
-    Semester registration dates are managed under <a href="{{ route('admin.semesters.index') }}">Semesters</a>.
-</div>
-
-<form action="{{ route('admin.settings.update') }}" method="POST">
+<form action="{{ route('admin.settings.update') }}" method="POST" id="settingsForm">
     @csrf
     @method('PUT')
 
     <div class="row">
-        <!-- General Settings -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-info-circle me-2"></i>General Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Application Name <span class="text-danger">*</span></label>
-                        <input type="text" name="app_name" class="form-control @error('app_name') is-invalid @enderror"
-                               value="{{ old('app_name', $settings->get('app_name')->value ?? 'JBI University') }}" required>
-                        @error('app_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Contact Email <span class="text-danger">*</span></label>
-                        <input type="email" name="app_email" class="form-control @error('app_email') is-invalid @enderror"
-                               value="{{ old('app_email', $settings->get('app_email')->value ?? 'info@jbiuniversity.com') }}" required>
-                        @error('app_email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Contact Phone</label>
-                        <input type="text" name="app_phone" class="form-control"
-                               value="{{ old('app_phone', $settings->get('app_phone')->value ?? '') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Address</label>
-                        <textarea name="app_address" class="form-control" rows="3">{{ old('app_address', $settings->get('app_address')->value ?? '') }}</textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="app_description" class="form-control" rows="3">{{ old('app_description', $settings->get('app_description')->value ?? '') }}</textarea>
-                        <small class="text-muted">Brief description of the institution</small>
-                    </div>
+        <!-- Sticky Sidebar Navigation -->
+        <div class="col-md-3 mb-4">
+            <div class="sticky-top" style="top: 80px; z-index: 10;">
+                <h6 class="text-muted fw-bold mb-3 ms-2">SETTINGS</h6>
+                <div class="nav flex-column nav-pills" id="settings-tab" role="tablist" aria-orientation="vertical">
+                    <button class="nav-link active text-start fw-semibold mb-1" id="tab-general" data-bs-toggle="pill" data-bs-target="#content-general" type="button" role="tab"><i class="bi bi-building me-2"></i>General</button>
+                    <button class="nav-link text-start fw-semibold mb-1" id="tab-system" data-bs-toggle="pill" data-bs-target="#content-system" type="button" role="tab"><i class="bi bi-sliders me-2"></i>System</button>
+                    <button class="nav-link text-start fw-semibold mb-1" id="tab-academic" data-bs-toggle="pill" data-bs-target="#content-academic" type="button" role="tab"><i class="bi bi-mortarboard me-2"></i>Academic</button>
+                    <button class="nav-link text-start fw-semibold mb-1" id="tab-term" data-bs-toggle="pill" data-bs-target="#content-term" type="button" role="tab"><i class="bi bi-calendar-range me-2"></i>Academic Term</button>
+                    <button class="nav-link text-start fw-semibold mb-1" id="tab-admissions" data-bs-toggle="pill" data-bs-target="#content-admissions" type="button" role="tab"><i class="bi bi-person-lines-fill me-2"></i>Admissions</button>
+                    <button class="nav-link text-start fw-semibold mb-1" id="tab-payments" data-bs-toggle="pill" data-bs-target="#content-payments" type="button" role="tab"><i class="bi bi-cash-coin me-2"></i>Payments</button>
                 </div>
             </div>
         </div>
 
-        <!-- System Settings -->
-        <div class="col-lg-6 mb-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-sliders me-2"></i>System Configuration
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Timezone</label>
-                        <select name="timezone" class="form-select">
-                            <option value="Africa/Johannesburg" {{ old('timezone', $settings->get('timezone')->value ?? 'Africa/Johannesburg') === 'Africa/Johannesburg' ? 'selected' : '' }}>South Africa Standard Time (SAST)</option>
-                            <option value="Africa/Kampala" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'Africa/Kampala' ? 'selected' : '' }}>East Africa Time (Kampala)</option>
-                            <option value="Africa/Nairobi" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'Africa/Nairobi' ? 'selected' : '' }}>East Africa Time (Nairobi)</option>
-                            <option value="UTC" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'UTC' ? 'selected' : '' }}>UTC</option>
-                        </select>
-                        <small class="text-muted">All registration windows and system dates use this timezone.</small>
+        <!-- Settings Content -->
+        <div class="col-md-9 mb-5 pb-5">
+            <div class="tab-content" id="settings-tabContent">
+
+                <!-- General Tab -->
+                <div class="tab-pane fade show active" id="content-general" role="tabpanel">
+                    <div class="mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1">General Information</h3>
+                            <p class="text-muted mb-0">Configure institution details and contact information.</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-check-lg me-1"></i> Save</button>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Operating Region</label>
-                        <select name="operating_region" id="operating_region" class="form-select" required>
-                            @foreach($currencyRegions as $code => $region)
-                                <option value="{{ $code }}" data-default-currency="{{ $region['default'] }}" {{ old('operating_region', $settings->get('operating_region')->value ?? 'southern_africa') === $code ? 'selected' : '' }}>{{ $region['label'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Institution Details</h6>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold"><i class="bi bi-currency-exchange me-1 text-primary"></i>Default Currency</label>
-                        <select name="default_currency" id="default_currency" class="form-select" required>
-                            @foreach($supportedCurrencies as $code => $name)
-                                <option value="{{ $code }}" {{ old('default_currency', $settings->get('default_currency')->value ?? 'ZAR') === $code ? 'selected' : '' }}>{{ $code }} — {{ $name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    @php
-                        $savedCurrencies = $settings->get('accepted_currencies')->typed_value ?? ['ZAR', 'USD'];
-                        $selectedCurrencies = old('accepted_currencies', is_array($savedCurrencies) ? $savedCurrencies : ['ZAR', 'USD']);
-                    @endphp
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-semibold mb-0">Accepted Currencies</label>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-primary" id="selectCommonCurrencies">Select common</button>
-                                <button type="button" class="btn btn-outline-secondary" id="clearCurrencies">Clear</button>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Application Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="app_name" class="form-control" value="{{ old('app_name', $settings->get('app_name')->value ?? 'JBI University') }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Contact Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="app_email" class="form-control" value="{{ old('app_email', $settings->get('app_email')->value ?? 'info@jbiuniversity.com') }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Contact Phone</label>
+                                    <input type="text" name="app_phone" class="form-control" value="{{ old('app_phone', $settings->get('app_phone')->value ?? '') }}">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Address</label>
+                                    <textarea name="app_address" class="form-control" rows="2">{{ old('app_address', $settings->get('app_address')->value ?? '') }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Description</label>
+                                    <textarea name="app_description" class="form-control" rows="2">{{ old('app_description', $settings->get('app_description')->value ?? '') }}</textarea>
+                                </div>
                             </div>
                         </div>
-                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
-                            <div class="row g-2">
-                                @foreach($supportedCurrencies as $code => $name)
+                    </div>
+                </div>
+
+                <!-- System Tab -->
+                <div class="tab-pane fade" id="content-system" role="tabpanel">
+                    <div class="mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1">System Configuration</h3>
+                            <p class="text-muted mb-0">Manage timezones, region, and currencies.</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-check-lg me-1"></i> Save</button>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Localization</h6>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Timezone</label>
+                                    <select name="timezone" class="form-select">
+                                        <option value="Africa/Johannesburg" {{ old('timezone', $settings->get('timezone')->value ?? 'Africa/Johannesburg') === 'Africa/Johannesburg' ? 'selected' : '' }}>South Africa Standard Time (SAST)</option>
+                                        <option value="Africa/Kampala" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'Africa/Kampala' ? 'selected' : '' }}>East Africa Time (Kampala)</option>
+                                        <option value="Africa/Nairobi" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'Africa/Nairobi' ? 'selected' : '' }}>East Africa Time (Nairobi)</option>
+                                        <option value="UTC" {{ old('timezone', $settings->get('timezone')->value ?? '') === 'UTC' ? 'selected' : '' }}>UTC</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Operating Region</label>
+                                    <select name="operating_region" id="operating_region" class="form-select" required>
+                                        @foreach($currencyRegions as $code => $region)
+                                            <option value="{{ $code }}" data-default-currency="{{ $region['default'] }}" {{ old('operating_region', $settings->get('operating_region')->value ?? 'southern_africa') === $code ? 'selected' : '' }}>{{ $region['label'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Currencies</h6>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Default Currency</label>
+                                <div class="row">
                                     <div class="col-md-6">
-                                        <label class="currency-option d-flex align-items-center gap-2 bg-white border rounded p-2 w-100" for="currency_{{ $code }}" style="cursor: pointer;">
-                                            <input class="form-check-input currency-checkbox mt-0" type="checkbox"
-                                                   name="accepted_currencies[]" id="currency_{{ $code }}" value="{{ $code }}"
-                                                   {{ in_array($code, $selectedCurrencies, true) ? 'checked' : '' }}>
-                                            <span class="fw-bold text-primary" style="min-width: 42px;">{{ $code }}</span>
-                                            <span class="small text-muted">{{ $name }}</span>
-                                            <span class="badge bg-primary ms-auto default-currency-badge d-none">Default</span>
-                                        </label>
+                                        <select name="default_currency" id="default_currency" class="form-select" required>
+                                            @foreach($supportedCurrencies as $code => $name)
+                                                <option value="{{ $code }}" {{ old('default_currency', $settings->get('default_currency')->value ?? 'ZAR') === $code ? 'selected' : '' }}>{{ $code }} — {{ $name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                @endforeach
+                                </div>
+                                <div class="text-muted small mt-2"><i class="bi bi-check-circle-fill text-success me-1"></i> Default currency is automatically included as an accepted currency.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-semibold mb-0">Accepted Currencies</label>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-link text-decoration-none" id="selectCommonCurrencies">Select Common</button>
+                                        <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none" id="clearCurrencies">Clear All</button>
+                                    </div>
+                                </div>
+
+                                @php
+                                    $savedCurrencies = $settings->get('accepted_currencies')->typed_value ?? ['ZAR', 'USD'];
+                                    $selectedCurrencies = old('accepted_currencies', is_array($savedCurrencies) ? $savedCurrencies : ['ZAR', 'USD']);
+                                @endphp
+
+                                <div class="row g-2" style="max-height: 250px; overflow-y: auto;">
+                                    @foreach($supportedCurrencies as $code => $name)
+                                        <div class="col-lg-3 col-md-4 col-sm-6">
+                                            <label class="card h-100 cursor-pointer currency-card border-{{ in_array($code, $selectedCurrencies) ? 'primary' : 'light' }} shadow-sm" style="cursor:pointer;" for="currency_{{ $code }}">
+                                                <div class="card-body p-3 d-flex align-items-center">
+                                                    <div class="form-check m-0 w-100 d-flex justify-content-between align-items-center">
+                                                        <div class="d-flex align-items-center">
+                                                            <input class="form-check-input currency-checkbox me-2" type="checkbox" name="accepted_currencies[]" id="currency_{{ $code }}" value="{{ $code }}" {{ in_array($code, $selectedCurrencies, true) ? 'checked' : '' }}>
+                                                            <span class="fw-bold">{{ $code }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
-                        @error('accepted_currencies')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                        <small class="text-muted">Tick every currency JBI will accept. The selected default currency is automatically included.</small>
                     </div>
 
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" name="maintenance_mode" id="maintenance_mode" value="1"
-                               {{ old('maintenance_mode', $settings->get('maintenance_mode')->value ?? false) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="maintenance_mode">
-                            Maintenance Mode
-                        </label>
-                        <small class="d-block text-muted">System will be unavailable to users when enabled</small>
-                    </div>
-
-                    <hr class="my-4">
-                    <h6 class="text-primary mb-3"><i class="bi bi-person-lines-fill me-2"></i>Admission Application Window</h6>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" name="admission_enabled" id="admission_enabled" value="1"
-                               {{ filter_var(old('admission_enabled', $settings->get('admission_enabled')->value ?? $settings->get('registration_enabled')->value ?? true), FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                        <label class="form-check-label fw-semibold" for="admission_enabled">
-                            Accept New Admission Applications
-                        </label>
-                        <small class="d-block text-muted">Allows prospective students to create an applicant account and submit an application.</small>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Applications Open</label>
-                            <input type="datetime-local" name="admission_open_at" class="form-control"
-                                   value="{{ old('admission_open_at', $settings->get('admission_open_at')->value ?? $settings->get('registration_open_at')->value ?? '') }}">
+                    <div class="card border-danger shadow-sm bg-danger bg-opacity-10 mb-4">
+                        <div class="card-body p-4 d-flex align-items-start gap-3">
+                            <i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i>
+                            <div>
+                                <h6 class="fw-bold text-danger mb-1">Maintenance Mode</h6>
+                                <p class="text-danger opacity-75 small mb-3">Temporarily prevent users from accessing the system.</p>
+                                <div class="form-check form-switch fs-5">
+                                    <input class="form-check-input" type="checkbox" name="maintenance_mode" id="maintenance_mode" value="1" {{ old('maintenance_mode', $settings->get('maintenance_mode')->value ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-bold text-dark fs-6" for="maintenance_mode">OFF / ON</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Applications Close</label>
-                            <input type="datetime-local" name="admission_close_at" class="form-control"
-                                   value="{{ old('admission_close_at', $settings->get('admission_close_at')->value ?? $settings->get('registration_close_at')->value ?? '') }}">
-                        </div>
-                    </div>
-                    <div class="alert alert-info py-2 small">
-                        New applicant accounts and applications are accepted only within this window. Closing admissions does not remove existing applications or prevent administrators from reviewing them.
                     </div>
                 </div>
-            </div>
 
-            <!-- Academic Settings -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-mortarboard me-2"></i>Academic Configuration
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Max Students Per Course</label>
-                        <input type="number" name="max_students_per_course" class="form-control" min="1"
-                               value="{{ old('max_students_per_course', $settings->get('max_students_per_course')->value ?? 50) }}">
-                        <small class="text-muted">Default enrollment limit for courses</small>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Academic Year Start</label>
-                            <input type="date" name="academic_year_start" class="form-control"
-                                   value="{{ old('academic_year_start', $settings->get('academic_year_start')->value ?? '') }}">
+                <!-- Academic Tab -->
+                <div class="tab-pane fade" id="content-academic" role="tabpanel">
+                    <div class="mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1">Academic Configuration</h3>
+                            <p class="text-muted mb-0">Configure academic years, courses and examinations.</p>
                         </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Academic Year End</label>
-                            <input type="date" name="academic_year_end" class="form-control"
-                                   value="{{ old('academic_year_end', $settings->get('academic_year_end')->value ?? '') }}">
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-check-lg me-1"></i> Save</button>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold"><i class="bi bi-file-earmark-check me-1 text-primary"></i>Configured Exam Types</label>
-                        <input type="text" name="exam_types" class="form-control"
-                               value="{{ old('exam_types', $settings->get('exam_types')->value ?? 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary') }}"
-                               placeholder="e.g. Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam">
-                        <small class="text-muted d-block mt-1">Comma-separated list of examination types available for faculty to select when scheduling course exams.</small>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">General Academic Settings</h6>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Maximum Students per Course</label>
+                                    <input type="number" name="max_students_per_course" class="form-control" min="1" value="{{ old('max_students_per_course', $settings->get('max_students_per_course')->value ?? 50) }}">
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Academic Year</h6>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Academic Year Start Date</label>
+                                    <input type="date" name="academic_year_start" class="form-control" value="{{ old('academic_year_start', $settings->get('academic_year_start')->value ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Academic Year End Date</label>
+                                    <input type="date" name="academic_year_end" class="form-control" value="{{ old('academic_year_end', $settings->get('academic_year_end')->value ?? '') }}">
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Examinations</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Configured Exam Types</label>
+                                <input type="text" name="exam_types" class="form-control" value="{{ old('exam_types', $settings->get('exam_types')->value ?? 'Midterm, Final, Quiz, Assignment, Practical, Test, Mock Exam, Supplementary') }}">
+                                <small class="text-muted mt-1 d-block">Comma-separated list of examination types available for faculty to select.</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Academic Term Settings -->
-            <div class="card mt-4 border-info">
-                <div class="card-header bg-info bg-opacity-10">
-                    <h5 class="card-title mb-0 text-info-emphasis">
-                        <i class="bi bi-calendar-range me-2"></i>Current Academic Term
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Current Academic Year</label>
-                            <select name="current_academic_year_id" id="current_academic_year_id" class="form-select">
-                                <option value="">Select Academic Year</option>
-                                @foreach($academicYears as $year)
-                                    <option value="{{ $year->id }}" {{ $year->is_current ? 'selected' : '' }}>
-                                        {{ $year->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                <!-- Academic Term Tab -->
+                <div class="tab-pane fade" id="content-term" role="tabpanel">
+                    <div class="mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1">Current Academic Term</h3>
+                            <p class="text-muted mb-0">Manage the active academic period and enrollment windows.</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Current Semester</label>
-                            <select name="current_semester_id" id="current_semester_id" class="form-select">
-                                <option value="">Select Semester</option>
-                                @foreach($academicYears as $year)
-                                    <optgroup label="{{ $year->name }}">
-                                        @foreach($year->semesters as $sem)
-                                            <option value="{{ $sem->id }}" 
-                                                data-start="{{ $sem->start_date ? $sem->start_date->format('Y-m-d') : '' }}"
-                                                data-end="{{ $sem->end_date ? $sem->end_date->format('Y-m-d') : '' }}"
-                                                data-reg-start="{{ $sem->registration_start ? $sem->registration_start->format('Y-m-d') : '' }}"
-                                                data-reg-end="{{ $sem->registration_end ? $sem->registration_end->format('Y-m-d') : '' }}"
-                                                {{ $sem->is_current ? 'selected' : '' }}>
-                                                {{ $sem->name }}
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-check-lg me-1"></i> Save</button>
+                        </div>
+                    </div>
+
+                    <div class="card border-info shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold text-info mb-4 border-bottom border-info pb-2"><i class="bi bi-calendar-event me-2"></i>Active Academic Period</h6>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Academic Year</label>
+                                    <select name="current_academic_year_id" id="current_academic_year_id" class="form-select bg-light">
+                                        <option value="">Select Academic Year</option>
+                                        @foreach($academicYears as $year)
+                                            <option value="{{ $year->id }}" {{ $year->is_current ? 'selected' : '' }}>{{ $year->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Current Semester</label>
+                                    <select name="current_semester_id" id="current_semester_id" class="form-select bg-light">
+                                        <option value="">Select Semester</option>
+                                        @foreach($academicYears as $year)
+                                            <optgroup label="{{ $year->name }}">
+                                                @foreach($year->semesters as $sem)
+                                                    <option value="{{ $sem->id }}"
+                                                        data-start="{{ $sem->start_date ? $sem->start_date->format('Y-m-d') : '' }}"
+                                                        data-end="{{ $sem->end_date ? $sem->end_date->format('Y-m-d') : '' }}"
+                                                        data-reg-start="{{ $sem->registration_start ? $sem->registration_start->format('Y-m-d') : '' }}"
+                                                        data-reg-end="{{ $sem->registration_end ? $sem->registration_end->format('Y-m-d') : '' }}"
+                                                        {{ $sem->is_current ? 'selected' : '' }}>
+                                                        {{ $sem->name }}
+                                                    </option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4" id="semester_dates_section">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Semester Dates</h6>
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Semester Start Date</label>
+                                    <input type="date" name="semester_start_date" id="semester_start_date" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Semester End Date</label>
+                                    <input type="date" name="semester_end_date" id="semester_end_date" class="form-control">
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Enrollment Period</h6>
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Enrollment Opens</label>
+                                    <input type="date" name="semester_registration_start" id="semester_registration_start" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-danger"><i class="bi bi-exclamation-circle me-1"></i>Enrollment Deadline</label>
+                                    <input type="date" name="semester_registration_end" id="semester_registration_end" class="form-control border-danger">
+                                    <small class="text-danger d-block mt-1">Students cannot enroll after this date.</small>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Program Change Window</h6>
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Program Change Opens</label>
+                                    <input type="date" name="program_change_start" id="program_change_start" class="form-control" value="{{ old('program_change_start', $settings->get('program_change_start')->value ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-clock-history me-1"></i>Program Change Deadline</label>
+                                    <input type="date" name="program_change_end" id="program_change_end" class="form-control" value="{{ old('program_change_end', $settings->get('program_change_end')->value ?? '') }}">
+                                    <small class="text-muted d-block mt-1">Students cannot request program changes after this date.</small>
+                                </div>
+                            </div>
+
+                            <div class="d-none mt-4 p-3 border border-warning rounded bg-warning bg-opacity-10" id="reason_for_change_container">
+                                <label class="form-label text-warning-emphasis fw-bold"><i class="bi bi-info-circle me-2"></i>Reason for Date Change</label>
+                                <textarea name="reason_for_change" id="reason_for_change" class="form-control border-warning" rows="2" placeholder="Required when modifying active dates (will notify users)..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admissions Tab -->
+                <div class="tab-pane fade" id="content-admissions" role="tabpanel">
+                    <div class="mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1">Admission applications</h3>
+                            <p class="text-muted mb-0">Manage prospective student application windows.</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-check-lg me-1"></i> Save</button>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Admission Application Window</h6>
+
+                            <div class="alert alert-info py-3 mb-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-info-circle fs-4 me-3"></i>
+                                    <div>
+                                        New applicant accounts and applications are accepted only within this window. Closing admissions does not remove existing applications or prevent administrators from reviewing them.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card border-{{ filter_var(old('admission_enabled', $settings->get('admission_enabled')->value ?? $settings->get('registration_enabled')->value ?? true), FILTER_VALIDATE_BOOLEAN) ? 'success' : 'secondary' }} bg-light mb-4" id="admission_card">
+                                <div class="card-body">
+                                    <div class="form-check form-switch fs-5 mb-0">
+                                        <input class="form-check-input" type="checkbox" name="admission_enabled" id="admission_enabled" value="1" {{ filter_var(old('admission_enabled', $settings->get('admission_enabled')->value ?? $settings->get('registration_enabled')->value ?? true), FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-bold text-dark fs-6 ms-2" for="admission_enabled">Accept New Admission Applications</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Applications Open</label>
+                                    <input type="datetime-local" name="admission_open_at" class="form-control" value="{{ old('admission_open_at', $settings->get('admission_open_at')->value ?? $settings->get('registration_open_at')->value ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Applications Close</label>
+                                    <input type="datetime-local" name="admission_close_at" class="form-control" value="{{ old('admission_close_at', $settings->get('admission_close_at')->value ?? $settings->get('registration_close_at')->value ?? '') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Tab -->
+                <div class="tab-pane fade" id="content-payments" role="tabpanel">
+                    <div class="mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1">Payments & Fees</h3>
+                            <p class="text-muted mb-0">Configure registration fees and tuition deadlines.</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-check-lg me-1"></i> Save</button>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Registration</h6>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">Registration Fee Structure</label>
+                                    <select name="registration_fee_structure_id" class="form-select w-50">
+                                        <option value="">Select Registration Fee</option>
+                                        @foreach($feeStructures ?? [] as $structure)
+                                            <option value="{{ $structure->id }}"
+                                                {{ (string) old('registration_fee_structure_id', $settings->get('registration_fee_structure_id')->value ?? '') === (string) $structure->id ? 'selected' : '' }}>
+                                                {{ $structure->name }} ({{ strtoupper($structure->type) }}) - {{ $settings->get('default_currency')->value ?? 'USD' }} {{ number_format($structure->amount, 2) }}
                                             </option>
                                         @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+                                    </select>
+                                    <small class="text-muted d-block mt-1">This fee must be paid before activation and admission numbers are issued.</small>
+                                </div>
 
-                    <div id="semester_dates_section">
-                        <hr>
-                        <h6 class="mb-3">Semester Dates</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Semester Start Date</label>
-                                <input type="date" name="semester_start_date" id="semester_start_date" class="form-control">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Registration Payment Deadline</label>
+                                    <div class="input-group">
+                                        <input type="number" name="registration_payment_days" class="form-control" min="1" max="365" value="{{ old('registration_payment_days', $settings->get('registration_payment_days')->value ?? 14) }}">
+                                        <span class="input-group-text">days</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Semester End (Closure) Date</label>
-                                <input type="date" name="semester_end_date" id="semester_end_date" class="form-control">
-                                <small class="text-muted">Semester auto-closes on this date.</small>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Enrollment Start Date</label>
-                                <input type="date" name="semester_registration_start" id="semester_registration_start" class="form-control">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label text-danger fw-bold">Enrollment Deadline</label>
-                                <input type="date" name="semester_registration_end" id="semester_registration_end" class="form-control border-danger">
-                                <small class="text-danger">Students cannot enroll after this date.</small>
-                            </div>
-                        </div>
 
-                        <div class="mb-3 d-none" id="reason_for_change_container">
-                            <label class="form-label text-warning fw-bold">Reason for Date Change</label>
-                            <textarea name="reason_for_change" id="reason_for_change" class="form-control border-warning" rows="2" placeholder="Required when modifying active dates (will notify users)..."></textarea>
+                            <h6 class="fw-bold mb-4 border-bottom pb-2">Tuition</h6>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Minimum Tuition for Enrollment</label>
+                                    <div class="input-group">
+                                        <input type="number" name="tuition_min_percent" class="form-control" min="0" max="100" step="0.01" value="{{ old('tuition_min_percent', $settings->get('tuition_min_percent')->value ?? 0) }}">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tuition Payment Deadline</label>
+                                    <div class="input-group">
+                                        <input type="number" name="tuition_payment_days" class="form-control" min="1" max="365" value="{{ old('tuition_payment_days', $settings->get('tuition_payment_days')->value ?? 30) }}">
+                                        <span class="input-group-text">days after registration</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Students must meet the tuition % by this deadline to remain active.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
-
-            <!-- Admissions & Payments -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-cash-coin me-2"></i>Admissions & Payments
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Registration Fee Structure</label>
-                        <select name="registration_fee_structure_id" class="form-select">
-                            <option value="">Select Registration Fee</option>
-                            @foreach($feeStructures ?? [] as $structure)
-                                <option value="{{ $structure->id }}"
-                                    {{ (string) old('registration_fee_structure_id', $settings->get('registration_fee_structure_id')->value ?? '') === (string) $structure->id ? 'selected' : '' }}>
-                                    {{ $structure->name }} ({{ strtoupper($structure->type) }}) - {{ $settings->get('default_currency')->value ?? 'USD' }} {{ number_format($structure->amount, 2) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">This fee must be paid before activation and admission numbers are issued.</small>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Registration Payment Deadline (days)</label>
-                            <input type="number" name="registration_payment_days" class="form-control" min="1" max="365"
-                                   value="{{ old('registration_payment_days', $settings->get('registration_payment_days')->value ?? 14) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Tuition Minimum % for Enrollment</label>
-                            <input type="number" name="tuition_min_percent" class="form-control" min="0" max="100" step="0.01"
-                                   value="{{ old('tuition_min_percent', $settings->get('tuition_min_percent')->value ?? 0) }}">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tuition Payment Deadline (days after registration)</label>
-                        <input type="number" name="tuition_payment_days" class="form-control" min="1" max="365"
-                               value="{{ old('tuition_payment_days', $settings->get('tuition_payment_days')->value ?? 30) }}">
-                        <small class="text-muted">Students must meet the tuition % by this deadline to remain active.</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check me-2"></i>Save Settings
-            </button>
-            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
         </div>
     </div>
 </form>
+
+<style>
+/* Style the settings tabs */
+.nav-pills .nav-link {
+    color: var(--bs-gray-700);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s;
+}
+.nav-pills .nav-link:hover {
+    background-color: var(--bs-gray-100);
+}
+.nav-pills .nav-link.active {
+    background-color: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary);
+    border-left: 4px solid var(--bs-primary);
+}
+.currency-card.border-primary {
+    background-color: var(--bs-primary-bg-subtle);
+    border-width: 2px !important;
+}
+</style>
+</div>
 @endsection
 
 @push('scripts')
@@ -406,26 +528,53 @@ document.addEventListener('DOMContentLoaded', function () {
     const currencyCheckboxes = Array.from(document.querySelectorAll('.currency-checkbox'));
     const commonCurrencies = ['ZAR', 'USD', 'EUR', 'GBP'];
 
-    function syncDefaultCurrency() {
-        document.querySelectorAll('.default-currency-badge').forEach(badge => badge.classList.add('d-none'));
-        const checkbox = document.getElementById('currency_' + defaultCurrency.value);
-        if (checkbox) {
-            checkbox.checked = true;
-            checkbox.closest('.currency-option').querySelector('.default-currency-badge').classList.remove('d-none');
+    function syncCurrencies() {
+        // Toggle card borders based on checkbox state
+        currencyCheckboxes.forEach(checkbox => {
+            const card = checkbox.closest('.currency-card');
+            if (checkbox.checked) {
+                card.classList.remove('border-light');
+                card.classList.add('border-primary');
+            } else {
+                card.classList.add('border-light');
+                card.classList.remove('border-primary');
+            }
+        });
+
+        // Ensure default currency is always checked
+        const defCheckbox = document.getElementById('currency_' + defaultCurrency.value);
+        if (defCheckbox) {
+            defCheckbox.checked = true;
+            const card = defCheckbox.closest('.currency-card');
+            card.classList.remove('border-light');
+            card.classList.add('border-primary');
         }
     }
 
-    defaultCurrency.addEventListener('change', syncDefaultCurrency);
+    defaultCurrency.addEventListener('change', syncCurrencies);
     document.getElementById('selectCommonCurrencies').addEventListener('click', function () {
         currencyCheckboxes.forEach(checkbox => checkbox.checked = commonCurrencies.includes(checkbox.value));
-        syncDefaultCurrency();
+        syncCurrencies();
     });
     document.getElementById('clearCurrencies').addEventListener('click', function () {
         currencyCheckboxes.forEach(checkbox => checkbox.checked = false);
-        syncDefaultCurrency();
+        syncCurrencies();
     });
-    currencyCheckboxes.forEach(checkbox => checkbox.addEventListener('change', syncDefaultCurrency));
-    syncDefaultCurrency();
+    currencyCheckboxes.forEach(checkbox => checkbox.addEventListener('change', syncCurrencies));
+    syncCurrencies();
+
+    // Admissions enabled toggle
+    const admissionEnabled = document.getElementById('admission_enabled');
+    const admissionCard = document.getElementById('admission_card');
+    admissionEnabled.addEventListener('change', function() {
+        if (this.checked) {
+            admissionCard.classList.remove('border-secondary');
+            admissionCard.classList.add('border-success');
+        } else {
+            admissionCard.classList.add('border-secondary');
+            admissionCard.classList.remove('border-success');
+        }
+    });
 
     // Academic Term Settings Logic
     const currentSemesterSelect = document.getElementById('current_semester_id');
@@ -437,22 +586,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function populateSemesterDates() {
         if (!currentSemesterSelect.value) return;
         const selectedOption = currentSemesterSelect.options[currentSemesterSelect.selectedIndex];
-        
+
         dateInputs.forEach(id => {
             const input = document.getElementById(id);
             const dataKey = id.replace('semester_', '').replace('_date', '');
-            
+
             // Map the data attributes
             let val = '';
             if (id === 'semester_start_date') val = selectedOption.dataset.start;
             if (id === 'semester_end_date') val = selectedOption.dataset.end;
             if (id === 'semester_registration_start') val = selectedOption.dataset.regStart;
             if (id === 'semester_registration_end') val = selectedOption.dataset.regEnd;
-            
+
             input.value = val;
             originalDates[id] = val; // Store original values to detect changes
         });
-        
+
         checkDateModifications();
     }
 
@@ -481,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize on page load
     populateSemesterDates();
-    
+
     // Form confirmation
     document.querySelector('form').addEventListener('submit', function(e) {
         if (!reasonContainer.classList.contains('d-none')) {
@@ -493,3 +642,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+

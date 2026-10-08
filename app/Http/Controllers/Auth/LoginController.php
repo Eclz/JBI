@@ -91,10 +91,8 @@ class LoginController extends Controller
             'action' => 'login',
             'model_type' => 'User',
             'model_id' => $user->id,
-            'details' => json_encode([
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent()
-            ]),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         // Redirect based on user role
@@ -106,8 +104,20 @@ class LoginController extends Controller
                 if ($user->isFinanceOfficer()) {
                     return redirect()->intended(route('admin.finance.dashboard'));
                 }
+                if ($user->isHrStaff()) {
+                    return redirect()->intended(route('human-resources.index'));
+                }
+                if ($user->hasRole('librarian') || $user->hasRole('assistant_librarian')) {
+                    return redirect()->intended(route('library.index'));
+                }
                 return redirect()->intended(route('dashboard'));
             case 'faculty':
+                if ($user->hasRole('dean')) {
+                    return redirect()->intended(route('faculty.dean.quality.index'));
+                }
+                if ($user->hasRole('head_of_department')) {
+                    return redirect()->intended(route('faculty.hod.department.index'));
+                }
                 return redirect()->intended(route('faculty.courses.index'));
             case 'student':
                 return redirect()->intended(route('student.dashboard'));
@@ -131,10 +141,8 @@ class LoginController extends Controller
                 'action' => 'logout',
                 'model_type' => 'User',
                 'model_id' => auth()->id(),
-                'details' => json_encode([
-                    'ip' => $request->ip(),
-                    'user_agent' => $request->userAgent()
-                ]),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
         }
 
@@ -170,10 +178,8 @@ class LoginController extends Controller
                 'action' => 'failed_login',
                 'model_type' => 'User',
                 'model_id' => $user->id,
-                'details' => json_encode([
-                    'ip' => $request->ip(),
-                    'user_agent' => $request->userAgent()
-                ]),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
         }
 

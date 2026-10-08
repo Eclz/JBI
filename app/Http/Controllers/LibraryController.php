@@ -47,7 +47,11 @@ class LibraryController extends Controller
 
     public function show(LibraryItem $item)
     {
-        return view('library.show', compact('item'));
+        $loans = \App\Models\LibraryLoan::where('library_item_id', $item->id)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('library.show', compact('item', 'loans'));
     }
 
     public function loansIndex()

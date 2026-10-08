@@ -50,7 +50,7 @@ return new class extends Migration
             $table->string('title');
             $table->decimal('amount', 15, 2);
             $table->date('expense_date');
-            $table->string('status')->default('approved'); // pending, approved, rejected, paid
+            $table->string('status')->default('pending'); // pending, approved, rejected, paid
             $table->string('payment_method')->nullable();
             $table->foreignId('requested_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');

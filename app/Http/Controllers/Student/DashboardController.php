@@ -46,6 +46,11 @@ class DashboardController extends Controller
         $isAdmitted = ($studentProfile && $studentProfile->status === 'active') || ($application && in_array($application->status, ['admitted', 'approved']));
         $hasAcknowledged = session('admission_acknowledged') || ($studentProfile && $studentProfile->admission_acknowledged_at !== null) || ($studentProfile && $studentProfile->status === 'active' && !$application);
 
+        // Prevent active and admitted students who have acknowledged from returning to the admissions page
+        if ($requestedAdmissionView && $studentProfile && $studentProfile->status === 'active' && $hasAcknowledged) {
+            return redirect()->route('student.dashboard');
+        }
+
         // Check if student is not admitted, or has not yet acknowledged admission onboarding, or explicitly requested admission view
         if (!$studentProfile || $studentProfile->status !== 'active' || ($isAdmitted && !$hasAcknowledged) || $requestedAdmissionView) {
             $programs = \App\Models\Program::where('is_active', true)
@@ -129,9 +134,9 @@ class DashboardController extends Controller
             : ($studentProfile->current_gpa ?? 0);
 
         // Get fee statistics
-        $totalFees = FeeRecord::where('user_id', $student->id)->sum('amount');
+        $totalFees = FeeRecord::where('user_id', $student->id)->sum('total_amount');
         $paidFees = FeeRecord::where('user_id', $student->id)->sum('paid_amount');
-        $pendingFees = $totalFees - $paidFees;
+        $pendingFees = FeeRecord::where('user_id', $student->id)->sum('balance_amount');
 
         // Get unread notifications
         $unreadNotifications = Notification::where('user_id', $student->id)
@@ -322,5 +327,22 @@ class DashboardController extends Controller
         session(['admission_acknowledged' => true]);
 
         return redirect()->route('student.dashboard')->with('success', 'Welcome to your Student Portal!');
+    }
+
+    public function idCard()
+    {
+        $student = Auth::user();
+        $studentProfile = $student->studentProfile()->with('department')->first();
+        
+        if (!$studentProfile || !$studentProfile->isActive()) {
+            return redirect()->route('student.dashboard')->with('error', 'Your student profile is not active. ID Card cannot be generated.');
+        }
+
+        $program = $studentProfile->program ?? 'N/A';
+        $department = $studentProfile->department->name ?? 'N/A';
+        $bloodGroup = 'O+'; // Normally from medical records, placeholder for now
+        $emergencyContact = $studentProfile->guardian_phone ?? 'N/A';
+
+        return view('student.id_card', compact('student', 'studentProfile', 'program', 'department', 'bloodGroup', 'emergencyContact'));
     }
 }

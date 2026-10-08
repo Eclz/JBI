@@ -481,10 +481,10 @@ class StudentController extends Controller
 
         // Calculate fee statistics
         $stats = [
-            'total_fees' => $allFeeRecords->sum('amount'),
-            'paid_fees' => $allFeeRecords->where('status', 'paid')->sum('amount'),
-            'pending_fees' => $allFeeRecords->where('status', 'pending')->sum('amount'),
-            'overdue_fees' => $allFeeRecords->where('status', 'overdue')->sum('amount'),
+            'total_fees' => $allFeeRecords->sum('total_amount'),
+            'paid_fees' => $allFeeRecords->sum('paid_amount'),
+            'pending_fees' => $allFeeRecords->sum('balance_amount'),
+            'overdue_fees' => $allFeeRecords->where('status', 'overdue')->sum('balance_amount'),
         ];
 
         return view('admin.students.fees', compact('student', 'feeRecords', 'stats'));

@@ -11,6 +11,8 @@ JBI is a web-based university management and learning platform built for Johnson
 - Manage course enrollment, fees, and student records
 - View academic, attendance, enrollment, faculty, course, and financial reports
 - Publish announcements and configure institutional settings
+- Manage campus facilities and associate rooms with named facilities
+- Manage halls of residence as facilities with type `hall`; other campus facilities use type `facility`
 
 ### Faculty
 
@@ -28,6 +30,13 @@ JBI is a web-based university management and learning platform built for Johnson
 - Request a program change and participate in course forums
 
 The system also provides profile management, password recovery, support requests, discussion forums, email notifications, and receipt verification.
+
+### Human resources
+
+- Publish vacancies for guest applicants and accept CVs and supporting documents securely
+- Track applications through screening, interviews, offers, and hiring; succession plans can create linked vacancies
+- Approve offers to provision staff accounts, HR profiles, department/workspace assignments, and onboarding checklists
+- Send password setup links and route new staff to the portal for their assigned role
 
 ## Technology
 
@@ -137,21 +146,24 @@ Because the default configuration uses database-backed sessions, cache, and queu
 
 ## Demo data and accounts
 
-To populate a development database with a realistic set of academic records:
+To populate a disposable development database with a realistic set of academic records:
 
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-> This command deletes all existing database data. Use it only for a disposable development database.
+> This command deletes all existing database data. Use it only for a disposable development database. Accounts created by `UserFactory` use the password `password`. The fixed administrator accounts are `admin@jbiuniversity.com` and `academic@jbiuniversity.com`; faculty and student accounts have generated email addresses.
 
-For a smaller set of role-based test accounts, run:
+To create a smaller demo dataset with fixed role-based accounts, start with a disposable database and run:
 
 ```bash
-php artisan db:seed --class=CreateTestUsersSeeder
+php artisan migrate:fresh
+php artisan db:seed --class=Database\\Seeders\\DemoDatabaseSeeder
 ```
 
-All test accounts use the password `password123`:
+> `migrate:fresh` deletes all existing database data. `DemoDatabaseSeeder` also deletes and recreates its fixed demo users; deleting those users may cascade to their related records. Do not run these commands against production or a database containing data you need to keep.
+
+The fixed demo accounts all use the password `password123`:
 
 | Role | Email |
 | --- | --- |
@@ -162,11 +174,23 @@ All test accounts use the password `password123`:
 
 These credentials are for local testing only. Never deploy them to production.
 
-To initialize an empty production database with only essential academic structure and the administrator account, run:
+### Functional-area permissions
+
+Role permissions include dedicated modules for Halls of Residence, Registrar Hub, Dean Administration, and HR Onboarding. To add or refresh these grants in an existing database without reseeding demo data, run:
+
+```bash
+php artisan db:seed --class="Database\\Seeders\\FunctionalAreaPermissionsSeeder"
+```
+
+The seeder grants each area to its corresponding operational roles and preserves each role's permissions for other modules.
+
+Only on a brand-new, empty production database, initialize essential academic structure and the administrator account with:
 
 ```bash
 php artisan migrate:fresh --force --seeder=Database\\Seeders\\ProductionDatabaseSeeder
 ```
+
+> This command drops all existing tables. For an existing production database, use `php artisan migrate --force` instead; do not use `migrate:fresh`.
 
 ## Email configuration
 
