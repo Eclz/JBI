@@ -84,7 +84,7 @@
         </p>
         <div class="actions">
             <button onclick="window.history.back()" class="btn btn-outline">Go Back</button>
-            <a href="{{ url('/') }}" class="btn">Return Home</a>
+            <a href="{{ url()->previous() }}" class="btn">Return Home</a>
         </div>
     </div>
 </body>

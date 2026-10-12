@@ -99,31 +99,41 @@ class LoginController extends Controller
         switch ($user->role) {
             case 'admin':
                 if ($user->isSuperAdmin()) {
-                    return redirect()->intended(route('admin.users.index'));
+                    return $this->redirectToRoleHome($request, 'admin.users.index');
                 }
                 if ($user->isFinanceOfficer()) {
-                    return redirect()->intended(route('admin.finance.dashboard'));
+                    return $this->redirectToRoleHome($request, 'admin.finance.dashboard');
                 }
                 if ($user->isHrStaff()) {
-                    return redirect()->intended(route('human-resources.index'));
+                    return $this->redirectToRoleHome($request, 'human-resources.index');
                 }
                 if ($user->hasRole('librarian') || $user->hasRole('assistant_librarian')) {
-                    return redirect()->intended(route('library.index'));
+                    return $this->redirectToRoleHome($request, 'library.index');
                 }
-                return redirect()->intended(route('dashboard'));
+                return $this->redirectToRoleHome($request, 'dashboard');
             case 'faculty':
                 if ($user->hasRole('dean')) {
-                    return redirect()->intended(route('faculty.dean.quality.index'));
+                    return $this->redirectToRoleHome($request, 'faculty.dean.quality.index');
                 }
                 if ($user->hasRole('head_of_department')) {
-                    return redirect()->intended(route('faculty.hod.department.index'));
+                    return $this->redirectToRoleHome($request, 'faculty.hod.department.index');
                 }
-                return redirect()->intended(route('faculty.courses.index'));
+                return $this->redirectToRoleHome($request, 'faculty.dashboard');
             case 'student':
-                return redirect()->intended(route('student.dashboard'));
+                return $this->redirectToRoleHome($request, 'student.dashboard');
             default:
-                return redirect()->intended(route('dashboard'));
+                return $this->redirectToRoleHome($request, 'dashboard');
         }
+    }
+
+    private function redirectToRoleHome(Request $request, string $routeName)
+    {
+        $intendedUrl = $request->session()->get('url.intended');
+        if ($intendedUrl && parse_url($intendedUrl, PHP_URL_PATH) === '/dashboard') {
+            $request->session()->forget('url.intended');
+        }
+
+        return redirect()->intended(route($routeName));
     }
 
     /**

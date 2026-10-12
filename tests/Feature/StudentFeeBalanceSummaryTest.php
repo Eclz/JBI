@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\FeeRecord;
 use App\Models\FeeStructure;
+use App\Models\Payment;
 use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class StudentFeeBalanceSummaryTest extends TestCase
@@ -75,5 +78,49 @@ class StudentFeeBalanceSummaryTest extends TestCase
             ->assertViewHas('summary', function (array $summary): bool {
                 return (float) $summary['outstanding'] === 60.0;
             });
+
+        $this->get(route('student.fees.receipt', $feeRecord))
+            ->assertOk()
+            ->assertViewHas('payments', function ($payments): bool {
+                return $payments->contains(fn (Payment $payment): bool => $payment->status === 'completed');
+            });
+    }
+
+    public function test_pending_cash_payment_does_not_reduce_the_fee_balance(): void
+    {
+        Storage::fake('public');
+
+        $student = User::factory()->student()->create();
+        StudentProfile::factory()->active()->create(['user_id' => $student->id]);
+        $feeRecord = FeeRecord::factory()->create([
+            'user_id' => $student->id,
+            'fee_structure_id' => FeeStructure::factory()->create()->id,
+            'amount' => 100,
+            'total_amount' => 100,
+            'paid_amount' => 0,
+            'balance_amount' => 100,
+            'status' => 'unpaid',
+        ]);
+
+        $this->actingAs($student)
+            ->post(route('student.fees.processPayment', $feeRecord), [
+                'amount' => 30,
+                'payment_method' => 'cash',
+                'payment_proof' => UploadedFile::fake()->image('payment-proof.jpg'),
+            ])
+            ->assertRedirect(route('student.fees.index'));
+
+        $this->assertDatabaseHas('payments', [
+            'fee_record_id' => $feeRecord->id,
+            'student_id' => $student->id,
+            'amount' => 30,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('fee_records', [
+            'id' => $feeRecord->id,
+            'paid_amount' => 0,
+            'balance_amount' => 100,
+            'status' => 'pending',
+        ]);
     }
 }
