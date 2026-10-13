@@ -30,7 +30,12 @@ class AdmissionWorkflow
                 $program = Program::with('department')->where('name', $application->program)->first();
             }
             $deptCode = $program?->department?->code ?? 'JBI';
-            $admNumber = $application->admission_number ?: self::generateAdmissionNumber($deptCode);
+            $admNumber = self::resolveAdmissionNumber(
+                $deptCode,
+                $application->admission_number,
+                $user->id,
+                $application->id
+            );
             $profile = StudentProfile::create([
                 'user_id' => $user->id,
                 'admission_number' => $admNumber,
@@ -58,8 +63,17 @@ class AdmissionWorkflow
 
         $departmentCode = $program?->department?->code ?? 'JBI';
 
-        if (!$profile->admission_number || str_starts_with($profile->admission_number, 'PENDING')) {
-            $profile->admission_number = self::generateAdmissionNumber($departmentCode);
+        if (
+            !$profile->admission_number
+            || str_starts_with($profile->admission_number, 'PENDING')
+            || !self::isAdmissionNumberAvailable($profile->admission_number, $user->id, $application?->id)
+        ) {
+            $profile->admission_number = self::resolveAdmissionNumber(
+                $departmentCode,
+                null,
+                $user->id,
+                $application?->id
+            );
         }
 
         $studentNumber = $profile->getRawOriginal('student_id') ?: self::generateStudentNumber($departmentCode);
@@ -137,7 +151,7 @@ class AdmissionWorkflow
 
     public static function generateAdmissionNumber(string $departmentCode): string
     {
-        $prefix = strtoupper(substr($departmentCode, 0, 3));
+        $prefix = strtoupper(substr($departmentCode ?: 'JBI', 0, 3));
         $year = now()->year;
 
         $profiles = StudentProfile::where('admission_number', 'like', "{$prefix}{$year}%")
@@ -160,6 +174,48 @@ class AdmissionWorkflow
 
         $newSequence = $maxSequence + 1;
         return $prefix . $year . str_pad((string) $newSequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    public static function resolveAdmissionNumber(
+        string $departmentCode,
+        ?string $preferredNumber = null,
+        ?int $userId = null,
+        ?int $applicationId = null
+    ): string {
+        if (
+            $preferredNumber
+            && self::isAdmissionNumberAvailable($preferredNumber, $userId, $applicationId)
+        ) {
+            return $preferredNumber;
+        }
+
+        $number = self::generateAdmissionNumber($departmentCode);
+        $prefix = strtoupper(substr($departmentCode ?: 'JBI', 0, 3)) . now()->year;
+
+        while (!self::isAdmissionNumberAvailable($number, $userId, $applicationId)) {
+            $sequence = (int) substr($number, strlen($prefix)) + 1;
+            $number = $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+        }
+
+        return $number;
+    }
+
+    private static function isAdmissionNumberAvailable(
+        string $number,
+        ?int $userId = null,
+        ?int $applicationId = null
+    ): bool {
+        $profileExists = StudentProfile::where('admission_number', $number)
+            ->when($userId, fn ($query) => $query->where('user_id', '!=', $userId))
+            ->exists();
+
+        if ($profileExists) {
+            return false;
+        }
+
+        return !Application::where('admission_number', $number)
+            ->when($applicationId, fn ($query) => $query->where('id', '!=', $applicationId))
+            ->exists();
     }
 
     public static function generateStudentNumber(?string $departmentCode = null): string

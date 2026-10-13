@@ -35,7 +35,7 @@ class QuizController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'course_id' => 'required|exists:courses,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -51,19 +51,18 @@ class QuizController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        $course = Course::findOrFail($request->course_id);
+        $course = Course::findOrFail($validated['course_id']);
 
         if ($course->instructor_id !== Auth::id()) {
             abort(403);
         }
 
-        $quiz = Quiz::create(array_merge(
-            $request->all(),
-            [
-                'created_by' => Auth::id(),
-                'is_published' => $request->boolean('is_published'),
-            ]
-        ));
+        $validated['shuffle_questions'] = $request->boolean('shuffle_questions');
+        $validated['shuffle_options'] = $request->boolean('shuffle_options');
+        $validated['is_published'] = $request->boolean('is_published');
+        $validated['created_by'] = Auth::id();
+
+        $quiz = Quiz::create($validated);
 
         return redirect()->route('faculty.quizzes.questions', $quiz)
             ->with('success', 'Quiz created. Now add questions.');
@@ -99,7 +98,7 @@ class QuizController extends Controller
     {
         $this->authorizeQuiz($quiz);
 
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
@@ -113,7 +112,10 @@ class QuizController extends Controller
             'shuffle_options' => 'boolean',
         ]);
 
-        $quiz->update($request->all());
+        $validated['shuffle_questions'] = $request->boolean('shuffle_questions');
+        $validated['shuffle_options'] = $request->boolean('shuffle_options');
+
+        $quiz->update($validated);
 
         return redirect()->route('faculty.quizzes.show', $quiz)
             ->with('success', 'Quiz updated successfully.');

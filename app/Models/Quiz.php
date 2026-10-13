@@ -23,6 +23,8 @@ class Quiz extends Model
         'end_time',
         'max_attempts',
         'shuffle_questions',
+        'shuffle_options',
+        'show_results',
         'show_correct_answers',
         'is_published',
         'quiz_type',
@@ -32,6 +34,7 @@ class Quiz extends Model
         'start_time' => 'datetime',
         'end_time' => 'datetime',
         'shuffle_questions' => 'boolean',
+        'shuffle_options' => 'boolean',
         'show_correct_answers' => 'boolean',
         'is_published' => 'boolean',
     ];

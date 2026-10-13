@@ -201,7 +201,7 @@ Route::middleware('auth')->group(function () {
 // Library routes for all authenticated users
 Route::middleware(['auth'])->prefix('library')->name('library.')->group(function () {
     Route::get('/catalogue', [\App\Http\Controllers\LibraryController::class, 'catalogueIndex'])->name('catalogue.index');
-    Route::get('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'show'])->name('catalogue.show');
+    Route::get('/catalogue/{item}', [\App\Http\Controllers\LibraryController::class, 'show'])->whereNumber('item')->name('catalogue.show');
     Route::get('/my-loans', [\App\Http\Controllers\LibraryController::class, 'myLoans'])->name('my-loans');
     Route::get('/loans/create', [\App\Http\Controllers\LibraryController::class, 'createLoan'])->name('loans.create');
     Route::post('/loans', [\App\Http\Controllers\LibraryController::class, 'storeLoan'])->name('loans.store');
@@ -826,19 +826,19 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     Route::delete('/courses/{course}/materials/{material}', [FacultyMaterialController::class, 'destroy'])->name('courses.materials.destroy')->middleware('permission:courses,edit');
 
     // Assignment Management
-    Route::prefix('assignments')->name('assignments.')->middleware('permission:courses,view')->group(function () {
-        Route::get('/', [FacultyAssignmentController::class, 'index'])->name('index');
+    Route::prefix('assignments')->name('assignments.')->group(function () {
+        Route::get('/', [FacultyAssignmentController::class, 'index'])->name('index')->middleware('permission:courses,view');
         Route::get('/create', [FacultyAssignmentController::class, 'create'])->name('create')->middleware('permission:courses,create');
         Route::post('/', [FacultyAssignmentController::class, 'store'])->name('store')->middleware('permission:courses,create');
-        Route::get('/{assignment}', [FacultyAssignmentController::class, 'show'])->name('show');
+        Route::get('/{assignment}', [FacultyAssignmentController::class, 'show'])->name('show')->middleware('permission:courses,view');
         Route::get('/{assignment}/edit', [FacultyAssignmentController::class, 'edit'])->name('edit')->middleware('permission:courses,edit');
         Route::put('/{assignment}', [FacultyAssignmentController::class, 'update'])->name('update')->middleware('permission:courses,edit');
         Route::delete('/{assignment}', [FacultyAssignmentController::class, 'destroy'])->name('destroy')->middleware('permission:courses,delete');
-        Route::get('/{assignment}/submissions', [FacultyAssignmentController::class, 'submissions'])->name('submissions');
+        Route::get('/{assignment}/submissions', [FacultyAssignmentController::class, 'submissions'])->name('submissions')->middleware('permission:courses,view');
         Route::post('/{assignment}/submissions/{submission}/grade', [FacultyAssignmentController::class, 'gradeSubmission'])->name('submissions.grade')->middleware('permission:grades,edit');
     });
     Route::get('/courses/{course}/assignments', [FacultyAssignmentController::class, 'courseAssignments'])->name('courses.assignments.index')->middleware('permission:courses,view');
-    Route::post('/courses/{course}/assignments', [FacultyAssignmentController::class, 'store'])->name('courses.assignments.store')->middleware('permission:courses,edit');
+    Route::post('/courses/{course}/assignments', [FacultyAssignmentController::class, 'store'])->name('courses.assignments.store')->middleware('permission:courses,create');
 
     Route::prefix('exams')->name('exams.')->middleware('permission:exams,view')->group(function () {
         Route::get('/', [FacultyExamController::class, 'index'])->name('index');
