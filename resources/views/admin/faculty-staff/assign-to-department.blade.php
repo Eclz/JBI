@@ -148,8 +148,8 @@
                                     <h6>Quick Stats</h6>
                                     <ul class="list-unstyled mb-0">
                                         <li>Faculties: {{ $faculties->count() }}</li>
-                                        <li>Departments: {{ $departments->count() }}</li>
-                                        <li>Faculty Staff: {{ $facultyStaff->count() }}</li>
+                                        <li>Departments: {{ is_countable($departments) ? count($departments) : $departments }}</li>
+                                        <li>Faculty Staff: {{ is_countable($facultyStaff) ? count($facultyStaff) : $facultyStaff }}</li>
                                     </ul>
                                 </div>
                             </div>

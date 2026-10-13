@@ -112,8 +112,12 @@ class AttendanceController extends Controller
             'token' => md5($course->id . now()->toDateString() . config('app.key'))
         ];
 
-        $qrCode = QrCode::size(300)->generate(json_encode($qrData));
+        // simple-qrcode is not a declared dependency; degrade gracefully to the text code.
+        $qrCode = class_exists(QrCode::class)
+            ? QrCode::size(300)->generate(json_encode($qrData))
+            : null;
+        $checkInCode = strtoupper(substr($qrData['token'], 0, 8));
 
-        return view('faculty.attendance.qr-code', compact('course', 'qrCode'));
+        return view('faculty.attendance.qr-code', compact('course', 'qrCode', 'checkInCode'));
     }
 }

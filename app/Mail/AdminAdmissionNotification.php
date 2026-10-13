@@ -23,7 +23,7 @@ class AdminAdmissionNotification extends Mailable implements ShouldQueue
     {
         $this->student = $student;
         $this->application = $application;
-        $this->link = $application ? route('admin.applications.show', $application) : route('admin.dashboard');
+        $this->link = $application ? route('admin.applications.show', $application) : route('dashboard');
     }
 
     public function envelope(): Envelope

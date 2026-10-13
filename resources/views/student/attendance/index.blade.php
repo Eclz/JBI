@@ -168,7 +168,7 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-end">
-                                        <a href="{{ route('student.attendance.show', $attendance->course_id) }}"
+                                        <a href="{{ route('student.attendance.course', $attendance->course_id) }}"
                                            class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye me-1"></i> View Details
                                         </a>

@@ -5,50 +5,37 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAnnouncementRequest;
 use App\Models\Announcement;
 use App\Models\Course;
-use App\Models\User;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class AnnouncementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $announcements = Announcement::with(['author', 'course'])
-            ->when(Auth::user()->role === 'student', function ($query) {
-                $query->where(function ($q) {
-                    $q->where('target_role', 'all')
-                      ->orWhere('target_role', 'student')
-                      ->orWhereHas('course.enrollments', function ($sq) {
-                          $sq->where('student_id', Auth::id());
-                      });
-                });
-            })
-            ->when(Auth::user()->role === 'faculty', function ($query) {
-                $query->where(function ($q) {
-                    $q->where('target_role', 'all')
-                      ->orWhere('target_role', 'faculty')
-                      ->orWhere('author_id', Auth::id());
-                });
-            })
-            ->when(request('priority'), function ($query, $priority) {
-                $query->where('priority', $priority);
-            })
-            ->when(request('course'), function ($query, $course) {
-                $query->where('course_id', $course);
-            })
-            ->orderBy('priority', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $user = Auth::user();
 
-        $courses = Course::when(Auth::user()->role === 'faculty', function ($query) {
-                $query->where('instructor_id', Auth::id());
-            })
-            ->when(Auth::user()->role === 'student', function ($query) {
-                $query->whereHas('enrollments', function ($q) {
-                    $q->where('student_id', Auth::id());
+        $announcements = Announcement::with(['creator', 'course'])
+            ->when(!$user->isAdmin(), function ($query) use ($user) {
+                // Non-admins only see live announcements aimed at their role (or ones they wrote).
+                $query->where(function ($q) use ($user) {
+                    $q->where(function ($live) use ($user) {
+                        $live->active()->forRole($user->role);
+                    })->orWhere('created_by', $user->id);
                 });
             })
+            ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->priority))
+            ->when($request->filled('course'), fn ($q) => $q->where('course_id', $request->course))
+            ->when($request->filled('target'), fn ($q) => $q->whereJsonContains('target_roles', $request->target))
+            ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+            ->orderByDesc('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        $courses = Course::query()
+            ->when($user->role === 'faculty', fn ($q) => $q->where('instructor_id', $user->id))
+            ->when($user->role === 'student', fn ($q) => $q->whereHas('enrollments', fn ($e) => $e->where('student_id', $user->id)))
+            ->orderBy('code')
             ->get();
 
         return view('announcements.index', compact('announcements', 'courses'));
@@ -56,45 +43,25 @@ class AnnouncementController extends Controller
 
     public function show(Announcement $announcement)
     {
-        $announcement->load(['author', 'course']);
-        
-        // Mark as read for current user
-        $announcement->markAsReadBy(Auth::user());
-        
+        $this->authorize('view', $announcement);
+
+        $announcement->load(['creator', 'course', 'department']);
+
         return view('announcements.show', compact('announcement'));
     }
 
     public function create()
     {
         $this->authorize('create', Announcement::class);
-        
-        $courses = Course::where('instructor_id', Auth::id())
-            ->where('status', 'active')
-            ->get();
-        
-        return view('announcements.create', compact('courses'));
+
+        return view('announcements.create', $this->formData());
     }
 
     public function store(StoreAnnouncementRequest $request)
     {
         $this->authorize('create', Announcement::class);
-        
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
-        }
 
-        $announcement = Announcement::create([
-            'title' => $request->title,
-            'content' => $request->content,
-            'priority' => $request->priority,
-            'target_role' => $request->target_role,
-            'course_id' => $request->course_id,
-            'author_id' => Auth::id(),
-            'attachment_path' => $attachmentPath,
-            'is_published' => $request->boolean('is_published'),
-            'published_at' => $request->boolean('is_published') ? now() : null,
-        ]);
+        $announcement = Announcement::create($this->payload($request) + ['created_by' => Auth::id()]);
 
         return redirect()->route('announcements.show', $announcement)
             ->with('success', 'Announcement created successfully.');
@@ -103,36 +70,21 @@ class AnnouncementController extends Controller
     public function edit(Announcement $announcement)
     {
         $this->authorize('update', $announcement);
-        
-        $courses = Course::where('instructor_id', Auth::id())
-            ->where('status', 'active')
-            ->get();
-        
-        return view('announcements.edit', compact('announcement', 'courses'));
+
+        return view('announcements.edit', ['announcement' => $announcement] + $this->formData());
     }
 
     public function update(StoreAnnouncementRequest $request, Announcement $announcement)
     {
         $this->authorize('update', $announcement);
-        
-        $attachmentPath = $announcement->attachment_path;
-        if ($request->hasFile('attachment')) {
-            if ($attachmentPath) {
-                Storage::disk('public')->delete($attachmentPath);
-            }
-            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
+
+        $data = $this->payload($request);
+        // Keep the original publish date when an already-published item is edited.
+        if ($data['is_published'] && $announcement->published_at && !$request->filled('published_at')) {
+            $data['published_at'] = $announcement->published_at;
         }
 
-        $announcement->update([
-            'title' => $request->title,
-            'content' => $request->content,
-            'priority' => $request->priority,
-            'target_role' => $request->target_role,
-            'course_id' => $request->course_id,
-            'attachment_path' => $attachmentPath,
-            'is_published' => $request->boolean('is_published'),
-            'published_at' => $request->boolean('is_published') && !$announcement->published_at ? now() : $announcement->published_at,
-        ]);
+        $announcement->update($data);
 
         return redirect()->route('announcements.show', $announcement)
             ->with('success', 'Announcement updated successfully.');
@@ -141,14 +93,48 @@ class AnnouncementController extends Controller
     public function destroy(Announcement $announcement)
     {
         $this->authorize('delete', $announcement);
-        
-        if ($announcement->attachment_path) {
-            Storage::disk('public')->delete($announcement->attachment_path);
-        }
-        
+
         $announcement->delete();
-        
+
         return redirect()->route('announcements.index')
             ->with('success', 'Announcement deleted successfully.');
+    }
+
+    /**
+     * Whitelisted attributes shared by store() and update().
+     */
+    private function payload(StoreAnnouncementRequest $request): array
+    {
+        $published = $request->boolean('is_published');
+
+        return [
+            'title' => $request->input('title'),
+            'content' => $request->input('content'),
+            'type' => $request->input('type'),
+            'priority' => $request->input('priority'),
+            'course_id' => $request->input('course_id'),
+            'department_id' => $request->input('department_id'),
+            'target_roles' => $request->input('target_roles'),
+            'is_published' => $published,
+            'send_email' => $request->boolean('send_email'),
+            'send_sms' => $request->boolean('send_sms'),
+            'published_at' => $published ? ($request->input('published_at') ?: now()) : null,
+            'expires_at' => $request->input('expires_at'),
+        ];
+    }
+
+    private function formData(): array
+    {
+        $user = Auth::user();
+
+        return [
+            'courses' => Course::query()
+                ->when($user->role === 'faculty', fn ($q) => $q->where('instructor_id', $user->id))
+                ->where('status', 'active')
+                ->orderBy('code')
+                ->get(),
+            'departmentOptions' => Department::where('is_active', true)->orderBy('name')->get(),
+            'roleOptions' => ['student' => 'Students', 'faculty' => 'Faculty', 'admin' => 'Administrators', 'parent' => 'Parents'],
+        ];
     }
 }

@@ -43,7 +43,12 @@ class DashboardController extends Controller
         // Common data for all dashboards
         $data = [
             'user' => $user,
-            'announcements' => Announcement::latest()->take(5)->get(),
+            'announcements' => Announcement::with('creator')
+                ->active()
+                ->forRole($role)
+                ->latest()
+                ->take(5)
+                ->get(),
             'currentSemester' => Semester::where('is_current', true)->first(),
             'currentAcademicYear' => AcademicYear::where('is_current', true)->first(),
         ];
@@ -122,8 +127,9 @@ class DashboardController extends Controller
 
                 $facultyId = $user->id;
                 $data['myCourses'] = Course::where('instructor_id', $facultyId)->get();
-                $data['pendingAssignments'] = Assignment::where('course_id', $facultyId)->count();
-                $data['upcomingAssignments'] = Assignment::where('course_id', $facultyId)->where('due_date', '>', now())->orderBy('due_date')->take(5)->get();
+                $myCourseIds = $data['myCourses']->pluck('id');
+                $data['pendingAssignments'] = Assignment::whereIn('course_id', $myCourseIds)->count();
+                $data['upcomingAssignments'] = Assignment::whereIn('course_id', $myCourseIds)->where('due_date', '>', now())->orderBy('due_date')->take(5)->get();
                 return view('dashboard.faculty', $data);
 
             case 'student':

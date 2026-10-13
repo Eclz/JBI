@@ -11,9 +11,9 @@
             <i class="bi bi-megaphone text-primary me-2"></i>E-VOTING ANNOUNCEMENTS
         </h5>
         <div class="btn-group btn-group-sm">
-            <a href="{{ route('student.evoting.index') }}" class="btn btn-outline-secondary">BALLOT / VOTE</a>
-            <a href="{{ route('student.evoting.announcements') }}" class="btn btn-primary active">ANNOUNCEMENTS</a>
-            <a href="{{ route('student.evoting.positions') }}" class="btn btn-outline-secondary">POSITIONS & CANDIDATES</a>
+            <a href="{{ route('student.evoting.index') }}" class="btn btn-primary active">BALLOT / ELECTIONS</a>
+            <a href="{{ route('student.evoting.my-applications') }}" class="btn btn-outline-secondary">MY APPLICATIONS</a>
+            <a href="{{ route('student.evoting.leaders') }}" class="btn btn-outline-secondary">STUDENT LEADERS</a>
         </div>
     </div>
 

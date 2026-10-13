@@ -91,22 +91,24 @@ Route::get('/', function () {
     return view('welcome', compact('programs'));
 })->name('home');
 
-Route::get('generate', function (){
-    \Illuminate\Support\Facades\Artisan::call('storage:link');
-    echo 'ok';
+// Maintenance utilities - restricted to signed-in super admins (previously public).
+Route::middleware('auth')->group(function () {
+    Route::get('generate', function () {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return 'ok';
+    });
+
+    Route::get('/clear', function () {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:cache');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+
+        return 'Cleared!';
+    });
 });
-
-
-Route::get('/clear', function() {
-
-    \Illuminate\Support\Facades\Artisan::call('cache:clear');
-    \Illuminate\Support\Facades\Artisan::call('config:clear');
-    \Illuminate\Support\Facades\Artisan::call('config:cache');
-    \Illuminate\Support\Facades\Artisan::call('view:clear');
-
-    return "Cleared!";
-
- });
 
 Route::get('/receipts/verify', [ReceiptVerificationController::class, 'showForm'])->name('receipts.verify');
 Route::post('/receipts/verify', [ReceiptVerificationController::class, 'verify'])->name('receipts.verify.submit');
@@ -183,6 +185,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/help', [HelpController::class, 'index'])->name('help.index');
     Route::get('/support', [SupportController::class, 'index'])->name('support.index');
     Route::post('/support', [SupportController::class, 'store'])->name('support.store');
+    Route::put('/support/{ticket}', [SupportController::class, 'update'])->name('support.update');
 
     // Forums (All users)
     Route::get('/forums', [ForumController::class, 'index'])->name('forums.index');
@@ -299,7 +302,7 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     Route::patch('/leaves/{leave}/status', [\App\Http\Controllers\LeaveRequestController::class, 'updateStatus'])->name('leaves.status')->middleware('permission:human_resources,view');
     
     // Job Roles
-    Route::resource('sections/job-roles', \App\Http\Controllers\JobRoleController::class)->names('job-roles')->middleware('permission:human_resources,view');
+    Route::resource('sections/job-roles', \App\Http\Controllers\JobRoleController::class)->except(['show'])->names('job-roles')->middleware('permission:human_resources,view');
     
     // Employee Directory
     Route::get('/directory', [\App\Http\Controllers\HumanResourcesController::class, 'directory'])->name('directory');
@@ -401,7 +404,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/students/{student}/edit', [AdminStudentController::class, 'edit'])->name('students.edit');
         Route::put('/students/{student}', [AdminStudentController::class, 'update'])->name('students.update');
         Route::post('/students/{student}/notes', [AdminStudentController::class, 'addNote'])->name('students.notes.add');
-        Route::post('/students/{student}/toggle-status', [AdminStudentController::class, 'toggleStatus'])->name('students.toggle-status');
     });
 
     Route::middleware('permission:students,delete')->group(function () {
@@ -412,7 +414,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/students/{student}/enroll-course', [AdminStudentController::class, 'showEnrollCourse'])->name('students.enroll-course')->middleware('permission:enrollments,create');
     Route::post('/students/{student}/enroll-course', [AdminStudentController::class, 'enrollCourse'])->name('students.enroll-course.store')->middleware('permission:enrollments,create');
-    Route::delete('/students/{student}/enrollments/{enrollment}', [AdminStudentController::class, 'removeEnrollment'])->name('students.remove-enrollment')->middleware('permission:enrollments,delete');
 
     // Faculty Management (Academic Divisions)
     Route::middleware('permission:departments,view')->group(function () {
@@ -423,7 +424,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/faculties/{faculty}/edit', [AdminFacultyController::class, 'edit'])->name('faculties.edit');
         Route::put('/faculties/{faculty}', [AdminFacultyController::class, 'update'])->name('faculties.update');
         Route::delete('/faculties/{faculty}', [AdminFacultyController::class, 'destroy'])->name('faculties.destroy');
-        Route::post('/faculties/{faculty}/toggle-status', [AdminFacultyController::class, 'toggleStatus'])->name('faculties.toggle-status');
+        // Legacy aliases
+        Route::redirect('/schools', '/admin/faculties')->name('schools.index');
+        Route::redirect('/schools/create', '/admin/faculties/create')->name('schools.create');
+        Route::redirect('/faculty', '/admin/faculties')->name('faculty.index');
+        Route::redirect('/faculty/create', '/admin/faculties/create')->name('faculty.create');
     });
 
     // Faculty Staff Management (Individual Faculty Members)
@@ -436,8 +441,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::put('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'update'])->name('faculty-staff.update');
         Route::delete('/faculty-staff/{facultyStaff}', [AdminFacultyStaffController::class, 'destroy'])->name('faculty-staff.destroy');
         Route::post('/faculty-staff/{facultyStaff}/toggle-status', [AdminFacultyStaffController::class, 'toggleStatus'])->name('faculty-staff.toggle-status');
-        Route::get('/faculty-staff/{facultyStaff}/courses', [AdminFacultyStaffController::class, 'courses'])->name('faculty-staff.courses');
-        Route::post('/faculty-staff/{facultyStaff}/assign-course', [AdminFacultyStaffController::class, 'assignCourse'])->name('faculty-staff.assign-course');
     });
 
     // Course Management
@@ -450,7 +453,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/courses/{course}/assignments', [AdminCourseController::class, 'assignments'])->name('courses.assignments');
         Route::get('/courses/{course}/grades', [AdminCourseController::class, 'grades'])->name('courses.grades');
         Route::get('/courses/{course}/grades/export', [AdminCourseController::class, 'exportGrades'])->name('courses.export-grades');
-        Route::post('/courses/{course}/toggle-status', [AdminCourseController::class, 'toggleStatus'])->name('courses.toggle-status');
         Route::post('/courses/{course}/enroll-student', [AdminCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:enrollments,create');
         Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [AdminCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:enrollments,delete');
     });
@@ -626,7 +628,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/departments/{department}/assign-head', [DepartmentController::class, 'assignHead'])->name('departments.assign-head');
 
     // Admin Timetable Management
-    Route::resource('timetables', AdminTimetableController::class);
+    Route::resource('timetables', AdminTimetableController::class)->except(['show']);
 
     // Admin E-Voting & Student Leadership Management
     Route::prefix('evoting')->name('evoting.')->group(function () {
@@ -657,7 +659,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Admin Evaluation Surveys
     Route::get('evaluation-surveys/rankings', [AdminEvaluationSurveyController::class, 'rankings'])->name('evaluation-surveys.rankings');
-    Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class)->parameters([
+    Route::resource('evaluation-surveys', AdminEvaluationSurveyController::class)->except(['create', 'edit'])->parameters([
         'evaluation-surveys' => 'survey'
     ]);
     Route::post('/evaluation-surveys/{survey}/toggle-status', [AdminEvaluationSurveyController::class, 'toggleStatus'])->name('evaluation-surveys.toggle-status');
@@ -815,7 +817,6 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     // Course Management
     Route::get('/courses', [FacultyCourseController::class, 'index'])->name('courses.index')->middleware('permission:courses,view');
     Route::get('/courses/{course}', [FacultyCourseController::class, 'show'])->name('courses.show')->middleware('permission:courses,view');
-    Route::put('/courses/{course}', [FacultyCourseController::class, 'update'])->name('courses.update')->middleware('permission:courses,edit');
     Route::post('/courses/{course}/enroll-student', [FacultyCourseController::class, 'enrollStudent'])->name('courses.enroll-student')->middleware('permission:courses,edit');
     Route::delete('/courses/{course}/enrollments/{enrollment}/drop', [FacultyCourseController::class, 'dropStudent'])->name('courses.drop-student')->middleware('permission:courses,edit');
 
@@ -874,15 +875,12 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     Route::get('/courses/{course}/attendance/show', [FacultyAttendanceController::class, 'show'])->name('courses.attendance.show')->middleware('permission:attendance,view');
     Route::get('/courses/{course}/attendance/qr', [FacultyAttendanceController::class, 'generateQRCode'])->name('courses.attendance.qr')->middleware('permission:attendance,edit');
     Route::post('/courses/{course}/attendance', [FacultyAttendanceController::class, 'store'])->name('courses.attendance.store')->middleware('permission:attendance,edit');
-    Route::put('/courses/{course}/attendance/{attendance}', [FacultyAttendanceController::class, 'update'])->name('courses.attendance.update')->middleware('permission:attendance,edit');
 
     // Faculty Timetables
     Route::get('/timetables', [FacultyTimetableController::class, 'index'])->name('timetables.index');
 
     // Grading
     Route::get('/courses/{course}/grades', [FacultyGradingController::class, 'index'])->name('courses.grades.index')->middleware('permission:grades,view');
-    Route::post('/courses/{course}/grades', [FacultyGradingController::class, 'store'])->name('courses.grades.store')->middleware('permission:grades,edit');
-    Route::put('/courses/{course}/grades/{grade}', [FacultyGradingController::class, 'update'])->name('courses.grades.update')->middleware('permission:grades,edit');
     Route::get('/courses/{course}/grading', [FacultyGradingController::class, 'course'])->name('courses.grading')->middleware('permission:grades,view');
     Route::get('/courses/{course}/gradebook', [FacultyGradingController::class, 'gradebook'])->name('courses.gradebook')->middleware('permission:grades,view');
     Route::post('/assignments/{assignment}/grade', [FacultyGradingController::class, 'storeGrade'])->name('grading.store')->middleware('permission:grades,edit');
@@ -978,6 +976,8 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
         Route::post('/sessions/{session}/vote', [StudentEVotingController::class, 'castVote'])->name('vote');
         Route::get('/sessions/{session}/results', [StudentEVotingController::class, 'results'])->name('results');
         Route::get('/leaders', [StudentEVotingController::class, 'leaders'])->name('leaders');
+        Route::redirect('/announcements', '/student/evoting')->name('announcements');
+        Route::redirect('/positions', '/student/evoting')->name('positions');
     });
 
     // Evaluation Surveys
@@ -1010,13 +1010,30 @@ Route::middleware(['auth'])->group(function () {
     // Academic Calendar
     Route::get('/academic-calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('academic-calendar.index');
 
-    // General course browsing
-    Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-    Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+    // Legacy shortcuts: send each role to its own course / student listing.
+    Route::get('/courses', function () {
+        return redirect()->route(match (auth()->user()->role) {
+            'admin' => 'admin.courses.index',
+            'faculty' => 'faculty.courses.index',
+            default => 'student.courses.index',
+        });
+    })->name('courses.index');
+    Route::get('/courses/{course}', function ($course) {
+        return redirect()->route(match (auth()->user()->role) {
+            'admin' => 'admin.courses.show',
+            'faculty' => 'faculty.courses.show',
+            default => 'student.courses.show',
+        }, $course);
+    })->name('courses.show');
 
-    // General student browsing (for faculty and admin)
-    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-    Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
+    Route::get('/students', function () {
+        return redirect()->route(auth()->user()->role === 'admin' ? 'admin.students.index' : 'dashboard');
+    })->name('students.index');
+    Route::get('/students/{student}', function ($student) {
+        return auth()->user()->role === 'admin'
+            ? redirect()->route('admin.students.show', $student)
+            : redirect()->route('dashboard');
+    })->name('students.show');
 
     // Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');

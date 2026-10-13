@@ -96,7 +96,7 @@
                             <div class="d-flex align-items-center gap-3">
                                 <small class="text-muted">
                                     <i class="bi bi-person me-1"></i>
-                                    {{ $announcement->author->first_name }} {{ $announcement->author->last_name }}
+                                    {{ optional($announcement->creator)->first_name }} {{ optional($announcement->creator)->last_name }}
                                 </small>
                                 <small class="text-muted">
                                     <i class="bi bi-calendar me-1"></i>
@@ -116,9 +116,13 @@
                             {{ ucfirst($announcement->priority) }}
                         </span>
                         <span class="badge bg-light text-dark">
-                            {{ ucfirst($announcement->target_role) }}
+                            {{ $announcement->target_roles ? implode(', ', array_map('ucfirst', $announcement->target_roles)) : 'Everyone' }}
                         </span>
-                        @if(Auth::user()->id === $announcement->author_id)
+                        @if(!$announcement->is_published)
+                            <span class="badge bg-secondary">Draft</span>
+                        @endif
+                        @if(Auth::user()->can('update', $announcement))
+
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots"></i>
@@ -140,14 +144,7 @@
                 <div class="card-body">
                     <p class="card-text">{{ Str::limit($announcement->content, 200) }}</p>
                     
-                    @if($announcement->attachment_path)
-                        <div class="mt-3">
-                            <a href="{{ Storage::url($announcement->attachment_path) }}" 
-                               class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="bi bi-paperclip me-2"></i>View Attachment
-                            </a>
-                        </div>
-                    @endif
+
                     
                     <div class="mt-3">
                         <a href="{{ route('announcements.show', $announcement) }}" class="btn btn-primary">
