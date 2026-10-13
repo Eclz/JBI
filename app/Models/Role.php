@@ -36,9 +36,16 @@ class Role extends Model
         });
     }
 
-    public function users(): HasMany
+    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'role_user')
+            ->withPivot('is_primary')
+            ->withTimestamps();
+    }
+
+    public function primaryUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'role_id');
     }
 
     public function hasPermission(string $module, string $action): bool
