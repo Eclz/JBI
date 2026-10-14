@@ -66,8 +66,8 @@
                                         </td>
                                         <td class="text-end pe-3">
                                             <div class="btn-group">
-                                                <a href="{{ route('admin.finance.payables.suppliers.show', $sup->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
-                                                <a href="{{ route('admin.finance.payables.suppliers.edit', $sup->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#showSupplierModal{{ $sup->id }}" title="View"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSupplierModal{{ $sup->id }}" title="Edit"><i class="bi bi-pencil"></i></button>
                                                 <form action="{{ route('admin.finance.payables.suppliers.destroy', $sup->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this supplier?');">
                                                     @csrf
                                                     @method('DELETE')
@@ -125,8 +125,8 @@
                                         <td class="fw-bold text-dark">{{ $currencyCode }} {{ number_format($inv->amount, 2) }}</td>
                                         <td class="text-end pe-3">
                                             <div class="btn-group">
-                                                <a href="{{ route('admin.finance.payables.invoices.show', $inv->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
-                                                <a href="{{ route('admin.finance.payables.invoices.edit', $inv->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#showInvoiceModal{{ $inv->id }}" title="View"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editInvoiceModal{{ $inv->id }}" title="Edit"><i class="bi bi-pencil"></i></button>
                                                 <form action="{{ route('admin.finance.payables.invoices.destroy', $inv->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this invoice?');">
                                                     @csrf
                                                     @method('DELETE')
@@ -235,4 +235,208 @@
         </div>
     </div>
 </div>
+@foreach($suppliers as $sup)
+<!-- Show Supplier Modal -->
+<div class="modal fade" id="showSupplierModal{{ $sup->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-building me-2"></i>Supplier Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Company Name</label>
+                    <div class="fw-bold fs-5">{{ $sup->company_name }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="text-muted small">Supplier Code</label>
+                        <div class="fw-bold">{{ $sup->supplier_code }}</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="text-muted small">Tax PIN / TIN</label>
+                        <div class="fw-bold">{{ $sup->tax_pin ?? 'N/A' }}</div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="text-muted small">Contact Person</label>
+                        <div>{{ $sup->contact_person ?? 'N/A' }}</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="text-muted small">Phone Number</label>
+                        <div>{{ $sup->phone ?? 'N/A' }}</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Email Address</label>
+                    <div>{{ $sup->email ?? 'N/A' }}</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Supplier Modal -->
+<div class="modal fade" id="editSupplierModal{{ $sup->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin.finance.payables.suppliers.update', $sup->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil me-2"></i>Edit Supplier</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" name="company_name" class="form-control" value="{{ $sup->company_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Contact Person</label>
+                        <input type="text" name="contact_person" class="form-control" value="{{ $sup->contact_person }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <input type="email" name="email" class="form-control" value="{{ $sup->email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <input type="text" name="phone" class="form-control" value="{{ $sup->phone }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tax PIN / TIN</label>
+                        <input type="text" name="tax_pin" class="form-control" value="{{ $sup->tax_pin }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+@foreach($invoices as $inv)
+<!-- Show Invoice Modal -->
+<div class="modal fade" id="showInvoiceModal{{ $inv->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-receipt me-2"></i>Invoice Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="text-muted small">Invoice Number</label>
+                        <div class="fw-bold fs-5">{{ $inv->invoice_number }}</div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <label class="text-muted small">Status</label>
+                        <div>
+                            @if($inv->status === 'paid')
+                                <span class="badge bg-success">Paid</span>
+                            @elseif($inv->status === 'partial')
+                                <span class="badge bg-warning text-dark">Partial</span>
+                            @else
+                                <span class="badge bg-danger">Pending</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Supplier</label>
+                    <div class="fw-bold text-primary">{{ $inv->supplier->company_name ?? 'N/A' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="text-muted small">Amount</label>
+                        <div class="fw-bold text-dark">{{ $currencyCode }} {{ number_format($inv->amount, 2) }}</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="text-muted small">Paid Amount</label>
+                        <div class="fw-bold text-success">{{ $currencyCode }} {{ number_format($inv->paid_amount, 2) }}</div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="text-muted small">Invoice Date</label>
+                        <div>{{ $inv->invoice_date ? $inv->invoice_date->format('M d, Y') : 'N/A' }}</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="text-muted small">Due Date</label>
+                        <div class="{{ $inv->due_date && $inv->due_date->isPast() && $inv->status !== 'paid' ? 'text-danger fw-bold' : '' }}">
+                            {{ $inv->due_date ? $inv->due_date->format('M d, Y') : 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+                @if($inv->notes)
+                <div class="mb-3">
+                    <label class="text-muted small">Notes</label>
+                    <div class="bg-light p-2 rounded small">{{ $inv->notes }}</div>
+                </div>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Invoice Modal -->
+<div class="modal fade" id="editInvoiceModal{{ $inv->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin.finance.payables.invoices.update', $inv->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil me-2"></i>Edit Invoice</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Supplier <span class="text-danger">*</span></label>
+                        <select name="supplier_id" class="form-select" required>
+                            @foreach($suppliers as $sup)
+                                <option value="{{ $sup->id }}" {{ $inv->supplier_id == $sup->id ? 'selected' : '' }}>{{ $sup->company_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Invoice Number <span class="text-danger">*</span></label>
+                        <input type="text" name="invoice_number" class="form-control" value="{{ $inv->invoice_number }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="amount" class="form-control" value="{{ $inv->amount }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Invoice Date <span class="text-danger">*</span></label>
+                        <input type="date" name="invoice_date" class="form-control" value="{{ $inv->invoice_date ? $inv->invoice_date->format('Y-m-d') : '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Due Date <span class="text-danger">*</span></label>
+                        <input type="date" name="due_date" class="form-control" value="{{ $inv->due_date ? $inv->due_date->format('Y-m-d') : '' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
 @endsection

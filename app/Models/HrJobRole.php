@@ -11,7 +11,8 @@ class HrJobRole extends Model
 
     protected $fillable = [
         'title',
-        'department',
+        'role_id',
+        'departments',
         'salary_band_min',
         'salary_band_max',
         'description',
@@ -22,5 +23,11 @@ class HrJobRole extends Model
         'is_active' => 'boolean',
         'salary_band_min' => 'decimal:2',
         'salary_band_max' => 'decimal:2',
+        'departments' => 'array',
     ];
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
 }

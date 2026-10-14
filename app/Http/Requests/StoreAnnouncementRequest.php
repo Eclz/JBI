@@ -76,13 +76,11 @@ class StoreAnnouncementRequest extends FormRequest
             'published_at' => [
                 'nullable',
                 'date',
-                'after_or_equal:now',
-                'required_if:is_published,true',
             ],
             'expires_at' => [
                 'nullable',
                 'date',
-                'after:published_at',
+                'after:now',
                 'before:' . now()->addYear()->toDateString(),
             ],
             'attachments' => [
@@ -108,7 +106,7 @@ class StoreAnnouncementRequest extends FormRequest
             'content.min' => 'Announcement content must be at least 20 characters.',
             'course_id.required_if' => 'Course is required for academic announcements.',
             'published_at.required_if' => 'Published date is required when publishing announcement.',
-            'expires_at.after' => 'Expiration date must be after publication date.',
+            'expires_at.after' => 'Expiration date must be in the future.',
             'target_roles.min' => 'At least one target role must be selected.',
             'attachments.max' => 'Maximum 5 attachments allowed.',
             'attachments.*.max' => 'Each attachment must not exceed 5MB.',

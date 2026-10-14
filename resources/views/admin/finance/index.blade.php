@@ -145,6 +145,12 @@
                     </a>
                 </div>
                 <div class="col-md-2 col-6">
+                    <a href="{{ route('admin.finance.procurement.index') }}" class="btn btn-outline-primary w-100 p-3 rounded-3 h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center">
+                        <i class="bi bi-cart-check fs-2 mb-2"></i>
+                        <span class="fw-bold small">Procurement</span>
+                    </a>
+                </div>
+                <div class="col-md-2 col-6">
                     <a href="{{ route('admin.finance.banking.index') }}" class="btn btn-outline-primary w-100 p-3 rounded-3 h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center">
                         <i class="bi bi-piggy-bank fs-2 mb-2"></i>
                         <span class="fw-bold small">Banking & Cash</span>

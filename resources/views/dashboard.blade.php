@@ -14,7 +14,7 @@
                         </div>
                     @endif
 
-                    <h2>Welcome, {{ Auth::user()->name }}!</h2>
+                    <h2>Welcome, {{ Auth::user()->full_name }}!</h2>
                     <p>This is the main dashboard of the JBI University Management System.</p>
 
                     <div class="row mt-4">
@@ -30,7 +30,7 @@
                                             <a href="{{ route('admin.courses.index') }}" class="list-group-item list-group-item-action">
                                                 <i class="fa fa-book mr-2"></i> Course Management
                                             </a>
-                                            <a href="{{ route('admin.reports') }}" class="list-group-item list-group-item-action">
+                                            <a href="{{ route('admin.reports.index') }}" class="list-group-item list-group-item-action">
                                                 <i class="fa fa-chart-bar mr-2"></i> Reports
                                             </a>
                                         @elseif(Auth::user()->role == 'faculty')
@@ -54,10 +54,10 @@
                                                 <i class="fa fa-star mr-2"></i> Grades
                                             </a>
                                         @endif
-                                        <a href="{{ route('profile') }}" class="list-group-item list-group-item-action">
+                                        <a href="{{ route('profile.show') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-user mr-2"></i> My Profile
                                         </a>
-                                        <a href="{{ route('settings') }}" class="list-group-item list-group-item-action">
+                                        <a href="{{ route('settings.index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-cog mr-2"></i> Settings
                                         </a>
                                     </ul>
@@ -78,7 +78,7 @@
                                                         <small>{{ $announcement->created_at->diffForHumans() }}</small>
                                                     </div>
                                                     <p class="mb-1">{{ Str::limit($announcement->content, 100) }}</p>
-                                                    <small>Posted by: {{ $announcement->user->name }}</small>
+                                                    <small>Posted by: {{ optional($announcement->creator)->full_name ?? 'Administration' }}</small>
                                                 </div>
                                             @endforeach
                                         </div>

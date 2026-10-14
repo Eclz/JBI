@@ -101,16 +101,23 @@ class VotingSession extends Model
 
     public function getIsApplicationOpenAttribute(): bool
     {
+        $now = now();
+
+        // Enforce the explicit end date strictly if it's set
+        if ($this->application_end_at && $now->gt($this->application_end_at)) {
+            return false;
+        }
+
+        // Enforce the explicit start date strictly if it's set
+        if ($this->application_start_at && $now->lt($this->application_start_at)) {
+            return false;
+        }
+
         if ($this->status === 'applications_open') {
             return true;
         }
 
-        if (!$this->application_start_at || !$this->application_end_at) {
-            return false;
-        }
-
-        $now = now();
-        return $now->gte($this->application_start_at) && $now->lte($this->application_end_at);
+        return false;
     }
 
     public function getIsVettingOpenAttribute(): bool
@@ -130,10 +137,6 @@ class VotingSession extends Model
     public function getIsVotingOpenAttribute(): bool
     {
         if ($this->status === 'voting_open') {
-            if ($this->start_time && $this->end_time) {
-                $now = now();
-                return $now->gte($this->start_time) && $now->lte($this->end_time);
-            }
             return true;
         }
 

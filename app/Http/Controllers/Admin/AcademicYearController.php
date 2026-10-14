@@ -37,7 +37,8 @@ class AcademicYearController extends Controller
 
         try {
             if ($request->boolean('is_current')) {
-                AcademicYear::query()->update(['is_current' => false]);
+                AcademicYear::query()->update(['is_current' => false, 'is_active' => false]);
+                \App\Models\Semester::query()->update(['is_current' => false, 'is_active' => false]);
             }
 
             AcademicYear::create([
@@ -80,7 +81,8 @@ class AcademicYearController extends Controller
 
         try {
             if ($request->boolean('is_current')) {
-                AcademicYear::query()->update(['is_current' => false]);
+                AcademicYear::query()->where('id', '!=', $academicYear->id)->update(['is_current' => false, 'is_active' => false]);
+                \App\Models\Semester::where('academic_year_id', '!=', $academicYear->id)->update(['is_current' => false, 'is_active' => false]);
             }
 
             $academicYear->update([

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\User;
-use App\Models\Department;
 use App\Models\Program;
 use App\Models\StudentProfile;
 use App\Models\Notification;
@@ -350,7 +349,13 @@ class ApplicationController extends Controller
         }
 
         if (!$existingUser->studentProfile) {
-            $admissionNumber = $application->admission_number ?: $this->generateAdmissionNumber($resolvedDepartmentId);
+            $departmentCode = $program?->department?->code ?? 'JBI';
+            $admissionNumber = AdmissionWorkflow::resolveAdmissionNumber(
+                $departmentCode,
+                $application->admission_number,
+                $existingUser->id,
+                $application->id
+            );
             $registrationDays = (int) SystemSetting::getSetting('registration_payment_days', 14);
             $tuitionDays = (int) SystemSetting::getSetting('tuition_payment_days', 30);
 
@@ -372,7 +377,7 @@ class ApplicationController extends Controller
             ]);
             $existingUser->setRelation('studentProfile', $profile);
 
-            if (!$application->admission_number) {
+            if ($application->admission_number !== $admissionNumber) {
                 $application->update(['admission_number' => $admissionNumber]);
             }
 
@@ -504,19 +509,4 @@ class ApplicationController extends Controller
         ];
     }
 
-    private function generateAdmissionNumber(int $departmentId): string
-    {
-        $department = Department::find($departmentId);
-        $year = date('Y');
-        $prefix = $department ? strtoupper(substr($department->code, 0, 3)) : 'JBI';
-
-        $lastNumber = StudentProfile::where('admission_number', 'like', "{$prefix}{$year}%")
-            ->orderBy('admission_number', 'desc')
-            ->first();
-
-        $lastSequence = $lastNumber ? intval(substr($lastNumber->admission_number, -4)) : 0;
-        $newSequence = $lastSequence + 1;
-
-        return $prefix . $year . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
-    }
 }

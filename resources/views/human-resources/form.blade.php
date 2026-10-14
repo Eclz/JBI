@@ -5,7 +5,10 @@
     </div>
     <div class="col-md-6">
         <label class="form-label">Employee number</label>
-        <input name="employee_number" required class="form-control" value="{{ old('employee_number', $hrProfile?->employee_number ?? '') }}">
+        <div class="input-group">
+            <input name="employee_number" id="employee_number" required class="form-control" value="{{ old('employee_number', $hrProfile?->employee_number ?? '') }}">
+            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('employee_number').value = 'EMP-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')">Generate</button>
+        </div>
     </div>
     <div class="col-md-6">
         <label class="form-label">Job title</label>

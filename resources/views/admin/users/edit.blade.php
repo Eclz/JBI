@@ -72,6 +72,28 @@
                         </div>
 
                         <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold"><i class="bi bi-people-fill text-primary me-1"></i>Concurrent / Multiple Assigned Roles</label>
+                                <div class="p-3 border rounded bg-light">
+                                    <small class="text-muted d-block mb-2">Check any additional roles this user holds concurrently (e.g., Lecturer who is also Dean or HOD, Finance Officer who is also Lecturer, Estates Manager who is also Dean):</small>
+                                    <div class="row g-2">
+                                        @foreach($roles as $r)
+                                            <div class="col-md-4 col-sm-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="role_ids[]" value="{{ $r->id }}" id="role_opt_{{ $r->id }}"
+                                                        {{ (is_array(old('role_ids')) && in_array($r->id, old('role_ids'))) || $user->roles->contains('id', $r->id) ? 'checked' : '' }}>
+                                                    <label class="form-check-label small" for="role_opt_{{ $r->id }}">
+                                                        <strong>{{ $r->name }}</strong> <span class="text-muted">({{ ucfirst($r->guard_role) }})</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-12">
                                 <div class="alert alert-light border d-flex align-items-center mb-3" role="alert">
                                     <i class="bi bi-shield-lock text-primary me-2 fs-5"></i>

@@ -79,6 +79,7 @@ class DatabaseSeeder extends Seeder
 
         // Seed Roles and Permissions
         $this->call(RolePermissionSeeder::class);
+        $this->call(FunctionalAreaPermissionsSeeder::class);
 
         // Seed Faculties and link departments
         $this->call(FacultySeeder::class);
@@ -333,6 +334,9 @@ class DatabaseSeeder extends Seeder
 
         // Create some audit logs
         AuditLog::factory()->count(100)->create();
+
+        // Seed HR Job Roles
+        $this->call(HrJobRolesSeeder::class);
 
         // Output summary
         $this->command->info('Database seeded successfully with realistic JBI University data!');

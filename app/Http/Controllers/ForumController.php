@@ -55,7 +55,7 @@ class ForumController extends Controller
             'author_id' => Auth::id(),
         ]);
 
-        return redirect()->route('forums.topic', $topic)
+        return redirect()->route('forums.topics.show', $topic)
             ->with('success', 'Topic created successfully.');
     }
 

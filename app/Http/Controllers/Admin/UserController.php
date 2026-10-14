@@ -108,6 +108,13 @@ class UserController extends Controller
 
             $user = User::create($userData);
 
+            // Sync multi-roles
+            $roleIds = (array) $request->input('role_ids', []);
+            if (!in_array($role->id, $roleIds)) {
+                $roleIds[] = $role->id;
+            }
+            $user->syncRoles($roleIds, $role->id);
+
             // Create role-specific profile
             if ($role->guard_role === 'student') {
                 $deptId = $request->department_id ?: Department::where('is_active', true)->value('id');
@@ -207,6 +214,16 @@ class UserController extends Controller
 
             $user->update($userData);
 
+            // Sync multi-roles
+            if ($request->has('role_ids') || $role) {
+                $roleIds = (array) $request->input('role_ids', []);
+                $primaryId = $role ? $role->id : $user->role_id;
+                if ($primaryId && !in_array($primaryId, $roleIds)) {
+                    $roleIds[] = $primaryId;
+                }
+                $user->syncRoles($roleIds, $primaryId);
+            }
+
             DB::commit();
 
             return redirect()->route('admin.users.show', $user)
@@ -276,5 +293,15 @@ class UserController extends Controller
         $status = $user->is_active ? 'activated' : 'deactivated';
 
         return back()->with('success', "User {$status} successfully.");
+    }
+
+    public function userLogs()
+    {
+        $logs = \App\Models\AuditLog::whereIn('action', ['login', 'logout'])
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        return view('admin.users.logs', compact('logs'));
     }
 }

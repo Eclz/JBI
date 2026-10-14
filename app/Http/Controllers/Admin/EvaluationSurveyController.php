@@ -11,6 +11,64 @@ use Illuminate\Http\Request;
 
 class EvaluationSurveyController extends Controller
 {
+    public function rankings(Request $request)
+    {
+        $surveyId = $request->query('survey_id');
+        
+        $query = EvaluationResponse::with(['lecturer.hrProfile', 'course']);
+        if ($surveyId) {
+            $query->where('survey_id', $surveyId);
+        }
+
+        $responses = $query->get();
+
+        $lecturerStats = [];
+
+        foreach ($responses as $resp) {
+            if (!$resp->lecturer) continue;
+            
+            $lid = $resp->lecturer_id;
+            if (!isset($lecturerStats[$lid])) {
+                $lecturerStats[$lid] = [
+                    'lecturer' => $resp->lecturer,
+                    'total_score' => 0,
+                    'total_questions_rated' => 0,
+                    'courses' => [],
+                    'responses_count' => 0,
+                ];
+            }
+
+            $lecturerStats[$lid]['responses_count']++;
+            
+            if ($resp->course && !in_array($resp->course->course_name, $lecturerStats[$lid]['courses'])) {
+                $lecturerStats[$lid]['courses'][] = $resp->course->course_name;
+            }
+
+            if (is_array($resp->answers)) {
+                foreach ($resp->answers as $qId => $val) {
+                    if (is_numeric($val)) {
+                        $lecturerStats[$lid]['total_score'] += (int)$val;
+                        $lecturerStats[$lid]['total_questions_rated']++;
+                    }
+                }
+            }
+        }
+
+        foreach ($lecturerStats as $lid => &$stat) {
+            $stat['average'] = $stat['total_questions_rated'] > 0 
+                ? round($stat['total_score'] / $stat['total_questions_rated'], 2) 
+                : 0;
+        }
+
+        usort($lecturerStats, function($a, $b) {
+            return $b['average'] <=> $a['average'];
+        });
+
+        $surveys = EvaluationSurvey::orderBy('created_at', 'desc')->get();
+
+        return view('admin.evaluation_surveys.rankings', compact('lecturerStats', 'surveys', 'surveyId'));
+    }
+
     public function index()
     {
         $surveys = EvaluationSurvey::with(['questions', 'academicYear'])->withCount('responses')->orderBy('created_at', 'desc')->get();

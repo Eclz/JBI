@@ -26,9 +26,13 @@
 
             <div class="d-flex align-items-center">
                 <div class="me-3">
-                    <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <span>{{ substr($topic->author->first_name, 0, 1) }}{{ substr($topic->author->last_name, 0, 1) }}</span>
-                    </div>
+                    @if($topic->author->profile_picture)
+                        <img src="{{ asset('storage/' . $topic->author->profile_picture) }}" alt="{{ $topic->author->first_name }}" class="rounded-circle shadow-sm object-fit-cover" style="width: 48px; height: 48px;">
+                    @else
+                        <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <span>{{ substr($topic->author->first_name, 0, 1) }}{{ substr($topic->author->last_name, 0, 1) }}</span>
+                        </div>
+                    @endif
                 </div>
                 <div>
                     <strong>{{ $topic->author->first_name }} {{ $topic->author->last_name }}</strong>
@@ -55,9 +59,13 @@
             @forelse($replies as $reply)
                 <div class="d-flex mb-4 {{ !$loop->last ? 'pb-4 border-bottom' : '' }}">
                     <div class="me-3">
-                        <div class="avatar bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                            <span>{{ substr($reply->author->first_name, 0, 1) }}{{ substr($reply->author->last_name, 0, 1) }}</span>
-                        </div>
+                        @if($reply->author->profile_picture)
+                            <img src="{{ asset('storage/' . $reply->author->profile_picture) }}" alt="{{ $reply->author->first_name }}" class="rounded-circle shadow-sm object-fit-cover" style="width: 40px; height: 40px;">
+                        @else
+                            <div class="avatar bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <span>{{ substr($reply->author->first_name, 0, 1) }}{{ substr($reply->author->last_name, 0, 1) }}</span>
+                            </div>
+                        @endif
                     </div>
                     <div class="flex-grow-1">
                         <div class="d-flex justify-content-between align-items-start mb-2">
