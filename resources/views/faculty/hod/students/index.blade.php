@@ -42,25 +42,25 @@
                         @forelse($students as $student)
                         <tr>
                             <td>
-                                <span class="badge badge-light px-2 py-1 text-dark border">{{ $student->admission_number ?? 'N/A' }}</span>
+                                <span class="badge bg-light text-dark px-2 py-1 border">{{ $student->admission_number ?? 'N/A' }}</span>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="avatar avatar-sm bg-primary text-white rounded-circle mr-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <div class="avatar avatar-sm bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                         {{ substr($student->user->first_name, 0, 1) }}
                                     </div>
                                     <div>
-                                        <div class="font-weight-bold">{{ $student->user->first_name }} {{ $student->user->last_name }}</div>
+                                        <div class="fw-bold">{{ $student->user->first_name }} {{ $student->user->last_name }}</div>
                                         <div class="small text-muted">{{ $student->user->email }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td>{{ $student->program->name ?? 'N/A' }}</td>
                             <td>
-                                @if($student->status === 'active')
-                                    <span class="badge badge-success px-2 py-1">Active</span>
+                                @if(strtolower($student->status ?? '') === 'active')
+                                    <span class="badge bg-success px-2 py-1">Active</span>
                                 @else
-                                    <span class="badge badge-secondary px-2 py-1">{{ ucfirst($student->status) }}</span>
+                                    <span class="badge bg-secondary px-2 py-1">{{ ucfirst($student->status ?? 'Inactive') }}</span>
                                 @endif
                             </td>
                             <td>

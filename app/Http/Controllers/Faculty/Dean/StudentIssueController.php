@@ -36,11 +36,13 @@ class StudentIssueController extends Controller
         ]);
 
         $validated['reported_by'] = auth()->id();
-        $validated['status'] = 'Open';
+        $isEscalate = $request->boolean('escalate') || $request->input('submit_action') === 'escalate';
+        $validated['status'] = $isEscalate ? 'Escalated' : 'Open';
 
         StudentIssue::create($validated);
 
-        return redirect()->route('faculty.dean.student-issues.index')->with('success', 'Student issue reported successfully.');
+        $message = $isEscalate ? 'Student issue reported and escalated to administration.' : 'Student issue reported successfully.';
+        return redirect()->route('faculty.dean.student-issues.index')->with('success', $message);
     }
 
     public function show(StudentIssue $studentIssue)

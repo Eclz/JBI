@@ -37,9 +37,9 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="funding_amount" class="form-label fw-medium">Expected Funding / Endowment (GHS) <small class="text-muted fw-normal">(Optional)</small></label>
+                    <label for="funding_amount" class="form-label fw-medium">Expected Funding / Endowment ({{ $systemCurrency }}) <small class="text-muted fw-normal">(Optional)</small></label>
                     <div class="input-group" style="max-width: 300px;">
-                        <span class="input-group-text">₵</span>
+                        <span class="input-group-text">{{ $systemCurrency }}</span>
                         <input type="number" name="funding_amount" id="funding_amount" class="form-control @error('funding_amount') is-invalid @enderror" value="{{ old('funding_amount') }}" step="0.01" min="0">
                     </div>
                     <div class="form-text text-muted">Leave blank if the partnership is non-financial.</div>

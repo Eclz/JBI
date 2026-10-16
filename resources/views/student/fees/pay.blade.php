@@ -54,7 +54,8 @@
 
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount</label>
-                            <input type="number" step="0.01" min="0.01" max="{{ $fee->balance_amount }}"
+                            <input type="number" step="0.01" min="0.01" 
+                            {{-- <input type="number" step="0.01" min="0.01" max="{{ $fee->balance_amount }}" --}}
                                    class="form-control @error('amount') is-invalid @enderror"
                                    id="amount" name="amount" value="{{ old('amount', $fee->balance_amount) }}" required>
                             @error('amount')
@@ -76,11 +77,11 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3" id="paymentProofWrapper" style="display: none;">
-                            <label for="payment_proof" class="form-label">Cash Payment Proof <span class="text-danger">*</span></label>
+                        <div class="mb-3" id="paymentProofWrapper">
+                            <label for="payment_proof" class="form-label">Payment Proof / Deposit Slip / Transaction Screenshot</label>
                             <input type="file" class="form-control @error('payment_proof') is-invalid @enderror"
                                    id="payment_proof" name="payment_proof" accept=".pdf,.jpg,.jpeg,.png">
-                            <div class="form-text">Upload a receipt or proof of cash payment (PDF, JPG, PNG).</div>
+                            <div class="form-text">Attach your bank receipt, deposit slip, or mobile money transfer confirmation (PDF, JPG, PNG).</div>
                             @error('payment_proof')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -92,15 +93,20 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-credit-card me-1"></i> Submit Payment
+                            <i class="bi bi-send me-1"></i> Submit Payment for Approval
                         </button>
                     </form>
                 </div>
             </div>
 
-            <div class="alert alert-info mt-3">
-                <i class="bi bi-shield-check me-2"></i>
-                Payments are recorded immediately. Keep your receipt for reference.
+            <div class="alert alert-warning mt-3 border-0 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-hourglass-split fs-4 me-3 text-warning"></i>
+                    <div>
+                        <strong class="d-block">Approval Required</strong>
+                        <span class="small">All student payments are verified and approved by the Finance/Accounts Office before being credited to your official fee record and balance. Keep your receipt/proof for records.</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -116,12 +122,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function togglePaymentProof() {
         const isCash = paymentMethodSelect.value === 'cash';
-        paymentProofWrapper.style.display = isCash ? 'block' : 'none';
+        paymentProofWrapper.style.display = 'block';
         if (isCash) {
             paymentProofInput.setAttribute('required', 'required');
         } else {
             paymentProofInput.removeAttribute('required');
-            paymentProofInput.value = '';
         }
     }
 

@@ -99,7 +99,7 @@ class DashboardController extends Controller
                 // Monthly statistics
                 $currentMonth = now()->startOfMonth();
                 $data['monthlyEnrollments'] = CourseEnrollment::where('created_at', '>=', $currentMonth)->count();
-                $data['monthlyRevenue'] = Payment::where('created_at', '>=', $currentMonth)->sum('amount');
+                $data['monthlyRevenue'] = Payment::where('status', 'completed')->where('created_at', '>=', $currentMonth)->sum('amount');
                 $data['monthlyNewStudents'] = User::where('role', 'student')
                     ->where('created_at', '>=', $currentMonth)
                     ->count();

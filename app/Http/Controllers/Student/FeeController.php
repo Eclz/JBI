@@ -212,41 +212,58 @@ class FeeController extends Controller
 
         $feeRecord = $prn->feeRecord;
 
-        if ($feeRecord) {
-            $newPaidAmount = $feeRecord->paid_amount + $prn->amount;
-            $newBalance = max(0, $feeRecord->total_amount - $newPaidAmount);
-
-            $feeRecord->update([
-                'paid_amount' => $newPaidAmount,
-                'balance_amount' => $newBalance,
-                'paid_date' => now(),
-                'payment_method' => $request->payment_method,
-                'status' => $newBalance <= 0 ? 'paid' : 'partial',
-            ]);
-        }
+        $feeRecord = $prn->feeRecord;
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $transactionRef = Str::uuid()->toString();
 
         $prn->update([
-            'status' => 'paid',
-            'paid_at' => now(),
+            'status' => 'pending',
             'payment_method' => $request->payment_method,
-            'transaction_reference' => Str::uuid()->toString(),
+            'transaction_reference' => $transactionRef,
         ]);
 
-        // Create transaction entry
         Payment::create([
             'fee_record_id' => $feeRecord?->id,
             'student_id' => Auth::id(),
             'amount' => $prn->amount,
             'payment_method' => $request->payment_method,
-            'transaction_id' => $prn->transaction_reference,
+            'transaction_id' => $transactionRef,
             'reference_number' => $prn->prn_number,
-            'notes' => 'Payment made via PRN ' . $prn->prn_number . ' for ' . $prn->fee_item_name,
-            'status' => 'completed',
+            'notes' => 'Payment submitted via PRN ' . $prn->prn_number . ' for ' . $prn->fee_item_name,
+            'status' => 'pending',
             'payment_date' => now(),
         ]);
 
+        // Notify Finance and Admin staff
+        $financeStaff = User::where(function($query) {
+            $query->whereIn('role', ['admin', 'super_administrator', 'finance_officer', 'finance'])
+                  ->orWhereHas('roles', function($q) {
+                      $q->whereIn('slug', ['super_administrator', 'finance_officer', 'admin']);
+                  });
+        })->where('is_active', true)->get();
+
+        foreach ($financeStaff as $staff) {
+            Notification::create([
+                'user_id' => $staff->id,
+                'type' => 'payment',
+                'title' => 'New PRN Payment Pending Approval',
+                'message' => 'Student ' . Auth::user()->name . ' submitted a payment of ' . $currencyCode . ' ' . number_format($prn->amount, 2) . ' via PRN ' . $prn->prn_number . ' awaiting approval.',
+                'action_url' => $feeRecord ? route('admin.fees.records.show', $feeRecord) : route('admin.fees.index'),
+                'priority' => 'high',
+            ]);
+        }
+
+        Notification::create([
+            'user_id' => Auth::id(),
+            'type' => 'payment',
+            'title' => 'PRN Payment Submitted',
+            'message' => 'Your payment of ' . $currencyCode . ' ' . number_format($prn->amount, 2) . ' via PRN ' . $prn->prn_number . ' has been submitted and is pending verification and approval by Finance.',
+            'action_url' => route('student.fees.index'),
+            'priority' => 'normal',
+        ]);
+
         return redirect()->route('student.fees.index')
-            ->with('success', 'Payment of USD ' . number_format($prn->amount, 2) . ' processed successfully using PRN ' . $prn->prn_number . '! Your account balance has been updated.');
+            ->with('success', 'Payment of ' . $currencyCode . ' ' . number_format($prn->amount, 2) . ' submitted using PRN ' . $prn->prn_number . '! It is pending approval by the Finance Office before being credited to your balance.');
     }
 
     public function pay(FeeRecord $fee)
@@ -282,22 +299,9 @@ class FeeController extends Controller
                 ->store('fee-payment-proofs/' . $fee->invoice_number, 'public');
         }
 
-        $isCash = $request->payment_method === 'cash';
-        $paymentStatus = $isCash ? 'pending' : 'completed';
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
 
-        if (!$isCash) {
-            $newPaidAmount = $fee->paid_amount + $request->amount;
-            $newBalance = $fee->total_amount - $newPaidAmount;
-
-            $fee->update([
-                'paid_amount' => $newPaidAmount,
-                'balance_amount' => $newBalance,
-                'paid_date' => now(),
-                'payment_method' => $request->payment_method,
-                'status' => $newBalance <= 0 ? 'paid' : 'partial',
-            ]);
-        }
-
+        // All student-submitted payments are created with status 'pending' awaiting finance/admin approval
         $payment = Payment::create([
             'fee_record_id' => $fee->id,
             'student_id' => Auth::id(),
@@ -307,47 +311,40 @@ class FeeController extends Controller
             'reference_number' => $fee->invoice_number,
             'notes' => $request->input('notes'),
             'payment_proof' => $proofPath,
-            'status' => $paymentStatus,
+            'status' => 'pending',
             'payment_date' => now(),
         ]);
 
-        if ($isCash) {
-            $admins = User::whereIn('role', ['admin', 'finance'])->where('is_active', true)->get();
-            foreach ($admins as $admin) {
-                Notification::create([
-                    'user_id' => $admin->id,
-                    'type' => 'payment',
-                    'title' => 'New Cash Payment Pending',
-                    'message' => 'A student has submitted a cash payment that needs approval.',
-                    'action_url' => route('admin.fees.records.show', $fee),
-                    'priority' => 'high',
-                ]);
-            }
+        // Notify Finance and Admin staff
+        $financeStaff = User::where(function($query) {
+            $query->whereIn('role', ['admin', 'super_administrator', 'finance_officer', 'finance'])
+                  ->orWhereHas('roles', function($q) {
+                      $q->whereIn('slug', ['super_administrator', 'finance_officer', 'admin']);
+                  });
+        })->where('is_active', true)->get();
 
+        foreach ($financeStaff as $staff) {
             Notification::create([
-                'user_id' => Auth::id(),
+                'user_id' => $staff->id,
                 'type' => 'payment',
-                'title' => 'Payment Submitted',
-                'message' => 'Your cash payment was submitted and is pending approval.',
-                'action_url' => route('student.fees.index'),
-                'priority' => 'normal',
+                'title' => 'New Student Payment Pending Approval',
+                'message' => 'Student ' . Auth::user()->name . ' submitted a payment of ' . $currencyCode . ' ' . number_format($request->amount, 2) . ' for ' . ($fee->feeStructure->name ?? 'Fees') . ' awaiting approval.',
+                'action_url' => route('admin.fees.records.show', $fee),
+                'priority' => 'high',
             ]);
-        } else {
-            $registrationFeeId = (int) SystemSetting::getSetting('registration_fee_structure_id', 0);
-            $isRegistrationFee = $fee->fee_structure_id === $registrationFeeId || $fee->feeStructure?->type === 'registration';
-            if ($isRegistrationFee) {
-                $profile = Auth::user()->studentProfile;
-                if ($profile && !$profile->registration_fee_paid_at) {
-                    $profile->update([
-                        'registration_fee_paid_at' => now(),
-                    ]);
-                }
-                AdmissionWorkflow::activateStudent(Auth::user());
-            }
         }
 
+        Notification::create([
+            'user_id' => Auth::id(),
+            'type' => 'payment',
+            'title' => 'Payment Submitted for Verification',
+            'message' => 'Your payment of ' . $currencyCode . ' ' . number_format($request->amount, 2) . ' was submitted and is pending verification/approval by the Accounts Office.',
+            'action_url' => route('student.fees.index'),
+            'priority' => 'normal',
+        ]);
+
         return redirect()->route('student.fees.index')
-            ->with('success', $isCash ? 'Cash payment submitted for approval.' : 'Payment processed successfully.');
+            ->with('success', 'Payment of ' . $currencyCode . ' ' . number_format($request->amount, 2) . ' submitted successfully! It is pending approval by the Finance Office before being credited to your balance.');
     }
 
     public function receipt(FeeRecord $fee)

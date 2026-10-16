@@ -497,6 +497,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::post('/{payment}/approve', [AdminFeeController::class, 'approvePayment'])->name('approve')->middleware('permission:fees,approve');
+            Route::post('/{payment}/reject', [AdminFeeController::class, 'rejectPayment'])->name('reject')->middleware('permission:fees,approve');
             Route::get('/{payment}/receipt', [AdminFeeController::class, 'transactionReceipt'])->name('receipt');
         });
 

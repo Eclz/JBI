@@ -75,7 +75,7 @@
                     </div>
                     <div class="mb-3">
                         <span class="text-muted d-block small mb-1">Requested Amount</span>
-                        <h3 class="mb-0 font-monospace text-primary">₵{{ number_format($budget->amount, 2) }}</h3>
+                        <h3 class="mb-0 font-monospace text-primary">{{ $systemCurrency }}{{ number_format($budget->amount, 2) }}</h3>
                     </div>
                     <div class="mb-3">
                         <span class="text-muted d-block small mb-1">Created By</span>

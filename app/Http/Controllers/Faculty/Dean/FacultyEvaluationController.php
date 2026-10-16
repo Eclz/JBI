@@ -40,11 +40,13 @@ class FacultyEvaluationController extends Controller
         ]);
 
         $validated['evaluator_id'] = auth()->id();
-        $validated['status'] = 'Draft';
+        $isSubmit = $request->input('submit_action') === 'submit';
+        $validated['status'] = $isSubmit ? 'Pending Approval' : 'Draft';
 
         FacultyEvaluation::create($validated);
 
-        return redirect()->route('faculty.dean.evaluations.index')->with('success', 'Faculty evaluation drafted successfully.');
+        $message = $isSubmit ? 'Faculty evaluation submitted for approval successfully.' : 'Faculty evaluation drafted successfully.';
+        return redirect()->route('faculty.dean.evaluations.index')->with('success', $message);
     }
 
     public function show(FacultyEvaluation $evaluation)

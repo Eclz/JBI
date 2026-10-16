@@ -27,9 +27,9 @@
                     <p class="text-muted mb-3">{{ $studentProfile->admission_number ?? 'No ID Assigned' }}</p>
                     
                     @if($studentProfile->status === 'active')
-                        <span class="badge badge-success px-3 py-2 mb-3 rounded-pill">Active Student</span>
+                        <span class="badge bg-success px-3 py-2 mb-3 rounded-pill">Active Student</span>
                     @else
-                        <span class="badge badge-secondary px-3 py-2 mb-3 rounded-pill">{{ ucfirst($studentProfile->status) }}</span>
+                        <span class="badge bg-secondary px-3 py-2 mb-3 rounded-pill">{{ ucfirst($studentProfile->status) }}</span>
                     @endif
 
                     <hr>

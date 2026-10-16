@@ -294,8 +294,10 @@
                                                     <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>PAID</span>
                                                 @elseif($prn->is_expired)
                                                     <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>EXPIRED (30 DAYS)</span>
+                                                @elseif($prn->status === 'pending')
+                                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>PENDING APPROVAL</span>
                                                 @else
-                                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>PENDING</span>
+                                                    <span class="badge bg-info text-dark"><i class="bi bi-qr-code me-1"></i>ACTIVE</span>
                                                 @endif
                                             </td>
                                             <td class="text-end pe-3">

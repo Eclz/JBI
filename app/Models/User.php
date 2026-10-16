@@ -468,6 +468,12 @@ class User extends Authenticatable
 
         if ($roleModel) {
             $this->roles()->detach($roleModel->id);
+            // Refresh the roles relationship to avoid stale in-memory data
+            $this->load('roles');
+            // Clear Spatie permission cache to ensure removed permissions are not cached
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            // Refresh the model instance to clear any cached attributes/relations
+            $this->refresh();
             if ($this->role_id === $roleModel->id) {
                 $nextRole = $this->roles()->first();
                 $this->update([
