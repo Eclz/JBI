@@ -150,7 +150,7 @@ Example format:
             formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
             formData.append('auto_save', '1');
 
-            fetch('{{ route('student.exams.auto-save', $attempt) }}', {
+            fetch('{{ route('student.exams.autosave', $attempt->exam_id) }}', {
                 method: 'POST',
                 body: formData
             });

@@ -58,7 +58,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="passing_marks" class="form-label fw-semibold">Passing Marks *</label>
-                                <input type="number" name="passing_marks" id="passing_marks" class="form-control @error('passing_marks', $quiz->passing_marks) is-invalid @enderror" value="{{ old('passing_marks') }}" required min="0" step="0.01">
+                                <input type="number" name="passing_marks" id="passing_marks" class="form-control @error('passing_marks') is-invalid @enderror" value="{{ old('passing_marks', $quiz->passing_marks) }}" required min="0" step="0.01">
                                 @error('passing_marks')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

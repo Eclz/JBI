@@ -49,6 +49,13 @@ class UpdateUserRequest extends FormRequest
                 'nullable',
                 'exists:roles,id',
             ],
+            'role_ids' => [
+                'nullable',
+                'array',
+            ],
+            'role_ids.*' => [
+                'exists:roles,id',
+            ],
             'student_id' => [
                 'nullable',
                 'string',

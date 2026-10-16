@@ -43,7 +43,12 @@ class DashboardController extends Controller
         // Common data for all dashboards
         $data = [
             'user' => $user,
-            'announcements' => Announcement::latest()->take(5)->get(),
+            'announcements' => Announcement::with('creator')
+                ->active()
+                ->forRole($role)
+                ->latest()
+                ->take(5)
+                ->get(),
             'currentSemester' => Semester::where('is_current', true)->first(),
             'currentAcademicYear' => AcademicYear::where('is_current', true)->first(),
         ];
@@ -54,6 +59,12 @@ class DashboardController extends Controller
                 // Check if user is finance officer and redirect to finance dashboard
                 if ($user->isFinanceOfficer() && !$user->isSuperAdmin()) {
                     return redirect()->route('admin.finance.dashboard');
+                }
+                if (!$user->isSuperAdmin() && $user->isHrStaff()) {
+                    return redirect()->route('human-resources.index');
+                }
+                if ($user->hasRole('librarian') || $user->hasRole('assistant_librarian')) {
+                    return redirect()->route('library.index');
                 }
                 
                 $data['totalStudents'] = User::where('role', 'student')->count();
@@ -107,10 +118,18 @@ class DashboardController extends Controller
                 return view('dashboard.admin', $data);
 
             case 'faculty':
+                if ($user->hasRole('dean')) {
+                    return redirect()->route('faculty.dean.quality.index');
+                }
+                if ($user->hasRole('head_of_department')) {
+                    return redirect()->route('faculty.hod.department.index');
+                }
+
                 $facultyId = $user->id;
                 $data['myCourses'] = Course::where('instructor_id', $facultyId)->get();
-                $data['pendingAssignments'] = Assignment::where('course_id', $facultyId)->count();
-                $data['upcomingAssignments'] = Assignment::where('course_id', $facultyId)->where('due_date', '>', now())->orderBy('due_date')->take(5)->get();
+                $myCourseIds = $data['myCourses']->pluck('id');
+                $data['pendingAssignments'] = Assignment::whereIn('course_id', $myCourseIds)->count();
+                $data['upcomingAssignments'] = Assignment::whereIn('course_id', $myCourseIds)->where('due_date', '>', now())->orderBy('due_date')->take(5)->get();
                 return view('dashboard.faculty', $data);
 
             case 'student':

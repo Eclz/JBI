@@ -10,9 +10,11 @@ use App\Models\Assignment;
 use App\Models\Grade;
 use App\Models\Attendance;
 use App\Models\FeeRecord;
+use App\Models\Announcement;
 use App\Policies\UserPolicy;
 use App\Policies\CoursePolicy;
 use App\Policies\StudentProfilePolicy;
+use App\Policies\AnnouncementPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -27,6 +29,7 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Course::class => CoursePolicy::class,
         StudentProfile::class => StudentProfilePolicy::class,
+        Announcement::class => AnnouncementPolicy::class,
     ];
 
     /**
@@ -35,6 +38,13 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        // Super Administrator bypass for all abilities
+        Gate::before(function (User $user, string $ability) {
+            if ($user->isSuperAdmin()) {
+                return true;
+            }
+        });
 
         // Define additional gates if needed
         Gate::define('manage-system', function (User $user) {

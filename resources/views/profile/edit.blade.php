@@ -74,11 +74,57 @@
                                 @enderror
                             </div>
 
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror"
+                                    value="{{ old('date_of_birth', $user->date_of_birth ? \Carbon\Carbon::parse($user->date_of_birth)->format('Y-m-d') : '') }}">
+                                @error('date_of_birth')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Gender</label>
+                                <select name="gender" class="form-select @error('gender') is-invalid @enderror">
+                                    <option value="" disabled {{ old('gender', $user->gender) ? '' : 'selected' }}>Select gender...</option>
+                                    <option value="Male" {{ old('gender', $user->gender) == 'Male' ? 'selected' : '' }}>Male</option>
+                                    <option value="Female" {{ old('gender', $user->gender) == 'Female' ? 'selected' : '' }}>Female</option>
+                                    <option value="Other" {{ old('gender', $user->gender) == 'Other' ? 'selected' : '' }}>Other</option>
+                                </select>
+                                @error('gender')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <div class="col-12">
                                 <label class="form-label">Address</label>
                                 <textarea name="address" class="form-control @error('address') is-invalid @enderror"
                                         rows="3">{{ old('address', $user->address) }}</textarea>
                                 @error('address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-12 mt-4 mb-2">
+                                <h6 class="fw-bold border-bottom pb-2">
+                                    <i class="bi bi-telephone me-2"></i>Emergency Contact
+                                </h6>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Name</label>
+                                <input type="text" name="emergency_contact" class="form-control @error('emergency_contact') is-invalid @enderror"
+                                    value="{{ old('emergency_contact', $user->emergency_contact) }}">
+                                @error('emergency_contact')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Phone</label>
+                                <input type="text" name="emergency_phone" class="form-control @error('emergency_phone') is-invalid @enderror"
+                                    value="{{ old('emergency_phone', $user->emergency_phone) }}">
+                                @error('emergency_phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

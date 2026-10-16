@@ -19,12 +19,17 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="academic_year_id" class="form-label">Academic Year <span class="text-danger">*</span></label>
-                        <select class="form-select @error('academic_year_id') is-invalid @enderror" id="academic_year_id" name="academic_year_id" required>
+                        <select class="form-select select2 @error('academic_year_id') is-invalid @enderror" id="academic_year_id" name="academic_year_id" required {{ $academicYears->isEmpty() ? 'disabled' : '' }}>
                             <option value="">Select Academic Year</option>
                             @foreach($academicYears as $year)
                                 <option value="{{ $year->id }}" {{ old('academic_year_id') == $year->id ? 'selected' : '' }}>{{ $year->name }}</option>
                             @endforeach
                         </select>
+                        @if($academicYears->isEmpty())
+                            <div class="form-text text-danger">
+                                No academic years found. <a href="{{ route('admin.academic-years.create') }}">Create one first</a>.
+                            </div>
+                        @endif
                         @error('academic_year_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6 mb-3">
@@ -69,7 +74,7 @@
 
                 <div class="d-flex justify-content-end gap-2">
                     <a href="{{ route('admin.semesters.index') }}" class="btn btn-outline-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Create</button>
+                    <button type="submit" class="btn btn-primary" {{ $academicYears->isEmpty() ? 'disabled' : '' }}>Create</button>
                 </div>
             </form>
         </div>

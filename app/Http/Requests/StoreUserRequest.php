@@ -61,6 +61,13 @@ class StoreUserRequest extends FormRequest
                 'required',
                 'exists:roles,id',
             ],
+            'role_ids' => [
+                'nullable',
+                'array',
+            ],
+            'role_ids.*' => [
+                'exists:roles,id',
+            ],
             'department_id' => [
                 'nullable',
                 'exists:departments,id',

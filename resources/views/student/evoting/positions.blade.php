@@ -11,9 +11,9 @@
             <i class="bi bi-person-badge text-primary me-2"></i>E-VOTING POSITIONS & CANDIDATES
         </h5>
         <div class="btn-group btn-group-sm">
-            <a href="{{ route('student.evoting.index') }}" class="btn btn-outline-secondary">BALLOT / VOTE</a>
-            <a href="{{ route('student.evoting.announcements') }}" class="btn btn-outline-secondary">ANNOUNCEMENTS</a>
-            <a href="{{ route('student.evoting.positions') }}" class="btn btn-primary active">POSITIONS & CANDIDATES</a>
+            <a href="{{ route('student.evoting.index') }}" class="btn btn-primary active">BALLOT / ELECTIONS</a>
+            <a href="{{ route('student.evoting.my-applications') }}" class="btn btn-outline-secondary">MY APPLICATIONS</a>
+            <a href="{{ route('student.evoting.leaders') }}" class="btn btn-outline-secondary">STUDENT LEADERS</a>
         </div>
     </div>
 
@@ -111,7 +111,7 @@
                 <div class="modal fade" id="applyModal{{ $position->id }}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-0 shadow">
-                            <form action="{{ route('student.evoting.candidacy.apply') }}" method="POST" enctype="multipart/form-data">
+                            <form action="{{ route('student.evoting.apply.store', $session) }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 <input type="hidden" name="voting_position_id" value="{{ $position->id }}">
 

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\FacilityRoom;
+use App\Models\CampusFacility;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class FacilitiesController extends Controller
 {
@@ -22,18 +24,73 @@ class FacilitiesController extends Controller
     {
         $user = Auth::user();
 
+        $upcomingBookings = \App\Models\FacilityBooking::with(['facilityRoom', 'user'])
+            ->where('start_time', '>=', now())
+            ->orderBy('start_time', 'asc')
+            ->take(5)
+            ->get();
+
         return view('facilities.index', [
             'rooms' => FacilityRoom::where('status', '!=', 'Retired')->count(),
-            'bookings' => 0,
+            'bookings' => \App\Models\FacilityBooking::where('start_time', '>=', now())->count(),
             'maintenance' => FacilityRoom::where('status', 'Maintenance')->count(),
-            'canManage' => $user ? ($user->isFacilitiesStaff() || $user->isAdmin()) : false,
+            'canManage' => $user ? ($user->isFacilitiesStaff() || $user->isAdmin() || $user->hasPermission('facilities', 'view')) : false,
+            'upcomingBookings' => $upcomingBookings,
         ]);
     }
 
     public function roomsIndex()
     {
-        $rooms = FacilityRoom::latest()->get();
+        $rooms = FacilityRoom::with('campusFacility')->latest()->get();
         return view('facilities.rooms', compact('rooms'));
+    }
+
+    public function facilitiesIndex()
+    {
+        $facilities = CampusFacility::withCount(['rooms', 'hostelRooms'])->orderBy('name')->get();
+
+        return view('facilities.facilities.index', compact('facilities'));
+    }
+
+    public function createFacility()
+    {
+        return view('facilities.facilities.create');
+    }
+
+    public function storeFacility(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150', Rule::unique('campus_facilities', 'name')->where('type', 'facility')],
+            'location' => ['nullable', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        CampusFacility::create($data + ['type' => 'facility']);
+
+        return redirect()->route('facilities.buildings.index')->with('success', 'Facility created successfully.');
+    }
+
+    public function editFacility(CampusFacility $facility)
+    {
+        abort_unless($facility->type === 'facility', 404);
+
+        return view('facilities.facilities.edit', compact('facility'));
+    }
+
+    public function updateFacility(Request $request, CampusFacility $facility)
+    {
+        abort_unless($facility->type === 'facility', 404);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150', Rule::unique('campus_facilities', 'name')->where('type', 'facility')->ignore($facility->id)],
+            'location' => ['nullable', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $facility->update($data);
+
+        return redirect()->route('facilities.buildings.index')->with('success', 'Facility updated successfully.');
     }
 
     public function bookingsIndex()
@@ -118,13 +175,15 @@ class FacilitiesController extends Controller
 
     public function create()
     {
-        return view('facilities.create');
+        $facilities = CampusFacility::where('is_active', true)->orderBy('name')->get();
+        return view('facilities.create', compact('facilities'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'name' => 'required|string|max:150',
+            'campus_facility_id' => 'nullable|exists:campus_facilities,id',
             'building' => 'nullable|string|max:150',
             'room_type' => 'required|string|max:80',
             'capacity' => 'required|integer|min:1',
@@ -139,13 +198,20 @@ class FacilitiesController extends Controller
 
     public function edit(FacilityRoom $room)
     {
-        return view('facilities.edit', compact('room'));
+        $facilities = CampusFacility::where('is_active', true)
+            ->when($room->campus_facility_id, function ($query) use ($room) {
+                $query->orWhere('id', $room->campus_facility_id);
+            })
+            ->orderBy('name')
+            ->get();
+        return view('facilities.edit', compact('room', 'facilities'));
     }
 
     public function update(Request $request, FacilityRoom $room)
     {
         $data = $request->validate([
             'name' => 'required|string|max:150',
+            'campus_facility_id' => 'nullable|exists:campus_facilities,id',
             'building' => 'nullable|string|max:150',
             'room_type' => 'required|string|max:80',
             'capacity' => 'required|integer|min:1',

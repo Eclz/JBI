@@ -169,7 +169,7 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <a href="{{ route('student.grades.show', $grade->course_id) }}" class="btn btn-sm" style="color: #667eea; font-weight: 500; text-decoration: none;">
+                                        <a href="{{ route('student.grades.course', $grade->course_id) }}" class="btn btn-sm" style="color: #667eea; font-weight: 500; text-decoration: none;">
                                             View Details →
                                         </a>
                                     </td>

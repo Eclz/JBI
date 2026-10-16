@@ -228,6 +228,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ route('careers.index') }}">
+                            <i class="bi bi-briefcase me-1"></i> Careers
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ route('support.index') }}">
                             <i class="bi bi-question-circle me-1"></i> Help
                         </a>

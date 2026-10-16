@@ -71,7 +71,7 @@ class ResetPasswordController extends Controller
                     'action' => 'password_reset',
                     'model_type' => 'User',
                     'model_id' => $user->id,
-                    'details' => json_encode(['ip' => $request->ip()]),
+                    'ip_address' => $request->ip(),
                 ]);
 
                 event(new PasswordReset($user));

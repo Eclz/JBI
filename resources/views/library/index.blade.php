@@ -77,12 +77,13 @@
                             <th>User</th>
                             <th>Status</th>
                             <th>Date</th>
+                            <th class="text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($recentActivity as $activity)
                             <tr>
-                                <td>{{ $activity->libraryItem->title }}</td>
+                                <td>{{ $activity->libraryItem->title ?? 'Unknown Item' }}</td>
                                 <td>{{ $activity->user->full_name ?? 'N/A' }}</td>
                                 <td>
                                     @if($activity->status == 'borrowed')
@@ -94,10 +95,15 @@
                                     @endif
                                 </td>
                                 <td>{{ $activity->created_at->diffForHumans() }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('library.loans.show', $activity->id) }}" class="btn btn-sm btn-light text-primary border">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted">No recent activity</td>
+                                <td colspan="5" class="text-center text-muted">No recent activity</td>
                             </tr>
                         @endforelse
                     </tbody>
