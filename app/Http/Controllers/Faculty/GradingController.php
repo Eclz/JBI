@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Faculty;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Assignment;
+use App\Models\AssignmentSubmission;
 use App\Models\Grade;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -151,6 +152,16 @@ class GradingController extends Controller
             ]
         );
 
+        AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->where('user_id', $request->user_id)
+            ->update([
+                'status' => 'graded',
+                'score' => $request->points_earned,
+                'feedback' => $request->comments,
+                'graded_at' => now(),
+                'graded_by' => Auth::id(),
+            ]);
+
         return back()->with('success', 'Grade saved successfully.');
     }
 
@@ -195,6 +206,16 @@ class GradingController extends Controller
                         'graded_by' => Auth::id(),
                     ]
                 );
+
+                AssignmentSubmission::where('assignment_id', $assignment->id)
+                    ->where('user_id', $gradeData['user_id'])
+                    ->update([
+                        'status' => 'graded',
+                        'score' => $gradeData['points_earned'],
+                        'feedback' => $gradeData['comments'] ?? null,
+                        'graded_at' => now(),
+                        'graded_by' => Auth::id(),
+                    ]);
             }
         });
 

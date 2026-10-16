@@ -140,12 +140,12 @@
                                         @endif
                                     </td>
                                     <td class="align-middle" style="padding: 1rem;">
-                                        @if($submission->score !== null)
+                                        @if($submission->effective_status === 'graded')
                                             <span class="badge bg-success">Graded</span>
-                                        @elseif($submission->submitted_at)
-                                            <span class="badge bg-warning">Pending</span>
+                                        @elseif($submission->effective_status === 'ungraded')
+                                            <span class="badge bg-warning text-dark">Ungraded</span>
                                         @else
-                                            <span class="badge bg-secondary">Not Submitted</span>
+                                            <span class="badge bg-secondary">{{ ucfirst($submission->status ?? 'Draft') }}</span>
                                         @endif
                                     </td>
                                     <td class="align-middle" style="padding: 1rem;">

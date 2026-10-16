@@ -187,6 +187,7 @@ class AssignmentController extends Controller
 
         $validated['graded_at'] = now();
         $validated['graded_by'] = Auth::id();
+        $validated['status'] = 'graded';
 
         $submission->update($validated);
 
