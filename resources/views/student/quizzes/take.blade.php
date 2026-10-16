@@ -10,7 +10,7 @@
             <div class="card-body py-2">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="fw-semibold"><i class="bi bi-clock me-2"></i>{{ $quiz->title }}</div>
-                    <div class="fs-5 fw-bold" id="timer">{{ sprintf('%02d:%02d:00', $quiz->duration / 60, $quiz->duration % 60) }}</div>
+                    <div class="fs-5 fw-bold" id="timer">{{ sprintf('%02d:%02d:00', intdiv($quiz->duration_minutes, 60), $quiz->duration_minutes % 60) }}</div>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
                     <div id="timerProgress" class="progress-bar bg-primary" style="width: 100%"></div>
@@ -35,7 +35,7 @@
                             @if($question->question_type === 'multiple_choice')
                                 @foreach($question->options as $optionKey => $option)
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" name="answers[{{ $question->id }}]" id="q{{ $question->id }}_{{ $optionKey }}" value="{{ $option }}" required>
+                                        <input class="form-check-input" type="radio" name="answers[{{ $question->id }}]" id="q{{ $question->id }}_{{ $optionKey }}" value="{{ $option }}">
                                         <label class="form-check-label" for="q{{ $question->id }}_{{ $optionKey }}">
                                             {{ $option }}
                                         </label>
@@ -43,15 +43,15 @@
                                 @endforeach
                             @elseif($question->question_type === 'true_false')
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="answers[{{ $question->id }}]" id="q{{ $question->id }}_true" value="true" required>
+                                    <input class="form-check-input" type="radio" name="answers[{{ $question->id }}]" id="q{{ $question->id }}_true" value="true">
                                     <label class="form-check-label" for="q{{ $question->id }}_true">True</label>
                                 </div>
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="answers[{{ $question->id }}]" id="q{{ $question->id }}_false" value="false" required>
+                                    <input class="form-check-input" type="radio" name="answers[{{ $question->id }}]" id="q{{ $question->id }}_false" value="false">
                                     <label class="form-check-label" for="q{{ $question->id }}_false">False</label>
                                 </div>
                             @elseif($question->question_type === 'short_answer')
-                                <textarea class="form-control" name="answers[{{ $question->id }}]" rows="3" required></textarea>
+                                <textarea class="form-control" name="answers[{{ $question->id }}]" rows="3" placeholder="Type your answer here..."></textarea>
                             @endif
                         </div>
                     </div>

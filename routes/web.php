@@ -869,6 +869,9 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         Route::put('/{quiz}/questions/{question}', [FacultyQuizController::class, 'updateQuestion'])->name('questions.update')->middleware('permission:exams,edit');
         Route::delete('/{quiz}/questions/{question}', [FacultyQuizController::class, 'destroyQuestion'])->name('questions.destroy')->middleware('permission:exams,delete');
         Route::get('/{quiz}/attempts', [FacultyQuizController::class, 'attempts'])->name('attempts');
+        Route::post('/{quiz}/close', [FacultyQuizController::class, 'close'])->name('close')->middleware('permission:exams,edit');
+        Route::post('/{quiz}/reopen', [FacultyQuizController::class, 'reopen'])->name('reopen')->middleware('permission:exams,edit');
+        Route::post('/{quiz}/status', [FacultyQuizController::class, 'updateStatus'])->name('status.update')->middleware('permission:exams,edit');
     });
 
     // Attendance Management
