@@ -162,6 +162,66 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the total outstanding tuition fee balance for the student.
+     */
+    public function getTuitionBalance(): float
+    {
+        if (!$this->isStudent()) {
+            return 0.0;
+        }
+
+        // Ensure student has invoices generated so an unbilled student is not falsely cleared
+        \App\Services\FeeInvoiceService::ensureStudentInvoiced($this);
+
+        $tuitionBalance = (float) FeeRecord::where('user_id', $this->id)
+            ->where(function ($q) {
+                $q->where('type', 'tuition')
+                  ->orWhereHas('feeStructure', function ($fs) {
+                      $fs->where('type', 'tuition');
+                  });
+            })
+            ->where('status', '!=', 'paid')
+            ->sum('balance_amount');
+
+        return max(0.0, round($tuitionBalance, 2));
+    }
+
+    /**
+     * Check if student has completed all tuition payments (zero tuition balance).
+     */
+    public function hasZeroTuitionBalance(): bool
+    {
+        return $this->getTuitionBalance() <= 0.001;
+    }
+
+    /**
+     * Get total outstanding fee balance across all categories for the student.
+     */
+    public function getTotalFeeBalance(): float
+    {
+        if (!$this->isStudent()) {
+            return 0.0;
+        }
+
+        \App\Services\FeeInvoiceService::ensureStudentInvoiced($this);
+
+        $totalBalance = (float) FeeRecord::where('user_id', $this->id)
+            ->where('status', '!=', 'paid')
+            ->sum('balance_amount');
+
+        return max(0.0, round($totalBalance, 2));
+    }
+
+    /**
+     * Check whether student qualifies to sit for examinations.
+     * Students who have not completed tuition do not qualify to sit for exams.
+     */
+    public function qualifiesForExams(): bool
+    {
+        return $this->hasZeroTuitionBalance();
+    }
+
+    /**
      * Get the notifications for the user.
      */
     public function notifications(): HasMany

@@ -425,12 +425,23 @@
                                         <div class="row align-items-center">
                                             <div class="col-md-7 mb-3 mb-md-0">
                                                 <h6 class="text-uppercase text-primary fw-semibold mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">Applied Program Information</h6>
-                                                <h4 class="fw-bold text-dark mb-1">{{ $application->programRecord->name ?? $application->program }}</h4>
-                                                <p class="text-muted small mb-0">
-                                                    <span class="me-3"><strong>Level:</strong> {{ $application->programRecord->level->name ?? 'N/A' }}</span>
-                                                    <span class="me-3"><strong>Department:</strong> {{ $application->programRecord->department->name ?? 'N/A' }}</span>
-                                                    <span><strong>Code:</strong> {{ $application->programRecord->code ?? 'N/A' }}</span>
-                                                </p>
+                                                @if($application->program_id && ($application->programRecord || $application->program))
+                                                    <h4 class="fw-bold text-dark mb-1">{{ $application->programRecord->name ?? $application->program }}</h4>
+                                                    <p class="text-muted small mb-0">
+                                                        <span class="badge bg-success-subtle text-success me-2">Officially Assigned</span>
+                                                        <span class="me-3"><strong>Level:</strong> {{ $application->programRecord->level->name ?? 'N/A' }}</span>
+                                                        <span class="me-3"><strong>Department:</strong> {{ $application->programRecord->department->name ?? 'N/A' }}</span>
+                                                        <span><strong>Code:</strong> {{ $application->programRecord->code ?? 'N/A' }}</span>
+                                                    </p>
+                                                @else
+                                                    <h4 class="fw-bold text-dark mb-1">{{ $programChoices->first()?->name ?? 'Degree Programme (Under Review)' }}</h4>
+                                                    <p class="text-muted small mb-0">
+                                                        <span class="badge bg-warning text-dark me-2"><i class="bi bi-clock-history me-1"></i>Programme Pending Staff Assignment</span>
+                                                        @if($programChoices->count() > 1)
+                                                            <span>({{ $programChoices->count() }} choices submitted for consideration)</span>
+                                                        @endif
+                                                    </p>
+                                                @endif
                                             </div>
                                             <div class="col-md-5 text-md-end border-start-md">
                                                 <h6 class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Admission Fee Amount</h6>
@@ -567,8 +578,15 @@
                                     Your non-refundable admission fee payment has been submitted. The academic admissions board is currently verifying your profile, credentials, and uploaded documents.
                                 </p>
                                 <div class="d-inline-flex flex-column align-items-start bg-light p-3 text-start border" style="border-radius: 10px; width: 100%; max-width: 480px;">
-                                    <div class="small mb-1.5 text-dark"><strong>Submitted On:</strong> {{ $application->created_at->format('M d, Y h:i A') }}</div>
-                                    <div class="small mb-1.5 text-dark"><strong>Primary Program:</strong> {{ $application->programRecord->name ?? $application->program }}</div>
+                                    @if($application->program_id && ($application->programRecord || $application->program))
+                                        <div class="small mb-1.5 text-dark"><strong>Assigned Programme:</strong> <span class="fw-bold text-success">{{ $application->programRecord->name ?? $application->program }}</span></div>
+                                    @else
+                                        <div class="small mb-1.5 text-dark">
+                                            <strong>Programmes Applied For:</strong> 
+                                            <span class="text-dark">{{ $programChoices->pluck('name')->join(', ') ?: 'Under review' }}</span>
+                                            <div class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-clock-history me-1"></i>Official programme will be manually assigned by admissions staff</div>
+                                        </div>
+                                    @endif
                                     <div class="small mb-1.5 text-dark"><strong>Payment Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Admission Fee Paid (Non-Refundable)</span></div>
                                     <div class="small text-dark"><strong>Academic Review:</strong> <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Under Admissions Board Verification</span></div>
                                 </div>
@@ -1048,18 +1066,37 @@
                             <div class="col-12">
                                 <h6 class="fw-bold text-primary mb-3"><i class="bi bi-list-ol me-2"></i>Selected Course Priorities</h6>
                                 <div class="list-group list-group-flush border rounded">
-                                    <div class="list-group-item d-flex justify-content-between align-items-center bg-light">
-                                        <span><strong>Choice 1 (Primary):</strong> {{ $application->programRecord->name ?? $application->program }}</span>
-                                        <span class="badge bg-primary rounded-pill">1st Priority</span>
-                                    </div>
-                                    @foreach($programChoices as $choice)
-                                        @if($choice->id !== $application->program_id)
-                                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                                <span><strong>Choice {{ $loop->iteration }}:</strong> {{ $choice->name }} @if($choice->level) ({{ $choice->level->name }}) @endif</span>
-                                                <span class="badge bg-secondary rounded-pill">{{ $loop->iteration }}nd Priority</span>
+                                    @forelse($programChoices as $choice)
+                                        @php
+                                            $isAssigned = $application->program_id == $choice->id;
+                                            $rankSuffix = match($loop->iteration) {
+                                                1 => '1st Priority',
+                                                2 => '2nd Priority',
+                                                3 => '3rd Priority',
+                                                default => $loop->iteration . 'th Priority'
+                                            };
+                                        @endphp
+                                        <div class="list-group-item d-flex justify-content-between align-items-center {{ $isAssigned ? 'bg-success bg-opacity-10' : '' }}">
+                                            <div>
+                                                <strong>Choice {{ $loop->iteration }}:</strong> {{ $choice->name }}
+                                                @if($choice->level) <span class="text-muted">({{ $choice->level->name }})</span> @endif
+                                                @if($choice->department) <span class="text-secondary small">&bull; {{ $choice->department->name }}</span> @endif
                                             </div>
-                                        @endif
-                                    @endforeach
+                                            <div>
+                                                @if($isAssigned)
+                                                    <span class="badge bg-success rounded-pill px-3 py-1">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Officially Assigned
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary rounded-pill">{{ $rankSuffix }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="list-group-item text-muted py-3 text-center">
+                                            Programme: {{ $application->programRecord->name ?? $application->program ?? 'Under review' }}
+                                        </div>
+                                    @endforelse
                                 </div>
                             </div>
                         </div>

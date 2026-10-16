@@ -57,6 +57,15 @@
                                         {{ isset($programChoices) ? count($programChoices) : 1 }} Choice(s) Submitted
                                     </span>
                                 </div>
+                                @if(!$application->program_id && $application->type === 'student')
+                                    <div class="alert alert-warning m-3 border-0 shadow-sm d-flex align-items-center">
+                                        <i class="bi bi-exclamation-triangle-fill fs-3 text-warning me-3"></i>
+                                        <div>
+                                            <strong class="d-block text-dark">Manual Programme Assignment Required</strong>
+                                            <span class="small text-muted">This student applicant has not yet been assigned a programme. Please review their submitted programme choices below and click <strong>"Select & Assign"</strong> to manually assign their official university programme before admitting.</span>
+                                        </div>
+                                    </div>
+                                @endif
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table table-hover align-middle mb-0">
@@ -179,7 +188,14 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <p><strong>Assigned Program:</strong> <span class="badge bg-primary fs-6">{{ $application->programRecord->name ?? $application->program ?? 'Not specified' }}</span></p>
+                                            <p>
+                                                <strong>Assigned Program:</strong>
+                                                @if($application->program_id && ($application->programRecord || $application->program))
+                                                    <span class="badge bg-success fs-6"><i class="bi bi-check-circle me-1"></i>{{ $application->programRecord->name ?? $application->program }}</span>
+                                                @else
+                                                    <span class="badge bg-warning text-dark fs-6"><i class="bi bi-clock-history me-1"></i>Pending Manual Assignment</span>
+                                                @endif
+                                            </p>
                                             <p><strong>Program Level:</strong> {{ $application->programRecord->level->name ?? 'Not specified' }}</p>
                                             <p><strong>Department:</strong> {{ $application->programRecord->department->name ?? 'Not specified' }}</p>
                                             <p><strong>Previous Institution:</strong> {{ $application->previous_school }}</p>

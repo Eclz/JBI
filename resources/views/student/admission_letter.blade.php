@@ -104,6 +104,16 @@
                     <div class="col-4 text-muted fw-bold">OFFICIAL PROGRAMME:</div>
                     <div class="col-8 fw-bold text-dark" style="color: #0f2942 !important; font-size: 0.85rem;">
                         {{ $application->programRecord->name ?? $application->program ?? 'Bachelor Degree Programme' }}
+                        @if(is_array($application->program_choices) && count($application->program_choices) > 0)
+                            @php
+                                $choicesList = \App\Models\Program::whereIn('id', $application->program_choices)->pluck('name')->all();
+                            @endphp
+                            @if(count($choicesList) > 0)
+                                <div class="text-muted fw-normal" style="font-size: 0.7rem; font-family: Arial, sans-serif;">
+                                    <strong>Programmes Applied For:</strong> {{ implode(' &bull; ', $choicesList) }}
+                                </div>
+                            @endif
+                        @endif
                     </div>
 
                     <div class="col-4 text-muted fw-bold">ACADEMIC DEPARTMENT:</div>

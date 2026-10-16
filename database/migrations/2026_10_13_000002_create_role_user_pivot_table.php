@@ -22,10 +22,14 @@ return new class extends Migration
             $table->unique(['user_id', 'role_id']);
         });
 
+        $isSqlite = DB::getDriverName() === 'sqlite';
+        $insertIgnore = $isSqlite ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+        $now = $isSqlite ? "datetime('now')" : 'NOW()';
+
         // 1. Backfill existing primary role_id references
         DB::statement("
-            INSERT IGNORE INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
-            SELECT id, role_id, 1, NOW(), NOW()
+            {$insertIgnore} INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
+            SELECT id, role_id, 1, {$now}, {$now}
             FROM users
             WHERE role_id IS NOT NULL
         ");
@@ -34,8 +38,8 @@ return new class extends Migration
         $roles = DB::table('roles')->get();
         foreach ($roles as $r) {
             DB::statement("
-                INSERT IGNORE INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
-                SELECT id, {$r->id}, 1, NOW(), NOW()
+                {$insertIgnore} INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
+                SELECT id, {$r->id}, 1, {$now}, {$now}
                 FROM users
                 WHERE (role = '{$r->slug}' OR role = '{$r->guard_role}')
                 AND id NOT IN (SELECT user_id FROM role_user)
@@ -46,8 +50,8 @@ return new class extends Migration
         $deanRole = DB::table('roles')->where('slug', 'dean')->first();
         if ($deanRole) {
             DB::statement("
-                INSERT IGNORE INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
-                SELECT dean_id, {$deanRole->id}, 0, NOW(), NOW()
+                {$insertIgnore} INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
+                SELECT dean_id, {$deanRole->id}, 0, {$now}, {$now}
                 FROM faculties
                 WHERE dean_id IS NOT NULL
             ");
@@ -57,8 +61,8 @@ return new class extends Migration
         $hodRole = DB::table('roles')->where('slug', 'head_of_department')->first();
         if ($hodRole) {
             DB::statement("
-                INSERT IGNORE INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
-                SELECT head_of_department_id, {$hodRole->id}, 0, NOW(), NOW()
+                {$insertIgnore} INTO role_user (user_id, role_id, is_primary, created_at, updated_at)
+                SELECT head_of_department_id, {$hodRole->id}, 0, {$now}, {$now}
                 FROM departments
                 WHERE head_of_department_id IS NOT NULL
             ");

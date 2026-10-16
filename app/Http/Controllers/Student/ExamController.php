@@ -96,13 +96,22 @@ class ExamController extends Controller
             return true;
         })->values();
 
+        $isTuitionCleared = $student->hasZeroTuitionBalance();
+        $tuitionBalance = $student->getTuitionBalance();
+        $totalBalance = $student->getTotalFeeBalance();
+        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+
         return view('student.exams.index', compact(
             'upcomingExams',
             'activeExams',
             'completedAttempts',
             'timeLeftByExam',
             'remainingSubmissionsByExam',
-            'expiredAttempts'
+            'expiredAttempts',
+            'isTuitionCleared',
+            'tuitionBalance',
+            'totalBalance',
+            'currencyCode'
         ));
     }
 
@@ -155,6 +164,14 @@ class ExamController extends Controller
             $canResubmit = $effectiveEnd->gt($now) && $currentCount < $maxAttempts;
         }
 
+        $isTuitionCleared = $student->hasZeroTuitionBalance();
+        $tuitionBalance = $student->getTuitionBalance();
+        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+
+        if (!$isTuitionCleared) {
+            $canAttempt = false;
+        }
+
         return view('student.exams.show', compact(
             'exam',
             'attempt',
@@ -164,13 +181,24 @@ class ExamController extends Controller
             'canAttempt',
             'hasPaid',
             'status',
-            'canResubmit'
+            'canResubmit',
+            'isTuitionCleared',
+            'tuitionBalance',
+            'currencyCode'
         ));
     }
 
     public function startExam(Exam $exam)
     {
         $student = Auth::user();
+
+        // Enforce limitation: students who have not completed tuition do not qualify to sit for exams
+        if (!$student->hasZeroTuitionBalance()) {
+            $tuitionBalance = $student->getTuitionBalance();
+            $currency = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', "You do not qualify to sit for examinations because you have an outstanding tuition balance of {$currency} " . number_format($tuitionBalance, 2) . ". Please clear your tuition fees in the Fee Portal to sit for exams and obtain your Examination Permit.");
+        }
 
         // Validations
         if (!$exam->isActive()) {
@@ -212,6 +240,14 @@ class ExamController extends Controller
     public function take(Exam $exam)
     {
         $student = Auth::user();
+
+        // Enforce limitation: students who have not completed tuition do not qualify to sit for exams
+        if (!$student->hasZeroTuitionBalance()) {
+            $tuitionBalance = $student->getTuitionBalance();
+            $currency = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+            return redirect()->route('student.exams.index')
+                ->with('error', "Examination access blocked: You have an outstanding tuition balance of {$currency} " . number_format($tuitionBalance, 2) . ". Please clear your tuition fees to sit for exams.");
+        }
 
         $attempt = $exam->studentAttempt($student->id);
 
@@ -332,5 +368,50 @@ class ExamController extends Controller
         }
 
         return Storage::disk('public')->download($exam->answer_booklet_url);
+    }
+
+    /**
+     * Display and permit printing of the official Examination Clearance Permit / Pass.
+     * Accessible only when the student's tuition balance is zero (0.00).
+     */
+    public function examinationPermit(Request $request)
+    {
+        $student = Auth::user();
+
+        // Enforce limitation: students who have not completed tuition do not qualify to sit for exams / receive exam permit
+        if (!$student->hasZeroTuitionBalance()) {
+            $tuitionBalance = $student->getTuitionBalance();
+            $currency = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+            return redirect()->route('student.exams.index')
+                ->with('error', "Access Denied: Examination Permits are only available to candidates who have completed tuition fees with a zero (0.00) balance. Your current outstanding tuition balance is {$currency} " . number_format($tuitionBalance, 2) . ". Please clear your tuition fees in the Fee Portal to print your permit.");
+        }
+
+        $studentProfile = $student->studentProfile;
+        $academicYear = \App\Models\AcademicYear::where('is_active', true)->orWhere('is_current', true)->first();
+        $semester = \App\Models\Semester::where('is_current', true)->orWhere('is_active', true)->first();
+
+        // Retrieve registered courses for the current semester
+        $enrolledCourses = $student->courseEnrollments()
+            ->with(['course.department', 'course.faculty', 'course.semester'])
+            ->where('status', 'enrolled')
+            ->get();
+
+        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+        $tuitionBalance = 0.00;
+        $totalBalance = $student->getTotalFeeBalance();
+
+        $permitNumber = 'JBI-EXM-' . date('Y') . '-' . strtoupper(substr(md5($student->id . '-permit-token-' . date('Y')), 0, 8));
+
+        return view('student.exams.permit', compact(
+            'student',
+            'studentProfile',
+            'academicYear',
+            'semester',
+            'enrolledCourses',
+            'currencyCode',
+            'tuitionBalance',
+            'totalBalance',
+            'permitNumber'
+        ));
     }
 }

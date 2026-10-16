@@ -414,6 +414,13 @@ class ApplicationController extends Controller
 
     private function performApproval(Application $application, ?string $notes, bool $forceApprove = false): array
     {
+        if ($application->type === 'student' && empty($application->program_id)) {
+            return [
+                'ok' => false,
+                'message' => 'Cannot approve application: A programme has not been assigned to this applicant yet. Please manually select and assign an approved programme from the applicant\'s choices before approving.',
+            ];
+        }
+
         $readiness = $this->buildApprovalReadiness($application);
         if ($application->type === 'student' && !$readiness['ready'] && !$forceApprove) {
             return [
@@ -482,7 +489,7 @@ class ApplicationController extends Controller
         $weightedChecks = [
             ['label' => 'Applicant details', 'weight' => 20, 'passed' => !empty($application->first_name) && !empty($application->last_name)],
             ['label' => 'Contact details', 'weight' => 20, 'passed' => !empty($application->email) && !empty($application->phone) && !empty($application->address)],
-            ['label' => 'Program selected', 'weight' => 25, 'passed' => $application->type !== 'student' || !empty($application->program_id) || !empty($application->program)],
+            ['label' => 'Programme assigned by admissions', 'weight' => 25, 'passed' => $application->type !== 'student' || (!empty($application->program_id) && !empty($application->program))],
             ['label' => 'Supporting documents', 'weight' => 20, 'passed' => !empty($application->documents) && is_array($application->documents)],
             ['label' => 'Prior education info', 'weight' => 15, 'passed' => $application->type !== 'student' || !empty($application->previous_school) || !empty($application->previous_qualification)],
         ];

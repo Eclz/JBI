@@ -954,6 +954,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
 
     // Exam Management
     Route::get('/exams', [StudentExamController::class, 'index'])->name('exams.index');
+    Route::get('/exams/permit', [StudentExamController::class, 'examinationPermit'])->name('exams.permit');
     Route::get('/exams/{exam}', [StudentExamController::class, 'show'])->name('exams.show');
     Route::post('/exams/{exam}/start', [StudentExamController::class, 'startExam'])->name('exams.start');
     Route::get('/exams/{exam}/take', [StudentExamController::class, 'take'])->name('exams.take');

@@ -29,7 +29,9 @@
                         <div class="text-end">
                             <div class="fs-6" style="color: rgba(255, 255, 255, 0.8);">Admission Number</div>
                             <div class="fs-5 fw-bold mb-2" style="color: #ffffff;">{{ $studentProfile->admission_number ?? 'N/A' }}</div>
-                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{{ route('student.exams.permit') }}" class="btn btn-sm btn-success text-white fw-bold shadow-sm" style="border-radius: 6px;">
+                                    <i class="bi bi-shield-check me-1"></i>Exam Permit
+                                </a>
                                 <a href="{{ route('student.id-card') }}" class="btn btn-sm btn-info text-dark fw-bold shadow-sm" style="border-radius: 6px;">
                                     <i class="bi bi-person-badge-fill me-1"></i>Digital ID Card
                                 </a>

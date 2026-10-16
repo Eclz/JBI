@@ -115,11 +115,21 @@
                                             </td>
                                             <td>
                                                 <div>
-                                                    <strong class="text-dark">{{ $application->programRecord->name ?? $application->program ?? 'N/A' }}</strong>
-                                                    @if(is_array($application->program_choices) && count($application->program_choices) > 1)
+                                                    @if($application->program_id && ($application->programRecord || $application->program))
+                                                        <strong class="text-dark">{{ $application->programRecord->name ?? $application->program }}</strong>
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-block mt-0.5" style="font-size: 0.68rem;">Assigned</span>
+                                                    @elseif($application->type === 'student')
+                                                        <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.75rem;">
+                                                            <i class="bi bi-clock-history me-1"></i>Pending Manual Assignment
+                                                        </span>
+                                                    @else
+                                                        <strong class="text-dark">{{ $application->department ?? 'N/A' }}</strong>
+                                                    @endif
+
+                                                    @if(is_array($application->program_choices) && count($application->program_choices) > 0)
                                                         <div class="mt-1">
                                                             <span class="badge bg-info text-dark" style="font-size: 0.7rem;">
-                                                                <i class="bi bi-list-stars me-1"></i>{{ count($application->program_choices) }} Course Choices
+                                                                <i class="bi bi-list-stars me-1"></i>{{ count($application->program_choices) }} Applied Choice(s)
                                                             </span>
                                                         </div>
                                                     @endif

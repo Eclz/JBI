@@ -126,16 +126,38 @@
                 <div class="card-header bg-white">
                     <h5 class="mb-0">Exam Access</h5>
                 </div>
-                <div class="card-body">
-                    @if($exam->required_payment > 0 && !$hasPaid)
-                            <div class="alert alert-danger">
-                                <div class="fw-semibold mb-2">Payment Required</div>
-                                <div class="small">
-                                Pay <strong>{{ $currencyCode }} {{ number_format($exam->required_payment, 2) }}</strong> to attempt this exam.
+                    @if(isset($isTuitionCleared) && !$isTuitionCleared)
+                        <div class="alert alert-danger shadow-sm border-0 mb-3" style="border-left: 4px solid #dc3545 !important;">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-shield-x fs-3 text-danger me-2"></i>
+                                <div>
+                                    <strong class="d-block text-danger">Exam Ineligible: Tuition Unpaid</strong>
+                                    <p class="small text-dark mb-2">You currently have an uncleared tuition balance of <strong>{{ $currencyCode }} {{ number_format($tuitionBalance, 2) }}</strong>. University regulations require complete tuition payment (zero balance) to sit for examinations.</p>
+                                    <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-danger fw-bold">
+                                        <i class="bi bi-credit-card me-1"></i>Pay Tuition in Fee Portal
+                                    </a>
                                 </div>
-                                <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-danger mt-3">Pay Now</a>
                             </div>
+                        </div>
+                        <button class="btn btn-outline-danger w-100" disabled>
+                            <i class="bi bi-lock-fill me-1"></i>Exam Access Blocked
+                        </button>
+                    @elseif($exam->required_payment > 0 && !$hasPaid)
+                        <div class="alert alert-danger">
+                            <div class="fw-semibold mb-2">Payment Required</div>
+                            <div class="small">
+                            Pay <strong>{{ $currencyCode }} {{ number_format($exam->required_payment, 2) }}</strong> to attempt this exam.
+                            </div>
+                            <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-danger mt-3">Pay Now</a>
+                        </div>
                     @else
+                        @if(isset($isTuitionCleared) && $isTuitionCleared)
+                            <div class="mb-3">
+                                <a href="{{ route('student.exams.permit') }}" class="btn btn-outline-success btn-sm w-100 fw-bold">
+                                    <i class="bi bi-file-earmark-check me-1"></i>Print Examination Permit
+                                </a>
+                            </div>
+                        @endif
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="text-muted">Submissions Used</span>
