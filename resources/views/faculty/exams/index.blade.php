@@ -30,6 +30,7 @@
                             <th style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem;">Type</th>
                             <th style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem;">Date & Time</th>
                             <th style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem;">Mode</th>
+                            <th style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem;">Status</th>
                             <th style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem;">Total Marks</th>
                             <th style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem;">Actions</th>
                         </tr>
@@ -49,8 +50,8 @@
                                 <span class="badge bg-primary">{{ ucfirst($exam->exam_type) }}</span>
                             </td>
                             <td class="align-middle" style="padding: 1rem;">
-                                <div style="color: #1e293b;">{{ \Carbon\Carbon::parse($exam->exam_date)->format('M d, Y') }}</div>
-                                <small class="text-muted">{{ $exam->start_time }} - {{ $exam->end_time }}</small>
+                                <div style="color: #1e293b;">{{ $exam->start_time ? $exam->start_time->format('M d, Y') : \Carbon\Carbon::parse($exam->exam_date)->format('M d, Y') }}</div>
+                                <small class="text-muted">{{ $exam->start_time ? $exam->start_time->format('H:i') : '' }} - {{ $exam->end_time ? $exam->end_time->format('H:i') : '' }}</small>
                             </td>
                             <td class="align-middle" style="padding: 1rem;">
                                 @if($exam->exam_mode === 'online')
@@ -60,6 +61,9 @@
                                 @else
                                     <span class="badge bg-info">Hybrid</span>
                                 @endif
+                            </td>
+                            <td class="align-middle" style="padding: 1rem;">
+                                <span class="badge bg-{{ $exam->status_badge_class }}">{{ $exam->status_label }}</span>
                             </td>
                             <td class="align-middle" style="padding: 1rem;">
                                 <span style="color: #1e293b; font-weight: 600;">{{ $exam->total_marks }}</span>
@@ -80,7 +84,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            <td colspan="8" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                     <p class="mt-3">No exams created yet. Create your first exam to get started.</p>

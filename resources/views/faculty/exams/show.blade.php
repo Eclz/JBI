@@ -203,6 +203,10 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Status</small>
+                        <span class="badge bg-{{ $exam->status_badge_class }} fs-6">{{ $exam->status_label }}</span>
+                    </div>
+                    <div class="mb-3">
                         <small class="text-muted d-block mb-1">Exam Type</small>
                         <span class="badge bg-primary">{{ ucfirst($exam->exam_type) }}</span>
                     </div>

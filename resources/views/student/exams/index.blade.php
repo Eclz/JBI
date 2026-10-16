@@ -214,6 +214,77 @@
                 </div>
             @endif
 
+            {{-- Closed Examinations --}}
+            @if(isset($closedExams) && $closedExams->count() > 0)
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                        <h5 class="card-title mb-0 text-dark fw-bold">
+                            <i class="bi bi-calendar-x text-danger me-2"></i>
+                            Closed Examinations
+                        </h5>
+                        <span class="badge bg-secondary">{{ $closedExams->count() }} Closed</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-dark">Exam</th>
+                                        <th class="text-dark">Course</th>
+                                        <th class="text-dark">Ended At</th>
+                                        <th class="text-dark">Mode</th>
+                                        <th class="text-dark">Status</th>
+                                        <th class="text-dark">Your Attempt</th>
+                                        <th class="text-dark text-end pe-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($closedExams as $exam)
+                                        @php
+                                            $attempt = $exam->attempts->first();
+                                        @endphp
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold text-dark">{{ $exam->title }}</div>
+                                                <small class="text-muted">{{ ucfirst($exam->exam_type) }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="text-dark">{{ $exam->course->code }}</div>
+                                                <small class="text-muted">{{ $exam->course->name }}</small>
+                                            </td>
+                                            <td class="text-muted">
+                                                {{ $exam->end_time ? $exam->end_time->format('M d, Y h:i A') : '—' }}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ ucfirst($exam->exam_mode ?? 'online') }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-danger">Closed / Ended</span>
+                                            </td>
+                                            <td>
+                                                @if($attempt && in_array($attempt->status, ['submitted', 'graded']))
+                                                    <span class="badge bg-success">Attempted</span>
+                                                    @if($attempt->status === 'graded')
+                                                        <small class="d-block text-muted">{{ $attempt->marks_obtained }}/{{ $exam->total_marks }}</small>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-secondary">Not Attempted</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye me-1"></i> View Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Completed Attempts --}}
             <div class="card">
                 <div class="card-header bg-light">

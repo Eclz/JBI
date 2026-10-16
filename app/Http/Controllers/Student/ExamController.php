@@ -101,9 +101,23 @@ class ExamController extends Controller
         $totalBalance = $student->getTotalFeeBalance();
         $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
 
+        $closedExams = Exam::whereIn('course_id', $enrolledCourseIds)
+            ->where('end_time', '<', Carbon::now())
+            ->where('is_published', true)
+            ->with([
+                'course',
+                'attempts' => function ($query) use ($student) {
+                    $query->where('user_id', $student->id);
+                },
+            ])
+            ->orderBy('end_time', 'desc')
+            ->take(10)
+            ->get();
+
         return view('student.exams.index', compact(
             'upcomingExams',
             'activeExams',
+            'closedExams',
             'completedAttempts',
             'timeLeftByExam',
             'remainingSubmissionsByExam',
@@ -144,12 +158,23 @@ class ExamController extends Controller
         $hasPaid = $exam->required_payment <= 0 || ($attempt && $attempt->payment_verified);
 
         $now = Carbon::now();
-        if ($exam->start_time && $exam->start_time->gt($now)) {
-            $status = 'upcoming';
-        } elseif ($exam->end_time && $exam->end_time->lt($now)) {
-            $status = 'completed';
-        } else {
-            $status = 'active';
+        $status = $exam->effective_status;
+
+        $mode = strtolower($exam->exam_mode ?? 'online');
+        $isAttempted = $attempt && in_array($attempt->status, ['submitted', 'graded']);
+        $isClosed = $exam->isPast();
+
+        // Download permissions
+        // Rule: Question papers cannot be downloaded for online exams or physical exams. For hybrid exams, only after timer starts.
+        $canDownloadPaper = false;
+        if ($mode === 'hybrid') {
+            $canDownloadPaper = $attempt && $attempt->status === 'in_progress';
+        }
+
+        // Rule: Answer booklets cannot be downloaded for physical exams, and for online/hybrid only after attempted or closed.
+        $canDownloadAnswerBooklet = false;
+        if ($mode !== 'offline' && $mode !== 'physical') {
+            $canDownloadAnswerBooklet = ($isAttempted || $isClosed);
         }
 
         $canResubmit = false;
@@ -168,8 +193,13 @@ class ExamController extends Controller
         $tuitionBalance = $student->getTuitionBalance();
         $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
 
-        if (!$isTuitionCleared) {
-            $canAttempt = false;
+        if (!$isTuitionCleared || in_array($mode, ['offline', 'physical'], true)) {
+            if (in_array($mode, ['offline', 'physical'], true)) {
+                $canAttempt = false;
+            }
+            if (!$isTuitionCleared) {
+                $canAttempt = false;
+            }
         }
 
         return view('student.exams.show', compact(
@@ -184,13 +214,22 @@ class ExamController extends Controller
             'canResubmit',
             'isTuitionCleared',
             'tuitionBalance',
-            'currencyCode'
+            'currencyCode',
+            'canDownloadPaper',
+            'canDownloadAnswerBooklet'
         ));
     }
 
     public function startExam(Exam $exam)
     {
         $student = Auth::user();
+
+        // Enforce limitation: physical exams cannot be started online
+        $mode = strtolower($exam->exam_mode ?? 'online');
+        if (in_array($mode, ['offline', 'physical'], true)) {
+            $room = $exam->room_number ? " in Room {$exam->room_number}" : '';
+            return back()->with('error', "This is a physical/offline examination. Candidates must sit for this exam in person{$room}. Online examination access is not applicable.");
+        }
 
         // Enforce limitation: students who have not completed tuition do not qualify to sit for exams
         if (!$student->hasZeroTuitionBalance()) {
@@ -241,6 +280,14 @@ class ExamController extends Controller
     {
         $student = Auth::user();
 
+        // Enforce limitation: physical exams cannot be taken online
+        $mode = strtolower($exam->exam_mode ?? 'online');
+        if (in_array($mode, ['offline', 'physical'], true)) {
+            $room = $exam->room_number ? " in Room {$exam->room_number}" : '';
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', "This is a physical/offline examination. Candidates must sit for this exam in person{$room}.");
+        }
+
         // Enforce limitation: students who have not completed tuition do not qualify to sit for exams
         if (!$student->hasZeroTuitionBalance()) {
             $tuitionBalance = $student->getTuitionBalance();
@@ -256,17 +303,17 @@ class ExamController extends Controller
                 ->with('error', 'Please start the exam first.');
         }
 
+        $now = Carbon::now();
+        $byDuration = $attempt->started_at ? $attempt->started_at->copy()->addMinutes($exam->duration_minutes) : null;
+        $deadline = $exam->end_time;
+        $effectiveEnd = ($byDuration && $deadline) ? ($deadline->lt($byDuration) ? $deadline : $byDuration) : ($byDuration ?: $deadline);
+
+        if ($effectiveEnd && $effectiveEnd->lt($now)) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('info', 'The examination time has ended.');
+        }
+
         if ($attempt->isSubmitted()) {
-            $now = Carbon::now();
-            $byDuration = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
-            $deadline = $exam->end_time;
-            $effectiveEnd = $deadline && $deadline->lt($byDuration) ? $deadline : $byDuration;
-
-            if ($effectiveEnd->lt($now)) {
-                return redirect()->route('student.exams.show', $exam)
-                    ->with('info', 'The exam time has ended.');
-            }
-
             $currentCount = $attempt->submission_count ?? 0;
             if ($currentCount === 0 && $attempt->submitted_at) {
                 $currentCount = 1;
@@ -284,6 +331,19 @@ class ExamController extends Controller
     {
         $student = Auth::user();
 
+        // Enforce limitation: physical exams cannot be submitted online
+        $mode = strtolower($exam->exam_mode ?? 'online');
+        if (in_array($mode, ['offline', 'physical'], true)) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'Physical examinations are conducted in person and cannot be submitted online.');
+        }
+
+        // Enforce limitation: students who have not completed tuition do not qualify to submit exams
+        if (!$student->hasZeroTuitionBalance()) {
+            return redirect()->route('student.exams.index')
+                ->with('error', 'Examination submission blocked: Tuition fees must be fully settled with a zero balance.');
+        }
+
         $attempt = $exam->studentAttempt($student->id);
 
         if (!$attempt || !in_array($attempt->status, ['in_progress', 'submitted'], true)) {
@@ -291,12 +351,22 @@ class ExamController extends Controller
         }
 
         $now = Carbon::now();
-        $byDuration = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
+        $byDuration = $attempt->started_at ? $attempt->started_at->copy()->addMinutes($exam->duration_minutes) : null;
         $deadline = $exam->end_time;
-        $effectiveEnd = $deadline && $deadline->lt($byDuration) ? $deadline : $byDuration;
+        if ($byDuration && $deadline) {
+            $effectiveEnd = $deadline->lt($byDuration) ? $deadline : $byDuration;
+        } else {
+            $effectiveEnd = $byDuration ?: $deadline;
+        }
 
-        if ($effectiveEnd->lt($now)) {
-            return back()->with('error', 'The exam time has ended.');
+        // Submitting beyond the exam's time limit is not allowed (with a 30s network grace period)
+        if ($effectiveEnd && $now->gt($effectiveEnd->copy()->addSeconds(30))) {
+            $attempt->update([
+                'status' => 'submitted',
+                'submitted_at' => $effectiveEnd,
+            ]);
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'The examination time has expired. Submissions beyond the exam time limit are not accepted.');
         }
 
         $currentCount = $attempt->submission_count ?? 0;
@@ -354,6 +424,39 @@ class ExamController extends Controller
 
     public function downloadPaper(Exam $exam)
     {
+        $student = Auth::user();
+
+        $enrolled = $student->courseEnrollments()
+            ->where('course_id', $exam->course_id)
+            ->where('status', 'enrolled')
+            ->exists();
+
+        if (!$enrolled) {
+            abort(403, 'You must be enrolled in this course to download examination materials.');
+        }
+
+        if (!$student->hasZeroTuitionBalance()) {
+            return back()->with('error', 'You must complete your tuition payment (zero balance) to access examination materials.');
+        }
+
+        $mode = strtolower($exam->exam_mode ?? 'online');
+
+        // Rule: Question papers cannot be viewed/downloaded for physical examinations
+        if (in_array($mode, ['offline', 'physical'], true)) {
+            return back()->with('error', 'Question papers for physical/offline examinations cannot be downloaded.');
+        }
+
+        // Rule: Question papers cannot be downloaded for online examinations
+        if ($mode === 'online') {
+            return back()->with('error', 'Question papers for online examinations cannot be downloaded. Please attempt the exam online in the system.');
+        }
+
+        // Rule: For hybrid exams, question paper can only be downloaded after the exam has been started (timer is running)
+        $attempt = $exam->studentAttempt($student->id);
+        if (!$attempt || $attempt->status === 'not_started' || !$attempt->started_at) {
+            return back()->with('error', 'You must start the examination first before downloading the question paper. The timer will begin upon starting.');
+        }
+
         if (!$exam->exam_paper_url) {
             return back()->with('error', 'Exam paper is not available.');
         }
@@ -363,6 +466,37 @@ class ExamController extends Controller
 
     public function downloadAnswerBooklet(Exam $exam)
     {
+        $student = Auth::user();
+
+        $enrolled = $student->courseEnrollments()
+            ->where('course_id', $exam->course_id)
+            ->where('status', 'enrolled')
+            ->exists();
+
+        if (!$enrolled) {
+            abort(403, 'You must be enrolled in this course to download examination materials.');
+        }
+
+        if (!$student->hasZeroTuitionBalance()) {
+            return back()->with('error', 'You must complete your tuition payment (zero balance) to access examination materials.');
+        }
+
+        $mode = strtolower($exam->exam_mode ?? 'online');
+
+        // Rule: Answers cannot be viewed/downloaded for physical examinations
+        if (in_array($mode, ['offline', 'physical'], true)) {
+            return back()->with('error', 'Answer booklets for physical/offline examinations cannot be downloaded.');
+        }
+
+        // Rule: Answers cannot be downloaded before exams are attempted or in status of closed
+        $attempt = $exam->studentAttempt($student->id);
+        $isAttempted = $attempt && in_array($attempt->status, ['submitted', 'graded']);
+        $isClosed = $exam->isPast();
+
+        if (!$isAttempted && !$isClosed) {
+            return back()->with('error', 'Answer booklets cannot be downloaded before the exam has been attempted or closed.');
+        }
+
         if (!$exam->answer_booklet_url) {
             return back()->with('error', 'Answer booklet is not available.');
         }

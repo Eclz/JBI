@@ -50,25 +50,66 @@ class Exam extends Model
         return $this->hasMany(ExamAttempt::class);
     }
 
+    public function getEffectiveStatusAttribute(): string
+    {
+        if (!$this->is_published) {
+            return 'draft';
+        }
+
+        $now = Carbon::now();
+        if ($this->start_time && $now->lt($this->start_time)) {
+            return 'upcoming';
+        }
+        if ($this->end_time && $now->gt($this->end_time)) {
+            return 'closed';
+        }
+
+        return 'active';
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->effective_status) {
+            'active' => 'success',
+            'upcoming' => 'info',
+            'draft' => 'secondary',
+            'closed' => 'danger',
+            default => 'secondary',
+        };
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->effective_status) {
+            'active' => 'Active / In Progress',
+            'upcoming' => 'Upcoming',
+            'draft' => 'Draft',
+            'closed' => 'Closed / Ended',
+            default => ucfirst($this->effective_status),
+        };
+    }
+
     public function isActive()
     {
         $now = Carbon::now();
-        return $this->start_time <= $now && $this->end_time >= $now;
+        return $this->is_published &&
+               (!$this->start_time || $this->start_time <= $now) &&
+               (!$this->end_time || $this->end_time >= $now);
     }
 
     public function isUpcoming()
     {
-        return $this->start_time > Carbon::now();
+        return $this->start_time && $this->start_time > Carbon::now();
     }
 
     public function isPast()
     {
-        return $this->end_time < Carbon::now();
+        return $this->end_time && $this->end_time < Carbon::now();
     }
 
     public function canAttempt($userId)
     {
-        if (!$this->isActive() || !$this->is_published) {
+        if (!$this->isActive()) {
             return false;
         }
 
@@ -78,7 +119,7 @@ class Exam extends Model
             return true;
         }
 
-        return $attempt->status === 'not_started';
+        return in_array($attempt->status, ['not_started', 'in_progress'], true);
     }
 
     public function studentAttempt($userId)
