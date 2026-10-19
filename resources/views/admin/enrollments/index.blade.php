@@ -22,11 +22,11 @@
 
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" class="row g-3">
+            <form method="GET" class="row g-2">
                 <div class="col-md-3">
-                    <input type="text" name="search" class="form-control" placeholder="Search student..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="form-control" placeholder="Search student or student number..." value="{{ request('search') }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select name="course_id" class="form-select">
                         <option value="">All Courses</option>
                         @foreach($courses as $course)
@@ -47,6 +47,15 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <select name="enrollment_type" class="form-select">
+                        <option value="">All Unit Types</option>
+                        <option value="normal" {{ request('enrollment_type') == 'normal' ? 'selected' : '' }}>Normal</option>
+                        <option value="retake" {{ request('enrollment_type') == 'retake' ? 'selected' : '' }}>Retake</option>
+                        <option value="missed_paper" {{ request('enrollment_type') == 'missed_paper' ? 'selected' : '' }}>Missed Paper</option>
+                        <option value="redo" {{ request('enrollment_type') == 'redo' ? 'selected' : '' }}>Redo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
                         <option value="enrolled" {{ request('status') == 'enrolled' ? 'selected' : '' }}>Enrolled</option>
@@ -55,7 +64,7 @@
                         <option value="dropped" {{ request('status') == 'dropped' ? 'selected' : '' }}>Dropped</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-secondary w-100">Filter</button>
                 </div>
             </form>
@@ -69,8 +78,9 @@
                     <thead>
                         <tr>
                             <th>Student</th>
-                            <th>Admission No.</th>
+                            <th>Student Number</th>
                             <th>Course</th>
+                            <th>Unit Nature</th>
                             <th>Semester</th>
                             <th>Enrollment Date</th>
                             <th>Status</th>
@@ -81,20 +91,23 @@
                         @forelse($enrollments as $enrollment)
                             <tr>
                                 <td>{{ $enrollment->student->name }}</td>
-                                <td>{{ $enrollment->student->admission_number ?? 'N/A' }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark font-monospace border">
+                                        {{ $enrollment->student->student_number ?? $enrollment->student->student_id ?? 'N/A' }}
+                                    </span>
+                                </td>
                                 <td>{{ $enrollment->course->name }}</td>
+                                <td>
+                                    <span class="badge {{ $enrollment->getEnrollmentTypeBadgeClass() }}">
+                                        {{ $enrollment->getEnrollmentTypeText() }}
+                                    </span>
+                                </td>
                                 <td>{{ $enrollment->semester->name ?? 'N/A' }}</td>
                                 <td>{{ $enrollment->enrollment_date->format('M d, Y') }}</td>
                                 <td>
-                                    @if($enrollment->status === 'enrolled')
-                                        <span class="badge bg-success">Enrolled</span>
-                                    @elseif($enrollment->status === 'pending')
-                                        <span class="badge bg-warning">Pending</span>
-                                    @elseif($enrollment->status === 'completed')
-                                        <span class="badge bg-info">Completed</span>
-                                    @else
-                                        <span class="badge bg-danger">Dropped</span>
-                                    @endif
+                                    <span class="badge {{ $enrollment->getStatusBadgeClass() }}">
+                                        {{ $enrollment->getStatusText() }}
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -124,7 +137,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4">No enrollments found.</td>
+                                <td colspan="8" class="text-center py-4">No enrollments found.</td>
                             </tr>
                         @endforelse
                     </tbody>

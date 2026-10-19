@@ -147,6 +147,7 @@
                                                     <option value="normal" selected>Normal (First Time - Free)</option>
                                                     <option value="retake">Retake Course ({{ $currencyCode }} {{ number_format($retakeFeeAmount ?? 150000) }} Invoice)</option>
                                                     <option value="missed_paper">Missed Paper Exam ({{ $currencyCode }} {{ number_format($missedPaperFeeAmount ?? 100000) }} Invoice)</option>
+                                                    <option value="redo">Redo Course Unit</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -238,6 +239,8 @@
                                                 <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-arrow-repeat me-1"></i>RETAKE</span>
                                             @elseif($item->enrollment_type === 'missed_paper')
                                                 <span class="badge bg-danger px-2 py-1"><i class="bi bi-exclamation-triangle me-1"></i>MISSED PAPER</span>
+                                            @elseif($item->enrollment_type === 'redo')
+                                                <span class="badge bg-info text-white px-2 py-1"><i class="bi bi-arrow-clockwise me-1"></i>REDO</span>
                                             @else
                                                 <span class="badge bg-primary px-2 py-1">NORMAL</span>
                                             @endif
