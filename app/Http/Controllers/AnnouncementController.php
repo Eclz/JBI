@@ -34,7 +34,7 @@ class AnnouncementController extends Controller
 
         $courses = Course::query()
             ->when($user->role === 'faculty', fn ($q) => $q->where('instructor_id', $user->id))
-            ->when($user->role === 'student', fn ($q) => $q->whereHas('enrollments', fn ($e) => $e->where('student_id', $user->id)))
+            ->when($user->role === 'student', fn ($q) => $q->whereHas('enrollments', fn ($e) => $e->where('user_id', $user->id)))
             ->orderBy('code')
             ->get();
 

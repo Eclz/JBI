@@ -27,7 +27,7 @@
                         </select>
                         @if($academicYears->isEmpty())
                             <div class="form-text text-danger">
-                                No academic years found. <a href="{{ route('admin.academic-years.create') }}">Create one first</a>.
+                                No active academic years found. <a href="{{ route('admin.academic-years.create') }}">Create one first</a>.
                             </div>
                         @endif
                         @error('academic_year_id')<div class="invalid-feedback">{{ $message }}</div>@enderror

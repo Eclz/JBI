@@ -95,6 +95,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the latest application associated with the user (by email).
+     */
+    public function application(): HasOne
+    {
+        return $this->hasOne(Application::class, 'email', 'email')->latestOfMany();
+    }
+
+    /**
+     * Get all applications associated with the user (by email).
+     */
+    public function applications(): HasMany
+    {
+        return $this->hasMany(Application::class, 'email', 'email');
+    }
+
+    /**
      * Get the courses that the user is enrolled in (for students).
      */
     public function enrolledCourses(): BelongsToMany
@@ -334,19 +350,76 @@ class User extends Authenticatable
             return $value;
         }
 
+        if ($this->relationLoaded('application')) {
+            $appNumber = $this->application?->student_number ?: $this->application?->application_number;
+            if (!empty($appNumber)) {
+                return $appNumber;
+            }
+        }
+
         if ($this->relationLoaded('studentProfile')) {
             return $this->studentProfile?->admission_number ?: null;
+        }
+
+        $appNumber = $this->application()->value('student_number') ?: $this->application()->value('application_number');
+        if (!empty($appNumber)) {
+            return $appNumber;
         }
 
         return $this->studentProfile()->value('admission_number');
     }
 
     /**
-     * Alias for student registration/admission number.
+     * Alias for student registration/student number.
+     * Prioritizes student_id, then application student_number or application_number,
+     * and falls back to student profile admission number.
      */
     public function getStudentNumberAttribute()
     {
-        return $this->student_id;
+        $rawStudentId = $this->attributes['student_id'] ?? null;
+        if (!empty($rawStudentId)) {
+            return $rawStudentId;
+        }
+
+        $app = $this->relationLoaded('application')
+            ? $this->application
+            : $this->application()->first();
+
+        if ($app) {
+            if (!empty($app->student_number)) {
+                return $app->student_number;
+            }
+            if (!empty($app->application_number)) {
+                return $app->application_number;
+            }
+        }
+
+        $profile = $this->relationLoaded('studentProfile')
+            ? $this->studentProfile
+            : $this->studentProfile()->first();
+
+        if ($profile && !empty($profile->admission_number)) {
+            return $profile->admission_number;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the admission number for this student.
+     */
+    public function getAdmissionNumberAttribute()
+    {
+        if ($this->relationLoaded('studentProfile')) {
+            return $this->studentProfile?->admission_number;
+        }
+
+        if ($this->relationLoaded('application')) {
+            return $this->application?->admission_number ?: $this->studentProfile()->value('admission_number');
+        }
+
+        return $this->studentProfile()->value('admission_number')
+            ?: $this->application()->value('admission_number');
     }
 
     public function roleCatalog(): BelongsTo
@@ -729,6 +802,28 @@ class User extends Authenticatable
 
         $name = $this->full_name ?? $this->email;
         return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&color=1e3a8a&background=e0e7ff';
+    }
+
+    /**
+     * Get faculty ID for student
+     */
+    public function getFacultyId(): ?int
+    {
+        return $this->studentProfile?->department?->faculty_id
+            ?? $this->studentProfile?->program?->department?->faculty_id
+            ?? $this->application?->programRecord?->department?->faculty_id
+            ?? null;
+    }
+
+    /**
+     * Get faculty name for student
+     */
+    public function getFacultyName(): ?string
+    {
+        return $this->studentProfile?->department?->faculty?->name
+            ?? $this->studentProfile?->program?->department?->faculty?->name
+            ?? $this->application?->programRecord?->department?->faculty?->name
+            ?? null;
     }
 
     /**
