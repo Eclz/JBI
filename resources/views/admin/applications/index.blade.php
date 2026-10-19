@@ -17,22 +17,14 @@
                 <!-- Filters -->
                 <div class="card-body border-bottom">
                     <form method="GET" action="{{ route('admin.applications.index') }}" class="row g-3">
-                        <div class="col-md-3">
-                            <label for="status" class="form-label">Search Here</label>
+                        @if(request()->filled('status'))
+                            <input type="hidden" name="status" value="{{ request('status') }}">
+                        @endif
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search Here</label>
                             <input type="text" name="search" class="form-control" placeholder="Search by name, email, phone..." value="{{ request('search') }}">
                         </div>
-                        <div class="col-md-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select name="status" id="status" class="form-select">
-                                <option value="">All Statuses</option>
-                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                <option value="payment_pending" {{ request('status') === 'payment_pending' ? 'selected' : '' }}>Payment Pending</option>
-                                <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label for="type" class="form-label">Type</label>
                             <select name="type" id="type" class="form-select">
                                 <option value="">All Types</option>
@@ -40,7 +32,7 @@
                                 <option value="faculty" {{ request('type') === 'faculty' ? 'selected' : '' }}>Faculty</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label for="program_id" class="form-label">Program</label>
                             <select name="program_id" id="program_id" class="form-select">
                                 <option value="">All Programs</option>
@@ -56,6 +48,28 @@
                             <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">Clear</a>
                         </div>
                     </form>
+                    <div class="border-top mt-3 pt-3">
+                        <ul class="nav nav-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->filled('status') ? '' : 'active' }}" href="{{ route('admin.applications.index', request()->except('status')) }}">All</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request('status') === 'pending' ? 'active' : '' }}" href="{{ route('admin.applications.index', array_merge(request()->except('status'), ['status' => 'pending'])) }}">Pending</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request('status') === 'under_review' ? 'active' : '' }}" href="{{ route('admin.applications.index', array_merge(request()->except('status'), ['status' => 'under_review'])) }}">Under Review</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request('status') === 'approved' ? 'active' : '' }}" href="{{ route('admin.applications.index', array_merge(request()->except('status'), ['status' => 'approved'])) }}">Approved</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request('status') === 'admitted' ? 'active' : '' }}" href="{{ route('admin.applications.index', array_merge(request()->except('status'), ['status' => 'admitted'])) }}">Admitted</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request('status') === 'rejected' ? 'active' : '' }}" href="{{ route('admin.applications.index', array_merge(request()->except('status'), ['status' => 'rejected'])) }}">Rejected</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="card-body p-0">
@@ -74,6 +88,9 @@
                                     <input class="form-check-input" type="checkbox" name="force_approve" id="bulkForceApprove" value="1">
                                     <label class="form-check-label" for="bulkForceApprove">Force incomplete</label>
                                 </div>
+                                <span class="small text-muted d-none d-lg-inline border-start ps-2" style="font-size: 0.75rem;">
+                                    <i class="fas fa-shield-alt text-primary me-1"></i>Course assignment & payment approval strictly required.
+                                </span>
                                 <input type="text" class="form-control form-control-sm" name="notes" style="max-width: 260px;" placeholder="Optional bulk note">
                             </div>
                         <div class="table-responsive">
@@ -96,6 +113,17 @@
                                 </thead>
                                 <tbody>
                                     @foreach($applications as $application)
+                                        @php
+                                            $isStudent = ($application->type === 'student');
+                                            $isPaymentApproved = $application->isPaymentApproved();
+                                            $hasCourseAssigned = $application->hasAssignedCourse();
+                                            $canApprove = !$isStudent || ($isPaymentApproved && $hasCourseAssigned);
+
+                                            $missingBlockers = [];
+                                            if ($isStudent && !$hasCourseAssigned) $missingBlockers[] = 'No Course Assigned';
+                                            if ($isStudent && !$isPaymentApproved) $missingBlockers[] = 'Payment Not Approved';
+                                            $blockerText = implode(' & ', $missingBlockers);
+                                        @endphp
                                         <tr>
                                             <td>
                                                 @if($application->status === 'pending')
@@ -142,6 +170,7 @@
                                                     $statusColors = [
                                                         'pending' => 'warning',
                                                         'approved' => 'success',
+                                                        'admitted' => 'success',
                                                         'rejected' => 'danger',
                                                         'payment_pending' => 'info',
                                                         'completed' => 'success'
@@ -160,10 +189,12 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if($application->payment_proof)
-                                                    <span class="badge bg-success">Submitted</span>
-                                                @elseif($application->status === 'payment_pending')
-                                                    <span class="badge bg-warning">Awaiting Payment</span>
+                                                @if($isPaymentApproved)
+                                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approved</span>
+                                                @elseif($application->payment_proof || $application->payment_status === 'uploaded')
+                                                    <span class="badge bg-info text-dark"><i class="fas fa-clock me-1"></i>Uploaded</span>
+                                                @elseif($isStudent)
+                                                    <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Unpaid</span>
                                                 @else
                                                     <span class="badge bg-secondary">N/A</span>
                                                 @endif
@@ -175,13 +206,21 @@
                                                         <i class="fas fa-eye"></i> View
                                                     </a>
                                                     @if($application->status === 'pending')
-                                                        <button type="button" class="btn btn-sm btn-outline-success"
-                                                                onclick="approveApplication({{ $application->id }})">
-                                                            <i class="fas fa-check"></i> Approve
-                                                        </button>
+                                                        @if($canApprove)
+                                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                                    onclick="approveApplication({{ $application->id }})">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                        @else
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                    onclick="alertApprovalLocked('{{ addslashes($blockerText) }}', {{ $application->id }})"
+                                                                    title="Strictly Locked: {{ $blockerText }}">
+                                                                <i class="fas fa-lock"></i> Locked
+                                                            </button>
+                                                        @endif
                                                         <button type="button" class="btn btn-sm btn-outline-danger"
                                                                 onclick="rejectApplication({{ $application->id }})">
-                                                            <i class="fas fa-times"></i> Reject
+                                                                <i class="fas fa-times"></i> Reject
                                                         </button>
                                                     @elseif($application->status === 'payment_pending' && $application->payment_proof)
                                                         <button type="button" class="btn btn-sm btn-outline-success"
@@ -219,29 +258,33 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Approve Application</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title"><i class="fas fa-user-check me-2 text-success"></i>Approve & Admit Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="approvalForm" method="POST">
                 @csrf
                 <input type="hidden" name="force_approve" id="forceApproveField" value="0">
                 <div class="modal-body">
-                    <p>Are you sure you want to approve this application? The applicant will receive an email with their login credentials.</p>
+                    <div class="alert alert-success py-2 px-3 small mb-3">
+                        <i class="fas fa-check-circle me-1"></i>Requirements verified: Student has verified admission payment and an assigned university programme.
+                    </div>
+                    <p class="mb-3">Are you sure you want to approve this application? The student will be officially admitted, an official Student Number issued, and admission credentials sent.</p>
                     <div class="mb-3">
-                        <label for="approval_notes" class="form-label">Notes (Optional)</label>
-                        <textarea name="notes" id="approval_notes" class="form-control" rows="3"
-                                  placeholder="Add any notes about the approval..."></textarea>
+                        <label for="approval_notes" class="form-label small fw-bold">Admission Notes (Optional)</label>
+                        <textarea name="notes" id="approval_notes" class="form-control form-control-sm" rows="3"
+                                  placeholder="Add any notes about this admission approval..."></textarea>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="forceApproveCheckbox">
-                        <label class="form-check-label" for="forceApproveCheckbox">
-                            Force approve even when readiness checklist is incomplete
+                        <label class="form-check-label small text-muted" for="forceApproveCheckbox">
+                            Force approve general checklist
+                            <span class="d-block text-danger" style="font-size: 0.72rem;">* Note: Payment approval & Course assignment can NEVER be bypassed.</span>
                         </label>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Approve Application</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check me-1"></i>Approve & Admit Student</button>
                 </div>
             </form>
         </div>
@@ -279,6 +322,12 @@
 
 @section('scripts')
 <script>
+function alertApprovalLocked(reason, applicationId) {
+    if (confirm("STRICT ADMISSIONS REQUIREMENT:\n\nThis student cannot be approved or admitted because:\n• " + reason + "\n\nAdmissions rule: Student must have verified payment and an assigned course before approval.\n\nWould you like to open this application now to assign a course or verify payment?")) {
+        window.location.href = `/admin/applications/${applicationId}`;
+    }
+}
+
 function approveApplication(applicationId) {
     const form = document.getElementById('approvalForm');
     const forceApproveField = document.getElementById('forceApproveField');
