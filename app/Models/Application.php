@@ -31,6 +31,9 @@ class Application extends Model
         'specialization',
         'years_of_experience',
         'documents',
+        'documents_verified_at',
+        'documents_verified_by',
+        'documents_verified_notes',
         'status',
         'review_notes',
         'reviewed_by',
@@ -51,6 +54,7 @@ class Application extends Model
         'date_of_birth' => 'date',
         'previous_gpa' => 'decimal:2',
         'documents' => 'array',
+        'documents_verified_at' => 'datetime',
         'program_choices' => 'array',
         'reviewed_at' => 'datetime',
         'payment_uploaded_at' => 'datetime',
@@ -72,6 +76,14 @@ class Application extends Model
     public function paymentVerifier()
     {
         return $this->belongsTo(User::class, 'payment_verified_by');
+    }
+
+    /**
+     * Get the verifier who verified applicant documents.
+     */
+    public function documentsVerifier()
+    {
+        return $this->belongsTo(User::class, 'documents_verified_by');
     }
 
     public function programRecord()
@@ -255,4 +267,42 @@ class Application extends Model
 
         return 'JBI' . $year . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
+
+    /**
+     * Determine if admission fee payment is verified/approved.
+     */
+    public function isPaymentApproved(): bool
+    {
+        return in_array(strtolower($this->payment_status ?? ''), ['verified', 'approved', 'paid', 'completed'])
+            || !empty($this->payment_verified_at);
+    }
+
+    /**
+     * Determine if an official course/programme has been assigned.
+     */
+    public function hasAssignedCourse(): bool
+    {
+        return !empty($this->program_id) && ($this->programRecord !== null || !empty($this->program));
+    }
+
+    /**
+     * Determine if supporting documents have been verified against applicant details.
+     */
+    public function areDocumentsVerified(): bool
+    {
+        return !empty($this->documents_verified_at) || $this->status === 'admitted';
+    }
+
+    /**
+     * Determine if application meets strict admission requirements (payment verified + documents verified + course assigned).
+     */
+    public function canBeAdmitted(): bool
+    {
+        if ($this->type !== 'student') {
+            return true;
+        }
+
+        return $this->isPaymentApproved() && $this->areDocumentsVerified() && $this->hasAssignedCourse();
+    }
 }
+

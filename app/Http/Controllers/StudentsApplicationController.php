@@ -216,7 +216,10 @@ class StudentsApplicationController extends Controller
                                   ->whereIn('status', ['pending', 'approved'])
                                   ->firstOrFail();
 
-        return view('applications.upload-payment', compact('application'));
+        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+        $feeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
+
+        return view('applications.upload-payment', compact('application', 'currencyCode', 'feeAmount'));
     }
 
     public function storePayment(Request $request, $token)

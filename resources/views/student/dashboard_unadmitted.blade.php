@@ -395,14 +395,7 @@
                     <!-- CASE 2: Admission Fee Payment Portal (APPEARS FIRST - NON-REFUNDABLE) -->
                     @if(isset($application) && in_array($application->payment_status, ['pending', 'rejected']))
                         @php
-                            $levelName = strtolower($application->programRecord->level->name ?? '');
-                            if (str_contains($levelName, 'bachelor') || str_contains($levelName, 'degree')) {
-                                $feeAmount = 150;
-                            } elseif (str_contains($levelName, 'master') || str_contains($levelName, 'doctor') || str_contains($levelName, 'phd')) {
-                                $feeAmount = 250;
-                            } else {
-                                $feeAmount = 100;
-                            }
+                            $feeAmount = $feeAmount ?? \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
                         @endphp
                         <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-radius: 12px;">
                             <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);">
