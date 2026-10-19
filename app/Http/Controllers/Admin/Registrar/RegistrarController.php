@@ -16,7 +16,7 @@ class RegistrarController extends Controller
     public function dashboard(Request $request)
     {
         $request->validate([
-            'student_view' => 'nullable|in:all,active,applicants',
+            'student_view' => 'nullable|in:all,active,inactive',
         ]);
 
         $studentView = $request->query('student_view', 'all');
@@ -26,28 +26,17 @@ class RegistrarController extends Controller
         $totalPrograms = Program::count();
         $activeEnrollments = CourseEnrollment::where('status', 'enrolled')->count();
 
-        if ($studentView === 'applicants') {
-            $applicants = Application::students()
-                ->whereIn('status', ['pending', 'under_review', 'approved'])
-                ->with('programRecord')
-                ->latest()
-                ->take(10)
-                ->get();
-            $recentStudents = collect();
-        } else {
-            $admittedStudentEmails = Application::students()
-                ->where('status', 'admitted')
-                ->select('email');
-            $studentsQuery = StudentProfile::with('user', 'program')
-                ->whereHas('user', fn ($query) => $query->whereIn('email', $admittedStudentEmails));
-
-            if ($studentView === 'active') {
-                $studentsQuery->where('status', 'active');
-            }
-
-            $recentStudents = $studentsQuery->latest()->take(10)->get();
-            $applicants = collect();
+        $admittedStudentEmails = Application::students()
+            ->where('status', 'admitted')
+            ->select('email');
+        $studentsQuery = StudentProfile::with('user', 'program')
+            ->whereHas('user', fn ($query) => $query->whereIn('email', $admittedStudentEmails));
+        if ($studentView === 'active') {
+            $studentsQuery->where('status', 'active');
+        } elseif ($studentView === 'inactive') {
+            $studentsQuery->where('status', 'inactive');
         }
+        $recentStudents = $studentsQuery->latest()->take(10)->get();
 
         return view('admin.registrar.dashboard', compact(
             'totalStudents', 

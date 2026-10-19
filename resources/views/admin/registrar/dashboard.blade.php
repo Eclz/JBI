@@ -91,6 +91,7 @@
         </div>
     </div>
 
+    @php($studentView = request()->query('student_view', 'all'))
     <div class="row g-4">
         <!-- Recent Students -->
         <div class="col-lg-8">
@@ -108,7 +109,7 @@
                             <a class="nav-link {{ $studentView === 'active' ? 'active' : '' }}" href="{{ route('admin.registrar.dashboard', ['student_view' => 'active']) }}">Active students</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ $studentView === 'applicants' ? 'active' : '' }}" href="{{ route('admin.registrar.dashboard', ['student_view' => 'applicants']) }}">Applicants</a>
+                            <a class="nav-link {{ $studentView === 'inactive' ? 'active' : '' }}" href="{{ route('admin.registrar.dashboard', ['student_view' => 'inactive']) }}">Inactive students</a>
                         </li>
                     </ul>
                 </div>
@@ -117,34 +118,15 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>{{ $studentView === 'applicants' ? 'Application No.' : 'Admission No.' }}</th>
-                                    <th>{{ $studentView === 'applicants' ? 'Applicant Name' : 'Student Name' }}</th>
+                                    <th>Admission No.</th>
+                                    <th>Student Name</th>
                                     <th>Program</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @if($studentView === 'applicants')
-                                    @forelse($applicants as $applicant)
-                                        <tr>
-                                            <td><span class="badge bg-secondary">{{ $applicant->application_number }}</span></td>
-                                            <td>{{ trim($applicant->first_name . ' ' . $applicant->last_name) }}</td>
-                                            <td>{{ $applicant->programRecord->name ?? $applicant->program ?? 'N/A' }}</td>
-                                            <td><span class="badge bg-warning text-dark">{{ ucfirst(str_replace('_', ' ', $applicant->status)) }}</span></td>
-                                            <td>
-                                                <a href="{{ route('admin.applications.show', $applicant) }}" class="btn btn-sm btn-light text-primary" title="View Application">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">No applicants found.</td>
-                                        </tr>
-                                    @endforelse
-                                @else
-                                    @forelse($recentStudents as $student)
+                                @forelse($recentStudents as $student)
                                         <tr>
                                             <td>
                                                 <span class="badge bg-secondary">{{ $student->admission_number }}</span>
@@ -174,10 +156,9 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">No admitted students found.</td>
+                                            <td colspan="5" class="text-center py-4 text-muted">No students found.</td>
                                         </tr>
-                                    @endforelse
-                                @endif
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
