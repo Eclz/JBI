@@ -47,4 +47,29 @@ class RegistrarController extends Controller
             'recentStudents'
         ));
     }
+
+    public function gradingCriteria()
+    {
+        $gradingCriteria = CourseEnrollment::getAcademicRegistrarGradingCriteria();
+        return view('admin.registrar.grading-criteria', compact('gradingCriteria'));
+    }
+
+    public function updateGradingCriteria(Request $request)
+    {
+        $request->validate([
+            'criteria' => 'required|array|min:1',
+            'criteria.*.min' => 'required|numeric|min:0|max:100',
+            'criteria.*.max' => 'required|numeric|min:0|max:100',
+            'criteria.*.letter' => 'required|string|max:5',
+            'criteria.*.grade_points' => 'required|numeric|min:0|max:5',
+            'criteria.*.remark' => 'nullable|string|max:100',
+        ]);
+
+        $criteria = array_values($request->criteria);
+        usort($criteria, fn($a, $b) => (float)$b['min'] <=> (float)$a['min']);
+
+        \App\Models\SystemSetting::setSetting('academic_registrar_grading_criteria', $criteria, 'json', 'academic', true);
+
+        return back()->with('success', 'Academic Registrar grading criteria updated successfully.');
+    }
 }

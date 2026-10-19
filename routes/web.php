@@ -341,6 +341,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Registrar Hub
     Route::middleware('permission:registrar_hub,view')->prefix('registrar')->name('registrar.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'dashboard'])->name('dashboard');
+        Route::get('/grading-criteria', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'gradingCriteria'])->name('grading-criteria');
+        Route::post('/grading-criteria', [\App\Http\Controllers\Admin\Registrar\RegistrarController::class, 'updateGradingCriteria'])->name('grading-criteria.update')->middleware('permission:registrar_hub,edit');
     });
 
     // Hostel Management
