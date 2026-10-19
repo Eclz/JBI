@@ -10,13 +10,7 @@
             <div class="text-muted">{{ $exam->course->name }} ({{ $exam->course->code }})</div>
         </div>
         <div class="mt-2">
-            @if($status === 'upcoming')
-                <span class="badge bg-info">Upcoming</span>
-            @elseif($status === 'active')
-                <span class="badge bg-success">Active</span>
-            @else
-                <span class="badge bg-secondary">Completed</span>
-            @endif
+            <span class="badge bg-{{ $exam->status_badge_class }} fs-6">{{ $exam->status_label }}</span>
         </div>
     </div>
 
@@ -87,26 +81,64 @@
                 </div>
             </div>
 
-            @if($exam->exam_paper_url || $exam->answer_booklet_url)
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Downloads</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex flex-column gap-2">
-                        @if($exam->exam_paper_url)
-                            <a class="btn btn-outline-primary" href="{{ route('student.exams.download-paper', $exam) }}">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>Download Question Paper
-                            </a>
-                        @endif
-                        @if($exam->answer_booklet_url)
-                            <a class="btn btn-outline-secondary" href="{{ route('student.exams.download-booklet', $exam) }}">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>Download Answer Booklet
-                            </a>
-                        @endif
+            @php
+                $mode = strtolower($exam->exam_mode ?? 'online');
+            @endphp
+
+            @if(in_array($mode, ['offline', 'physical'], true))
+                <div class="card shadow-sm mb-4 border-info">
+                    <div class="card-header bg-info bg-opacity-10 py-3">
+                        <h5 class="mb-0 text-info fw-semibold"><i class="bi bi-geo-alt me-2"></i>Physical Examination</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-0">
+                            This is an offline/physical examination conducted on campus{{ $exam->room_number ? ' in Room ' . $exam->room_number : '' }}.
+                            Question papers and physical answer booklets are distributed directly in the exam room and are not accessible online.
+                        </p>
                     </div>
                 </div>
-            </div>
+            @else
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-download me-2 text-primary"></i>Examination Materials</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            @if($mode === 'hybrid')
+                                @if($exam->exam_paper_url)
+                                    @if(!empty($canDownloadPaper))
+                                        <a class="btn btn-outline-primary" href="{{ route('student.exams.download-paper', $exam) }}">
+                                            <i class="bi bi-file-earmark-arrow-down me-2"></i>Download Question Paper
+                                        </a>
+                                    @else
+                                        <div class="alert alert-secondary mb-0 small">
+                                            <i class="bi bi-clock me-1"></i>
+                                            <strong>Question Paper:</strong> The question paper will unlock and become downloadable once you start the examination. Your timer will begin immediately.
+                                        </div>
+                                    @endif
+                                @endif
+                            @else
+                                <div class="alert alert-light border mb-0 small text-muted">
+                                    <i class="bi bi-laptop me-1 text-primary"></i>
+                                    <strong>Online Examination:</strong> This exam is attempted directly online using the built-in exam interface. Question papers are not downloaded.
+                                </div>
+                            @endif
+
+                            @if($exam->answer_booklet_url)
+                                @if(!empty($canDownloadAnswerBooklet))
+                                    <a class="btn btn-outline-secondary" href="{{ route('student.exams.download-booklet', $exam) }}">
+                                        <i class="bi bi-file-earmark-arrow-down me-2"></i>Download Answer Booklet / Marking Guide
+                                    </a>
+                                @else
+                                    <div class="alert alert-light border mb-0 small text-muted">
+                                        <i class="bi bi-shield-lock me-1"></i>
+                                        <strong>Answer Booklet:</strong> Available to download after you submit your attempt or once the examination has closed.
+                                    </div>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+                </div>
             @endif
 
             @if($exam->instructions)
@@ -126,16 +158,38 @@
                 <div class="card-header bg-white">
                     <h5 class="mb-0">Exam Access</h5>
                 </div>
-                <div class="card-body">
-                    @if($exam->required_payment > 0 && !$hasPaid)
-                            <div class="alert alert-danger">
-                                <div class="fw-semibold mb-2">Payment Required</div>
-                                <div class="small">
-                                Pay <strong>{{ $currencyCode }} {{ number_format($exam->required_payment, 2) }}</strong> to attempt this exam.
+                    @if(isset($isTuitionCleared) && !$isTuitionCleared)
+                        <div class="alert alert-danger shadow-sm border-0 mb-3" style="border-left: 4px solid #dc3545 !important;">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-shield-x fs-3 text-danger me-2"></i>
+                                <div>
+                                    <strong class="d-block text-danger">Exam Ineligible: Tuition Unpaid</strong>
+                                    <p class="small text-dark mb-2">You currently have an uncleared tuition balance of <strong>{{ $currencyCode }} {{ number_format($tuitionBalance, 2) }}</strong>. University regulations require complete tuition payment (zero balance) to sit for examinations.</p>
+                                    <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-danger fw-bold">
+                                        <i class="bi bi-credit-card me-1"></i>Pay Tuition in Fee Portal
+                                    </a>
                                 </div>
-                                <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-danger mt-3">Pay Now</a>
                             </div>
+                        </div>
+                        <button class="btn btn-outline-danger w-100" disabled>
+                            <i class="bi bi-lock-fill me-1"></i>Exam Access Blocked
+                        </button>
+                    @elseif($exam->required_payment > 0 && !$hasPaid)
+                        <div class="alert alert-danger">
+                            <div class="fw-semibold mb-2">Payment Required</div>
+                            <div class="small">
+                            Pay <strong>{{ $currencyCode }} {{ number_format($exam->required_payment, 2) }}</strong> to attempt this exam.
+                            </div>
+                            <a href="{{ route('student.fees.index') }}" class="btn btn-sm btn-danger mt-3">Pay Now</a>
+                        </div>
                     @else
+                        @if(isset($isTuitionCleared) && $isTuitionCleared)
+                            <div class="mb-3">
+                                <a href="{{ route('student.exams.permit') }}" class="btn btn-outline-success btn-sm w-100 fw-bold">
+                                    <i class="bi bi-file-earmark-check me-1"></i>Print Examination Permit
+                                </a>
+                            </div>
+                        @endif
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="text-muted">Submissions Used</span>
@@ -146,17 +200,29 @@
                             </div>
                         </div>
 
-                        @if($canAttempt)
+                        @if($attempt && $attempt->status === 'in_progress')
+                            <a href="{{ route('student.exams.take', $exam) }}" class="btn btn-warning w-100 fw-bold">
+                                <i class="bi bi-play-circle me-2"></i>Resume Exam Attempt
+                            </a>
+                        @elseif($status === 'closed')
+                            <div class="alert alert-danger text-center mb-0">
+                                <i class="bi bi-x-circle me-1"></i> Examination Closed / Ended
+                            </div>
+                        @elseif($status === 'upcoming')
+                            <div class="alert alert-secondary text-center mb-0">
+                                <i class="bi bi-clock me-1"></i> Exam Not Yet Available (Starts {{ $exam->start_time->format('M d, Y h:i A') }})
+                            </div>
+                        @elseif($canAttempt)
                             @if($status === 'active')
                                 <form action="{{ route('student.exams.start', $exam) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-success w-100">
+                                    <button type="submit" class="btn btn-success w-100 fw-bold">
                                         <i class="bi bi-play-circle me-2"></i>Start Exam
                                     </button>
                                 </form>
                             @else
                                 <div class="alert alert-secondary text-center mb-0">
-                                    Exam not yet available
+                                    Exam not currently available
                                 </div>
                             @endif
                         @elseif($attempt && $attempt->status === 'submitted' && $status === 'active')

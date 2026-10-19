@@ -133,32 +133,51 @@ class CourseController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:users,id',
+            'enrollment_type' => 'nullable|in:normal,retake,missed_paper,redo',
         ]);
 
         $student = User::findOrFail($request->student_id);
+        $enrollmentType = $request->enrollment_type ?? 'normal';
         
-        if ($course->enrollments()->where('student_id', $student->id)->exists()) {
-            return back()->withErrors(['error' => 'Student is already enrolled in this course.']);
+        $existing = $course->enrollments()->where('user_id', $student->id)->first();
+        if ($existing) {
+            if (in_array($existing->status, ['enrolled', 'pending'])) {
+                return back()->withErrors(['error' => 'Student is already actively enrolled in this course.']);
+            }
+
+            // Student is redoing or retaking a completed/dropped course unit
+            $existing->update([
+                'status' => 'enrolled',
+                'enrollment_type' => $enrollmentType,
+                'enrollment_date' => now(),
+                'final_grade' => null,
+                'letter_grade' => null,
+                'grade_points' => null,
+                'completion_date' => null,
+            ]);
+
+            return back()->with('success', 'Student re-enrolled successfully as ' . ucfirst(str_replace('_', ' ', $enrollmentType)) . '.');
         }
 
-        if ($course->enrollments()->count() >= $course->capacity) {
+        if ($course->enrollments()->where('status', 'enrolled')->count() >= $course->capacity) {
             return back()->withErrors(['error' => 'Course is at full capacity.']);
         }
 
         CourseEnrollment::create([
-            'student_id' => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
             'enrollment_date' => now(),
             'status' => 'enrolled',
+            'enrollment_type' => $enrollmentType,
         ]);
 
-        return back()->with('success', 'Student enrolled successfully.');
+        return back()->with('success', 'Student enrolled successfully (' . ucfirst(str_replace('_', ' ', $enrollmentType)) . ').');
     }
 
     public function unenroll(Course $course, User $student)
     {
         $enrollment = $course->enrollments()
-            ->where('student_id', $student->id)
+            ->where('user_id', $student->id)
             ->first();
 
         if (!$enrollment) {

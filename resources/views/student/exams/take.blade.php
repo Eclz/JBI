@@ -65,20 +65,15 @@
                     </div>
                     @endif
 
-                    <!-- Exam Paper Download -->
-                    @if($exam->exam_paper_url)
-                    <div class="mb-4">
+                    <!-- Hybrid Exam Paper Download (Time included in exam timer) -->
+                    @if(($exam->exam_mode ?? 'online') === 'hybrid' && $exam->exam_paper_url)
+                    <div class="alert alert-info border-info d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <div>
+                            <i class="bi bi-file-earmark-arrow-down-fill fs-5 me-2"></i>
+                            <strong>Hybrid Examination Paper:</strong> Download the question paper below. Note that paper downloading and solution uploading times are counted within your running examination timer.
+                        </div>
                         <a href="{{ route('student.exams.download-paper', $exam) }}" class="btn btn-primary" target="_blank">
                             <i class="fas fa-download me-2"></i>Download Exam Paper
-                        </a>
-                    </div>
-                    @endif
-
-                    <!-- Answer Booklet Download (offline/hybrid only) -->
-                    @if(in_array($exam->exam_mode ?? 'online', ['offline', 'hybrid'], true) && $exam->answer_booklet_url)
-                    <div class="mb-4">
-                        <a href="{{ route('student.exams.download-booklet', $exam) }}" class="btn btn-secondary" target="_blank">
-                            <i class="fas fa-download me-2"></i>Download Answer Booklet
                         </a>
                     </div>
                     @endif
@@ -334,11 +329,20 @@
     // Timer countdown
     const startedAt = {{ $attempt->started_at ? $attempt->started_at->timestamp : 'null' }};
     const durationSeconds = {{ $exam->duration_minutes * 60 }};
+    const examDeadline = {{ $exam->end_time ? $exam->end_time->timestamp : 'null' }};
     const serverNow = {{ now()->timestamp }};
     const fallbackRemaining = {{ $attempt->time_remaining_seconds ?? ($exam->duration_minutes * 60) }};
-    const endTimeEpoch = startedAt
+
+    let computedEndEpoch = startedAt
         ? startedAt + durationSeconds
         : Math.floor(Date.now() / 1000) + fallbackRemaining;
+
+    // Timer strictly respects exam end time (due date/time) if earlier than duration limit
+    if (examDeadline && examDeadline < computedEndEpoch) {
+        computedEndEpoch = examDeadline;
+    }
+
+    const endTimeEpoch = computedEndEpoch;
     let timeRemaining = Math.max(endTimeEpoch - serverNow, 0);
     const timerElement = document.getElementById('timer');
     const timerCircle = document.getElementById('timerCircle');
@@ -404,11 +408,29 @@
         }
 
         if (timeRemaining <= 0) {
+            timerElement.textContent = '00:00:00';
+            timerProgress.style.width = '0%';
+            timerCircle.style.strokeDashoffset = circumference;
+
+            // Lock editing and inputs beyond exam time
+            if (editor) {
+                editor.setAttribute('contenteditable', 'false');
+                editor.style.opacity = '0.7';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-clock-history me-1"></i> Exam Time Expired';
+            }
+            const fileInput = document.getElementById('submission_file');
+            if (fileInput) {
+                fileInput.disabled = true;
+            }
+
             if (!hasSubmitted) {
+                hasSubmitted = true;
                 autosaveToServer('timeup').finally(function() {
-                    hasSubmitted = true;
                     syncEditor();
-                    alert('Time is up! Your exam will be automatically submitted.');
+                    alert('Time is up! Your examination time has ended. Your exam is being automatically submitted.');
                     examForm.submit();
                 });
             }

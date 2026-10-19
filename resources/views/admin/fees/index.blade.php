@@ -96,9 +96,12 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {{ (request('tx_page') || request('transaction_search') || request('transaction_method')) ? 'active' : '' }}" id="transactions-tab" data-bs-toggle="tab"
+                            <button class="nav-link {{ (request('tx_page') || request('transaction_search') || request('transaction_method') || request('transaction_status')) ? 'active' : '' }}" id="transactions-tab" data-bs-toggle="tab"
                                     data-bs-target="#transactions" type="button" role="tab">
                                 <i class="fas fa-receipt me-1 text-success"></i> Transactions & Receipts
+                                @if(isset($pendingPaymentsCount) && $pendingPaymentsCount > 0)
+                                    <span class="badge bg-warning text-dark ms-1 rounded-pill">{{ $pendingPaymentsCount }} pending</span>
+                                @endif
                             </button>
                         </li>
                         @if(optional(auth()->user()->roleCatalog)->code !== 'admissions_officer')
@@ -284,18 +287,18 @@
                         </div>
 
                         <!-- Transactions & Receipts Tab -->
-                        <div class="tab-pane fade {{ (request('tx_page') || request('transaction_search') || request('transaction_method')) ? 'show active' : '' }}" id="transactions" role="tabpanel">
+                        <div class="tab-pane fade {{ (request('tx_page') || request('transaction_search') || request('transaction_method') || request('transaction_status')) ? 'show active' : '' }}" id="transactions" role="tabpanel">
                             <div class="mt-3">
                                 <!-- Transactions Search & Filter -->
                                 <form method="GET" action="{{ route('admin.fees.index') }}" class="mb-3">
                                     <input type="hidden" name="tx_page" value="1">
                                     <div class="row g-2 align-items-center">
-                                        <div class="col-md-5">
+                                        <div class="col-md-4">
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                                 <input type="text" class="form-control" name="transaction_search"
                                                        value="{{ request('transaction_search') }}"
-                                                       placeholder="Search reference #, transaction ID, or student name/email...">
+                                                       placeholder="Search reference #, transaction ID, or student...">
                                             </div>
                                         </div>
                                         <div class="col-md-3">
@@ -305,11 +308,22 @@
                                                 <option value="Cash" {{ request('transaction_method') == 'Cash' ? 'selected' : '' }}>Cash</option>
                                                 <option value="Online" {{ request('transaction_method') == 'Online' ? 'selected' : '' }}>Online</option>
                                                 <option value="Cheque" {{ request('transaction_method') == 'Cheque' ? 'selected' : '' }}>Cheque</option>
+                                                <option value="card" {{ request('transaction_method') == 'card' ? 'selected' : '' }}>Card</option>
+                                                <option value="bank_transfer" {{ request('transaction_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer (Direct)</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-4 d-flex gap-2">
+                                        <div class="col-md-2">
+                                            <select class="form-select" name="transaction_status">
+                                                <option value="">All Statuses</option>
+                                                <option value="pending" {{ request('transaction_status') == 'pending' ? 'selected' : '' }}>Pending Verification</option>
+                                                <option value="completed" {{ request('transaction_status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                                                <option value="failed" {{ request('transaction_status') == 'failed' ? 'selected' : '' }}>Rejected / Failed</option>
+                                                <option value="refunded" {{ request('transaction_status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 d-flex gap-2">
                                             <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-filter me-1"></i> Filter Transactions
+                                                <i class="fas fa-filter me-1"></i> Filter
                                             </button>
                                             <a href="{{ route('admin.fees.index') }}#transactions" class="btn btn-outline-secondary">
                                                 <i class="fas fa-undo me-1"></i> Reset
@@ -403,18 +417,52 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check-circle me-1"></i> {{ ucfirst($tx->status ?: 'completed') }}
-                                                    </span>
+                                                    @if($tx->status === 'completed')
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check-circle me-1"></i> Completed
+                                                        </span>
+                                                    @elseif($tx->status === 'pending')
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-clock me-1"></i> Pending Verification
+                                                        </span>
+                                                    @elseif($tx->status === 'failed')
+                                                        <span class="badge bg-danger">
+                                                            <i class="fas fa-times-circle me-1"></i> Rejected / Failed
+                                                        </span>
+                                                    @elseif($tx->status === 'refunded')
+                                                        <span class="badge bg-info">
+                                                            <i class="fas fa-undo me-1"></i> Refunded
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-secondary">
+                                                            {{ ucfirst($tx->status ?: 'completed') }}
+                                                        </span>
+                                                    @endif
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="btn-group" role="group">
-                                                        <a href="{{ route('admin.fees.payments.receipt', $tx->id) }}"
-                                                           target="_blank"
-                                                           class="btn btn-sm btn-outline-primary"
-                                                           title="Print / View Official Receipt">
-                                                            <i class="fas fa-receipt me-1"></i> Receipt
-                                                        </a>
+                                                        @if($tx->status === 'pending' && auth()->user()->hasPermission('fees', 'approve'))
+                                                            <form method="POST" action="{{ route('admin.fees.payments.approve', $tx->id) }}" class="d-inline" onsubmit="return confirm('Approve payment of {{ $currencyCode }} {{ number_format($tx->amount, 2) }} and credit student account?');">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-success" title="Approve Payment">
+                                                                    <i class="fas fa-check me-1"></i> Approve
+                                                                </button>
+                                                            </form>
+                                                            <button type="button" class="btn btn-sm btn-danger ms-1" title="Reject Payment"
+                                                                    onclick="openRejectModal({{ $tx->id }}, '{{ addslashes($tx->student?->name ?? 'Student') }}', '{{ $currencyCode }} {{ number_format($tx->amount, 2) }}', '{{ addslashes($tx->reference_number ?: $tx->transaction_id) }}')">
+                                                                <i class="fas fa-times me-1"></i> Reject
+                                                            </button>
+                                                        @endif
+
+                                                        @if($tx->status === 'completed')
+                                                            <a href="{{ route('admin.fees.payments.receipt', $tx->id) }}"
+                                                               target="_blank"
+                                                               class="btn btn-sm btn-outline-primary"
+                                                               title="Print / View Official Receipt">
+                                                                <i class="fas fa-receipt me-1"></i> Receipt
+                                                            </a>
+                                                        @endif
+
                                                         @if($tx->payment_proof)
                                                         <a href="{{ asset('storage/' . $tx->payment_proof) }}"
                                                            target="_blank"
@@ -859,11 +907,63 @@
         </div>
     </div>
 </div>
+
+<!-- Reject Payment Modal -->
+<div class="modal fade" id="rejectPaymentModal" tabindex="-1" aria-labelledby="rejectPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="rejectPaymentForm" method="POST" action="">
+                @csrf
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectPaymentModalLabel"><i class="fas fa-times-circle me-2"></i>Reject Student Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                            <div>
+                                <strong>Payment will be marked as Failed/Rejected.</strong>
+                                <div class="small">The student will be notified and their fee balance will remain unpaid.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Student:</label>
+                        <div id="rejectStudentName" class="fw-semibold"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Amount & Reference:</label>
+                        <div><span id="rejectPaymentAmount" class="fw-bold text-danger"></span> (<span id="rejectPaymentRef" class="font-monospace"></span>)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label fw-bold">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" required placeholder="Explain why this payment cannot be approved (e.g. proof unreadable, transaction not reflected on bank statement, wrong account)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+function openRejectModal(paymentId, studentName, amount, ref) {
+    document.getElementById('rejectPaymentForm').action = '/admin/fees/payments/' + paymentId + '/reject';
+    document.getElementById('rejectStudentName').textContent = studentName;
+    document.getElementById('rejectPaymentAmount').textContent = amount;
+    document.getElementById('rejectPaymentRef').textContent = ref;
+    document.getElementById('rejection_reason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('rejectPaymentModal'));
+    modal.show();
+}
+
 function exportFeeRecords() {
     window.location.href = '{{ route("admin.fees.records.export") }}';
 }

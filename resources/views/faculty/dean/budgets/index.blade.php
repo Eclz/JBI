@@ -35,7 +35,7 @@
                         <tr>
                             <th class="ps-4">Title</th>
                             <th>Department</th>
-                            <th>Amount (GHS)</th>
+                            <th>Amount ({{ $systemCurrency }})</th>
                             <th>Status</th>
                             <th>Date Created</th>
                             <th class="text-end pe-4">Actions</th>
@@ -47,7 +47,7 @@
                             <td class="ps-4 fw-medium text-dark">{{ $budget->title }}</td>
                             <td>{{ $budget->department->name ?? 'N/A' }}</td>
                             <td class="font-monospace">
-                                ₵{{ number_format($budget->amount, 2) }}
+                                {{ $systemCurrency }}{{ number_format($budget->amount, 2) }}
                             </td>
                             <td>
                                 @if($budget->status === 'Draft')

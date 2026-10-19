@@ -151,7 +151,7 @@
     </div>
     <div class="card shadow-sm">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0"><i class="fa fa-list me-2"></i>Enrollment Details</h5>
+            <h5 class="card-title mb-0"><i class="fa fa-list me-2"></i></h5>
             <a href="{{ route('admin.reports.enrollment.export', request()->all()) }}"
                class="btn btn-success btn-sm">
                 <i class="fas fa-file-excel me-1"></i> Export CSV
@@ -165,6 +165,7 @@
                             <th>Student</th>
                             <th>Admission Number</th>
                             <th>Course</th>
+                            <th>Unit Nature</th>
                             <th>Semester</th>
                             <th>Enrollment Date</th>
                             <th>Status</th>
@@ -177,6 +178,11 @@
                                 <td>{{ $enrollment?->student?->full_name ?: ($enrollment?->student?->name ?? 'N/A') }}</td>
                                 <td>{{ $enrollment->student->studentProfile->admission_number ?? 'N/A' }}</td>
                                 <td>{{ $enrollment->course->code ?? $enrollment->course->course_code }} - {{ $enrollment->course->name }}</td>
+                                <td>
+                                    <span class="badge {{ $enrollment->getEnrollmentTypeBadgeClass() }}">
+                                        {{ $enrollment->getEnrollmentTypeText() }}
+                                    </span>
+                                </td>
                                 <td>{{ $enrollment?->semester?->name ?? 'N/A' }}</td>
                                 <td>{{ $enrollment->enrollment_date?->format('M d, Y') ?? 'N/A' }}</td>
                                 <td>

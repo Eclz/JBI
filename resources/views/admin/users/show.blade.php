@@ -7,7 +7,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h3 mb-0 text-gray-800">Student Assessment Dashboard</h1>
+                    <h1 class="h3 mb-0 text-gray-800">User Assesment Dashboard</h1>
                     <p class="text-muted">Comprehensive overview of {{ $user->full_name }}</p>
                 </div>
                 <div class="d-flex gap-2">

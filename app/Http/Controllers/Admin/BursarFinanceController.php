@@ -16,7 +16,7 @@ use App\Models\UniversityAsset;
 use App\Models\BankAccount;
 use App\Models\ResearchGrant;
 use App\Models\GeneralLedgerEntry;
-use App\Models\FinanceAuditLog;
+use App\Models\AcademicYear;
 use App\Models\Department;
 use App\Models\User;
 use App\Models\SystemSetting;
@@ -234,18 +234,34 @@ class BursarFinanceController extends Controller
             'category' => 'required|string',
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
-            'expense_date' => 'required|date',
+            'expense_date' => 'required|date|before_or_equal:today',
             'description' => 'nullable|string',
+            'status' => 'nullable|string|in:pending,approved,rejected',
+        ], [
+            'expense_date.before_or_equal' => 'Expense date cannot be past the current date.',
         ]);
+
+        $status = $validated['status'] ?? 'approved';
+        $userCanApprove = auth()->user()->can('expenses,approve') || auth()->user()->hasRole('super_administrator') || auth()->user()->role === 'admin';
+        if ($status === 'approved' && !$userCanApprove) {
+            $status = 'pending';
+        }
 
         $validated['expense_number'] = 'EXP-' . date('Ymd') . '-' . rand(100, 999);
         $validated['requested_by'] = auth()->id();
-        $validated['status'] = 'pending';
+        $validated['status'] = $status;
+        if ($status === 'approved') {
+            $validated['approved_by'] = auth()->id();
+        }
 
-        FinanceExpense::create($validated);
+        $expense = FinanceExpense::create($validated);
+
+        if ($status === 'approved') {
+            $this->applyExpenseToBudget($validated['department_id'], (float) $validated['amount']);
+        }
 
         return redirect()->route('admin.finance.expenses.index')
-            ->with('success', 'Expense recorded successfully and is pending approval.');
+            ->with('success', 'Expense recorded and reconciled with department budget successfully.');
     }
 
     public function showExpense($id)
@@ -271,65 +287,157 @@ class BursarFinanceController extends Controller
             'category' => 'required|string',
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
-            'expense_date' => 'required|date',
+            'expense_date' => 'required|date|before_or_equal:today',
             'description' => 'nullable|string',
             'status' => 'nullable|string|in:pending,approved,rejected',
+        ], [
+            'expense_date.before_or_equal' => 'Expense date cannot be past the current date.',
         ]);
 
         $oldStatus = $expense->status;
         $newStatus = $validated['status'] ?? $oldStatus;
+        $oldDeptId = $expense->department_id;
+        $newDeptId = $validated['department_id'];
+        $oldAmount = (float) $expense->amount;
+        $newAmount = (float) $validated['amount'];
+
+        $userCanApprove = auth()->user()->can('expenses,approve') || auth()->user()->hasRole('super_administrator') || auth()->user()->role === 'admin';
 
         if ($newStatus !== $oldStatus) {
-            // Permissions check for approving/rejecting
             if (in_array($newStatus, ['approved', 'rejected'])) {
-                if (!auth()->user()->can('expenses,approve') && !auth()->user()->hasRole('super_administrator')) {
+                if (!$userCanApprove) {
                     unset($validated['status']);
                     $newStatus = $oldStatus;
                 } else {
                     $validated['approved_by'] = auth()->id();
                 }
             }
-
-            // Handle Budget logic based on status change
-            if ($newStatus === 'approved' && $oldStatus !== 'approved') {
-                $budget = FinanceBudget::where('department_id', $validated['department_id'])->first();
-                if ($budget) {
-                    $budget->increment('spent_amount', $validated['amount']);
-                }
-            } elseif ($oldStatus === 'approved' && $newStatus !== 'approved') {
-                $budget = FinanceBudget::where('department_id', $expense->department_id)->first();
-                if ($budget) {
-                    $budget->decrement('spent_amount', $expense->amount);
-                }
-            }
         }
 
-        // Handle amount change if it stays approved
-        if ($oldStatus === 'approved' && $newStatus === 'approved' && $expense->amount != $validated['amount']) {
-            $budget = FinanceBudget::where('department_id', $expense->department_id)->first();
-            if ($budget) {
-                $budget->decrement('spent_amount', $expense->amount);
-                
-                $newBudget = FinanceBudget::where('department_id', $validated['department_id'])->first();
-                if ($newBudget) {
-                    $newBudget->increment('spent_amount', $validated['amount']);
-                }
+        // Budget reconciliation
+        if ($oldStatus === 'approved' && $newStatus !== 'approved') {
+            $this->revertExpenseFromBudget($oldDeptId, $oldAmount);
+        } elseif ($oldStatus !== 'approved' && $newStatus === 'approved') {
+            $this->applyExpenseToBudget($newDeptId, $newAmount);
+        } elseif ($oldStatus === 'approved' && $newStatus === 'approved') {
+            if ($oldDeptId != $newDeptId || $oldAmount != $newAmount) {
+                $this->revertExpenseFromBudget($oldDeptId, $oldAmount);
+                $this->applyExpenseToBudget($newDeptId, $newAmount);
             }
         }
 
         $expense->update($validated);
 
         return redirect()->route('admin.finance.expenses.index')
-            ->with('success', 'Expense updated successfully.');
+            ->with('success', 'Expense updated and department budget reconciled successfully.');
+    }
+
+    public function approveExpense($id)
+    {
+        $expense = FinanceExpense::findOrFail($id);
+        if ($expense->status !== 'approved') {
+            $expense->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+            ]);
+            $this->applyExpenseToBudget($expense->department_id, (float) $expense->amount);
+        }
+
+        return redirect()->route('admin.finance.expenses.index')
+            ->with('success', 'Expense approved and reconciled with department budget successfully.');
     }
 
     public function destroyExpense($id)
     {
         $expense = FinanceExpense::findOrFail($id);
+
+        if ($expense->status === 'approved' && $expense->department_id) {
+            $this->revertExpenseFromBudget($expense->department_id, (float) $expense->amount);
+        }
+
         $expense->delete();
 
         return redirect()->route('admin.finance.expenses.index')
-            ->with('success', 'Expense deleted successfully.');
+            ->with('success', 'Expense deleted and department budget reconciled successfully.');
+    }
+
+    public function reconcileBudgets()
+    {
+        $departments = Department::all();
+        $academicYear = AcademicYear::where('is_current', true)->first()?->name 
+            ?? AcademicYear::where('is_active', true)->first()?->name 
+            ?? date('Y') . '/' . (date('Y') + 1);
+
+        foreach ($departments as $dept) {
+            $totalSpent = FinanceExpense::where('department_id', $dept->id)
+                ->where('status', 'approved')
+                ->sum('amount');
+
+            $budget = FinanceBudget::where('department_id', $dept->id)->latest()->first();
+            if ($budget) {
+                $budget->update(['spent_amount' => $totalSpent]);
+            } elseif ($totalSpent > 0) {
+                FinanceBudget::create([
+                    'budget_code' => 'BDG-' . date('Y') . '-' . $dept->id . '-' . rand(10, 99),
+                    'academic_year' => $academicYear,
+                    'department_id' => $dept->id,
+                    'allocated_amount' => 0.00,
+                    'spent_amount' => $totalSpent,
+                    'committed_amount' => 0.00,
+                    'status' => 'approved',
+                    'approved_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.finance.budgets.index')
+            ->with('success', 'Department budgets reconciled successfully with all recorded expenses.');
+    }
+
+    /**
+     * Increment spent_amount on department budget (creates budget if missing)
+     */
+    private function applyExpenseToBudget($departmentId, float $amount): void
+    {
+        if ($amount <= 0 || !$departmentId) {
+            return;
+        }
+
+        $budget = FinanceBudget::where('department_id', $departmentId)->latest()->first();
+
+        if (!$budget) {
+            $academicYear = AcademicYear::where('is_current', true)->first()?->name 
+                ?? AcademicYear::where('is_active', true)->first()?->name 
+                ?? date('Y') . '/' . (date('Y') + 1);
+
+            $budget = FinanceBudget::create([
+                'budget_code' => 'BDG-' . date('Y') . '-' . $departmentId . '-' . rand(10, 99),
+                'academic_year' => $academicYear,
+                'department_id' => $departmentId,
+                'allocated_amount' => 0.00,
+                'spent_amount' => 0.00,
+                'committed_amount' => 0.00,
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+            ]);
+        }
+
+        $budget->increment('spent_amount', $amount);
+    }
+
+    /**
+     * Decrement spent_amount on department budget
+     */
+    private function revertExpenseFromBudget($departmentId, float $amount): void
+    {
+        if ($amount <= 0 || !$departmentId) {
+            return;
+        }
+
+        $budget = FinanceBudget::where('department_id', $departmentId)->latest()->first();
+        if ($budget) {
+            $budget->decrement('spent_amount', min($budget->spent_amount, $amount));
+        }
     }
 
     /**

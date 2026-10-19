@@ -55,17 +55,11 @@
                                 <span style="color: #1e293b; font-weight: 600;">{{ $quiz->total_marks }}</span>
                             </td>
                             <td class="align-middle" style="padding: 1rem;">
-                                @if(now()->lt($quiz->start_time))
-                                    <span class="badge bg-secondary">Upcoming</span>
-                                @elseif(now()->between($quiz->start_time, $quiz->end_time))
-                                    <span class="badge bg-success">Active</span>
-                                @else
-                                    <span class="badge bg-danger">Ended</span>
-                                @endif
+                                <span class="badge bg-{{ $quiz->status_badge_class }}">{{ $quiz->status_label }}</span>
                             </td>
                             <td class="align-middle" style="padding: 1rem;">
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('faculty.quizzes.show', $quiz) }}" class="btn btn-sm btn-outline-primary" title="View">
+                                    <a href="{{ route('faculty.quizzes.show', $quiz) }}" class="btn btn-sm btn-outline-primary" title="View Details">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     <a href="{{ route('faculty.quizzes.questions', $quiz) }}" class="btn btn-sm btn-outline-success" title="Manage Questions">
@@ -74,6 +68,21 @@
                                     <a href="{{ route('faculty.quizzes.edit', $quiz) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    @if($quiz->isActive())
+                                        <form action="{{ route('faculty.quizzes.close', $quiz) }}" method="POST" class="d-inline" onsubmit="return confirm('Close quiz {{ addslashes($quiz->title) }}? Students will no longer be able to attempt it.');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Close Quiz">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <form action="{{ route('faculty.quizzes.reopen', $quiz) }}" method="POST" class="d-inline" onsubmit="return confirm('Reopen/Activate quiz {{ addslashes($quiz->title) }} for students?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Open/Activate Quiz">
+                                                <i class="bi bi-play-circle"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -60,6 +60,10 @@ class QuizController extends Controller
         $validated['shuffle_questions'] = $request->boolean('shuffle_questions');
         $validated['shuffle_options'] = $request->boolean('shuffle_options');
         $validated['is_published'] = $request->boolean('is_published');
+        $validated['status'] = $request->input('status', $validated['is_published'] ? 'published' : 'draft');
+        if ($validated['status'] === 'active') {
+            $validated['is_published'] = true;
+        }
         $validated['created_by'] = Auth::id();
 
         $quiz = Quiz::create($validated);
@@ -72,12 +76,17 @@ class QuizController extends Controller
     {
         $this->authorizeQuiz($quiz);
 
-        $quiz->load(['course', 'questions', 'attempts.student']);
+        $quiz->load(['course', 'questions', 'attempts.student', 'attempts.user']);
+
+        $completedAttempts = $quiz->attempts()->whereIn('status', ['submitted', 'graded', 'completed']);
 
         $statistics = [
             'total_attempts' => $quiz->attempts()->count(),
-            'completed' => $quiz->attempts()->where('status', 'completed')->count(),
-            'average_score' => $quiz->attempts()->where('status', 'completed')->avg('score'),
+            'completed' => (clone $completedAttempts)->count(),
+            'average_score' => round((clone $completedAttempts)->avg('percentage') ?? 0, 1),
+            'highest_score' => (clone $completedAttempts)->max('percentage') ?? 0,
+            'lowest_score' => (clone $completedAttempts)->min('percentage') ?? 0,
+            'pass_count' => (clone $completedAttempts)->where('score', '>=', $quiz->passing_marks)->count(),
         ];
 
         return view('faculty.quizzes.show', compact('quiz', 'statistics'));
@@ -110,15 +119,76 @@ class QuizController extends Controller
             'show_results' => 'required|in:immediately,after_deadline,manual',
             'shuffle_questions' => 'boolean',
             'shuffle_options' => 'boolean',
+            'is_published' => 'nullable|boolean',
+            'status' => 'nullable|in:draft,published,active,closed',
         ]);
 
         $validated['shuffle_questions'] = $request->boolean('shuffle_questions');
         $validated['shuffle_options'] = $request->boolean('shuffle_options');
+        $validated['is_published'] = $request->boolean('is_published', true);
+
+        if ($request->filled('status')) {
+            $validated['status'] = $request->status;
+            if ($validated['status'] === 'closed') {
+                if ($quiz->end_time && $quiz->end_time->isFuture()) {
+                    $validated['end_time'] = now();
+                }
+            } elseif ($validated['status'] === 'active') {
+                $validated['is_published'] = true;
+            } elseif ($validated['status'] === 'draft') {
+                $validated['is_published'] = false;
+            }
+        }
 
         $quiz->update($validated);
 
         return redirect()->route('faculty.quizzes.show', $quiz)
             ->with('success', 'Quiz updated successfully.');
+    }
+
+    public function close(Quiz $quiz)
+    {
+        $this->authorizeQuiz($quiz);
+
+        $quiz->close();
+
+        return back()->with('success', "Quiz '{$quiz->title}' has been closed. Students can no longer make new attempts.");
+    }
+
+    public function reopen(Request $request, Quiz $quiz)
+    {
+        $this->authorizeQuiz($quiz);
+
+        $days = (int) $request->input('days', 7);
+        if ($days <= 0) {
+            $days = 7;
+        }
+
+        $quiz->reopen($days);
+
+        return back()->with('success', "Quiz '{$quiz->title}' has been opened/activated for students until " . $quiz->end_time->format('M d, Y H:i') . '.');
+    }
+
+    public function updateStatus(Request $request, Quiz $quiz)
+    {
+        $this->authorizeQuiz($quiz);
+
+        $request->validate([
+            'status' => 'required|in:draft,published,active,closed',
+        ]);
+
+        $status = $request->input('status');
+        if ($status === 'closed') {
+            $quiz->close();
+        } elseif ($status === 'active') {
+            $quiz->reopen((int) $request->input('days', 7));
+        } else {
+            $quiz->status = $status;
+            $quiz->is_published = ($status !== 'draft');
+            $quiz->save();
+        }
+
+        return back()->with('success', "Quiz status updated to " . ucfirst($status) . ".");
     }
 
     public function destroy(Quiz $quiz)

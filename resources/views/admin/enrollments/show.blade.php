@@ -44,8 +44,8 @@
                             <p>{{ $enrollment->student->name }}</p>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Student ID</label>
-                            <p>{{ $enrollment->student->student_id ?? 'N/A' }}</p>
+                            <label class="form-label fw-bold">Student Number</label>
+                            <p>{{ $enrollment->student->student_number ?? $enrollment->student->student_id ?? 'N/A' }}</p>
                         </div>
                     </div>
 
@@ -61,14 +61,22 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold">Enrollment Date</label>
                             <p>{{ $enrollment->enrollment_date->format('M d, Y') }}</p>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Unit Nature / Type</label>
+                            <p>
+                                <span class="badge {{ $enrollment->getEnrollmentTypeBadgeClass() }} px-3 py-2 fs-6">
+                                    {{ $enrollment->getEnrollmentTypeText() }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label fw-bold">Status</label>
                             <p>
-                                <span class="badge {{ $enrollment->getStatusBadgeClass() }}">
+                                <span class="badge {{ $enrollment->getStatusBadgeClass() }} px-3 py-2 fs-6">
                                     {{ $enrollment->getStatusText() }}
                                 </span>
                             </p>

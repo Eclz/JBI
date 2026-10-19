@@ -542,6 +542,12 @@
                 margin: 0 !important;
             }
         }
+
+        /* Remove DataTables search input globally */
+        .dataTables_filter,
+        div.dataTables_wrapper div.dataTables_filter {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="{{ auth()->guest() ? 'guest-user' : 'authenticated-user' }}">
@@ -944,16 +950,18 @@
             if ($.fn.DataTable) {
                 // Suppress DataTables alert warnings globally and log to console instead
                 $.fn.dataTable.ext.errMode = 'none';
-                
+
+                // Disable search input globally on all DataTables
+                $.extend(true, $.fn.dataTable.defaults, {
+                    searching: false
+                });
+
                 $('.table:not(.no-datatable)').each(function() {
                     if ($(this).find('thead').length > 0) {
                         try {
                             $(this).DataTable({
+                                searching: false,
                                 pageLength: 25,
-                                language: {
-                                    search: "",
-                                    searchPlaceholder: "Search records..."
-                                },
                                 drawCallback: function() {
                                     $('.dataTables_paginate > .pagination').addClass('pagination-sm');
                                 }

@@ -159,13 +159,13 @@
                                         </td>
                                         <td class="py-3">
                                             @if($isSubmitted)
-                                                @if($submission->status == 'graded')
+                                                @if($submission->effective_status === 'graded')
                                                     <span class="badge bg-success">
                                                         <i class="bi bi-check-circle me-1"></i>Graded
                                                     </span>
                                                 @else
-                                                    <span class="badge bg-info text-white">
-                                                        <i class="bi bi-clock me-1"></i>Submitted
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-clock me-1"></i>Ungraded
                                                     </span>
                                                 @endif
                                             @elseif($isOverdue)

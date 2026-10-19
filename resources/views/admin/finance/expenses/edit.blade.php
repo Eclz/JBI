@@ -10,6 +10,19 @@
             <a href="{{ route('admin.finance.expenses.index') }}" class="btn btn-outline-secondary btn-sm fw-bold">Back to List</a>
         </div>
         <div class="card-body p-4">
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Unable to update expense:</strong>
+                    <ul class="mb-0 mt-1 ps-3">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             <form action="{{ route('admin.finance.expenses.update', $expense->id) }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -48,7 +61,11 @@
 
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Expense Date <span class="text-danger">*</span></label>
-                        <input type="date" name="expense_date" class="form-control" value="{{ $expense->expense_date ? \Carbon\Carbon::parse($expense->expense_date)->format('Y-m-d') : '' }}" required>
+                        <input type="date" name="expense_date" class="form-control @error('expense_date') is-invalid @enderror" value="{{ old('expense_date', $expense->expense_date ? \Carbon\Carbon::parse($expense->expense_date)->format('Y-m-d') : '') }}" max="{{ date('Y-m-d') }}" required>
+                        @error('expense_date')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text text-muted">Expense date cannot be past the current date.</div>
                     </div>
                     
                     @if(auth()->user()->can('expenses,approve') || auth()->user()->hasRole('super_administrator'))

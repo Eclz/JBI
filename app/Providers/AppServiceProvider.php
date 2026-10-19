@@ -31,25 +31,39 @@ class AppServiceProvider extends ServiceProvider
                 date_default_timezone_set($timezone);
             }
 
-            $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
-            $acceptedCurrencies = \App\Models\SystemSetting::getSetting('accepted_currencies', [$currencyCode]);
-            $acceptedCurrencies = is_array($acceptedCurrencies) ? $acceptedCurrencies : json_decode($acceptedCurrencies, true);
-            View::share('currencyCode', $currencyCode);
-            View::share('systemCurrency', $currencyCode);
-            View::share('acceptedCurrencies', $acceptedCurrencies ?: [$currencyCode]);
-            View::share('admissionWindow', \App\Models\SystemSetting::admissionWindow());
+            View::composer('*', function ($view) {
+                try {
+                    $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+                    $acceptedCurrencies = \App\Models\SystemSetting::getSetting('accepted_currencies', [$currencyCode]);
+                    $acceptedCurrencies = is_array($acceptedCurrencies) ? $acceptedCurrencies : json_decode($acceptedCurrencies, true);
+
+                    $view->with([
+                        'currencyCode' => $currencyCode,
+                        'systemCurrency' => $currencyCode,
+                        'acceptedCurrencies' => $acceptedCurrencies ?: [$currencyCode],
+                        'admissionWindow' => \App\Models\SystemSetting::admissionWindow(),
+                    ]);
+                } catch (\Throwable $e) {
+                    $view->with([
+                        'currencyCode' => 'USD',
+                        'systemCurrency' => 'USD',
+                        'acceptedCurrencies' => ['USD'],
+                        'admissionWindow' => [
+                            'isOpen' => true,
+                            'status' => 'open',
+                            'start' => null,
+                            'end' => null,
+                            'timezone' => config('app.timezone'),
+                        ],
+                    ]);
+                }
+            });
+
             View::share('departments', Department::all());
         } catch (\Throwable $e) {
             View::share('currencyCode', 'USD');
             View::share('systemCurrency', 'USD');
             View::share('acceptedCurrencies', ['USD']);
-            View::share('admissionWindow', [
-                'isOpen' => true,
-                'status' => 'open',
-                'start' => null,
-                'end' => null,
-                'timezone' => config('app.timezone'),
-            ]);
             View::share('departments', collect());
         }
     }

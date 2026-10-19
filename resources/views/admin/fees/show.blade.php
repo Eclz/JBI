@@ -299,19 +299,31 @@
                                             </td>
                                             <td>
                                                 @if($payment->status === 'pending')
-                                                    <form method="POST" action="{{ route('admin.fees.payments.approve', $payment) }}">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-sm btn-success"
-                                                                onclick="return confirm('Approve this payment and post it to the fee record?')">
-                                                            Approve
+                                                    @if(auth()->user()->hasPermission('fees', 'approve'))
+                                                    <div class="btn-group" role="group">
+                                                        <form method="POST" action="{{ route('admin.fees.payments.approve', $payment) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-success"
+                                                                    onclick="return confirm('Approve this payment of {{ $currencyCode }} {{ number_format($payment->amount, 2) }} and credit this fee record?')">
+                                                                <i class="fas fa-check me-1"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <button type="button" class="btn btn-sm btn-danger ms-1"
+                                                                onclick="openRejectModal({{ $payment->id }}, '{{ addslashes($fee->student->name ?? 'Student') }}', '{{ $currencyCode }} {{ number_format($payment->amount, 2) }}', '{{ addslashes($payment->reference_number ?: $payment->transaction_id) }}')">
+                                                            <i class="fas fa-times me-1"></i> Reject
                                                         </button>
-                                                    </form>
+                                                    </div>
+                                                    @else
+                                                        <span class="badge bg-warning text-dark">Awaiting Approval</span>
+                                                    @endif
                                                 @elseif($payment->status === 'completed')
                                                     <a href="{{ route('admin.fees.payments.receipt', $payment) }}"
                                                        target="_blank"
                                                        class="btn btn-sm btn-outline-primary">
-                                                        Print Receipt
+                                                        <i class="fas fa-receipt me-1"></i> Print Receipt
                                                     </a>
+                                                @elseif($payment->status === 'failed')
+                                                    <span class="badge bg-danger">Rejected</span>
                                                 @else
                                                     <span class="text-muted">-</span>
                                                 @endif
@@ -372,10 +384,61 @@
         </div>
     </div>
 </div>
+
+<!-- Reject Payment Modal -->
+<div class="modal fade" id="rejectPaymentModal" tabindex="-1" aria-labelledby="rejectPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="rejectPaymentForm" method="POST" action="">
+                @csrf
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectPaymentModalLabel"><i class="fas fa-times-circle me-2"></i>Reject Student Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                            <div>
+                                <strong>Payment will be marked as Failed/Rejected.</strong>
+                                <div class="small">The student will be notified and the fee balance will remain unpaid.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Student:</label>
+                        <div id="rejectStudentName" class="fw-semibold"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Amount & Reference:</label>
+                        <div><span id="rejectPaymentAmount" class="fw-bold text-danger"></span> (<span id="rejectPaymentRef" class="font-monospace"></span>)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label fw-bold">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" required placeholder="Explain why this payment cannot be approved (e.g. proof unreadable, transaction not reflected on bank statement, wrong amount)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+function openRejectModal(paymentId, studentName, amount, ref) {
+    document.getElementById('rejectPaymentForm').action = '/admin/fees/payments/' + paymentId + '/reject';
+    document.getElementById('rejectStudentName').textContent = studentName;
+    document.getElementById('rejectPaymentAmount').textContent = amount;
+    document.getElementById('rejectPaymentRef').textContent = ref;
+    document.getElementById('rejection_reason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('rejectPaymentModal'));
+    modal.show();
+}
 function printReceipt() {
     window.print();
 }

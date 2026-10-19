@@ -248,3 +248,10 @@ body {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
 }
+
+/* Remove DataTables search input globally */
+.dataTables_filter,
+div.dataTables_wrapper div.dataTables_filter {
+  display: none !important;
+}
+

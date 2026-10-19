@@ -763,6 +763,12 @@
                         @endif
                     </a>
                 </li>
+                <li class="submenu-item {{ request()->routeIs('student.exams.permit') ? 'active' : '' }}">
+                    <a href="{{ route('student.exams.permit') }}" class="submenu-link">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Exam Permit / Pass</span>
+                    </a>
+                </li>
                 <li class="submenu-item {{ request()->routeIs('student.attendance.*') ? 'active' : '' }}">
                     <a href="{{ route('student.attendance.index') }}" class="submenu-link">
                         <i class="bi bi-calendar-check"></i>

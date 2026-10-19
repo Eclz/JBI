@@ -190,7 +190,7 @@ class StudentJourneyFeatureTest extends TestCase
             'assignment_id' => $assignment->id,
             'user_id' => $student->id,
             'submission_text' => 'My completed assignment.',
-            'status' => 'submitted',
+            'status' => 'ungraded',
         ]);
 
         $anotherStudent = User::factory()->student()->create();

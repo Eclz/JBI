@@ -95,6 +95,19 @@
                         </div>
 
                         <div class="mb-4">
+                            <label for="status" class="form-label fw-semibold">Status *</label>
+                            <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
+                                <option value="active" {{ old('status', $quiz->status) == 'active' ? 'selected' : '' }}>Active / Open (Students can attempt immediately)</option>
+                                <option value="published" {{ old('status', $quiz->status) == 'published' ? 'selected' : '' }}>Published (Scheduled by Start/End Time)</option>
+                                <option value="draft" {{ old('status', $quiz->status) == 'draft' ? 'selected' : '' }}>Draft (Unpublished, hidden from students)</option>
+                                <option value="closed" {{ old('status', $quiz->status) == 'closed' ? 'selected' : '' }}>Closed (Attempts blocked)</option>
+                            </select>
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
                             <div class="form-check">
                                 <input type="checkbox" name="shuffle_questions" id="shuffle_questions" class="form-check-input" value="1" {{ old('shuffle_questions', $quiz->shuffle_questions) ? 'checked' : '' }}>
                                 <label for="shuffle_questions" class="form-check-label">Shuffle Questions</label>
@@ -102,6 +115,10 @@
                             <div class="form-check mt-2">
                                 <input type="checkbox" name="shuffle_options" id="shuffle_options" class="form-check-input" value="1" {{ old('shuffle_options', $quiz->shuffle_options) ? 'checked' : '' }}>
                                 <label for="shuffle_options" class="form-check-label">Shuffle Answer Options</label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input type="checkbox" name="is_published" id="is_published" class="form-check-input" value="1" {{ old('is_published', $quiz->is_published) ? 'checked' : '' }}>
+                                <label for="is_published" class="form-check-label">Published</label>
                             </div>
                         </div>
 
