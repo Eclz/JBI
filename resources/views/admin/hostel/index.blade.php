@@ -87,22 +87,27 @@
                                         </div>
                                     </div>
                                     <div class="card-footer bg-white border-0 py-3 text-center">
-                                        @if(auth()->user()->hasPermission('halls_of_residence', 'edit'))
-                                            <a href="{{ route('admin.hostel.edit', $hostel) }}" class="btn btn-sm btn-outline-secondary w-100 fw-bold mb-2">
-                                                <i class="bi bi-pencil me-1"></i> Edit Hall
-                                            </a>
-                                        @endif
-                                        @if(auth()->user()->hasPermission('halls_of_residence', 'create'))
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-primary w-100 fw-bold btn-add-room"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#addRoomModal"
-                                                data-hostel-id="{{ $hostel->id }}"
-                                                data-hostel-name="{{ $hostel->name }}"
-                                                data-action="{{ route('admin.hostel.storeRoom', $hostel) }}">
-                                            <i class="bi bi-plus-lg me-1"></i> Add Room
-                                        </button>
-                                        @endif
+                                        <a href="{{ route('admin.hostel.show', $hostel) }}" class="btn btn-sm btn-primary w-100 fw-bold mb-2">
+                                            <i class="bi bi-door-open me-1"></i> View Rooms & Occupancy
+                                        </a>
+                                        <div class="d-flex gap-2">
+                                            @if(auth()->user()->hasPermission('halls_of_residence', 'edit'))
+                                                <a href="{{ route('admin.hostel.edit', $hostel) }}" class="btn btn-sm btn-outline-secondary flex-fill fw-bold">
+                                                    <i class="bi bi-pencil me-1"></i> Edit
+                                                </a>
+                                            @endif
+                                            @if(auth()->user()->hasPermission('halls_of_residence', 'create'))
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary flex-fill fw-bold btn-add-room"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addRoomModal"
+                                                    data-hostel-id="{{ $hostel->id }}"
+                                                    data-hostel-name="{{ $hostel->name }}"
+                                                    data-action="{{ route('admin.hostel.storeRoom', $hostel) }}">
+                                                <i class="bi bi-plus-lg me-1"></i> Add Room
+                                            </button>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -155,8 +160,11 @@
                                                 </span>
                                             </td>
                                             <td class="text-end pe-3">
+                                                <a href="{{ route('admin.hostel.show', $hostel) }}" class="btn btn-sm btn-primary fw-bold me-1">
+                                                    <i class="bi bi-door-open me-1"></i> Rooms & Occupancy
+                                                </a>
                                                 @if(auth()->user()->hasPermission('halls_of_residence', 'edit'))
-                                                    <a href="{{ route('admin.hostel.edit', $hostel) }}" class="btn btn-sm btn-outline-secondary fw-bold">Edit Hall</a>
+                                                    <a href="{{ route('admin.hostel.edit', $hostel) }}" class="btn btn-sm btn-outline-secondary fw-bold me-1">Edit</a>
                                                 @endif
                                                 @if(auth()->user()->hasPermission('halls_of_residence', 'create'))
                                                 <button type="button"
