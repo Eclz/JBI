@@ -38,9 +38,9 @@
 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="funding_amount" class="form-label fw-medium">Expected Funding / Endowment (GHS)</label>
+                        <label for="funding_amount" class="form-label fw-medium">Expected Funding / Endowment ({{ $systemCurrency }})</label>
                         <div class="input-group">
-                            <span class="input-group-text">₵</span>
+                                                         <span class="input-group-text">{{ $systemCurrency }}</span>
                             <input type="number" name="funding_amount" id="funding_amount" class="form-control @error('funding_amount') is-invalid @enderror" value="{{ old('funding_amount', $partnership->funding_amount) }}" step="0.01" min="0">
                         </div>
                         @error('funding_amount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror

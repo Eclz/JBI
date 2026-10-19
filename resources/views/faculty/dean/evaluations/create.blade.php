@@ -46,8 +46,13 @@
                     @error('comments')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="text-end mt-4">
-                    <button type="submit" class="btn btn-primary px-4">Save Draft</button>
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="submit" name="submit_action" value="draft" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-save me-1"></i> Save Draft
+                    </button>
+                    <button type="submit" name="submit_action" value="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-send me-1"></i> Submit for Approval
+                    </button>
                 </div>
             </form>
         </div>

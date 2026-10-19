@@ -138,12 +138,11 @@ class StudentsApplicationController extends Controller
                     }
                 }
                 $validated['program_choices'] = $choices;
-                $validated['program_id'] = $validated['program_id_1'] ?? null;
-
-                if (!empty($validated['program_id'])) {
-                    $program = Program::find($validated['program_id']);
-                    $validated['program'] = $program?->name;
-                }
+                // Student applicants are NOT automatically assigned a course/programme.
+                // The programmes applied for are saved in program_choices and reflected in admission,
+                // but the official programme must be manually assigned by staff with application permissions.
+                $validated['program_id'] = null;
+                $validated['program'] = null;
             }
 
             // Exclude temporary fields
@@ -217,7 +216,10 @@ class StudentsApplicationController extends Controller
                                   ->whereIn('status', ['pending', 'approved'])
                                   ->firstOrFail();
 
-        return view('applications.upload-payment', compact('application'));
+        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+        $feeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
+
+        return view('applications.upload-payment', compact('application', 'currencyCode', 'feeAmount'));
     }
 
     public function storePayment(Request $request, $token)

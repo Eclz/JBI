@@ -49,10 +49,13 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" name="submit_action" value="log" class="btn btn-outline-secondary">
                         <i class="bi bi-save me-1"></i> Log Issue
                     </button>
-                    <a href="{{ route('faculty.dean.student-issues.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" name="submit_action" value="escalate" class="btn btn-primary">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Log & Escalate to Administration
+                    </button>
+                    <a href="{{ route('faculty.dean.student-issues.index') }}" class="btn btn-link text-muted">Cancel</a>
                 </div>
             </form>
         </div>

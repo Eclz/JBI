@@ -39,11 +39,13 @@ class BudgetController extends Controller
         ]);
 
         $validated['requested_by'] = auth()->id();
-        $validated['status'] = 'Draft';
+        $isSubmit = $request->input('submit_action') === 'submit';
+        $validated['status'] = $isSubmit ? 'Pending Finance Approval' : 'Draft';
 
         BudgetRequest::create($validated);
 
-        return redirect()->route('faculty.dean.budgets.index')->with('success', 'Budget request created as Draft.');
+        $message = $isSubmit ? 'Budget request submitted for finance approval.' : 'Budget request created as Draft.';
+        return redirect()->route('faculty.dean.budgets.index')->with('success', $message);
     }
 
     public function show(BudgetRequest $budget)

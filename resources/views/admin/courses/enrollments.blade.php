@@ -88,6 +88,7 @@
                                         <th>Student</th>
                                         <th>Student ID</th>
                                         <th>Department</th>
+                                        <th>Unit Nature</th>
                                         <th>Enrollment Date</th>
                                         <th>Status</th>
                                         <th>Actions</th>
@@ -117,22 +118,17 @@
                                                 {{ $enrollment->student->studentProfile->department->name ?? 'N/A' }}
                                             </td>
                                             <td>
+                                                <span class="badge {{ $enrollment->getEnrollmentTypeBadgeClass() }}">
+                                                    {{ $enrollment->getEnrollmentTypeText() }}
+                                                </span>
+                                            </td>
+                                            <td>
                                                 {{ $enrollment->enrollment_date->format('M d, Y') }}
                                             </td>
                                             <td>
-                                                @switch($enrollment->status)
-                                                    @case('enrolled')
-                                                        <span class="badge bg-success">Enrolled</span>
-                                                        @break
-                                                    @case('dropped')
-                                                        <span class="badge bg-danger">Dropped</span>
-                                                        @break
-                                                    @case('completed')
-                                                        <span class="badge bg-primary">Completed</span>
-                                                        @break
-                                                    @default
-                                                        <span class="badge bg-secondary">{{ ucfirst($enrollment->status) }}</span>
-                                                @endswitch
+                                                <span class="badge {{ $enrollment->getStatusBadgeClass() }}">
+                                                    {{ $enrollment->getStatusText() }}
+                                                </span>
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">

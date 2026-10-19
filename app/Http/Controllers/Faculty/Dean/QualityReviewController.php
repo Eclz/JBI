@@ -39,11 +39,13 @@ class QualityReviewController extends Controller
         ]);
 
         $validated['dean_id'] = auth()->id();
-        $validated['status'] = 'Draft';
+        $isSubmit = $request->input('submit_action') === 'submit';
+        $validated['status'] = $isSubmit ? 'Pending Registrar Approval' : 'Draft';
 
         QualityReview::create($validated);
 
-        return redirect()->route('faculty.dean.quality.index')->with('success', 'Quality review drafted successfully.');
+        $message = $isSubmit ? 'Quality review submitted for approval successfully.' : 'Quality review drafted successfully.';
+        return redirect()->route('faculty.dean.quality.index')->with('success', $message);
     }
 
     public function show(QualityReview $quality)
@@ -104,7 +106,7 @@ class QualityReviewController extends Controller
             return back()->with('error', 'Only drafts can be submitted.');
         }
 
-        $quality->update(['status' => 'Pending Approval']);
+        $quality->update(['status' => 'Pending Registrar Approval']);
 
         return back()->with('success', 'Quality review submitted for approval.');
     }

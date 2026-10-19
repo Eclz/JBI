@@ -174,4 +174,25 @@ class StudentProfile extends Model
     {
         return $this->admission_number ?: ($this->user?->student_id ?: null);
     }
+
+    public function getFirstNameAttribute($value)
+    {
+        return $value ?: ($this->user?->first_name ?? '');
+    }
+
+    public function getLastNameAttribute($value)
+    {
+        return $value ?: ($this->user?->last_name ?? '');
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->user?->name ?: trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
+
+    public function getProfilePictureUrlAttribute()
+    {
+        return $this->user?->profile_picture_url 
+            ?: ('https://ui-avatars.com/api/?name=' . urlencode($this->name ?: 'Student') . '&color=1e3a8a&background=e0e7ff');
+    }
 }

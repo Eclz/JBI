@@ -63,4 +63,12 @@ class NotificationController extends Controller
         return redirect()->route('notifications.index')
             ->with('success', 'Notification deleted successfully.');
     }
+
+    public function deleteAll()
+    {
+        Auth::user()->notifications()->delete();
+
+        return redirect()->route('notifications.index')
+            ->with('success', 'All notifications have been deleted successfully.');
+    }
 }

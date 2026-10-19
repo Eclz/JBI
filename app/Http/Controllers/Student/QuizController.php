@@ -57,6 +57,16 @@ class QuizController extends Controller
     {
         $student = Auth::user();
 
+        // If the student already has an in-progress attempt, resume it
+        $existingAttempt = $quiz->attempts()
+            ->where('user_id', $student->id)
+            ->where('status', 'in_progress')
+            ->first();
+
+        if ($existingAttempt) {
+            return redirect()->route('student.quizzes.take', [$quiz, $existingAttempt]);
+        }
+
         if (!$quiz->canAttempt($student->id)) {
             return back()->with('error', 'You cannot attempt this quiz at this time.');
         }
@@ -108,17 +118,18 @@ class QuizController extends Controller
         }
 
         $validated = $request->validate([
-            'answers' => 'required|array',
+            'answers' => 'nullable|array',
         ]);
 
+        $submittedAnswers = $validated['answers'] ?? [];
         $score = 0;
         $totalPoints = 0;
 
         foreach ($quiz->questions as $question) {
             $totalPoints += $question->points;
-            $studentAnswer = $validated['answers'][$question->id] ?? null;
+            $studentAnswer = $submittedAnswers[$question->id] ?? null;
 
-            if ($question->checkAnswer($studentAnswer)) {
+            if ($studentAnswer !== null && $question->checkAnswer($studentAnswer)) {
                 $score += $question->points;
             }
         }

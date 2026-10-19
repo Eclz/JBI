@@ -31,14 +31,14 @@
                     <tbody>
                         @forelse($programs as $program)
                         <tr>
-                            <td><span class="badge badge-light px-2 py-1 border text-dark">{{ $program->code ?? 'N/A' }}</span></td>
-                            <td class="font-weight-bold">{{ $program->name }}</td>
+                            <td><span class="badge bg-light text-dark px-2 py-1 border">{{ $program->code ?? 'N/A' }}</span></td>
+                            <td class="fw-bold">{{ $program->name }}</td>
                             <td>{{ $program->level->name ?? 'N/A' }}</td>
                             <td>
                                 @if($program->is_active ?? true)
-                                    <span class="badge badge-success px-2 py-1">Active</span>
+                                    <span class="badge bg-success px-2 py-1">Active</span>
                                 @else
-                                    <span class="badge badge-secondary px-2 py-1">Inactive</span>
+                                    <span class="badge bg-secondary px-2 py-1">Inactive</span>
                                 @endif
                             </td>
                         </tr>

@@ -97,6 +97,15 @@ class Course extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function getFacultyId(): ?int
+    {
+        return $this->department?->faculty_id;
+    }
+
+    public function getFacultyName(): ?string
+    {
+        return $this->department?->faculty?->name;
+    }
 
     /**
      * Get the program of the course.

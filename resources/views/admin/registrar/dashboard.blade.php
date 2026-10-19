@@ -7,13 +7,16 @@
         <div class="col-12">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                 <div class="card-body p-4 text-white">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <div>
                             <h3 class="mb-1" style="font-weight: 600;">Registrar Dashboard</h3>
                             <p class="mb-0" style="color: rgba(255, 255, 255, 0.85);">University-wide academic and student administration overview.</p>
                         </div>
-                        <div class="text-end">
-                            <i class="bi bi-bank2 display-4" style="color: rgba(255, 255, 255, 0.2);"></i>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ route('admin.registrar.grading-criteria') }}" class="btn btn-light fw-bold text-primary shadow-sm">
+                                <i class="bi bi-award me-1"></i>Grading Criteria
+                            </a>
+                            <i class="bi bi-bank2 display-4 d-none d-md-inline" style="color: rgba(255, 255, 255, 0.2);"></i>
                         </div>
                     </div>
                 </div>
@@ -88,13 +91,27 @@
         </div>
     </div>
 
+    @php($studentView = request()->query('student_view', 'all'))
     <div class="row g-4">
         <!-- Recent Students -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Recently Registered Students</h5>
+                    <h5 class="mb-0 fw-bold">Student Management</h5>
                     <a href="{{ route('admin.students.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-header bg-white border-top py-2">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link {{ $studentView === 'all' ? 'active' : '' }}" href="{{ route('admin.registrar.dashboard', ['student_view' => 'all']) }}">All</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ $studentView === 'active' ? 'active' : '' }}" href="{{ route('admin.registrar.dashboard', ['student_view' => 'active']) }}">Active students</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ $studentView === 'inactive' ? 'active' : '' }}" href="{{ route('admin.registrar.dashboard', ['student_view' => 'inactive']) }}">Inactive students</a>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -110,39 +127,37 @@
                             </thead>
                             <tbody>
                                 @forelse($recentStudents as $student)
-                                    <tr>
-                                        <td>
-                                            <span class="badge bg-secondary">{{ $student->admission_number }}</span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm me-3 bg-primary bg-opacity-10 text-whiterounded-circle d-flex justify-content-center align-items-center" style="width: 32px; height: 32px;">
-                                                    {{ strtoupper(substr($student->first_name, 0, 1)) }}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ $student->admission_number }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-3">
+                                                        <img src="{{ $student->profile_picture_url }}"
+                                                             alt="{{ $student->name }}"
+                                                             class="rounded-circle object-fit-cover shadow-sm"
+                                                             style="width: 36px; height: 36px;"
+                                                             onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($student->name ?: 'Student') }}&color=1e3a8a&background=e0e7ff';">
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold">{{ $student->name }}</div>
+                                                        <small class="text-muted">{{ $student->user->email ?? '' }}</small>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div class="fw-bold">{{ $student->first_name }} {{ $student->last_name }}</div>
-                                                    <small class="text-muted">{{ $student->user->email ?? '' }}</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ $student->program->name ?? 'N/A' }}</td>
-                                        <td>
-                                            @if($student->is_active)
-                                                <span class="badge bg-success">Active</span>
-                                            @else
-                                                <span class="badge bg-danger">Inactive</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('admin.students.show', $student->id) }}" class="btn btn-sm btn-light text-primary">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">No students found.</td>
-                                    </tr>
+                                            </td>
+                                            <td>{{ $student->program->name ?? 'N/A' }}</td>
+                                            <td><span class="badge bg-{{ $student->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($student->status) }}</span></td>
+                                            <td>
+                                                <a href="{{ route('admin.students.show', $student->user_id ?? $student->user?->id ?? $student->id) }}" class="btn btn-sm btn-light text-primary" title="View Student">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">No students found.</td>
+                                        </tr>
                                 @endforelse
                             </tbody>
                         </table>

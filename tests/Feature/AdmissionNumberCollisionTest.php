@@ -84,6 +84,8 @@ class AdmissionNumberCollisionTest extends TestCase
             'program' => $program->name,
             'program_id' => $program->id,
             'admission_number' => 'CSC'.now()->year.'0001',
+            'payment_status' => 'verified',
+            'payment_verified_at' => now(),
             'status' => 'pending',
         ]);
 

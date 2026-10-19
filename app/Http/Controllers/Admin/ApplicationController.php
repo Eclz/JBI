@@ -27,7 +27,7 @@ class ApplicationController extends Controller
     {
         $this->middleware(['auth', 'role:admin']);
         $this->middleware('permission:applications,view')->only(['index', 'show']);
-        $this->middleware('permission:applications,edit')->only(['approve', 'reject', 'bulkApprove', 'updateProgram', 'verifyPayment']);
+        $this->middleware('permission:applications,edit')->only(['approve', 'reject', 'bulkApprove', 'updateProgram', 'verifyPayment', 'verifyDocuments']);
     }
 
     public function index(Request $request)
@@ -111,7 +111,37 @@ class ApplicationController extends Controller
             $prog->setAttribute('is_full', ($capacity - $enrolledCount) <= 0);
         }
 
-        return view('admin.applications.show', compact('application', 'approvalReadiness', 'programChoices', 'allPrograms'));
+        $isStudent = ($application->type === 'student');
+        $step1Complete = !$isStudent || $application->isPaymentApproved();
+        $step2Complete = !$isStudent || ($step1Complete && $application->areDocumentsVerified());
+        $step3Complete = !$isStudent || ($step1Complete && $step2Complete && $application->hasAssignedCourse());
+        $step4Complete = $application->status === 'admitted';
+        $canConfirmAdmission = $step1Complete && $step2Complete && $step3Complete;
+
+        $currentStep = 1;
+        if ($step4Complete || $canConfirmAdmission) {
+            $currentStep = 4;
+        } elseif ($step2Complete) {
+            $currentStep = 3;
+        } elseif ($step1Complete) {
+            $currentStep = 2;
+        } else {
+            $currentStep = 1;
+        }
+
+        return view('admin.applications.show', compact(
+            'application', 
+            'approvalReadiness', 
+            'programChoices', 
+            'allPrograms',
+            'isStudent',
+            'step1Complete',
+            'step2Complete',
+            'step3Complete',
+            'step4Complete',
+            'canConfirmAdmission',
+            'currentStep'
+        ));
     }
 
     public function updateProgram(Request $request, $id)
@@ -122,6 +152,16 @@ class ApplicationController extends Controller
         ]);
 
         $application = Application::findOrFail($id);
+
+        if ($application->type === 'student') {
+            if (!$application->isPaymentApproved()) {
+                return redirect()->back()->with('error', 'Strict Admission Order: Admission fee payment must be received and approved (Step 1) before assigning a programme.');
+            }
+            if (!$application->areDocumentsVerified()) {
+                return redirect()->back()->with('error', 'Strict Admission Order: Applicant documents must be previewed and verified against application details (Step 2) before assigning a programme.');
+            }
+        }
+
         $program = Program::with('department')->findOrFail($request->program_id);
 
         $capacity = $program->capacity ?? 50;
@@ -267,20 +307,27 @@ class ApplicationController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:1000',
+            'offline_receipt' => 'nullable|string|max:100',
+            'confirm_manual_payment' => 'nullable|boolean',
         ]);
 
         $application = Application::findOrFail($id);
 
-        if (!$application->payment_proof && $application->payment_status !== 'uploaded') {
-            return redirect()->back()->with('error', 'No payment proof has been uploaded for this application yet.');
+        $hasProof = (bool) $application->payment_proof || $application->payment_status === 'uploaded';
+        $hasManualConfirm = $request->filled('offline_receipt') || $request->boolean('confirm_manual_payment');
+
+        if (!$hasProof && !$hasManualConfirm) {
+            return redirect()->back()->with('error', 'No payment proof has been uploaded for this application yet. Provide an offline receipt/reference to confirm payment.');
         }
 
         DB::beginTransaction();
         try {
+            $paymentRef = $application->payment_ref ?: ($request->offline_receipt ?: Application::generatePaymentRef());
             $application->update([
                 'payment_status' => 'verified',
                 'payment_verified_at' => now(),
                 'payment_verified_by' => auth()->id(),
+                'payment_ref' => $paymentRef,
                 'review_notes' => $request->notes ?: $application->review_notes,
             ]);
 
@@ -291,7 +338,7 @@ class ApplicationController extends Controller
                     'user_id' => $user->id,
                     'type' => 'payment',
                     'title' => 'Admission Fee Payment Verified',
-                    'message' => 'Your payment receipt has been verified by the admissions office. You can now proceed to admission.',
+                    'message' => 'Your payment receipt (Ref: ' . $paymentRef . ') has been verified by the admissions office. You can now proceed to admission.',
                     'priority' => 'high',
                 ]);
             }
@@ -302,10 +349,50 @@ class ApplicationController extends Controller
             DB::commit();
 
             return redirect()->back()
-                           ->with('success', 'Payment verified and confirmed successfully! You can now proceed to Approve & Admit the applicant.');
+                           ->with('success', 'Payment verified and confirmed successfully! You can now proceed to Step 2: Document Preview.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Failed to verify payment: ' . $e->getMessage());
+        }
+    }
+
+    public function verifyDocuments(Request $request, $id)
+    {
+        $request->validate([
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $application = Application::findOrFail($id);
+
+        if ($application->type === 'student' && !$application->isPaymentApproved()) {
+            return redirect()->back()->with('error', 'Strict Admission Order: Admission fee payment must be received and approved (Step 1) before previewing and verifying applicant documents.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $application->update([
+                'documents_verified_at' => now(),
+                'documents_verified_by' => auth()->id(),
+                'documents_verified_notes' => $request->notes ?: $application->documents_verified_notes,
+            ]);
+
+            $user = User::where('email', $application->email)->first();
+            if ($user) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'type' => 'application',
+                    'title' => 'Application Documents Verified',
+                    'message' => 'Your application credentials and supporting documents have been verified against your profile details by the Admissions Office.',
+                    'priority' => 'high',
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Applicant documents have been previewed and verified successfully against application details! You may now proceed to Step 3: Programme Assignment.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to verify documents: ' . $e->getMessage());
         }
     }
 
@@ -414,12 +501,29 @@ class ApplicationController extends Controller
 
     private function performApproval(Application $application, ?string $notes, bool $forceApprove = false): array
     {
-        $readiness = $this->buildApprovalReadiness($application);
-        if ($application->type === 'student' && !$readiness['ready'] && !$forceApprove) {
-            return [
-                'ok' => false,
-                'message' => 'Application is missing required approval details: ' . implode(', ', $readiness['missing']) . '.',
-            ];
+        $isStudent = ($application->type === 'student');
+
+        if ($isStudent) {
+            if (!$application->isPaymentApproved()) {
+                return [
+                    'ok' => false,
+                    'message' => 'Strict Admission Order: Application cannot be approved without verified fee payment (Step 1).',
+                ];
+            }
+
+            if (!$application->areDocumentsVerified() && !$forceApprove) {
+                return [
+                    'ok' => false,
+                    'message' => 'Strict Admission Order: Application documents must be previewed and verified against application details (Step 2) before admission confirmation.',
+                ];
+            }
+
+            if (!$application->hasAssignedCourse()) {
+                return [
+                    'ok' => false,
+                    'message' => 'Strict Admission Order: Application cannot be approved without an assigned university programme (Step 3).',
+                ];
+            }
         }
 
         DB::beginTransaction();
@@ -445,6 +549,8 @@ class ApplicationController extends Controller
                 'payment_status' => 'verified',
                 'payment_verified_at' => $application->payment_verified_at ?: now(),
                 'payment_verified_by' => $application->payment_verified_by ?: auth()->id(),
+                'documents_verified_at' => $application->documents_verified_at ?: now(),
+                'documents_verified_by' => $application->documents_verified_by ?: auth()->id(),
                 'admitted_at' => now(),
             ]);
 
@@ -479,12 +585,17 @@ class ApplicationController extends Controller
 
     private function buildApprovalReadiness(Application $application): array
     {
+        $isStudent = ($application->type === 'student');
+        $isPaymentApproved = !$isStudent || $application->isPaymentApproved();
+        $areDocumentsVerified = !$isStudent || $application->areDocumentsVerified();
+        $hasCourseAssigned = !$isStudent || $application->hasAssignedCourse();
+
         $weightedChecks = [
-            ['label' => 'Applicant details', 'weight' => 20, 'passed' => !empty($application->first_name) && !empty($application->last_name)],
-            ['label' => 'Contact details', 'weight' => 20, 'passed' => !empty($application->email) && !empty($application->phone) && !empty($application->address)],
-            ['label' => 'Program selected', 'weight' => 25, 'passed' => $application->type !== 'student' || !empty($application->program_id) || !empty($application->program)],
-            ['label' => 'Supporting documents', 'weight' => 20, 'passed' => !empty($application->documents) && is_array($application->documents)],
-            ['label' => 'Prior education info', 'weight' => 15, 'passed' => $application->type !== 'student' || !empty($application->previous_school) || !empty($application->previous_qualification)],
+            ['label' => 'Step 1: Admission fee payment verified & approved', 'weight' => 30, 'passed' => $isPaymentApproved, 'strict' => true],
+            ['label' => 'Step 2: Supporting documents previewed & verified against details', 'weight' => 25, 'passed' => $areDocumentsVerified, 'strict' => true],
+            ['label' => 'Step 3: University programme assigned by admissions', 'weight' => 25, 'passed' => $hasCourseAssigned, 'strict' => true],
+            ['label' => 'Applicant personal identity details', 'weight' => 10, 'passed' => !empty($application->first_name) && !empty($application->last_name), 'strict' => false],
+            ['label' => 'Contact details (email, phone, address)', 'weight' => 10, 'passed' => !empty($application->email) && !empty($application->phone) && !empty($application->address), 'strict' => false],
         ];
 
         $totalWeight = collect($weightedChecks)->sum('weight');
@@ -496,12 +607,21 @@ class ApplicationController extends Controller
             ->values()
             ->all();
 
+        $strictMissing = collect($weightedChecks)
+            ->filter(fn ($row) => !empty($row['strict']) && !$row['passed'])
+            ->pluck('label')
+            ->values()
+            ->all();
+
         $checks = collect($weightedChecks)->mapWithKeys(function ($row) {
             return [$row['label'] => $row['passed']];
         })->all();
 
         return [
-            'ready' => empty($missing) || $score >= 80,
+            'ready' => empty($strictMissing) && (empty($missing) || $score >= 80),
+            'has_course_assigned' => $hasCourseAssigned,
+            'is_payment_approved' => $isPaymentApproved,
+            'strict_missing' => $strictMissing,
             'score' => $score,
             'missing' => $missing,
             'checks' => $checks,

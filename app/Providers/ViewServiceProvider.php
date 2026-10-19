@@ -30,10 +30,8 @@ class ViewServiceProvider extends ServiceProvider
 
         try {
             View::share('departments', Department::where('is_active', true)->get());
-            View::share('currencyCode', SystemSetting::getSetting('default_currency', 'USD'));
         } catch (\Throwable $e) {
             View::share('departments', collect());
-            View::share('currencyCode', 'USD');
         }
 
         // Share notifications with all views

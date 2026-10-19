@@ -18,6 +18,58 @@
                 </div>
             </div>
 
+            {{-- Examination Clearance & Permit Status Banner --}}
+            @if(isset($isTuitionCleared) && $isTuitionCleared)
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 5px solid #16a34a !important;">
+                    <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 52px; height: 52px; min-width: 52px;">
+                                <i class="bi bi-shield-check fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-success mb-1">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Financial Clearance Complete &bull; Qualified for Examinations
+                                </h5>
+                                <p class="mb-0 text-muted small">
+                                    Your tuition account balance is <strong>{{ $currencyCode }} 0.00 (Zero Balance)</strong>. You meet all financial requirements to sit for university semester examinations. Your official Examination Clearance Permit has been validated and issued.
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="{{ route('student.exams.permit') }}" class="btn btn-success fw-bold px-4 py-2 shadow-sm d-inline-flex align-items-center" style="border-radius: 8px;">
+                                <i class="bi bi-file-earmark-check-fill me-2 fs-5"></i>Print / Download Exam Permit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%); border-left: 5px solid #dc2626 !important;">
+                    <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 52px; height: 52px; min-width: 52px;">
+                                <i class="bi bi-shield-x fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-danger mb-1">
+                                    <i class="bi bi-exclamation-octagon-fill me-1"></i>Exam Qualification Notice: Tuition Clearance Required
+                                </h5>
+                                <p class="mb-0 text-dark small">
+                                    You currently have an uncleared tuition balance of <strong class="text-danger fs-6">{{ $currencyCode }} {{ number_format($tuitionBalance ?? 0, 2) }}</strong>. Under university regulations, candidates who have not completed tuition payments do not qualify to sit for examinations and cannot generate an Examination Permit.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('student.fees.index') }}" class="btn btn-danger fw-bold px-3 py-2 shadow-sm" style="border-radius: 8px;">
+                                <i class="bi bi-credit-card-fill me-1.5"></i>Pay Tuition in Fee Portal
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary px-3 py-2" disabled style="border-radius: 8px;" title="Complete tuition payment to unlock permit">
+                                <i class="bi bi-lock-fill me-1"></i>Permit Locked
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Active Exams --}}
             @if($activeExams->count() > 0)
                 <div class="alert alert-warning border-warning">
@@ -62,7 +114,16 @@
                                         </div>
                                     </div>
 
-                                    @if($attempt)
+                                    @if(isset($isTuitionCleared) && !$isTuitionCleared)
+                                        <button class="btn btn-outline-danger w-100 fw-bold" disabled>
+                                            <i class="bi bi-lock-fill me-1"></i> Locked (Tuition Clearance Required)
+                                        </button>
+                                        <div class="text-center mt-1">
+                                            <a href="{{ route('student.fees.index') }}" class="text-danger small text-decoration-none">
+                                                <i class="bi bi-credit-card me-1"></i>Pay balance to unlock
+                                            </a>
+                                        </div>
+                                    @elseif($attempt)
                                         @if($attempt->status === 'in_progress')
                                             <a href="{{ route('student.exams.take', $exam) }}" class="btn btn-warning w-100">
                                                 <i class="bi bi-play-circle me-1"></i> Resume Exam
@@ -148,6 +209,77 @@
                                     </div>
                                 </div>
                             @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Closed Examinations --}}
+            @if(isset($closedExams) && $closedExams->count() > 0)
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                        <h5 class="card-title mb-0 text-dark fw-bold">
+                            <i class="bi bi-calendar-x text-danger me-2"></i>
+                            Closed Examinations
+                        </h5>
+                        <span class="badge bg-secondary">{{ $closedExams->count() }} Closed</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-dark">Exam</th>
+                                        <th class="text-dark">Course</th>
+                                        <th class="text-dark">Ended At</th>
+                                        <th class="text-dark">Mode</th>
+                                        <th class="text-dark">Status</th>
+                                        <th class="text-dark">Your Attempt</th>
+                                        <th class="text-dark text-end pe-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($closedExams as $exam)
+                                        @php
+                                            $attempt = $exam->attempts->first();
+                                        @endphp
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold text-dark">{{ $exam->title }}</div>
+                                                <small class="text-muted">{{ ucfirst($exam->exam_type) }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="text-dark">{{ $exam->course->code }}</div>
+                                                <small class="text-muted">{{ $exam->course->name }}</small>
+                                            </td>
+                                            <td class="text-muted">
+                                                {{ $exam->end_time ? $exam->end_time->format('M d, Y h:i A') : '—' }}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ ucfirst($exam->exam_mode ?? 'online') }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-danger">Closed / Ended</span>
+                                            </td>
+                                            <td>
+                                                @if($attempt && in_array($attempt->status, ['submitted', 'graded']))
+                                                    <span class="badge bg-success">Attempted</span>
+                                                    @if($attempt->status === 'graded')
+                                                        <small class="d-block text-muted">{{ $attempt->marks_obtained }}/{{ $exam->total_marks }}</small>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-secondary">Not Attempted</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye me-1"></i> View Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

@@ -171,16 +171,16 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <div class="small text-muted mb-1">Status</div>
-                            @if($submission->status == 'graded')
+                            @if($submission->effective_status === 'graded')
                                 <span class="badge bg-success">
                                     <i class="bi bi-check-circle me-1"></i>Graded
                                 </span>
-                            @elseif($submission->status == 'submitted')
-                                <span class="badge bg-info text-white">
-                                    <i class="bi bi-clock me-1"></i>Submitted
+                            @elseif($submission->effective_status === 'ungraded')
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-clock me-1"></i>Ungraded
                                 </span>
                             @else
-                                <span class="badge bg-warning text-dark">
+                                <span class="badge bg-secondary">
                                     <i class="bi bi-file-earmark me-1"></i>Draft
                                 </span>
                             @endif

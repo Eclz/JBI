@@ -98,72 +98,13 @@
                                         <small class="text-muted">{{ $t->created_at->format('M d, Y H:i') }}</small>
                                     </td>
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#adminTicketModal{{ $t->id }}">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#adminTicketModal{{ $t->id }}">
                                             <i class="bi bi-pencil-square me-1"></i>Manage
                                         </button>
                                     </td>
                                 </tr>
-
-                                <!-- Staff Manage Modal -->
-                                <div class="modal fade" id="adminTicketModal{{ $t->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                                        <div class="modal-content border-0 shadow">
-                                            <form action="{{ route('support.update', $t) }}" method="POST">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="modal-header bg-primary text-white py-3">
-                                                    <h5 class="modal-title fw-bold">
-                                                        <i class="bi bi-ticket-detailed me-2"></i>Ticket {{ $t->ticket_number }}: {{ $t->subject }}
-                                                    </h5>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body p-4">
-                                                    <div class="row g-3 mb-3">
-                                                        <div class="col-md-6">
-                                                            <small class="text-muted d-block text-uppercase">Submitter</small>
-                                                            <strong>{{ $t->user->full_name ?? 'User' }} ({{ $t->user->email ?? 'N/A' }})</strong>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <small class="text-muted d-block text-uppercase">Category</small>
-                                                            <strong>{{ ucfirst($t->category) }}</strong>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <small class="text-muted d-block text-uppercase">Priority</small>
-                                                            <span class="badge bg-{{ $t->priority_badge }} text-uppercase">{{ $t->priority }}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="card bg-light border-0 p-3 mb-3">
-                                                        <small class="text-muted fw-bold text-uppercase mb-1">Original User Inquiry:</small>
-                                                        <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ $t->message }}</p>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold">Update Status <span class="text-danger">*</span></label>
-                                                        <select name="status" class="form-select" required>
-                                                            <option value="open" {{ $t->status === 'open' ? 'selected' : '' }}>Open</option>
-                                                            <option value="in_progress" {{ $t->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                                            <option value="resolved" {{ $t->status === 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                                            <option value="closed" {{ $t->status === 'closed' ? 'selected' : '' }}>Closed</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold">Staff Resolution Notes / User Reply</label>
-                                                        <textarea name="admin_notes" class="form-control" rows="4" placeholder="Provide notes on actions taken or reply directly to the user...">{{ old('admin_notes', $t->admin_notes) }}</textarea>
-                                                        <small class="text-muted">These notes will be recorded on the ticket and notified to the submitter.</small>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer bg-light py-2">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-primary fw-bold">
-                                                        <i class="bi bi-save me-1"></i>Save & Update Ticket
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                             @empty
                                 <tr>
                                     <td colspan="7" class="text-center py-4 text-muted">
@@ -174,6 +115,7 @@
                         </tbody>
                     </table>
                 </div>
+
                 @if($adminTickets->hasPages())
                     <div class="p-3 border-top">
                         {{ $adminTickets->links() }}
@@ -227,61 +169,13 @@
                                     <small class="text-muted">{{ $ticket->created_at->format('M d, Y H:i') }}</small>
                                 </td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#userTicketModal{{ $ticket->id }}">
+                                    <button type="button" class="btn btn-sm btn-outline-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#userTicketModal{{ $ticket->id }}">
                                         <i class="bi bi-eye me-1"></i>View
                                     </button>
                                 </td>
                             </tr>
-
-                            <!-- User View Modal -->
-                            <div class="modal fade" id="userTicketModal{{ $ticket->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow">
-                                        <div class="modal-header bg-light py-3 border-bottom">
-                                            <h5 class="modal-title fw-bold text-dark">
-                                                <i class="bi bi-receipt me-2"></i>Ticket {{ $ticket->ticket_number }}
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-3">
-                                                <h6 class="fw-bold text-primary mb-1">{{ $ticket->subject }}</h6>
-                                                <div class="d-flex gap-2 align-items-center">
-                                                    <span class="badge bg-{{ $ticket->status_badge }}">{{ strtoupper(str_replace('_', ' ', $ticket->status)) }}</span>
-                                                    <span class="badge bg-{{ $ticket->priority_badge }}">{{ strtoupper($ticket->priority) }} PRIORITY</span>
-                                                    <small class="text-muted">{{ $ticket->created_at->format('M d, Y \a\t h:i A') }}</small>
-                                                </div>
-                                            </div>
-
-                                            <div class="card bg-light border-0 p-3 mb-3">
-                                                <small class="text-muted fw-bold text-uppercase mb-1">Your Inquiry:</small>
-                                                <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ $ticket->message }}</p>
-                                            </div>
-
-                                            @if($ticket->admin_notes)
-                                                <div class="card border border-success border-opacity-25 bg-success bg-opacity-10 p-3">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <small class="text-success fw-bold text-uppercase">
-                                                            <i class="bi bi-chat-left-dots-fill me-1"></i>Official Support Resolution / Response:
-                                                        </small>
-                                                        @if($ticket->resolved_at)
-                                                            <small class="text-muted">{{ $ticket->resolved_at->format('M d, Y') }}</small>
-                                                        @endif
-                                                    </div>
-                                                    <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ $ticket->admin_notes }}</p>
-                                                </div>
-                                            @else
-                                                <div class="alert alert-info py-2 px-3 small mb-0">
-                                                    <i class="bi bi-hourglass-split me-1"></i>Our support desk is currently evaluating your request. You will receive an update once reviewed.
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="modal-footer bg-light py-2">
-                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-4 text-muted">
@@ -292,6 +186,7 @@
                     </tbody>
                 </table>
             </div>
+
             @if($myTickets->hasPages())
                 <div class="p-3 border-top">
                     {{ $myTickets->links() }}
@@ -498,4 +393,126 @@
         </div>
     </div>
 </div>
+
+{{-- ============================================================
+     ALL MODALS MUST BE OUTSIDE ANY CARD / CONTAINER
+     This prevents the fixed-position flicker & jumping
+     ============================================================ --}}
+
+@if($isAdminOrStaff && isset($adminTickets))
+    @foreach($adminTickets as $t)
+        <div class="modal fade" id="adminTicketModal{{ $t->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <form action="{{ route('support.update', $t) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-header bg-primary text-white py-3">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-ticket-detailed me-2"></i>Ticket {{ $t->ticket_number }}: {{ $t->subject }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block text-uppercase">Submitter</small>
+                                    <strong>{{ $t->user->full_name ?? 'User' }} ({{ $t->user->email ?? 'N/A' }})</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted d-block text-uppercase">Category</small>
+                                    <strong>{{ ucfirst($t->category) }}</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted d-block text-uppercase">Priority</small>
+                                    <span class="badge bg-{{ $t->priority_badge }} text-uppercase">{{ $t->priority }}</span>
+                                </div>
+                            </div>
+
+                            <div class="card bg-light border-0 p-3 mb-3">
+                                <small class="text-muted fw-bold text-uppercase mb-1">Original User Inquiry:</small>
+                                <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ $t->message }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Update Status <span class="text-danger">*</span></label>
+                                <select name="status" class="form-select" required>
+                                    <option value="open" {{ $t->status === 'open' ? 'selected' : '' }}>Open</option>
+                                    <option value="in_progress" {{ $t->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                    <option value="resolved" {{ $t->status === 'resolved' ? 'selected' : '' }}>Resolved</option>
+                                    <option value="closed" {{ $t->status === 'closed' ? 'selected' : '' }}>Closed</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Staff Resolution Notes / User Reply</label>
+                                <textarea name="admin_notes" class="form-control" rows="4"
+                                          placeholder="Provide notes on actions taken or reply directly to the user...">{{ old('admin_notes', $t->admin_notes) }}</textarea>
+                                <small class="text-muted">These notes will be recorded on the ticket and notified to the submitter.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light py-2">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary fw-bold">
+                                <i class="bi bi-save me-1"></i>Save & Update Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+@endif
+
+@foreach($myTickets as $ticket)
+    <div class="modal fade" id="userTicketModal{{ $ticket->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark">
+                        <i class="bi bi-receipt me-2"></i>Ticket {{ $ticket->ticket_number }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-primary mb-1">{{ $ticket->subject }}</h6>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <span class="badge bg-{{ $ticket->status_badge }}">{{ strtoupper(str_replace('_', ' ', $ticket->status)) }}</span>
+                            <span class="badge bg-{{ $ticket->priority_badge }}">{{ strtoupper($ticket->priority) }} PRIORITY</span>
+                            <small class="text-muted">{{ $ticket->created_at->format('M d, Y \a\t h:i A') }}</small>
+                        </div>
+                    </div>
+
+                    <div class="card bg-light border-0 p-3 mb-3">
+                        <small class="text-muted fw-bold text-uppercase mb-1">Your Inquiry:</small>
+                        <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ $ticket->message }}</p>
+                    </div>
+
+                    @if($ticket->admin_notes)
+                        <div class="card border border-success border-opacity-25 bg-success bg-opacity-10 p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-success fw-bold text-uppercase">
+                                    <i class="bi bi-chat-left-dots-fill me-1"></i>Official Support Resolution / Response:
+                                </small>
+                                @if($ticket->resolved_at)
+                                    <small class="text-muted">{{ $ticket->resolved_at->format('M d, Y') }}</small>
+                                @endif
+                            </div>
+                            <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ $ticket->admin_notes }}</p>
+                        </div>
+                    @else
+                        <div class="alert alert-info py-2 px-3 small mb-0">
+                            <i class="bi bi-hourglass-split me-1"></i>Our support desk is currently evaluating your request. You will receive an update once reviewed.
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endforeach
+
 @endsection

@@ -12,6 +12,12 @@
             <p class="text-muted mb-0">Allocate, monitor, and manage annual operational budgets for academic and administrative departments</p>
         </div>
         <div class="d-flex gap-2">
+            <form action="{{ route('admin.finance.budgets.reconcile') }}" method="POST" class="d-inline" onsubmit="return confirm('Recalculate and reconcile all department budgets with recorded expenses?');">
+                @csrf
+                <button type="submit" class="btn btn-outline-primary fw-bold" title="Reconcile department budgets with expenses">
+                    <i class="bi bi-arrow-repeat me-1"></i>Reconcile with Expenses
+                </button>
+            </form>
             <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                 <i class="bi bi-plus-lg me-1"></i>Allocate New Budget
             </button>

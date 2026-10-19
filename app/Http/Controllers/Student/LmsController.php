@@ -64,6 +64,7 @@ class LmsController extends Controller
             ->whereNotNull('due_date')
             ->whereBetween('due_date', [$now, $dueWindowEnd])
             ->get()
+            ->toBase()
             ->map(function ($assignment) {
                 return [
                     'type' => 'Assignment',
@@ -80,6 +81,7 @@ class LmsController extends Controller
             ->whereNotNull('start_time')
             ->whereBetween('start_time', [$now, $dueWindowEnd])
             ->get()
+            ->toBase()
             ->map(function ($quiz) {
                 return [
                     'type' => 'Quiz',
@@ -96,6 +98,7 @@ class LmsController extends Controller
             ->whereNotNull('start_time')
             ->whereBetween('start_time', [$now, $dueWindowEnd])
             ->get()
+            ->toBase()
             ->map(function ($exam) {
                 return [
                     'type' => 'Exam',
@@ -106,9 +109,10 @@ class LmsController extends Controller
                 ];
             });
 
-        $upcomingItems = $upcomingAssignments
-            ->merge($upcomingQuizzes)
-            ->merge($upcomingExams)
+        $upcomingItems = collect()
+            ->concat($upcomingAssignments)
+            ->concat($upcomingQuizzes)
+            ->concat($upcomingExams)
             ->sortBy('due_at')
             ->values();
 

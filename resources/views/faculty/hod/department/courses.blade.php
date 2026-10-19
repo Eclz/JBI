@@ -33,8 +33,8 @@
                     <tbody>
                         @forelse($courses as $course)
                         <tr>
-                            <td><span class="badge badge-light px-2 py-1 border text-dark">{{ $course->code ?? 'N/A' }}</span></td>
-                            <td class="font-weight-bold">
+                            <td><span class="badge bg-light text-dark px-2 py-1 border">{{ $course->code ?? 'N/A' }}</span></td>
+                            <td class="fw-bold">
                                 <a href="{{ route('faculty.courses.show', $course) }}" class="text-decoration-none">
                                     {{ $course->name }}
                                 </a>
@@ -43,20 +43,20 @@
                             <td>
                                 @if($course->instructor)
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-sm mr-2" style="width: 30px; height: 30px; border-radius: 50%; background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                                        <div class="avatar-sm me-2" style="width: 30px; height: 30px; border-radius: 50%; background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
                                             <span style="font-size: 12px; font-weight: bold; color: #6c757d;">{{ substr($course->instructor->name, 0, 2) }}</span>
                                         </div>
                                         <span>{{ $course->instructor->name }}</span>
                                     </div>
                                 @else
-                                    <span class="text-danger small"><i class="fas fa-exclamation-triangle mr-1"></i>Unassigned</span>
+                                    <span class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Unassigned</span>
                                 @endif
                             </td>
                             <td>
                                 @if($course->is_active ?? true)
-                                    <span class="badge badge-success px-2 py-1">Active</span>
+                                    <span class="badge bg-success px-2 py-1">Active</span>
                                 @else
-                                    <span class="badge badge-secondary px-2 py-1">Inactive</span>
+                                    <span class="badge bg-secondary px-2 py-1">Inactive</span>
                                 @endif
                             </td>
                             <td>

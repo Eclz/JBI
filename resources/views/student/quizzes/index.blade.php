@@ -147,16 +147,24 @@
                                     @endphp
                                     <span class="text-muted">{{ $attempts }}/{{ $quiz->max_attempts }}</span>
                                 </td>
-                                <td style="padding: 1rem; text-align: center;">
-                                    @if($quiz->canAttempt(auth()->id()))
+                                    @php
+                                        $inProgressAttempt = $quiz->attempts()->where('user_id', auth()->id())->where('status', 'in_progress')->first();
+                                    @endphp
+                                    @if($inProgressAttempt)
+                                        <a href="{{ route('student.quizzes.take', [$quiz, $inProgressAttempt]) }}"
+                                           class="btn btn-sm btn-warning">
+                                            <i class="bi bi-arrow-repeat me-1"></i>Continue Attempt
+                                        </a>
+                                    @elseif($quiz->canAttempt(auth()->id()))
                                         <a href="{{ route('student.quizzes.show', $quiz) }}"
                                            class="btn btn-sm btn-primary">
                                             <i class="bi bi-play-fill me-1"></i>Start Quiz
                                         </a>
                                     @else
-                                        <button class="btn btn-sm btn-secondary" disabled>
-                                            <i class="bi bi-lock-fill me-1"></i>Unavailable
-                                        </button>
+                                        <a href="{{ route('student.quizzes.show', $quiz) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
                                     @endif
                                 </td>
                             </tr>

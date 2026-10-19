@@ -11,11 +11,22 @@
             </h1>
             <p class="text-muted mb-0">Stay updated with your activity</p>
         </div>
-        @if(auth()->user()->unreadNotifications->count() > 0)
-            <button class="btn btn-outline-primary" onclick="markAllAsRead()">
-                <i class="bi bi-check-all me-2"></i>Mark All as Read
-            </button>
-        @endif
+        <div class="d-flex align-items-center gap-2">
+            @if(auth()->user()->unreadNotifications->count() > 0)
+                <button class="btn btn-outline-primary" onclick="markAllAsRead()">
+                    <i class="bi bi-check-all me-1"></i>Mark All as Read
+                </button>
+            @endif
+            @if($notifications->total() > 0)
+                <form action="{{ route('notifications.delete-all') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete ALL notifications? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash3 me-1"></i>Delete All Notifications
+                    </button>
+                </form>
+            @endif
+        </div>
     </div>
 
     @if(session('success'))

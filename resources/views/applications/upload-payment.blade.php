@@ -18,7 +18,7 @@
 
                     <div class="alert alert-info">
                         <h6><i class="bi bi-info-circle me-2"></i>Admission Fee Payment Details</h6>
-                        <p><strong>Amount to Pay:</strong> 50,000 {{ $currencyCode }}</p>
+                        <p><strong>Amount to Pay:</strong> {{ $currencyCode }} {{ number_format($feeAmount ?? 150, 2) }}</p>
                         <p class="mb-0"><strong>Bank Details:</strong></p>
                         <ul class="mb-0">
                             <li>Bank Name: Stanbic Bank Uganda</li>
@@ -53,7 +53,7 @@
                                 Please ensure your payment receipt clearly shows:
                                 <ul class="mb-0 mt-2">
                                     <li>Transaction date and time</li>
-                                    <li>Amount paid (50,000 {{ $currencyCode }})</li>
+                                    <li>Amount paid ({{ $currencyCode }} {{ number_format($feeAmount ?? 150, 2) }})</li>
                                     <li>Reference number: {{ $application->application_number }}</li>
                                     <li>Bank details</li>
                                 </ul>

@@ -64,10 +64,13 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" name="submit_action" value="draft" class="btn btn-outline-secondary">
                         <i class="bi bi-save me-1"></i> Save as Draft
                     </button>
-                    <a href="{{ route('faculty.dean.budgets.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" name="submit_action" value="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i> Submit for Approval
+                    </button>
+                    <a href="{{ route('faculty.dean.budgets.index') }}" class="btn btn-link text-muted">Cancel</a>
                 </div>
             </form>
         </div>

@@ -186,10 +186,14 @@ class FeeController extends Controller
             ->when($request->transaction_method, function ($query, $method) {
                 $query->where('payment_method', $method);
             })
+            ->when($request->transaction_status, function ($query, $status) {
+                $query->where('status', $status);
+            })
             ->orderBy('payment_date', 'desc');
 
         $transactions = $transactionsQuery->paginate(15, ['*'], 'tx_page');
         $totalTransactionsAmount = Payment::where('status', 'completed')->sum('amount');
+        $pendingPaymentsCount = Payment::where('status', 'pending')->count();
         $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
         $programs = \App\Models\Program::where('is_active', true)->orderBy('name')->get();
 
@@ -203,6 +207,7 @@ class FeeController extends Controller
             'programs',
             'transactions',
             'totalTransactionsAmount',
+            'pendingPaymentsCount',
             'totalCollected',
             'totalPending',
             'totalOverdue',
@@ -479,69 +484,141 @@ class FeeController extends Controller
         }
 
         $fee = $payment->feeRecord;
-        $fee->load('feeStructure');
+
+        // If payment references a PRN and fee is missing, look up via PRN
+        if (!$fee && $payment->reference_number) {
+            $prn = \App\Models\PaymentReferenceNumber::where('prn_number', $payment->reference_number)->first();
+            if ($prn && $prn->feeRecord) {
+                $fee = $prn->feeRecord;
+                $payment->update(['fee_record_id' => $fee->id]);
+            }
+        }
+
+        if ($fee) {
+            $fee->load('feeStructure');
+        }
 
         try {
             DB::beginTransaction();
 
-            $newPaidAmount = $fee->paid_amount + $payment->amount;
-            $newBalanceAmount = $fee->total_amount - $newPaidAmount;
-            $newStatus = $newBalanceAmount <= 0 ? 'paid' : 'partial';
+            if ($fee) {
+                $newPaidAmount = $fee->paid_amount + $payment->amount;
+                $newBalanceAmount = max(0, $fee->total_amount - $newPaidAmount);
+                $newStatus = $newBalanceAmount <= 0 ? 'paid' : 'partial';
 
-            $paymentHistory = $fee->payment_history ?? [];
-            $paymentHistory[] = [
-                'amount' => $payment->amount,
-                'date' => $payment->payment_date,
-                'method' => $payment->payment_method,
-                'transaction_id' => $payment->transaction_id,
-                'notes' => $payment->notes,
-                'proof_path' => $payment->payment_proof,
-                'processed_by' => auth()->id(),
-                'processed_at' => now(),
-            ];
+                $paymentHistory = $fee->payment_history ?? [];
+                $paymentHistory[] = [
+                    'amount' => $payment->amount,
+                    'date' => $payment->payment_date,
+                    'method' => $payment->payment_method,
+                    'transaction_id' => $payment->transaction_id,
+                    'notes' => $payment->notes,
+                    'proof_path' => $payment->payment_proof,
+                    'processed_by' => auth()->id(),
+                    'processed_at' => now(),
+                ];
 
-            $fee->update([
-                'paid_amount' => $newPaidAmount,
-                'balance_amount' => $newBalanceAmount,
-                'status' => $newStatus,
-                'paid_date' => $newStatus === 'paid' ? now() : $fee->paid_date,
-                'payment_method' => $payment->payment_method,
-                'payment_history' => $paymentHistory,
-                'processed_by' => auth()->id(),
-            ]);
+                $fee->update([
+                    'paid_amount' => $newPaidAmount,
+                    'balance_amount' => $newBalanceAmount,
+                    'status' => $newStatus,
+                    'paid_date' => $newStatus === 'paid' ? now() : $fee->paid_date,
+                    'payment_method' => $payment->payment_method,
+                    'payment_history' => $paymentHistory,
+                    'processed_by' => auth()->id(),
+                ]);
+
+                $registrationFeeId = (int) \App\Models\SystemSetting::getSetting('registration_fee_structure_id', 0);
+                $isRegistrationFee = $fee->fee_structure_id === $registrationFeeId || $fee->feeStructure?->type === 'registration';
+                if ($isRegistrationFee) {
+                    $profile = $fee->student?->studentProfile;
+                    if ($profile && !$profile->registration_fee_paid_at) {
+                        $profile->update([
+                            'registration_fee_paid_at' => now(),
+                        ]);
+                    }
+                    \App\Services\AdmissionWorkflow::activateStudent($fee->student, null, auth()->id());
+                }
+            }
+
+            // Mark associated PRN as paid if reference number matches
+            if ($payment->reference_number) {
+                \App\Models\PaymentReferenceNumber::where('prn_number', $payment->reference_number)
+                    ->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'transaction_reference' => $payment->transaction_id,
+                    ]);
+            }
 
             $payment->update([
                 'status' => 'completed',
                 'processed_by' => auth()->id(),
             ]);
 
-            $registrationFeeId = (int) \App\Models\SystemSetting::getSetting('registration_fee_structure_id', 0);
-            $isRegistrationFee = $fee->fee_structure_id === $registrationFeeId || $fee->feeStructure?->type === 'registration';
-            if ($isRegistrationFee) {
-                $profile = $fee->student?->studentProfile;
-                if ($profile && !$profile->registration_fee_paid_at) {
-                    $profile->update([
-                        'registration_fee_paid_at' => now(),
-                    ]);
-                }
-                \App\Services\AdmissionWorkflow::activateStudent($fee->student, null, auth()->id());
-            }
-
+            $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
             Notification::create([
                 'user_id' => $payment->student_id,
                 'type' => 'payment',
                 'title' => 'Payment Approved',
-                'message' => 'Your payment has been approved and posted to your account.',
+                'message' => 'Your payment of ' . $currencyCode . ' ' . number_format($payment->amount, 2) . ' (' . ($payment->payment_method ?? 'Payment') . ') has been approved and posted to your fee account.',
                 'action_url' => route('student.fees.index'),
                 'priority' => 'normal',
             ]);
 
             DB::commit();
 
-            return back()->with('success', 'Payment approved and posted successfully.');
+            return back()->with('success', 'Payment of ' . $currencyCode . ' ' . number_format($payment->amount, 2) . ' approved and credited successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Failed to approve payment: ' . $e->getMessage()]);
+        }
+    }
+
+    public function rejectPayment(Request $request, Payment $payment)
+    {
+        if ($payment->status !== 'pending') {
+            return back()->withErrors(['error' => 'Only pending payments can be rejected.']);
+        }
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $payment->update([
+                'status' => 'failed',
+                'processed_by' => auth()->id(),
+                'notes' => trim(($payment->notes ? $payment->notes . "\n" : '') . 'Rejection reason: ' . $request->rejection_reason),
+            ]);
+
+            // If it had a PRN, reset the PRN back to active so the student can re-attempt
+            if ($payment->reference_number) {
+                \App\Models\PaymentReferenceNumber::where('prn_number', $payment->reference_number)
+                    ->where('status', '!=', 'paid')
+                    ->update([
+                        'status' => 'active',
+                    ]);
+            }
+
+            $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+            Notification::create([
+                'user_id' => $payment->student_id,
+                'type' => 'payment',
+                'title' => 'Payment Submission Rejected',
+                'message' => 'Your payment submission of ' . $currencyCode . ' ' . number_format($payment->amount, 2) . ' was rejected: ' . $request->rejection_reason,
+                'action_url' => route('student.fees.index'),
+                'priority' => 'high',
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Payment submission rejected. The student has been notified.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to reject payment: ' . $e->getMessage()]);
         }
     }
 
@@ -718,6 +795,10 @@ class FeeController extends Controller
             'feeRecord.feeStructure.semester',
             'processedBy',
         ]);
+
+        if ($payment->status !== 'completed') {
+            return back()->withErrors(['error' => 'Receipt is only available for approved and completed payments.']);
+        }
 
         if (!$payment->feeRecord) {
             return back()->withErrors(['error' => 'No fee record attached to this payment.']);

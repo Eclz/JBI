@@ -75,7 +75,9 @@ class AssignmentSubmission extends Model
      */
     public function scopeGraded($query)
     {
-        return $query->whereNotNull('score');
+        return $query->where(function ($q) {
+            $q->where('status', 'graded')->orWhereNotNull('score');
+        });
     }
 
     /**
@@ -83,7 +85,47 @@ class AssignmentSubmission extends Model
      */
     public function scopePendingGrading($query)
     {
-        return $query->whereNull('score')->where('status', 'submitted');
+        return $query->whereNull('score')->whereIn('status', ['submitted', 'ungraded']);
+    }
+
+    /**
+     * Get effective submission status
+     */
+    public function getEffectiveStatusAttribute(): string
+    {
+        if ($this->status === 'graded' || $this->score !== null) {
+            return 'graded';
+        }
+        if ($this->status === 'draft') {
+            return 'draft';
+        }
+        return 'ungraded';
+    }
+
+    /**
+     * Get human-readable status label
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->effective_status) {
+            'graded' => 'Graded',
+            'ungraded' => 'Ungraded',
+            'draft' => 'Draft',
+            default => ucfirst($this->status ?? 'Ungraded'),
+        };
+    }
+
+    /**
+     * Get Bootstrap badge class for status
+     */
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->effective_status) {
+            'graded' => 'bg-success',
+            'ungraded' => 'bg-warning text-dark',
+            'draft' => 'bg-secondary',
+            default => 'bg-info text-white',
+        };
     }
 
     /**

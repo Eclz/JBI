@@ -68,7 +68,10 @@ class DashboardController extends Controller
                     });
             }
 
-            return view('student.dashboard_unadmitted', compact('student', 'studentProfile', 'application', 'programs', 'programChoices'));
+            $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+            $feeAmount = $application ? \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application) : 150.00;
+
+            return view('student.dashboard_unadmitted', compact('student', 'studentProfile', 'application', 'programs', 'programChoices', 'currencyCode', 'feeAmount'));
         }
 
         $currentSemester = Semester::where('is_current', true)->first();

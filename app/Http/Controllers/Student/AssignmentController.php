@@ -79,7 +79,7 @@ class AssignmentController extends Controller
             $files[] = $request->file('file')->store('submissions', 'public');
         }
 
-        $status = $request->action === 'draft' ? 'draft' : 'submitted';
+        $status = $request->action === 'draft' ? 'draft' : 'ungraded';
 
         if ($existingSubmission) {
             $existingSubmission->update([

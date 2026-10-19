@@ -8,6 +8,7 @@ use App\Models\AcademicYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class SemesterController extends Controller
 {
@@ -20,7 +21,9 @@ class SemesterController extends Controller
 
     public function create()
     {
-        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::where('is_active', true)
+            ->orderBy('start_date', 'desc')
+            ->get();
 
         return view('admin.semesters.create', compact('academicYears'));
     }
@@ -28,7 +31,10 @@ class SemesterController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'academic_year_id' => 'required|exists:academic_years,id',
+            'academic_year_id' => [
+                'required',
+                Rule::exists('academic_years', 'id')->where('is_active', true),
+            ],
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -36,6 +42,8 @@ class SemesterController extends Controller
             'registration_end' => 'required|date|after_or_equal:registration_start',
             // 'is_current' => 'nullable|boolean',
             // 'is_active' => 'nullable|boolean',
+        ], [
+            'academic_year_id.exists' => 'The selected academic year is invalid or inactive.',
         ]);
 
         DB::beginTransaction();
@@ -71,7 +79,10 @@ class SemesterController extends Controller
 
     public function edit(Semester $semester)
     {
-        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::where('is_active', true)
+            ->orWhere('id', $semester->academic_year_id)
+            ->orderBy('start_date', 'desc')
+            ->get();
 
         return view('admin.semesters.edit', compact('semester', 'academicYears'));
     }
@@ -79,7 +90,12 @@ class SemesterController extends Controller
     public function update(Request $request, Semester $semester)
     {
         $validated = $request->validate([
-            'academic_year_id' => 'required|exists:academic_years,id',
+            'academic_year_id' => [
+                'required',
+                Rule::exists('academic_years', 'id')->where(function ($query) use ($semester) {
+                    $query->where('is_active', true)->orWhere('id', $semester->academic_year_id);
+                }),
+            ],
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -87,6 +103,8 @@ class SemesterController extends Controller
             'registration_end' => 'required|date|after_or_equal:registration_start',
             // 'is_current' => 'nullable|boolean',
             // 'is_active' => 'nullable|boolean',
+        ], [
+            'academic_year_id.exists' => 'The selected academic year is invalid or inactive.',
         ]);
 
         DB::beginTransaction();

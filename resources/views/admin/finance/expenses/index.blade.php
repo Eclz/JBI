@@ -26,6 +26,19 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Unable to record expense:</strong>
+            <ul class="mb-0 mt-1 ps-3">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -67,6 +80,12 @@
                                     <div class="btn-group">
                                         <a href="{{ route('admin.finance.expenses.show', $exp->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
                                         <a href="{{ route('admin.finance.expenses.edit', $exp->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        @if($exp->status === 'pending')
+                                            <form action="{{ route('admin.finance.expenses.approve', $exp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Approve this expense and deduct from department budget?');">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Approve & Reconcile Budget"><i class="bi bi-check-lg"></i></button>
+                                            </form>
+                                        @endif
                                         <form action="{{ route('admin.finance.expenses.destroy', $exp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this record?');">
                                             @csrf
                                             @method('DELETE')
@@ -131,11 +150,23 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Expense Date <span class="text-danger">*</span></label>
-                            <input type="date" name="expense_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="expense_date" class="form-control @error('expense_date') is-invalid @enderror" value="{{ old('expense_date', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required>
+                            @error('expense_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text text-muted">Expense date cannot be past the current date.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-primary"><i class="bi bi-shield-check me-1"></i>Approval & Budget Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select border-primary" required>
+                                <option value="approved" {{ old('status', 'approved') === 'approved' ? 'selected' : '' }}>Approved (Reconcile to Budget)</option>
+                                <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending Approval</option>
+                            </select>
+                            <div class="form-text text-muted">Approved expenses will immediately deduct from the department's budget.</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Description / Notes</label>
-                            <textarea name="description" class="form-control" rows="2"></textarea>
+                            <textarea name="description" class="form-control" rows="2">{{ old('description') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -147,4 +178,18 @@
         </div>
     </div>
 </div>
+
+@if($errors->any())
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modalEl = document.getElementById('addExpenseModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                var modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+        });
+    </script>
+    @endpush
+@endif
 @endsection

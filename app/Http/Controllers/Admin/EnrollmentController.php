@@ -24,7 +24,7 @@ class EnrollmentController extends Controller
 
     public function index(Request $request)
     {
-        $query = CourseEnrollment::with(['student', 'course', 'semester']);
+        $query = CourseEnrollment::with(['student.studentProfile', 'student.application', 'course', 'semester']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -41,12 +41,29 @@ class EnrollmentController extends Controller
             $query->where('semester_id', $request->semester_id);
         }
 
-        // Search by student name or admission number
+        // Filter by enrollment type (normal, retake, missed_paper, redo)
+        if ($request->filled('enrollment_type')) {
+            $query->where('enrollment_type', $request->enrollment_type);
+        }
+
+        // Search by student name, student number / student ID, or email
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->whereHas('student', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('admission_number', 'like', "%{$search}%");
+                $q->where(function ($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('student_id', 'like', "%{$search}%")
+                      ->orWhereHas('studentProfile', function ($profileQuery) use ($search) {
+                          $profileQuery->where('admission_number', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('application', function ($appQuery) use ($search) {
+                          $appQuery->where('student_number', 'like', "%{$search}%")
+                                   ->orWhere('application_number', 'like', "%{$search}%");
+                      });
+                });
             });
         }
 
@@ -59,17 +76,86 @@ class EnrollmentController extends Controller
         return view('admin.enrollments.index', compact('enrollments', 'courses', 'semesters'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $students = User::where('role', 'student')
-                        ->orderBy('name')
-                        ->get();
-        $courses = Course::with('semester')
+        $courses = Course::with(['semester', 'department.faculty'])
                         ->where('status', 'active')
                         ->orderBy('name')
                         ->get();
 
-        return view('admin.enrollments.create', compact('students', 'courses'));
+        $selectedCourse = null;
+        if ($request->filled('course_id')) {
+            $selectedCourse = Course::with('department.faculty')->find($request->course_id);
+        }
+
+        $studentsQuery = User::where('role', 'student')
+                        ->with([
+                            'studentProfile.department.faculty',
+                            'studentProfile.program.department.faculty',
+                            'application.programRecord.department.faculty'
+                        ])
+                        ->orderBy('name');
+
+        // If a course is selected or specified, filter strictly to students in that course's faculty
+        if ($selectedCourse && $selectedCourse->getFacultyId()) {
+            $facultyId = $selectedCourse->getFacultyId();
+            $studentsQuery->where(function($q) use ($facultyId) {
+                $q->whereHas('studentProfile.department', fn($dq) => $dq->where('faculty_id', $facultyId))
+                  ->orWhereHas('studentProfile.program.department', fn($dq) => $dq->where('faculty_id', $facultyId))
+                  ->orWhereHas('application.programRecord.department', fn($dq) => $dq->where('faculty_id', $facultyId));
+            });
+        }
+
+        $students = $studentsQuery->get();
+        $enrollmentTypes = CourseEnrollment::getEnrollmentTypeOptions();
+
+        return view('admin.enrollments.create', compact('students', 'courses', 'enrollmentTypes', 'selectedCourse'));
+    }
+
+    public function facultyStudents(Request $request)
+    {
+        $request->validate(['course_id' => 'required|exists:courses,id']);
+
+        $course = Course::with('department.faculty')->findOrFail($request->course_id);
+        $facultyId = $course->getFacultyId();
+
+        $query = User::where('role', 'student')
+            ->with([
+                'studentProfile.department.faculty',
+                'studentProfile.program.department.faculty',
+                'application.programRecord.department.faculty'
+            ])
+            ->orderBy('name');
+
+        if ($facultyId) {
+            $query->where(function($q) use ($facultyId) {
+                $q->whereHas('studentProfile.department', fn($dq) => $dq->where('faculty_id', $facultyId))
+                  ->orWhereHas('studentProfile.program.department', fn($dq) => $dq->where('faculty_id', $facultyId))
+                  ->orWhereHas('application.programRecord.department', fn($dq) => $dq->where('faculty_id', $facultyId));
+            });
+        }
+
+        $students = $query->get()->map(function($student) {
+            $studentNo = $student->student_number ?? $student->student_id ?? $student->studentProfile?->admission_number ?? $student->application?->student_number ?? 'N/A';
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'student_number' => $studentNo,
+                'email' => $student->email,
+                'faculty_id' => $student->getFacultyId(),
+                'faculty_name' => $student->getFacultyName() ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'course' => [
+                'id' => $course->id,
+                'name' => $course->name,
+                'faculty_id' => $facultyId,
+                'faculty_name' => $course->getFacultyName() ?? 'Department / General',
+            ],
+            'students' => $students,
+        ]);
     }
 
     public function store(Request $request)
@@ -79,30 +165,64 @@ class EnrollmentController extends Controller
             'course_id' => 'required|exists:courses,id',
             'enrollment_date' => 'required|date',
             'status' => 'required|in:enrolled,dropped,completed,pending',
+            'enrollment_type' => 'nullable|in:normal,retake,missed_paper,redo',
         ]);
 
-        // Check if enrollment already exists
-        $exists = CourseEnrollment::where('student_id', $request->student_id)
-                                  ->where('course_id', $request->course_id)
-                                  ->exists();
+        $userId = $request->student_id;
+        $enrollmentType = $request->enrollment_type ?? 'normal';
 
-        if ($exists) {
-            return back()->with('error', 'Student is already enrolled in this course.');
+        // Strictly verify that student belongs to the course's faculty
+        $course = Course::with('department.faculty')->findOrFail($request->course_id);
+        $courseFacultyId = $course->getFacultyId();
+
+        if ($courseFacultyId) {
+            $student = User::with([
+                'studentProfile.department.faculty',
+                'studentProfile.program.department.faculty',
+                'application.programRecord.department.faculty'
+            ])->findOrFail($userId);
+
+            $studentFacultyId = $student->getFacultyId();
+            if ($studentFacultyId && (int)$studentFacultyId !== (int)$courseFacultyId) {
+                return back()->withInput()->with('error', 'Student must strictly belong to the faculty of this course unit (' . ($course->getFacultyName() ?: 'Course Faculty') . ').');
+            }
         }
 
-        // Get course details for semester
-        $course = Course::findOrFail($request->course_id);
+        // Check if enrollment already exists
+        $existing = CourseEnrollment::where('user_id', $userId)
+                                  ->where('course_id', $request->course_id)
+                                  ->first();
+
+        if ($existing) {
+            if (in_array($existing->status, ['enrolled', 'pending'])) {
+                return back()->with('error', 'Student is already actively enrolled in this course.');
+            }
+
+            // Student is redoing, retaking, or sitting missed paper for a previous course unit
+            $existing->update([
+                'status' => $request->status,
+                'enrollment_type' => $enrollmentType,
+                'enrollment_date' => $request->enrollment_date,
+                'final_grade' => null,
+                'letter_grade' => null,
+                'grade_points' => null,
+                'completion_date' => null,
+            ]);
+
+            return redirect()->route('admin.enrollments.index')
+                            ->with('success', 'Student enrollment updated successfully as ' . ucfirst(str_replace('_', ' ', $enrollmentType)) . '.');
+        }
 
         CourseEnrollment::create([
-            'student_id' => $request->student_id,
+            'user_id' => $userId,
             'course_id' => $request->course_id,
-            'semester_id' => $course->semester_id,
             'enrollment_date' => $request->enrollment_date,
             'status' => $request->status,
+            'enrollment_type' => $enrollmentType,
         ]);
 
         return redirect()->route('admin.enrollments.index')
-                        ->with('success', 'Student enrolled successfully.');
+                        ->with('success', 'Student enrolled successfully (' . ucfirst(str_replace('_', ' ', $enrollmentType)) . ').');
     }
 
     public function show(CourseEnrollment $enrollment)
@@ -114,28 +234,67 @@ class EnrollmentController extends Controller
 
     public function edit(CourseEnrollment $enrollment)
     {
+        $enrollment->load(['student.studentProfile', 'student.application', 'course.semester', 'grades.assignment']);
+
         $students = User::where('role', 'student')
+                        ->with(['studentProfile', 'application'])
                         ->orderBy('name')
                         ->get();
         $courses = Course::with('semester')
                         ->orderBy('name')
                         ->get();
 
-        return view('admin.enrollments.edit', compact('enrollment', 'students', 'courses'));
+        $calculatedResults = $enrollment->calculateStudentResults();
+        $semesterEndDate = $enrollment->getSemesterClosureDate();
+        $gradingCriteria = CourseEnrollment::getAcademicRegistrarGradingCriteria();
+        $enrollmentTypes = CourseEnrollment::getEnrollmentTypeOptions();
+
+        return view('admin.enrollments.edit', compact(
+            'enrollment',
+            'students',
+            'courses',
+            'calculatedResults',
+            'semesterEndDate',
+            'gradingCriteria',
+            'enrollmentTypes'
+        ));
     }
 
     public function update(Request $request, CourseEnrollment $enrollment)
     {
         $request->validate([
-            'status' => 'required|in:enrolled,dropped,completed,pending',
+            'status' => 'required|in:enrolled,dropped,completed,pending,failed',
+            'enrollment_type' => 'nullable|in:normal,retake,missed_paper,redo',
             'enrollment_date' => 'required|date',
-            'completion_date' => 'nullable|date|after:enrollment_date',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
-        $enrollment->update($request->only(['status', 'enrollment_date', 'completion_date']));
+        $calculated = $enrollment->calculateStudentResults();
+        $semesterEndDate = $enrollment->getSemesterClosureDate();
+
+        // Completion date is automatically the semester end closure date
+        $completionDate = ($request->status === 'completed' || $enrollment->completion_date !== null)
+            ? ($semesterEndDate ?: $enrollment->completion_date ?: now())
+            : null;
+
+        $updateData = [
+            'status' => $request->status,
+            'enrollment_type' => $request->enrollment_type ?? $enrollment->enrollment_type ?? 'normal',
+            'enrollment_date' => $request->enrollment_date,
+            'completion_date' => $completionDate,
+            'final_grade' => $calculated['final_grade'],
+            'letter_grade' => $calculated['letter_grade'],
+            'grade_points' => $calculated['grade_points'],
+        ];
+
+        if ($request->has('notes')) {
+            $updateData['notes'] = $request->notes;
+        }
+
+        $enrollment->update($updateData);
 
         return redirect()->route('admin.enrollments.index')
-                        ->with('success', 'Enrollment updated successfully.');
+                        ->with('success', 'Enrollment updated successfully. Grade points, letter grade, and completion date automatically calculated.');
     }
 
     public function destroy(CourseEnrollment $enrollment)
@@ -168,20 +327,18 @@ class EnrollmentController extends Controller
             'student_ids.*' => 'exists:users,id',
         ]);
 
-        $course = Course::findOrFail($request->course_id);
         $enrolled = 0;
         $skipped = 0;
 
         foreach ($request->student_ids as $studentId) {
-            $exists = CourseEnrollment::where('student_id', $studentId)
+            $exists = CourseEnrollment::where('user_id', $studentId)
                                       ->where('course_id', $request->course_id)
                                       ->exists();
 
             if (!$exists) {
                 CourseEnrollment::create([
-                    'student_id' => $studentId,
+                    'user_id' => $studentId,
                     'course_id' => $request->course_id,
-                    'semester_id' => $course->semester_id,
                     'enrollment_date' => now(),
                     'status' => 'enrolled',
                 ]);
