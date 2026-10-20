@@ -82,21 +82,18 @@ class Notification extends Model
     protected static function booted()
     {
         static::created(function ($notification) {
-            try {
-                $user = $notification->user;
-                if ($user && !empty($user->email)) {
-                    // Check user preferences if present (crucial/high/urgent always bypass preference)
-                    $priority = strtolower($notification->priority ?? 'normal');
-                    $isCrucial = in_array($priority, ['urgent', 'high']);
-                    $emailPref = $user->preferences['email_notifications'] ?? true;
-
-                    if ($isCrucial || $emailPref) {
-                        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\NotificationMail($notification, $user));
-                        $notification->updateQuietly(['email_sent' => true]);
-                    }
+            $user = $notification->user;
+            $priority = strtolower($notification->priority ?? 'normal');
+            $emailPref = data_get($user?->preferences, 'notifications.email',
+                data_get($user?->preferences, 'email_notifications', true));
+            if ($user?->is_active && $user->email && (in_array($priority, ['urgent', 'high']) || $emailPref)) {
+                $notification->updateQuietly(['data' => array_merge($notification->data ?? [], ['email_status' => 'queued'])]);
+                try {
+                    \App\Jobs\SendNotificationEmail::dispatch($notification->id);
+                } catch (\Throwable $exception) {
+                    $notification->updateQuietly(['data' => array_merge($notification->data ?? [], ['email_status' => 'failed'])]);
+                    \Illuminate\Support\Facades\Log::error('Notification email could not be queued', ['notification_id' => $notification->id]);
                 }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to send notification email: ' . $e->getMessage());
             }
         });
     }

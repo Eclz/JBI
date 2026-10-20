@@ -368,6 +368,13 @@ class ApplicationController extends Controller
             return redirect()->back()->with('error', 'Strict Admission Order: Admission fee payment must be received and approved (Step 1) before previewing and verifying applicant documents.');
         }
 
+        if (empty($application->documents)) {
+            return back()->with('error', 'No supporting documents have been uploaded. Ask the applicant to upload their certificates or transcripts first.');
+        }
+        if ($application->status !== 'pending') {
+            return back()->with('error', 'Only pending applications can be verified.');
+        }
+
         DB::beginTransaction();
         try {
             $application->update([
@@ -417,7 +424,7 @@ class ApplicationController extends Controller
         }
 
         if (!$existingUser) {
-            $password = 'ABCxyz,.?123';
+            $password = Str::random(64);
             $existingUser = User::create([
                 'first_name' => $application->first_name,
                 'last_name' => $application->last_name,
@@ -511,7 +518,7 @@ class ApplicationController extends Controller
                 ];
             }
 
-            if (!$application->areDocumentsVerified() && !$forceApprove) {
+            if (!$application->areDocumentsVerified()) {
                 return [
                     'ok' => false,
                     'message' => 'Strict Admission Order: Application documents must be previewed and verified against application details (Step 2) before admission confirmation.',

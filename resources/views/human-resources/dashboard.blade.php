@@ -3,6 +3,9 @@
 @section('title', 'Human Resources Dashboard')
 
 @section('content')
+@if(auth()->user()->hasPermission('applications', 'view') || auth()->user()->hasPermission('hr_onboarding', 'view'))
+<div class="mx-4 mt-3"><a class="btn btn-outline-primary" href="{{ route('onboarding.index') }}">Onboarding: next actions and setup</a></div>
+@endif
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

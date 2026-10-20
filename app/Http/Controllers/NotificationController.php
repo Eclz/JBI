@@ -34,6 +34,20 @@ class NotificationController extends Controller
         return view('notifications.show', compact('notification'));
     }
 
+    public function retryEmail($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        if ($notification->email_sent) {
+            return back()->with('success', 'This email has already been sent.');
+        }
+        if (($notification->data['email_status'] ?? null) === 'queued') {
+            return back()->with('warning', 'This email is already queued. Contact the administrator if it remains queued.');
+        }
+        $notification->updateQuietly(['data' => array_merge($notification->data ?? [], ['email_status' => 'queued'])]);
+        \App\Jobs\SendNotificationEmail::dispatch($notification->id);
+        return back()->with('success', 'Email queued for retry.');
+    }
+
     public function markAsRead($id)
     {
         $notification = Auth::user()->notifications()->findOrFail($id);

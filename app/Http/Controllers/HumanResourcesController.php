@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
 use App\Models\HrEmployee;
-use App\Models\HrJobRole;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -33,7 +31,7 @@ class HumanResourcesController extends Controller
         return view('human-resources.dashboard', [
             'staffCount' => User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->where('is_active', true)->count(),
             'leaveRequests' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
-            'onboardingCount' => HrEmployee::where('status', 'Onboarding')->count(),
+            'onboardingCount' => \App\Models\HrOnboarding::where('status', '!=', 'Completed')->count(),
             'recentStaff' => User::with('hrProfile')->whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->latest()->take(5)->get(),
             'isManager' => $isManager,
         ]);
@@ -232,9 +230,9 @@ class HumanResourcesController extends Controller
             $stats = [
                 'total' => \App\Models\HrOnboarding::count(),
                 'not_started' => \App\Models\HrOnboarding::where('status', 'Not Started')->count(),
-                'in_progress' => \App\Models\HrOnboarding::where('status', 'In Progress')->count(),
+                'in_progress' => \App\Models\HrOnboarding::where('status', '!=', 'Completed')->whereDate('due_date', '>=', today())->count(),
                 'completed' => \App\Models\HrOnboarding::where('status', 'Completed')->count(),
-                'overdue' => \App\Models\HrOnboarding::where('status', 'Overdue')->count(),
+                'overdue' => \App\Models\HrOnboarding::where('status', '!=', 'Completed')->whereDate('due_date', '<', today())->count(),
             ];
             $onboardings = \App\Models\HrOnboarding::with(['user.hrProfile', 'hrOfficer'])->latest()->get();
             $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
@@ -369,50 +367,29 @@ class HumanResourcesController extends Controller
 
     public function create()
     {
-        $users = User::where('is_active', true)->orderBy('first_name')->get();
-        $departments = Department::with('faculty')->where('is_active', true)->orderBy('name')->get();
-        $adminDepartments = [
-            'Administration',
-            'Finance & Bursar',
-            'Human Resources',
-            'Estates & Facilities',
-            'Library Services',
-            'Academic Affairs',
-            'Admissions & Records',
-            'ICT & Computing',
-            'Student Affairs',
-        ];
-        $jobRoles = HrJobRole::where('is_active', true)->orderBy('title')->get();
-
-        return view('human-resources.create', compact('users', 'departments', 'adminDepartments', 'jobRoles'));
+        $users = User::where('is_active', true)->whereNotIn('role', ['student', 'applicant', 'parent', ''])->orderBy('first_name')->get();
+        return view('human-resources.create', compact('users'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id' => 'nullable|exists:users,id',
+            'user_id' => ['required', \Illuminate\Validation\Rule::exists('users', 'id')->whereNotIn('role', ['student', 'applicant', 'parent', '']), 'unique:hr_employees,user_id'],
             'employee_number' => 'required|string|max:50|unique:hr_employees,employee_number',
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150',
-            'department_id' => 'nullable|exists:departments,id',
             'employment_type' => 'required|string|max:50',
+            'workspace' => 'nullable|string|max:150',
             'salary_band' => 'nullable|string|max:50',
             'emergency_contact' => 'nullable|string|max:255',
             'status' => 'required|in:Active,On Leave,Inactive',
             'notes' => 'nullable|string|max:2000',
         ]);
-
-        if (!empty($data['department_id'])) {
-            $deptModel = Department::find($data['department_id']);
-            if ($deptModel) {
-                $data['department'] = $deptModel->name;
-            }
-        } elseif (!empty($data['department'])) {
-            $deptModel = Department::where('name', $data['department'])->first();
-            $data['department_id'] = $deptModel?->id;
-        }
-
-        $employee = HrEmployee::create($data);
+        $employee = \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            $employee = HrEmployee::create($data);
+            \App\Services\StaffOnboardingService::ensure(User::findOrFail($data['user_id']), auth()->id());
+            return $employee;
+        });
         $this->notify($employee, 'Employee record created', "HR created employee record {$employee->employee_number}.", 'human-resources.staff.index');
 
         return redirect()->route('human-resources.staff.index')->with('success', 'Employee record created successfully.');
@@ -498,12 +475,6 @@ class HumanResourcesController extends Controller
 
     public function edit(User $employee)
     {
-        $employee->load([
-            'hrProfile.departmentRecord',
-            'facultyProfile.department.faculty',
-            'headedDepartments.faculty'
-        ]);
-
         $hrProfile = $employee->hrProfile;
         if (!$hrProfile) {
             $hrProfile = new HrEmployee([
@@ -513,32 +484,8 @@ class HumanResourcesController extends Controller
             ]);
         }
         
-        $departments = Department::with(['faculty', 'headOfDepartment'])
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        $adminDepartments = [
-            'Administration',
-            'Finance & Bursar',
-            'Human Resources',
-            'Estates & Facilities',
-            'Library Services',
-            'Academic Affairs',
-            'Admissions & Records',
-            'ICT & Computing',
-            'Student Affairs',
-        ];
-
-        $jobRoles = HrJobRole::where('is_active', true)->orderBy('title')->get();
-
-        return view('human-resources.edit', compact(
-            'employee',
-            'hrProfile',
-            'jobRoles',
-            'departments',
-            'adminDepartments'
-        ));
+        $jobRoles = \App\Models\HrJobRole::where('is_active', true)->orderBy('title')->get();
+        return view('human-resources.edit', compact('employee', 'hrProfile', 'jobRoles'));
     }
 
     public function generateId(User $employee)
@@ -568,8 +515,8 @@ class HumanResourcesController extends Controller
             'employee_number' => 'required|string|max:50',
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150',
-            'department_id' => 'nullable|exists:departments,id',
             'employment_type' => 'required|string|max:50',
+            'workspace' => 'nullable|string|max:150',
             'salary_band' => 'nullable|string|max:50',
             'emergency_contact' => 'nullable|string|max:255',
             'status' => 'required|in:Active,On Leave,Inactive',
@@ -577,19 +524,6 @@ class HumanResourcesController extends Controller
         ]);
         
         $data['user_id'] = $employee->id;
-
-        if (!empty($data['department_id'])) {
-            $deptModel = Department::find($data['department_id']);
-            if ($deptModel) {
-                $data['department'] = $deptModel->name;
-            }
-        } elseif (!empty($data['department'])) {
-            $deptModel = Department::where('name', $data['department'])->first();
-            $data['department_id'] = $deptModel?->id;
-        } else {
-            $data['department_id'] = null;
-            $data['department'] = null;
-        }
         
         if ($employee->hrProfile) {
             $employee->hrProfile->update($data);

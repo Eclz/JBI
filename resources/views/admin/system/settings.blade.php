@@ -444,6 +444,9 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-4 border-bottom pb-2">Registration</h6>
+                            <div class="mb-3"><label class="form-label" for="admission_payment_instructions">Official admission payment instructions</label><textarea class="form-control" id="admission_payment_instructions" name="admission_payment_instructions" rows="4" maxlength="4000">{{ old('admission_payment_instructions', $settings->get('admission_payment_instructions')->value ?? '') }}</textarea><small class="text-muted">Bank name, account details and payment guidance shown to applicants. No sample bank details are used.</small></div>
+                            <input type="hidden" name="admission_covers_registration" value="0">
+                            <div class="form-check mb-4"><input class="form-check-input" type="checkbox" name="admission_covers_registration" id="admission_covers_registration" value="1" @checked(filter_var(old('admission_covers_registration', $settings->get('admission_covers_registration')->value ?? true), FILTER_VALIDATE_BOOLEAN))><label class="form-check-label" for="admission_covers_registration">The admission fee includes the registration fee</label><div class="form-text">Clear this when registration is billed separately. New admissions will then require the separate registration payment before course enrolment.</div></div>
 
                             <div class="row g-4 mb-4">
                                 <div class="col-md-12">

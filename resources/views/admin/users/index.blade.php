@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@if(auth()->user()->hasPermission('applications', 'view') || auth()->user()->hasPermission('hr_onboarding', 'view'))
+<div class="mx-4 mt-3"><a class="btn btn-outline-primary" href="{{ route('onboarding.index') }}">Onboarding: next actions and setup</a></div>
+@endif
     <div class="container-fluid px-4 py-6">
         <div class="row mb-4">
             <div class="col-12">

@@ -18,9 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         ]);
 
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\RequireStudentActivation::class,
+        );
+
         // You can also register other middleware here
         $middleware->web(append: [
-            // Add any web middleware here
+            \App\Http\Middleware\RequireStudentActivation::class,
+            \App\Http\Middleware\RequirePasswordChange::class,
         ]);
 
         $middleware->api(append: [

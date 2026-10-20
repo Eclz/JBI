@@ -15,16 +15,23 @@ class RequirePasswordChange
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Email activation comes before the password setup step for invited students.
+        if ($request->user()?->role === 'student' && !$request->user()->hasVerifiedEmail()) {
+            return $next($request);
+        }
+
         if (auth()->check() && auth()->user()->must_change_password) {
             // Allow access to password change routes and logout
             $allowedRoutes = [
                 'password.change.form',
                 'password.change',
                 'logout',
-                'profile.password.update'
+                'profile.password.update',
+                'login', 'password.request', 'password.email', 'password.reset', 'password.update',
+                'verification.verify', 'verification.resend', 'verification.notice', 'verification.email.update'
             ];
 
-            if (!in_array($request->route()->getName(), $allowedRoutes)) {
+            if (!in_array($request->route()?->getName(), $allowedRoutes)) {
                 return redirect()->route('password.change.form')
                     ->with('warning', 'You must change your password before continuing.');
             }

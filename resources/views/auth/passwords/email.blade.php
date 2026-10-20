@@ -1,47 +1,11 @@
-@extends('layouts.app')
-
+@extends('layouts.admissions')
+@section('title', 'Reset your password')
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
-
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('password.email') }}">
-                        @csrf
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Send Password Reset Link') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="notice-card"><div class="notice-icon" aria-hidden="true">↗</div><h1>Forgot your password?</h1><p>Enter the email you used to register. We’ll send a link to choose a new password.</p>
+    @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }} Check your inbox and spam folder.</div>@endif
+    @if(session('warning'))<div class="alert alert-warning" role="alert">{{ session('warning') }}</div>@endif
+    @if($errors->any())<div class="alert alert-error" role="alert">{{ $errors->first() }}</div>@endif
+    <form method="POST" action="{{ route('password.email') }}" data-submit-form>@csrf<div class="field"><label for="email">Email address</label><input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="254" required></div><button type="submit" class="primary-button" style="margin-top:24px" data-ready-text="Send password reset link" data-busy-text="Sending reset link…">Send password reset link</button></form>
+    <p class="form-bottom"><a href="{{ route('login') }}">Back to sign in</a> · <a href="{{ route('register') }}">Create an account</a></p>
+</section>
 @endsection

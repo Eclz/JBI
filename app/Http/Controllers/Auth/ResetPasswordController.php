@@ -46,10 +46,13 @@ class ResetPasswordController extends Controller
      */
     public function reset(Request $request)
     {
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => strtolower(trim($request->email))]);
+        }
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'string', 'confirmed', 'max:72', Rules\Password::defaults()],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

@@ -85,7 +85,8 @@ class HrRecruitingController extends Controller
             }
         }
 
-        return view('human-resources.recruiting.show', compact('vacancy', 'kanban', 'roles', 'departments'));
+        $existingAccounts = User::whereIn('email', $vacancy->applicants->pluck('email'))->get()->keyBy(fn ($user) => strtolower($user->email));
+        return view('human-resources.recruiting.show', compact('vacancy', 'kanban', 'roles', 'departments', 'existingAccounts'));
     }
 
     public function storeFromSuccession(Request $request, \App\Models\HrSuccessionPlan $succession)
@@ -171,6 +172,7 @@ class HrRecruitingController extends Controller
         $data = $request->validate([
             'role_id' => ['required', 'integer', Rule::exists('roles', 'id')->where('is_active', true)],
             'department_id' => ['required', 'integer', Rule::exists('departments', 'id')->where('is_active', true)],
+            'existing_user_id' => 'nullable|integer|exists:users,id',
             'workspace' => ['required', 'string', 'max:150'],
             'due_date' => ['required', 'date', 'after_or_equal:today'],
         ]);
@@ -182,15 +184,19 @@ class HrRecruitingController extends Controller
 
             $role = Role::where('is_active', true)->findOrFail($data['role_id']);
             abort_if(in_array($role->guard_role, ['student', 'parent', 'applicant'], true), 422, 'Select a staff role.');
-            abort_if(
-                User::whereRaw('LOWER(email) = ?', [Str::lower($applicant->email)])->exists(),
-                422,
-                'A user account already exists for this email address.'
-            );
+            $existingUser = User::whereRaw('LOWER(email) = ?', [Str::lower($applicant->email)])->lockForUpdate()->first();
+            if ($existingUser) {
+                abort_unless((int) ($data['existing_user_id'] ?? 0) === $existingUser->id, 422,
+                    'An account already exists. Confirm linking it instead of creating a duplicate.');
+                abort_if(in_array($existingUser->role, ['student', 'parent', 'applicant', null, ''], true), 422, 'Only an existing staff account can be linked.');
+                abort_if($existingUser->hrProfile?->source_applicant_id, 422, 'This employee is already linked to another approved hire.');
+            } else {
+                abort_if(!empty($data['existing_user_id']), 422, 'The selected account does not match this applicant email.');
+            }
 
             $department = Department::where('is_active', true)->findOrFail($data['department_id']);
             $name = trim($applicant->first_name . ' ' . $applicant->last_name);
-            $user = User::create([
+            $user = $existingUser ?? User::create([
                 'name' => $name,
                 'first_name' => $applicant->first_name,
                 'last_name' => $applicant->last_name,
@@ -204,8 +210,7 @@ class HrRecruitingController extends Controller
             ]);
 
             $employeeNumber = sprintf('EMP-%s-%06d', now()->format('Y'), $user->id);
-            HrEmployee::create([
-                'user_id' => $user->id,
+            HrEmployee::updateOrCreate(['user_id' => $user->id], [
                 'source_applicant_id' => $applicant->id,
                 'employee_number' => $employeeNumber,
                 'job_title' => $applicant->vacancy->position_title,
@@ -217,8 +222,7 @@ class HrRecruitingController extends Controller
             ]);
 
             if ($role->guard_role === 'faculty') {
-                FacultyProfile::create([
-                    'user_id' => $user->id,
+                FacultyProfile::updateOrCreate(['user_id' => $user->id], [
                     'employee_id' => $employeeNumber,
                     'department_id' => $department->id,
                     'designation' => $role->name,
@@ -231,32 +235,12 @@ class HrRecruitingController extends Controller
                 ]);
             }
 
-            $onboarding = HrOnboarding::create([
-                'user_id' => $user->id,
-                'status' => 'In Progress',
-                'hr_officer_id' => auth()->id(),
+            $roleIds = $user->roles->pluck('id')->push($role->id)->unique()->all();
+            $user->update(['role' => $role->guard_role, 'role_id' => $role->id]);
+            $user->syncRoles($roleIds, $role->id);
+            \App\Services\StaffOnboardingService::ensure($user, auth()->id(), [
                 'due_date' => $data['due_date'],
-                'template_name' => 'New Employee',
             ]);
-
-            foreach ([
-                'Employment documents verified',
-                'Employment contract signed',
-                'Identification documents verified',
-                'Payroll information collected',
-                'Bank details submitted',
-                'Account password set',
-                'ID card issued',
-                'Workspace assigned',
-                'Department introduction completed',
-            ] as $taskName) {
-                $onboarding->tasks()->create([
-                    'task_name' => $taskName,
-                    'status' => 'Pending',
-                    'assigned_to' => auth()->id(),
-                    'due_date' => $data['due_date'],
-                ]);
-            }
 
             $applicant->update([
                 'status' => 'Hired',
@@ -268,19 +252,12 @@ class HrRecruitingController extends Controller
             return $user;
         });
 
-        try {
-            $token = Password::broker()->createToken($user);
-            Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
-        } catch (\Throwable $exception) {
-            Log::error('New employee setup email could not be sent.', [
-                'user_id' => $user->id,
-                'applicant_id' => $applicant->id,
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return back()->with('warning', 'The hire was approved and onboarding was created, but the password setup email could not be sent. Ask an administrator to resend the setup link.');
+        if (!$user->must_change_password) {
+            return back()->with('success', 'Hire approved and linked to the existing staff account. Their current password is unchanged; onboarding is ready.');
         }
-
-        return back()->with('success', 'Hire approved. The staff account, employee profile, ID/workspace checklist, and onboarding plan were created. A password setup link was sent to the applicant.');
+        $sent = \App\Services\AccountInvitationService::send($user);
+        return back()->with($sent ? 'success' : 'warning', $sent
+            ? 'Hire approved. Staff account, employee record and onboarding checklist created. Password setup email sent.'
+            : 'Hire approved and onboarding created, but the setup email could not be sent. Ask an administrator to resend the invitation.');
     }
 }

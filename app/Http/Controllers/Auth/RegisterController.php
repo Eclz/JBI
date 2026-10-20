@@ -31,7 +31,7 @@ class RegisterController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('guest')->except(['verifyEmail', 'resendVerification', 'getPendingApplications', 'processApplication']);
+        $this->middleware('guest')->except(['verifyEmail', 'verificationNotice', 'updateVerificationEmail', 'resendVerification', 'getPendingApplications', 'processApplication']);
     }
 
     public function showRegistrationForm()
@@ -41,80 +41,82 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        if (!SystemSetting::admissionWindow()['isOpen']) {
-            return back()->withErrors(['admission' => 'Admissions are currently closed. Please check the published opening dates or contact the admissions office.']);
-        }
-
-        // Custom validation
-        $validator = $this->getValidationRules($request);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        DB::beginTransaction();
-
-        try {
-            // Handle file uploads
-            $profilePicture = null;
-
-            if ($request->hasFile('profile_picture')) {
-                $profilePicture = $request->file('profile_picture')->store('profile-pictures', 'public');
+        foreach (['first_name', 'last_name', 'phone', 'email'] as $field) {
+            if (is_string($request->input($field))) {
+                $value = trim($request->input($field));
+                $request->merge([$field => $field === 'email' ? strtolower($value) : $value]);
             }
-
-            // Create user account as student
-            $user = User::create([
+        }
+        if (!SystemSetting::admissionWindow()['isOpen']) {
+            return back()->withErrors(['admission' => 'Admissions are currently closed. Contact admissions for the next intake.']);
+        }
+        $validator = $this->getValidationRules($request);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput($request->except(['password', 'password_confirmation']));
+        }
+        if (User::whereRaw('LOWER(email) = ?', [$request->email])->exists()) {
+            return back()->withErrors(['email' => 'An account already exists for this email address. Sign in or reset your password.'])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+        try {
+            $user = DB::transaction(fn () => User::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => 'student',
+                'role_id' => \App\Models\Role::where('guard_role', 'student')->where('is_active', true)->value('id'),
                 'phone' => $request->phone,
-                'is_active' => true, // Active to allow logging in to apply
-                'email_verified_at' => null, // Requires email verification
-            ]);
-
-            DB::commit();
-
-            // Create database notification for successful registration
-            try {
-                \App\Models\Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Account Created Successfully',
-                    'message' => 'Welcome to JBI University! Please complete your profile application to proceed.',
-                    'type' => 'info',
-                    'priority' => 'high',
-                ]);
-            } catch (\Exception $notifError) {
-                Log::error('Failed to create registration notification: ' . $notifError->getMessage());
-            }
-
-            // Send email verification in the background
-            $emailResults = [];
-            $emailResults['verification'] = $this->sendEmailSafely(function() use ($user) {
-                Mail::to($user->email)->send(new EmailVerification($user));
-            }, 'Email verification', $user->email);
-
-            // Log email results
-            Log::info('Registration completed for user: ' . $user->email, [
-                'user_id' => $user->id,
-                'email_results' => $emailResults
-            ]);
-
-            // Authenticate and log in the user immediately
-            Auth::login($user);
-
-            return redirect()->route('dashboard')->with('success', 'Account created successfully! Please fill out your admission application below.');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Registration failed: ' . $e->getMessage(), [
-                'email' => $request->email,
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->withErrors(['error' => 'Registration failed: ' . $e->getMessage()])->withInput();
+                'is_active' => true,
+                'email_verified_at' => null,
+            ]));
+        } catch (\Throwable $exception) {
+            Log::error('Student account creation failed', ['exception' => $exception->getMessage()]);
+            return back()->withErrors(['registration' => 'We could not create your account. Try again, or sign in if you already registered.'])
+                ->withInput($request->except(['password', 'password_confirmation']));
         }
+        Auth::login($user);
+        $request->session()->regenerate();
+        $sent = $this->sendEmailSafely(fn () => Mail::to($user->email)->send(new EmailVerification($user)), 'Email verification', $user->email);
+        return redirect()->route('student.dashboard')->with($sent ? 'success' : 'warning', $sent
+            ? 'Your account is ready. Open your verification email to continue.'
+            : 'Your account was created, but we could not send the verification email. Use Resend verification email below, or contact admissions.');
+    }
+
+    public function verificationNotice()
+    {
+        if (auth()->user()->hasVerifiedEmail()) {
+            if (request()->expectsJson()) {
+                return response()->json(['verified' => true, 'redirect' => route(auth()->user()->role === 'student' ? 'student.dashboard' : 'dashboard')]);
+            }
+            return redirect()->route(auth()->user()->role === 'student' ? 'student.dashboard' : 'dashboard');
+        }
+        if (request()->expectsJson()) {
+            return response()->json(['verified' => false]);
+        }
+        if (auth()->user()->role === 'student') {
+            return redirect()->route('student.dashboard', request()->only('check'));
+        }
+        return view('auth.verify-email');
+    }
+
+    public function updateVerificationEmail(Request $request)
+    {
+        $user = $request->user();
+        abort_if($user->hasVerifiedEmail(), 403, 'Verified email addresses must be changed in your profile.');
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => strtolower(trim($request->email))]);
+        }
+        $data = $request->validate(['email' => ['required', 'string', 'email', 'max:254', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)]]);
+        if (User::whereRaw('LOWER(email) = ?', [$data['email']])->whereKeyNot($user->id)->exists()) {
+            return back()->withErrors(['email' => 'This email already has an account. Sign out and sign in to that account instead.']);
+        }
+        $user->update(['email' => $data['email']]);
+        $sent = $this->sendEmailSafely(fn () => Mail::to($user->email)->send(new EmailVerification($user)), 'Email verification', $user->email);
+        return redirect()->route('verification.notice')->with($sent ? 'success' : 'warning', $sent
+            ? 'Email address updated. We sent a verification link to your corrected address.'
+            : 'Email address updated, but the message could not be sent. Please resend or contact admissions.');
     }
 
     private function sendEmailSafely($emailFunction, $emailType, $recipient)
@@ -133,29 +135,32 @@ class RegisterController extends Controller
 
     public function verifyEmail(Request $request)
     {
+        if (!$request->hasValidSignature()) {
+            return response()->view('auth.verification-invalid', [], 403);
+        }
         $user = User::findOrFail($request->route('id'));
-
-        if (!hash_equals((string) $request->route('hash'), sha1($user->email))) {
-            return redirect()->route('login')->withErrors(['error' => 'Invalid verification link.']);
+        if (!hash_equals(sha1($user->email), (string) $request->route('hash'))) {
+            return response()->view('auth.verification-invalid', [], 403);
         }
-
-        if ($user->hasVerifiedEmail()) {
-            return redirect()->route('login')->with('success', 'Email already verified. You can now log in.');
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
         }
-
-        $user->markEmailAsVerified();
-
-        return redirect()->route('login')->with('success', 'Email verified successfully! You can now log in and complete your admission application.');
+        if ((int) Auth::id() === (int) $user->id) {
+            Auth::setUser($user);
+            return redirect()->route($user->role === 'student' ? 'student.dashboard' : 'dashboard')->with('success', 'Email verified. You can now complete your admission application.');
+        }
+        return view('auth.email-verified');
     }
 
     public function resendVerification(Request $request)
     {
+        $request->merge(['email' => auth()->user()->email]);
         $request->validate(['email' => 'required|email|exists:users,email']);
 
         $user = User::where('email', $request->email)->first();
 
         if ($user->hasVerifiedEmail()) {
-            return back()->with('error', 'Email is already verified.');
+            return redirect()->route(auth()->user()->role === 'student' ? 'student.dashboard' : 'dashboard');
         }
 
         $success = $this->sendEmailSafely(function() use ($user) {
@@ -163,9 +168,9 @@ class RegisterController extends Controller
         }, 'Verification email resend', $user->email);
 
         if ($success) {
-            return back()->with('success', 'Verification email sent!');
+            return redirect()->route('verification.notice')->with('success', 'A fresh verification email has been sent. Check your inbox and spam folder.');
         } else {
-            return back()->with('error', 'Failed to send verification email. Please try again or contact support.');
+            return redirect()->route('verification.notice')->with('warning', 'We could not send the verification email. Try again shortly or contact admissions. Your account is already saved.');
         }
     }
 
@@ -299,12 +304,19 @@ class RegisterController extends Controller
         $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'phone' => 'required|string|max:20',
+            'email' => 'required|string|email|max:254|unique:users,email',
+            'password' => 'required|string|min:8|max:72|confirmed',
+            'password_confirmation' => 'required|string',
+            'terms' => 'accepted',
+            'phone' => ['required', 'string', 'max:30', 'regex:/^\\+?[0-9][0-9\\s().-]{5,28}$/'],
         ];
 
-        return Validator::make($request->all(), $rules);
+        return Validator::make($request->all(), $rules, [
+            'email.unique' => 'An account already exists for this email address. Sign in or reset your password.',
+            'password.confirmed' => 'The passwords do not match. Enter the same password in both fields.',
+            'phone.regex' => 'Enter a valid phone number, including a country code where applicable.',
+            'terms.accepted' => 'Confirm that these details are correct and this is your email address.',
+        ]);
     }
 
     private function generateAdmissionNumber()

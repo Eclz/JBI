@@ -2,6 +2,12 @@
 
 @section('content')
 <div class="container-fluid px-4 py-6">
+    @if(!in_array($user->role, ['student', 'parent', 'applicant']))
+        <div class="alert alert-info">Staff account and HR onboarding are linked.
+            <a href="{{ route('human-resources.section', 'onboarding') }}">Open staff onboarding</a>
+            <div class="small mt-1">Password: {{ $user->must_change_password ? 'Setup pending' : 'Ready' }} · Invitation: {{ $user->setup_email_error ?: ($user->setup_email_sent_at ? 'Accepted by mail server at ' . $user->setup_email_sent_at : 'No successful send recorded') }}. Use the password setup action below to resend.</div>
+        </div>
+    @endif
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">

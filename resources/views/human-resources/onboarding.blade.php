@@ -9,9 +9,7 @@
             <p class="text-muted mb-0">Manage new employee onboarding and onboarding tasks.</p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-secondary">
-                <i class="bi bi-funnel me-1"></i> Filters
-            </button>
+
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-download me-1"></i> Export

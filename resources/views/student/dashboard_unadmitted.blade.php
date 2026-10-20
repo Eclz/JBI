@@ -3,6 +3,11 @@
 @section('title', 'Admission Status - JBI University')
 
 @section('content')
+@if(!auth()->user()->hasVerifiedEmail())
+<div class="alert alert-warning mx-3 mt-3"><strong>Verify your email before submitting your application.</strong> Open the verification message sent to {{ auth()->user()->email }}. Check spam if it is missing.
+<form method="POST" action="{{ route('verification.resend') }}" class="d-inline">@csrf<button class="btn btn-sm btn-outline-primary ms-2">Resend verification</button></form></div>
+@endif
+
 <div class="container py-4">
     <!-- Welcome Header -->
     <div class="row mb-4">
@@ -407,7 +412,7 @@
                                         <i class="bi bi-exclamation-octagon-fill fs-3 text-danger me-3"></i>
                                         <div>
                                             <h6 class="fw-bold mb-1 text-danger">ADMISSION APPLICATION FEE IS NON-REFUNDABLE</h6>
-                                            <p class="mb-0 small text-dark">Please complete your admission application fee payment and upload payment proof below. Your application documents will proceed to <strong>Academic Review & Verification</strong> once payment proof is submitted.</p>
+                                            <p class="mb-0 small text-dark">Please complete your admission application fee payment and upload payment proof below. Admissions will verify your receipt before reviewing your documents and assigning your programme.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -471,15 +476,6 @@
                                             <button class="nav-link active text-start py-2.5 px-3 mb-2 small fw-medium" id="v-pills-bank-tab" data-bs-toggle="pill" data-bs-target="#v-pills-bank" type="button" role="tab" aria-controls="v-pills-bank" aria-selected="true" style="border-radius: 6px;">
                                                 <i class="bi bi-bank me-2"></i>Bank Transfer / Wire Transfer
                                             </button>
-                                            <button class="nav-link text-start py-2.5 px-3 mb-2 small fw-medium" id="v-pills-card-tab" data-bs-toggle="pill" data-bs-target="#v-pills-card" type="button" role="tab" aria-controls="v-pills-card" aria-selected="false" style="border-radius: 6px;">
-                                                <i class="bi bi-credit-card me-2"></i>Credit / Debit Card (Online)
-                                            </button>
-                                            <button class="nav-link text-start py-2.5 px-3 mb-2 small fw-medium" id="v-pills-paypal-tab" data-bs-toggle="pill" data-bs-target="#v-pills-paypal" type="button" role="tab" aria-controls="v-pills-paypal" aria-selected="false" style="border-radius: 6px;">
-                                                <i class="bi bi-paypal me-2"></i>PayPal
-                                            </button>
-                                            <button class="nav-link text-start py-2.5 px-3 small fw-medium" id="v-pills-mobile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-mobile" type="button" role="tab" aria-controls="v-pills-mobile" aria-selected="false" style="border-radius: 6px;">
-                                                <i class="bi bi-phone me-2"></i>Mobile Payment / Wallet
-                                            </button>
                                         </div>
                                     </div>
 
@@ -488,39 +484,16 @@
                                             <div class="tab-pane fade show active small" id="v-pills-bank" role="tabpanel" aria-labelledby="v-pills-bank-tab">
                                                 <h6 class="fw-bold text-primary mb-2">Direct Bank Transfer</h6>
                                                 <p class="text-muted mb-3" style="font-size: 0.8rem;">Transfer the exact amount to JBI's bank account. Input reference code in payment remarks.</p>
-                                                <div class="mb-2"><strong>Bank Name:</strong> JBI National Bank</div>
-                                                <div class="mb-2"><strong>Account Name:</strong> JBI Admissions Department</div>
-                                                <div class="mb-2"><strong>Account Number:</strong> 1234-5678-9012</div>
+                                                @php $paymentInstructions = \App\Models\SystemSetting::getSetting('admission_payment_instructions'); @endphp
+                                                @if($paymentInstructions)
+                                                    <p class="text-break" style="white-space: pre-line">{{ $paymentInstructions }}</p>
+                                                @else
+                                                    <div class="alert alert-info">Contact the admissions or finance office for the official bank account and payment instructions before making payment.</div>
+                                                @endif
                                                 <div class="mb-0"><strong>Required Remarks:</strong> <code class="bg-light text-danger px-1 py-0.5 rounded">{{ $application->payment_ref }}</code></div>
                                             </div>
 
-                                            <div class="tab-pane fade small" id="v-pills-card" role="tabpanel" aria-labelledby="v-pills-card-tab">
-                                                <h6 class="fw-bold text-primary mb-2">Online Credit Card</h6>
-                                                <p class="text-muted mb-3" style="font-size: 0.8rem;">Pay securely online using your Visa, Mastercard, or American Express.</p>
-                                                <div class="d-grid gap-2 mt-4">
-                                                    <button type="button" class="btn btn-sm btn-primary py-2" onclick="alert('Online credit card payment channel simulated successfully. Please upload the transaction confirmation receipt below.')" style="border-radius: 6px;">
-                                                        <i class="bi bi-shield-check me-2"></i>Pay {{ $currencyCode }} {{ number_format($feeAmount, 2) }} Online
-                                                    </button>
-                                                </div>
-                                            </div>
 
-                                            <div class="tab-pane fade small" id="v-pills-paypal" role="tabpanel" aria-labelledby="v-pills-paypal-tab">
-                                                <h6 class="fw-bold text-primary mb-2">PayPal Checkout</h6>
-                                                <p class="text-muted mb-3" style="font-size: 0.8rem;">Sign in to your PayPal account to make a secure digital wallet payment.</p>
-                                                <div class="d-grid gap-2 mt-4">
-                                                    <button type="button" class="btn btn-sm btn-warning py-2" onclick="alert('PayPal checkout simulated successfully. Please upload the transaction receipt below.')" style="border-radius: 6px; background-color: #ffc439;">
-                                                        <i class="bi bi-paypal me-2"></i>Pay with PayPal
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div class="tab-pane fade small" id="v-pills-mobile" role="tabpanel" aria-labelledby="v-pills-mobile-tab">
-                                                <h6 class="fw-bold text-primary mb-2">Mobile Payments</h6>
-                                                <p class="text-muted mb-3" style="font-size: 0.8rem;">Scan QR code or use push notification to pay using Apple Pay, Google Pay, or local mobile wallets.</p>
-                                                <div class="d-flex align-items-center justify-content-center p-3">
-                                                    <span class="badge bg-secondary p-2"><i class="bi bi-phone me-1"></i>Google Pay / Apple Pay Enabled</span>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -568,7 +541,7 @@
                                 </div>
                                 <h4 class="fw-bold mb-2 text-dark">Step 4: Application & Document Review</h4>
                                 <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
-                                    Your non-refundable admission fee payment has been submitted. The academic admissions board is currently verifying your profile, credentials, and uploaded documents.
+                                    Your non-refundable admission fee payment has been submitted. Admissions will verify your payment first, then your supporting documents, and finally assign your programme. You will be notified when your admission is confirmed.
                                 </p>
                                 <div class="d-inline-flex flex-column align-items-start bg-light p-3 text-start border" style="border-radius: 10px; width: 100%; max-width: 480px;">
                                     @if($application->program_id && ($application->programRecord || $application->program))
@@ -1100,7 +1073,7 @@
                                 <h6 class="fw-bold text-primary mb-3"><i class="bi bi-folder-fill me-2"></i>Uploaded Supporting Documents</h6>
                                 @if(is_array($application->documents) && count($application->documents) > 0)
                                     <div class="row g-3">
-                                        @foreach($application->documents as $doc)
+                                        @foreach($application->documents as $docIndex => $doc)
                                             @php
                                                 $fileName = basename($doc);
                                                 $isImage = in_array(strtolower(pathinfo($doc, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif']);
@@ -1108,7 +1081,7 @@
                                             <div class="col-sm-6 col-md-4 col-lg-3">
                                                 <div class="card h-100 border shadow-sm overflow-hidden" style="border-radius: 8px;">
                                                     @if($isImage)
-                                                        <img src="{{ Storage::url($doc) }}" class="card-img-top" style="height: 110px; object-fit: cover;">
+                                                        <img src="{{ route('applications.files.show', [$application, $docIndex]) }}" class="card-img-top" style="height: 110px; object-fit: cover;">
                                                     @else
                                                         <div class="card-img-top d-flex align-items-center justify-content-center bg-light text-secondary" style="height: 110px;">
                                                             <i class="bi bi-file-earmark-pdf fs-1"></i>
@@ -1116,7 +1089,7 @@
                                                     @endif
                                                     <div class="card-body p-2 d-flex flex-column justify-content-between">
                                                         <span class="text-truncate d-block small fw-semibold text-dark mb-2" title="{{ $fileName }}">{{ $fileName }}</span>
-                                                        <a href="{{ Storage::url($doc) }}" target="_blank" class="btn btn-xs btn-primary w-100 text-center py-1 mt-auto" style="font-size: 0.75rem; border-radius: 4px;">
+                                                        <a href="{{ route('applications.files.show', [$application, $docIndex]) }}" target="_blank" class="btn btn-xs btn-primary w-100 text-center py-1 mt-auto" style="font-size: 0.75rem; border-radius: 4px;">
                                                             <i class="bi bi-eye me-1"></i>Preview / View
                                                         </a>
                                                     </div>

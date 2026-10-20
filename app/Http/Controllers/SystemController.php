@@ -102,6 +102,8 @@ class SystemController extends Controller
             'admission_open_at' => 'nullable|date',
             'admission_close_at' => 'nullable|date|after:admission_open_at',
             'registration_fee_structure_id' => 'nullable|integer|exists:fee_structures,id',
+            'admission_payment_instructions' => 'nullable|string|max:4000',
+            'admission_covers_registration' => 'nullable|boolean',
             'registration_payment_days' => 'nullable|integer|min:1|max:365',
             'tuition_min_percent' => 'nullable|numeric|min:0|max:100',
             'tuition_payment_days' => 'nullable|integer|min:1|max:365',
@@ -126,6 +128,7 @@ class SystemController extends Controller
         }
 
         $values = $request->except(['_token', '_method']);
+        $values['admission_covers_registration'] = $request->boolean('admission_covers_registration');
         $values['maintenance_mode'] = $request->boolean('maintenance_mode');
         $values['admission_enabled'] = $request->boolean('admission_enabled');
         $values['accepted_currencies'] = $request->input('accepted_currencies', []);

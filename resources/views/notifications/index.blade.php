@@ -97,6 +97,11 @@
                                                 @endif
                                             </h6>
                                             <p class="mb-1 text-secondary" style="font-size: 0.9rem;">{{ $message }}</p>
+                                            <div class="small mb-2">Email: {{ $notification->email_sent ? 'Sent to mail server' : ucfirst($notification->data['email_status'] ?? 'Not sent') }}
+                                                @if(!$notification->email_sent && ($notification->data['email_status'] ?? null) !== 'queued')
+                                                    <form class="d-inline" method="POST" action="{{ route('notifications.retry-email', $notification) }}">@csrf<button class="btn btn-sm btn-outline-primary">Retry email</button></form>
+                                                @endif
+                                            </div>
                                             <div class="d-flex align-items-center gap-3">
                                                 <small class="text-muted">
                                                     <i class="bi bi-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}

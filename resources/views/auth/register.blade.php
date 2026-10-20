@@ -1,161 +1,43 @@
-@extends('layouts.app')
-
-@section('title', 'Register - JBI University')
-
+@extends('layouts.admissions')
+@section('title', 'Create your student account')
 @section('content')
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 16px;">
-                <div class="row g-0">
-                    <!-- Left Side - Simplified Form -->
-                    <div class="col-md-7 p-4 p-lg-5 bg-white">
-                        <div class="mb-4">
-                            <h3 class="fw-bold text-primary mb-1">Create an Account</h3>
-                            <p class="text-muted small">Register below to begin your student admission journey at JBI.</p>
-                        </div>
-
-                        @if($errors->any())
-                            <div class="alert alert-danger py-2 px-3 mb-3 small" style="border-radius: 8px;">
-                                <ul class="mb-0 ps-3">
-                                    @foreach($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-
-                        @if(!($admissionWindow['isOpen'] ?? true))
-                            <div class="alert alert-warning">
-                                <h6 class="alert-heading"><i class="bi bi-calendar-x me-2"></i>Admissions are currently closed</h6>
-                                @if(($admissionWindow['status'] ?? '') === 'scheduled' && $admissionWindow['start'])
-                                    <p class="mb-0">Applications open {{ $admissionWindow['start']->format('d M Y, H:i') }} {{ $admissionWindow['timezone'] }}.</p>
-                                @elseif(($admissionWindow['status'] ?? '') === 'closed' && $admissionWindow['end'])
-                                    <p class="mb-0">The admission application window closed {{ $admissionWindow['end']->format('d M Y, H:i') }} {{ $admissionWindow['timezone'] }}.</p>
-                                @else
-                                    <p class="mb-0">Please contact the admissions office for the next registration period.</p>
-                                @endif
-                            </div>
-                        @endif
-
-                        <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" id="registrationForm">
-                            @csrf
-
-                            <!-- Personal Details Section -->
-                            <h6 class="text-uppercase text-primary fw-semibold mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">
-                                <i class="bi bi-person-fill me-2"></i>Account Details
-                            </h6>
-                            
-                            <div class="row g-3 mb-4">
-                                <div class="col-sm-6">
-                                    <label for="first_name" class="form-label small fw-medium">First Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm @error('first_name') is-invalid @enderror" id="first_name" name="first_name" value="{{ old('first_name') }}" required placeholder="John">
-                                    @error('first_name')
-                                        <div class="invalid-feedback small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-sm-6">
-                                    <label for="last_name" class="form-label small fw-medium">Last Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm @error('last_name') is-invalid @enderror" id="last_name" name="last_name" value="{{ old('last_name') }}" required placeholder="Doe">
-                                    @error('last_name')
-                                        <div class="invalid-feedback small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-sm-6">
-                                    <label for="email" class="form-label small fw-medium">Email Address <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control form-control-sm @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required placeholder="john.doe@example.com">
-                                    @error('email')
-                                        <div class="invalid-feedback small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-sm-6">
-                                    <label for="phone" class="form-label small fw-medium">Phone Number <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control form-control-sm @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" required placeholder="+1 (555) 000-0000">
-                                    @error('phone')
-                                        <div class="invalid-feedback small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Security Section -->
-                            <h6 class="text-uppercase text-primary fw-semibold mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">
-                                <i class="bi bi-shield-lock-fill me-2"></i>Account Security
-                            </h6>
-                            <div class="row g-3 mb-4">
-                                <div class="col-sm-6">
-                                    <label for="password" class="form-label small fw-medium">Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control form-control-sm @error('password') is-invalid @enderror" id="password" name="password" required>
-                                        <button class="btn btn-outline-secondary btn-sm toggle-password" type="button" data-target="password" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                    @error('password')
-                                        <div class="invalid-feedback d-block small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-sm-6">
-                                    <label for="password_confirmation" class="form-label small fw-medium">Confirm Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control form-control-sm" id="password_confirmation" name="password_confirmation" required>
-                                        <button class="btn btn-outline-secondary btn-sm toggle-password" type="button" data-target="password_confirmation" tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-check mb-4">
-                                <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
-                                <label class="form-check-label text-muted small" for="terms">
-                                    I agree to the <a href="#" class="text-primary text-decoration-none">Terms and Conditions</a> & <a href="#" class="text-primary text-decoration-none">Privacy Policy</a> *
-                                </label>
-                            </div>
-
-                            <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-primary" style="border-radius: 8px;" {{ !($admissionWindow['isOpen'] ?? true) ? 'disabled' : '' }}>
-                                    <i class="bi bi-person-plus-fill me-2"></i>Register Account
-                                </button>
-                            </div>
-
-                            <div class="text-center">
-                                <p class="small text-muted mb-0">Already have an account? 
-                                    <a href="{{ route('login') }}" class="text-primary text-decoration-none fw-medium">Sign In</a>
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Right Side - Info Panel -->
-                    <div class="col-md-5 d-none d-md-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #1a2236 100%);">
-                        <div class="text-center p-5">
-                            <img src="{{ asset('images/jbi-blue.webp') }}" alt="JBI University Logo" class="mb-4" style="height: 100px;">
-                            <h4 class="fw-bold mb-2">Welcome to JBI</h4>
-                            <p class="text-white-50 small mb-4">Begin your student admission process directly from within your dashboard.</p>
-
-                            <div class="text-start mx-auto" style="max-width: 280px;">
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: bold; font-size: 0.85rem;">1</div>
-                                    <span class="small">Create an Account</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: bold; font-size: 0.85rem;">2</div>
-                                    <span class="small">Log In to Apply</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: bold; font-size: 0.85rem;">3</div>
-                                    <span class="small">Submit Academic Profile</span>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: bold; font-size: 0.85rem;">4</div>
-                                    <span class="small">Get Admitted by Admin</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<div class="admissions-card">
+    <section class="form-panel" aria-labelledby="registration-title">
+        <div class="eyebrow">Begin your application</div>
+        <h1 id="registration-title">Create your student account</h1>
+        <p class="intro">Start with your contact details. You’ll verify your email before choosing your programme and uploading documents.</p>
+        <p class="mobile-steps"><strong>1. Create account</strong> &nbsp;→&nbsp; 2. Verify email &nbsp;→&nbsp; 3. Apply</p>
+        @if($errors->any())
+            <div class="alert alert-error" id="registration-errors" role="alert" tabindex="-1"><strong>Please check the following:</strong><ul>@foreach($errors->messages() as $field => $messages)<li><a href="#{{ $field === 'password.confirmed' ? 'password_confirmation' : $field }}">{{ $messages[0] }}</a></li>@endforeach</ul></div>
+        @endif
+        @if(!($admissionWindow['isOpen'] ?? true))
+            <div class="alert alert-warning" role="status"><strong>Admissions are currently closed.</strong>
+                @if(($admissionWindow['status'] ?? '') === 'scheduled' && $admissionWindow['start'])
+                    <p>Applications open {{ $admissionWindow['start']->format('d M Y, H:i') }} ({{ $admissionWindow['timezone'] }}).</p>
+                @else <p>Contact <a href="mailto:admission@jbiuniversity.com">admissions</a> for the next intake.</p> @endif
+                Already registered? <a href="{{ route('login') }}">Sign in to check your application.</a>
             </div>
-        </div>
-    </div>
+        @endif
+        <form method="POST" action="{{ route('register') }}" id="registrationForm" data-submit-form>
+            @csrf
+            <div class="account-fields">
+                <div class="field"><label for="first_name">First name</label><input id="first_name" name="first_name" type="text" autocomplete="given-name" maxlength="255" value="{{ old('first_name') }}" required @error('first_name') aria-invalid="true" aria-describedby="first_name-error" @enderror>@error('first_name')<p class="field-error" id="first_name-error">{{ $message }}</p>@enderror</div>
+                <div class="field"><label for="last_name">Last name</label><input id="last_name" name="last_name" type="text" autocomplete="family-name" maxlength="255" value="{{ old('last_name') }}" required @error('last_name') aria-invalid="true" aria-describedby="last_name-error" @enderror>@error('last_name')<p class="field-error" id="last_name-error">{{ $message }}</p>@enderror</div>
+                <div class="field field-full"><label for="email">Email address</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254" value="{{ old('email') }}" required aria-describedby="email-help @error('email') email-error @enderror" @error('email') aria-invalid="true" @enderror><p id="email-help" class="hint">Use an email you can open. We’ll send your verification link here.</p>@error('email')<p class="field-error" id="email-error">{{ $message }} <a href="{{ route('login') }}">Sign in</a> or <a href="{{ route('password.request') }}">reset your password</a>.</p>@enderror</div>
+                <div class="field field-full"><label for="phone">Phone number</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="e.g. +27 68 443 8415" value="{{ old('phone') }}" required aria-describedby="phone-help @error('phone') phone-error @enderror" @error('phone') aria-invalid="true" @enderror><p id="phone-help" class="hint">Include your country code if you’re outside South Africa.</p>@error('phone')<p class="field-error" id="phone-error">{{ $message }}</p>@enderror</div>
+                <div class="field field-full"><label for="password">Password</label><div class="password-field"><input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required aria-describedby="password-help @error('password') password-error @enderror" @error('password') aria-invalid="true" @enderror><button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-controls="password" aria-pressed="false">Show</button></div><p id="password-help" class="hint">Use at least 8 characters. A longer phrase is easier to remember.</p>@error('password')<p class="field-error" id="password-error">{{ $message }}</p>@enderror</div>
+                <div class="field field-full"><label for="password_confirmation">Confirm password</label><div class="password-field"><input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="72" required @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror><button class="password-toggle" type="button" data-password-toggle="password_confirmation" aria-label="Show confirmed password" aria-controls="password_confirmation" aria-pressed="false">Show</button></div>@error('password_confirmation')<p class="field-error" id="password_confirmation-error">{{ $message }}</p>@enderror</div>
+            </div>
+            <div class="consent"><input id="terms" name="terms" type="checkbox" value="1" @checked(old('terms')) required @error('terms') aria-invalid="true" aria-describedby="terms-error" @enderror><label for="terms">I confirm these details are correct and this is my email address.</label></div>
+            @error('terms')<p class="field-error" id="terms-error">{{ $message }}</p>@enderror
+            <button type="submit" class="primary-button" data-ready-text="Create account" data-busy-text="Creating your account…" data-closed="{{ !($admissionWindow['isOpen'] ?? true) ? 'true' : 'false' }}" @disabled(!($admissionWindow['isOpen'] ?? true))>Create account <span aria-hidden="true">→</span></button>
+            <p class="form-bottom">Already registered? <a href="{{ route('login') }}">Sign in</a><br><a href="{{ route('password.request') }}">Forgot your password?</a></p>
+        </form>
+    </section>
+    <aside class="journey-panel" aria-label="Your application journey">
+        <h2>Your next chapter<br>starts here.</h2><p>One account to apply, track your admission, and access your student portal.</p>
+        <ol class="journey-steps"><li><span class="step-number">1</span><div><strong>Create your account</strong><p>Enter your name, email, phone number and password.</p></div></li><li><span class="step-number">2</span><div><strong>Verify your email</strong><p>Open the link we send to confirm your email address.</p></div></li><li><span class="step-number">3</span><div><strong>Complete your application</strong><p>Choose your preferred programmes, upload documents and submit your payment receipt.</p></div></li></ol>
+        <div class="journey-support">Need help getting started?<br><a href="mailto:admission@jbiuniversity.com">admission@jbiuniversity.com</a></div>
+    </aside>
 </div>
 @endsection

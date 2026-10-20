@@ -1,75 +1,8 @@
-@extends('layouts.app')
-
+@extends('layouts.admissions')
+@section('title', 'Choose your password')
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
-
-                <div class="card-body">
-                    <form method="POST" action="{{ route('password.update') }}">
-                        @csrf
-
-                        <input type="hidden" name="token" value="{{ $token }}">
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
-
-                            <div class="col-md-6">
-                                <div class="input-group">
-                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
-                                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password" tabindex="-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-
-                                @error('password')
-                                    <span class="invalid-feedback d-block" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
-
-                            <div class="col-md-6">
-                                <div class="input-group">
-                                    <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
-                                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password-confirm" tabindex="-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Reset Password') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="notice-card"><h1>Choose your password</h1><p>Use a password with at least 8 characters. You’ll use it to sign in to your student or staff account.</p>
+    @if($errors->any())<div class="alert alert-error" role="alert">{{ $errors->first() }} @if($errors->has('email'))<a href="{{ route('password.request') }}">Request a fresh reset link.</a>@endif</div>@endif
+    <form method="POST" action="{{ route('password.update') }}" data-submit-form>@csrf<input type="hidden" name="token" value="{{ $token }}"><div class="account-fields"><div class="field field-full"><label for="email">Email address</label><input id="email" type="email" name="email" value="{{ old('email', $email) }}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="254" required></div><div class="field field-full"><label for="password">New password</label><div class="password-field"><input id="password" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" required><button type="button" class="password-toggle" data-password-toggle="password" aria-label="Show password" aria-controls="password" aria-pressed="false">Show</button></div></div><div class="field field-full"><label for="password_confirmation">Confirm password</label><div class="password-field"><input id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" minlength="8" maxlength="72" required><button type="button" class="password-toggle" data-password-toggle="password_confirmation" aria-label="Show confirmed password" aria-controls="password_confirmation" aria-pressed="false">Show</button></div></div></div><button type="submit" class="primary-button" style="margin-top:24px" data-ready-text="Save password and continue" data-busy-text="Saving your password…">Save password and continue</button></form><p class="form-bottom"><a href="{{ route('login') }}">Back to sign in</a></p>
+</section>
 @endsection

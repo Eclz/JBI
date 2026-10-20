@@ -70,7 +70,7 @@ class CareerPortalWorkflowTest extends TestCase
         Mail::fake();
 
         $admin = User::factory()->create(['role' => 'admin', 'role_id' => null]);
-        $department = Department::factory()->create();
+        $department = Department::factory()->active()->create();
         $role = Role::where('slug', 'dean')->firstOrFail();
         $vacancy = HrVacancy::create([
             'position_title' => 'Dean of Science',
