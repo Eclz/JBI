@@ -215,12 +215,18 @@ class UserController extends Controller
             $user->update($userData);
 
             // Sync multi-roles
-            if ($request->has('role_ids') || $role) {
+            if ($request->has('role_ids_present') || $request->has('role_ids') || $role) {
                 $roleIds = (array) $request->input('role_ids', []);
-                $primaryId = $role ? $role->id : $user->role_id;
-                if ($primaryId && !in_array($primaryId, $roleIds)) {
-                    $roleIds[] = $primaryId;
+                $primaryId = $role?->id;
+
+                if ($role && !in_array($role->id, array_map('intval', $roleIds), true)) {
+                    $roleIds[] = $role->id;
                 }
+
+                if (!$primaryId && $user->role_id && in_array($user->role_id, array_map('intval', $roleIds), true)) {
+                    $primaryId = $user->role_id;
+                }
+
                 $user->syncRoles($roleIds, $primaryId);
             }
 

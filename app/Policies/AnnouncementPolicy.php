@@ -17,7 +17,7 @@ class AnnouncementPolicy
 
     public function view(User $user, Announcement $announcement): bool
     {
-        if ($user->isAdmin() || $announcement->created_by === $user->id) {
+        if ($user->hasPermission('announcements', 'view') || $announcement->created_by === $user->id) {
             return true;
         }
 
@@ -30,21 +30,22 @@ class AnnouncementPolicy
 
         $roles = $announcement->target_roles;
 
-        return empty($roles) || in_array($user->role, $roles, true);
+        return empty($roles) || collect($roles)->contains(fn ($role) => $user->hasRole($role));
     }
 
     public function create(User $user): bool
     {
-        return $user->isAdmin() || $user->isFaculty();
+        return $user->hasPermission('announcements', 'create') || $user->isFaculty();
     }
 
     public function update(User $user, Announcement $announcement): bool
     {
-        return $user->isAdmin() || $announcement->created_by === $user->id;
+        return $user->hasPermission('announcements', 'edit') || $announcement->created_by === $user->id;
     }
 
     public function delete(User $user, Announcement $announcement): bool
     {
-        return $this->update($user, $announcement);
+        return $user->hasPermission('announcements', 'delete')
+            || $announcement->created_by === $user->id;
     }
 }

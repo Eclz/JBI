@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\HrEmployee;
+use App\Models\HrJobRole;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -368,7 +370,21 @@ class HumanResourcesController extends Controller
     public function create()
     {
         $users = User::where('is_active', true)->orderBy('first_name')->get();
-        return view('human-resources.create', compact('users'));
+        $departments = Department::with('faculty')->where('is_active', true)->orderBy('name')->get();
+        $adminDepartments = [
+            'Administration',
+            'Finance & Bursar',
+            'Human Resources',
+            'Estates & Facilities',
+            'Library Services',
+            'Academic Affairs',
+            'Admissions & Records',
+            'ICT & Computing',
+            'Student Affairs',
+        ];
+        $jobRoles = HrJobRole::where('is_active', true)->orderBy('title')->get();
+
+        return view('human-resources.create', compact('users', 'departments', 'adminDepartments', 'jobRoles'));
     }
 
     public function store(Request $request)
@@ -378,12 +394,24 @@ class HumanResourcesController extends Controller
             'employee_number' => 'required|string|max:50|unique:hr_employees,employee_number',
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150',
+            'department_id' => 'nullable|exists:departments,id',
             'employment_type' => 'required|string|max:50',
             'salary_band' => 'nullable|string|max:50',
             'emergency_contact' => 'nullable|string|max:255',
             'status' => 'required|in:Active,On Leave,Inactive',
             'notes' => 'nullable|string|max:2000',
         ]);
+
+        if (!empty($data['department_id'])) {
+            $deptModel = Department::find($data['department_id']);
+            if ($deptModel) {
+                $data['department'] = $deptModel->name;
+            }
+        } elseif (!empty($data['department'])) {
+            $deptModel = Department::where('name', $data['department'])->first();
+            $data['department_id'] = $deptModel?->id;
+        }
+
         $employee = HrEmployee::create($data);
         $this->notify($employee, 'Employee record created', "HR created employee record {$employee->employee_number}.", 'human-resources.staff.index');
 
@@ -470,6 +498,12 @@ class HumanResourcesController extends Controller
 
     public function edit(User $employee)
     {
+        $employee->load([
+            'hrProfile.departmentRecord',
+            'facultyProfile.department.faculty',
+            'headedDepartments.faculty'
+        ]);
+
         $hrProfile = $employee->hrProfile;
         if (!$hrProfile) {
             $hrProfile = new HrEmployee([
@@ -479,8 +513,32 @@ class HumanResourcesController extends Controller
             ]);
         }
         
-        $jobRoles = \App\Models\HrJobRole::where('is_active', true)->orderBy('title')->get();
-        return view('human-resources.edit', compact('employee', 'hrProfile', 'jobRoles'));
+        $departments = Department::with(['faculty', 'headOfDepartment'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $adminDepartments = [
+            'Administration',
+            'Finance & Bursar',
+            'Human Resources',
+            'Estates & Facilities',
+            'Library Services',
+            'Academic Affairs',
+            'Admissions & Records',
+            'ICT & Computing',
+            'Student Affairs',
+        ];
+
+        $jobRoles = HrJobRole::where('is_active', true)->orderBy('title')->get();
+
+        return view('human-resources.edit', compact(
+            'employee',
+            'hrProfile',
+            'jobRoles',
+            'departments',
+            'adminDepartments'
+        ));
     }
 
     public function generateId(User $employee)
@@ -510,6 +568,7 @@ class HumanResourcesController extends Controller
             'employee_number' => 'required|string|max:50',
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150',
+            'department_id' => 'nullable|exists:departments,id',
             'employment_type' => 'required|string|max:50',
             'salary_band' => 'nullable|string|max:50',
             'emergency_contact' => 'nullable|string|max:255',
@@ -518,6 +577,19 @@ class HumanResourcesController extends Controller
         ]);
         
         $data['user_id'] = $employee->id;
+
+        if (!empty($data['department_id'])) {
+            $deptModel = Department::find($data['department_id']);
+            if ($deptModel) {
+                $data['department'] = $deptModel->name;
+            }
+        } elseif (!empty($data['department'])) {
+            $deptModel = Department::where('name', $data['department'])->first();
+            $data['department_id'] = $deptModel?->id;
+        } else {
+            $data['department_id'] = null;
+            $data['department'] = null;
+        }
         
         if ($employee->hrProfile) {
             $employee->hrProfile->update($data);

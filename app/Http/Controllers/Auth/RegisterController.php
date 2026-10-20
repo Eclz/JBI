@@ -173,7 +173,7 @@ class RegisterController extends Controller
     {
         try {
             // Get all active admin users
-            $admins = User::where('role', 'admin')
+            $admins = User::role('admin')
                          ->where('is_active', true)
                          ->whereNotNull('email_verified_at')
                          ->get()->filter(function($u) { return !$u->isFinanceOfficer(); });

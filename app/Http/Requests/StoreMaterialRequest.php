@@ -11,7 +11,7 @@ class StoreMaterialRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->role === 'faculty');
+        return auth()->check() && auth()->user()->hasPermission('courses', 'create');
     }
 
     /**

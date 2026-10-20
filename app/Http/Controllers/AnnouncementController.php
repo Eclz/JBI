@@ -16,11 +16,10 @@ class AnnouncementController extends Controller
         $user = Auth::user();
 
         $announcements = Announcement::with(['creator', 'course'])
-            ->when(!$user->isAdmin(), function ($query) use ($user) {
-                // Non-admins only see live announcements aimed at their role (or ones they wrote).
+            ->when(!$user->hasPermission('announcements', 'view'), function ($query) use ($user) {
                 $query->where(function ($q) use ($user) {
                     $q->where(function ($live) use ($user) {
-                        $live->active()->forRole($user->role);
+                        $live->active()->forRole($user->getAssignedRoleIdentifiers());
                     })->orWhere('created_by', $user->id);
                 });
             })
@@ -32,9 +31,23 @@ class AnnouncementController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $hasFacultyRole = $user->hasRole(['faculty', 'lecturer']);
+        $hasStudentRole = $user->hasRole('student');
         $courses = Course::query()
-            ->when($user->role === 'faculty', fn ($q) => $q->where('instructor_id', $user->id))
-            ->when($user->role === 'student', fn ($q) => $q->whereHas('enrollments', fn ($e) => $e->where('user_id', $user->id)))
+            ->when(!$user->hasPermission('courses', 'view'), function ($query) use ($user, $hasFacultyRole, $hasStudentRole) {
+                $query->where(function ($scope) use ($user, $hasFacultyRole, $hasStudentRole) {
+                    if ($hasFacultyRole) {
+                        $scope->where('instructor_id', $user->id);
+                    }
+                    if ($hasStudentRole) {
+                        $method = $hasFacultyRole ? 'orWhereHas' : 'whereHas';
+                        $scope->{$method}('enrollments', fn ($enrollments) => $enrollments->where('user_id', $user->id));
+                    }
+                    if (!$hasFacultyRole && !$hasStudentRole) {
+                        $scope->whereRaw('1 = 0');
+                    }
+                });
+            })
             ->orderBy('code')
             ->get();
 
@@ -129,7 +142,7 @@ class AnnouncementController extends Controller
 
         return [
             'courses' => Course::query()
-                ->when($user->role === 'faculty', fn ($q) => $q->where('instructor_id', $user->id))
+                ->when($user->hasRole('faculty'), fn ($q) => $q->where('instructor_id', $user->id))
                 ->where('status', 'active')
                 ->orderBy('code')
                 ->get(),

@@ -15,16 +15,30 @@ class AssignmentController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+        $isFaculty = $user->hasRole('faculty');
+        $isStudent = $user->hasRole('student');
+        $canViewAllCourses = $user->hasPermission('courses', 'view');
+
         $assignments = Assignment::with(['course', 'course.instructor'])
-            ->when(Auth::user()->role === 'faculty', function ($query) {
-                $query->whereHas('course', function ($q) {
-                    $q->where('instructor_id', Auth::id());
+            ->when($isFaculty || $isStudent, function ($query) use ($isFaculty, $isStudent, $user) {
+                $query->where(function ($visibility) use ($isFaculty, $isStudent, $user) {
+                    if ($isFaculty) {
+                        $visibility->whereHas('course', function ($q) use ($user) {
+                            $q->where('instructor_id', $user->id);
+                        });
+                    }
+
+                    if ($isStudent) {
+                        $method = $isFaculty ? 'orWhereHas' : 'whereHas';
+                        $visibility->{$method}('course.enrollments', function ($q) use ($user) {
+                            $q->where('student_id', $user->id);
+                        });
+                    }
                 });
             })
-            ->when(Auth::user()->role === 'student', function ($query) {
-                $query->whereHas('course.enrollments', function ($q) {
-                    $q->where('student_id', Auth::id());
-                });
+            ->when(!$isFaculty && !$isStudent && !$canViewAllCourses, function ($query) {
+                $query->whereRaw('1 = 0');
             })
             ->when(request('course'), function ($query, $course) {
                 $query->where('course_id', $course);
@@ -35,13 +49,22 @@ class AssignmentController extends Controller
             ->orderBy('due_date', 'asc')
             ->paginate(20);
 
-        $courses = Course::when(Auth::user()->role === 'faculty', function ($query) {
-                $query->where('instructor_id', Auth::id());
-            })
-            ->when(Auth::user()->role === 'student', function ($query) {
-                $query->whereHas('enrollments', function ($q) {
-                    $q->where('student_id', Auth::id());
+        $courses = Course::when($isFaculty || $isStudent, function ($query) use ($isFaculty, $isStudent, $user) {
+                $query->where(function ($visibility) use ($isFaculty, $isStudent, $user) {
+                    if ($isFaculty) {
+                        $visibility->where('instructor_id', $user->id);
+                    }
+
+                    if ($isStudent) {
+                        $method = $isFaculty ? 'orWhereHas' : 'whereHas';
+                        $visibility->{$method}('enrollments', function ($q) use ($user) {
+                            $q->where('student_id', $user->id);
+                        });
+                    }
                 });
+            })
+            ->when(!$isFaculty && !$isStudent && !$canViewAllCourses, function ($query) {
+                $query->whereRaw('1 = 0');
             })
             ->get();
 
@@ -59,7 +82,7 @@ class AssignmentController extends Controller
         ]);
 
         $userSubmission = null;
-        if (Auth::user()->role === 'student') {
+        if (Auth::user()->hasRole('student')) {
             $userSubmission = $assignment->submissions()
                 ->where('student_id', Auth::id())
                 ->first();

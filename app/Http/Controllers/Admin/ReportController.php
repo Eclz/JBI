@@ -28,10 +28,10 @@ class ReportController extends Controller
     public function index()
     {
         $stats = [
-            'total_students' => User::where('role', 'student')->count(),
-            'active_students' => User::where('role', 'student')->where('is_active', true)->count(),
-            'total_faculty' => User::where('role', 'faculty')->count(),
-            'active_faculty' => User::where('role', 'faculty')->where('is_active', true)->count(),
+            'total_students' => User::role('student')->count(),
+            'active_students' => User::role('student')->where('is_active', true)->count(),
+            'total_faculty' => User::role('faculty')->count(),
+            'active_faculty' => User::role('faculty')->where('is_active', true)->count(),
             'total_courses' => Course::count(),
             'active_courses' => Course::where('status', 'active')->count(),
             'total_enrollments' => CourseEnrollment::where('status', 'enrolled')->count(),
@@ -85,7 +85,7 @@ class ReportController extends Controller
      */
     public function students(Request $request)
     {
-        $query = User::where('role', 'student')
+        $query = User::role('student')
             ->with(['studentProfile.department']);
 
         // Apply filters
@@ -126,19 +126,19 @@ class ReportController extends Controller
 
         // Statistics
         $stats = [
-            'total_students' => User::where('role', 'student')->count(),
-            'active_students' => User::where('role', 'student')->where('is_active', true)->count(),
-            'inactive_students' => User::where('role', 'student')->where('is_active', false)->count(),
-            'male_students' => User::where('role', 'student')->where('gender', 'male')->count(),
-            'female_students' => User::where('role', 'student')->where('gender', 'female')->count(),
+            'total_students' => User::role('student')->count(),
+            'active_students' => User::role('student')->where('is_active', true)->count(),
+            'inactive_students' => User::role('student')->where('is_active', false)->count(),
+            'male_students' => User::role('student')->where('gender', 'male')->count(),
+            'female_students' => User::role('student')->where('gender', 'female')->count(),
         ];
 
-        $studentsByStatus = User::where('role', 'student')
+        $studentsByStatus = User::role('student')
             ->selectRaw("CASE WHEN is_active = 1 THEN 'active' ELSE 'inactive' END as status, COUNT(*) as count")
             ->groupBy('status')
             ->get();
 
-        $recentAdmissions = User::where('role', 'student')
+        $recentAdmissions = User::role('student')
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('date')
@@ -180,7 +180,7 @@ class ReportController extends Controller
      */
     public function faculty(Request $request)
     {
-        $query = User::where('role', 'faculty')
+        $query = User::role('faculty')
             ->with(['facultyProfile.department']);
 
         // Apply filters
@@ -217,9 +217,9 @@ class ReportController extends Controller
 
         // Statistics
         $stats = [
-            'total_faculty' => User::where('role', 'faculty')->count(),
-            'active_faculty' => User::where('role', 'faculty')->where('is_active', true)->count(),
-            'inactive_faculty' => User::where('role', 'faculty')->where('is_active', false)->count(),
+            'total_faculty' => User::role('faculty')->count(),
+            'active_faculty' => User::role('faculty')->where('is_active', true)->count(),
+            'inactive_faculty' => User::role('faculty')->where('is_active', false)->count(),
         ];
 
         // Faculty by department
@@ -236,7 +236,7 @@ class ReportController extends Controller
             ->get();
 
         // Course load per faculty
-        $facultyLoad = User::where('role', 'faculty')
+        $facultyLoad = User::role('faculty')
             ->withCount(['taughtCourses as active_courses' => function ($query) {
                 $query->where('status', 'active');
             }])
@@ -327,7 +327,7 @@ class ReportController extends Controller
         // Get filter options
         $departments = Department::orderBy('name')->get();
         $semesters = Semester::orderBy('start_date', 'desc')->get();
-        $instructors = User::where('role', 'faculty')
+        $instructors = User::role('faculty')
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
@@ -666,7 +666,7 @@ class ReportController extends Controller
             ->get();
 
         // Top performers
-        $topPerformers = User::where('role', 'student')
+        $topPerformers = User::role('student')
             ->with('studentProfile.department')
             ->withAvg('grades as avg_gpa', 'percentage')
             ->orderBy('avg_gpa', 'desc')
@@ -808,7 +808,7 @@ class ReportController extends Controller
      */
     public function exportStudents(Request $request)
     {
-        $students = User::where('role', 'student')->with('studentProfile.department')->get();
+        $students = User::role('student')->with('studentProfile.department')->get();
 
         $csv = "Name,Email,Admission Number,Department,Status,Date of Admission\n";
 
@@ -835,7 +835,7 @@ class ReportController extends Controller
      */
     public function exportFaculty(Request $request)
     {
-        $faculty = User::where('role', 'faculty')->with('facultyProfile')->get();
+        $faculty = User::role('faculty')->with('facultyProfile')->get();
 
         $csv = "Name,Email,Employee ID,Department,Employment Status,Qualification\n";
 

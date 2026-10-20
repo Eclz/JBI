@@ -60,7 +60,7 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
-        if ($user->role === 'student' && $user->studentProfile) {
+        if ($user->hasRole('student') && $user->studentProfile) {
             $profile = $user->studentProfile;
             if ($profile->registration_deadline_at && !$profile->registration_fee_paid_at) {
                 if (now()->greaterThan($profile->registration_deadline_at)) {

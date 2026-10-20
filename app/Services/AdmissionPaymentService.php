@@ -108,7 +108,7 @@ class AdmissionPaymentService
             }
 
             $paymentDate = $application->payment_verified_at ?: ($application->payment_uploaded_at ?: now());
-            $adminId = $processedBy ?: ($application->payment_verified_by ?: (auth()->id() ?: User::where('role', 'admin')->value('id')));
+            $adminId = $processedBy ?: ($application->payment_verified_by ?: (auth()->id() ?: User::role('admin')->value('id')));
 
             // 1. Create or update FeeRecord
             $feeRecord = FeeRecord::where('user_id', $user->id)

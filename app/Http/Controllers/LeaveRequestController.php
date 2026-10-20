@@ -36,7 +36,7 @@ class LeaveRequestController extends Controller
         $isHrOrAdmin = Auth::user()->hasPermission('human_resources', 'view');
         
         if (Auth::user()->isFaculty() || $isHrOrAdmin) {
-            $faculty = User::where('role', 'faculty')
+            $faculty = User::role('faculty')
                 ->where('id', '!=', Auth::id())
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -94,7 +94,7 @@ class LeaveRequestController extends Controller
 
         $faculty = [];
         if (Auth::user()->isFaculty()) {
-            $faculty = User::where('role', 'faculty')
+            $faculty = User::role('faculty')
                 ->where('id', '!=', Auth::id())
                 ->where('is_active', true)
                 ->orderBy('name')

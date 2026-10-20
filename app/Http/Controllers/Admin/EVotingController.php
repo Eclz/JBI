@@ -83,7 +83,7 @@ class EVotingController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role']);
 
-        $totalEligibleStudents = User::where('role', 'student')->where('is_active', true)->count();
+        $totalEligibleStudents = User::role('student')->where('is_active', true)->count();
         $totalVotersCount = $session->votes()->distinct('user_id')->count('user_id');
         $turnoutPercentage = $totalEligibleStudents > 0 
             ? round(($totalVotersCount / $totalEligibleStudents) * 100, 1) 
@@ -369,7 +369,7 @@ class EVotingController extends Controller
             'votes',
         ]);
 
-        $totalEligibleStudents = User::where('role', 'student')->where('is_active', true)->count();
+        $totalEligibleStudents = User::role('student')->where('is_active', true)->count();
         $totalVotersCount = $session->votes()->distinct('user_id')->count('user_id');
 
         return view('admin.evoting.results', compact('session', 'totalEligibleStudents', 'totalVotersCount'));

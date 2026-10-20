@@ -48,15 +48,16 @@ class AuthServiceProvider extends ServiceProvider
 
         // Define additional gates if needed
         Gate::define('manage-system', function (User $user) {
-            return $user->isAdmin();
+            return $user->hasPermission('settings', 'edit');
         });
 
         Gate::define('manage-academic', function (User $user) {
-            return $user->isAdmin() || $user->isFaculty();
+            return $user->hasPermission('courses', 'view')
+                || $user->hasPermission('faculty', 'view');
         });
 
         Gate::define('view-reports', function (User $user) {
-            return $user->isAdmin() || $user->isFaculty();
+            return $user->hasPermission('reports', 'view');
         });
     }
 }

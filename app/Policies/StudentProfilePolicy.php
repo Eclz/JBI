@@ -15,7 +15,7 @@ class StudentProfilePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isFaculty();
+        return $user->hasPermission('students', 'view') || $user->isFaculty();
     }
 
     /**
@@ -24,7 +24,7 @@ class StudentProfilePolicy
     public function view(User $user, StudentProfile $studentProfile): bool
     {
         // Admin can view any student profile
-        if ($user->isAdmin()) {
+        if ($user->hasPermission('students', 'view')) {
             return true;
         }
 
@@ -42,7 +42,7 @@ class StudentProfilePolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('students', 'create');
     }
 
     /**
@@ -51,7 +51,7 @@ class StudentProfilePolicy
     public function update(User $user, StudentProfile $studentProfile): bool
     {
         // Admin can update any student profile
-        if ($user->isAdmin()) {
+        if ($user->hasPermission('students', 'edit')) {
             return true;
         }
 
@@ -64,6 +64,6 @@ class StudentProfilePolicy
      */
     public function delete(User $user, StudentProfile $studentProfile): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('students', 'delete');
     }
 }

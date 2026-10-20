@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\Course;
+use App\Models\User;
 
 class UpdateCourseRequest extends FormRequest
 {
@@ -71,7 +72,11 @@ class UpdateCourseRequest extends FormRequest
             'instructor_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('users', 'id')->where('role', 'faculty')->where('is_active', true),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value && !User::role('faculty')->where('is_active', true)->whereKey($value)->exists()) {
+                        $fail('The selected instructor must have an active faculty role.');
+                    }
+                },
             ],
             'semester_id' => [
                 'sometimes',

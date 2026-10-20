@@ -35,7 +35,7 @@ class CourseController extends Controller
         ]);
 
         // Get available students for enrollment (not already enrolled)
-        $availableStudents = \App\Models\User::where('role', 'student')
+        $availableStudents = \App\Models\User::role('student')
             ->where('is_active', true)
             ->whereNotIn('id', function($query) use ($course) {
                 $query->select('user_id')

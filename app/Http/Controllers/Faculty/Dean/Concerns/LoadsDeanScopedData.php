@@ -47,15 +47,8 @@ trait LoadsDeanScopedData
     {
         $facultyIds = $this->deanFacultyIds();
 
-        return User::query()
+        return User::role('faculty')
             ->with('facultyProfile.department.faculty')
-            ->where(function ($query) {
-                $query->where('role', 'faculty')
-                    ->orWhereHas('roleCatalog', function ($roleQuery) {
-                        $roleQuery->where('guard_role', 'faculty')
-                            ->orWhereIn('slug', ['faculty', 'lecturer', 'head_of_department', 'dean']);
-                    });
-            })
             ->when($facultyIds->isNotEmpty(), function ($query) use ($facultyIds) {
                 $query->where(function ($scopedQuery) use ($facultyIds) {
                     $scopedQuery->whereHas('facultyProfile.department', function ($departmentQuery) use ($facultyIds) {
@@ -71,15 +64,8 @@ trait LoadsDeanScopedData
     {
         $facultyIds = $this->deanFacultyIds();
 
-        return User::query()
+        return User::role('student')
             ->with('studentProfile.department.faculty', 'studentProfile.program.department.faculty')
-            ->where(function ($query) {
-                $query->where('role', 'student')
-                    ->orWhereHas('roleCatalog', function ($roleQuery) {
-                        $roleQuery->where('guard_role', 'student')
-                            ->orWhere('slug', 'student');
-                    });
-            })
             ->when($facultyIds->isNotEmpty(), function ($query) use ($facultyIds) {
                 $query->where(function ($scopedQuery) use ($facultyIds) {
                     $scopedQuery->whereHas('studentProfile.department', function ($departmentQuery) use ($facultyIds) {

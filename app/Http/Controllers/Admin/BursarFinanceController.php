@@ -242,7 +242,7 @@ class BursarFinanceController extends Controller
         ]);
 
         $status = $validated['status'] ?? 'approved';
-        $userCanApprove = auth()->user()->can('expenses,approve') || auth()->user()->hasRole('super_administrator') || auth()->user()->role === 'admin';
+        $userCanApprove = auth()->user()->hasPermission('expenses', 'approve');
         if ($status === 'approved' && !$userCanApprove) {
             $status = 'pending';
         }
@@ -301,7 +301,7 @@ class BursarFinanceController extends Controller
         $oldAmount = (float) $expense->amount;
         $newAmount = (float) $validated['amount'];
 
-        $userCanApprove = auth()->user()->can('expenses,approve') || auth()->user()->hasRole('super_administrator') || auth()->user()->role === 'admin';
+        $userCanApprove = auth()->user()->hasPermission('expenses', 'approve');
 
         if ($newStatus !== $oldStatus) {
             if (in_array($newStatus, ['approved', 'rejected'])) {

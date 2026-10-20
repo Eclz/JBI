@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\StudentProfile;
 use App\Models\Program;
+use App\Models\User;
 
 class StoreStudentProfileRequest extends FormRequest
 {
@@ -40,7 +41,11 @@ class StoreStudentProfileRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'integer',
-                Rule::exists('users', 'id')->where('role', 'student'),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value && !User::role('student')->whereKey($value)->exists()) {
+                        $fail('The selected user must have an active student role.');
+                    }
+                },
                 Rule::unique('student_profiles', 'user_id')->ignore($studentProfileId),
             ],
             'admission_number' => [

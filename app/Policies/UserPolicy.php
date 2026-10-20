@@ -14,7 +14,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('users', 'view');
     }
 
     /**
@@ -23,7 +23,7 @@ class UserPolicy
     public function view(User $user, User $model): bool
     {
         // Admin can view any user
-        if ($user->isAdmin()) {
+        if ($user->hasPermission('users', 'view')) {
             return true;
         }
 
@@ -41,7 +41,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('users', 'create');
     }
 
     /**
@@ -50,7 +50,7 @@ class UserPolicy
     public function update(User $user, User $model): bool
     {
         // Admin can update any user
-        if ($user->isAdmin()) {
+        if ($user->hasPermission('users', 'edit')) {
             return true;
         }
 
@@ -64,7 +64,7 @@ class UserPolicy
     public function delete(User $user, User $model): bool
     {
         // Admin can delete any user except themselves
-        return $user->isAdmin() && $user->id !== $model->id;
+        return $user->hasPermission('users', 'delete') && $user->id !== $model->id;
     }
 
     /**
@@ -72,7 +72,7 @@ class UserPolicy
      */
     public function restore(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('users', 'delete');
     }
 
     /**
@@ -80,6 +80,6 @@ class UserPolicy
      */
     public function forceDelete(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('users', 'delete');
     }
 }

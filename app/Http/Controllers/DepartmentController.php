@@ -99,7 +99,7 @@ class DepartmentController extends Controller
     public function create()
     {
         $faculties = Faculty::where('is_active', true)->orderBy('name')->get();
-        $potentialHeads = User::where('role', 'faculty')
+        $potentialHeads = User::role('faculty')
                              ->where('is_active', true)
                              ->with('facultyProfile')
                              ->orderBy('first_name')
@@ -170,7 +170,7 @@ class DepartmentController extends Controller
         ];
 
         // Get available faculty members for head assignment
-        $availableFacultyMembers = User::where('role', 'faculty')
+        $availableFacultyMembers = User::role('faculty')
                                       ->where('is_active', true)
                                       ->whereHas('facultyProfile', function ($query) use ($department) {
                                           $query->where('department_id', $department->id);
@@ -189,7 +189,7 @@ class DepartmentController extends Controller
     public function edit(Department $department)
     {
         $faculties = Faculty::where('is_active', true)->orderBy('name')->get();
-        $potentialHeads = User::where('role', 'faculty')
+        $potentialHeads = User::role('faculty')
                              ->where('is_active', true)
                              ->with('facultyProfile')
                              ->orderBy('first_name')
@@ -322,8 +322,8 @@ class DepartmentController extends Controller
         ]);
 
         // Verify the user is a faculty member in this department
-        $facultyMember = User::where('id', $request->head_of_department_id)
-                            ->where('role', 'faculty')
+        $facultyMember = User::role('faculty')
+                            ->whereKey($request->head_of_department_id)
                             ->where('is_active', true)
                             ->whereHas('facultyProfile', function ($query) use ($department) {
                                 $query->where('department_id', $department->id);
@@ -371,7 +371,7 @@ class DepartmentController extends Controller
                            ->get();
 
         $departments = Department::where('is_active', true)->count();
-        $facultyStaff = User::where('role', 'faculty')->where('is_active', true)->count();
+        $facultyStaff = User::role('faculty')->where('is_active', true)->count();
 
         return view('admin.faculty-staff.assign-to-department', compact('faculties', 'departments', 'facultyStaff'));
     }

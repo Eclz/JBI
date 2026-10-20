@@ -12,7 +12,7 @@ class UpdateFacultyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->user()->role === 'admin';
+        return auth()->check() && auth()->user()->hasPermission('faculty', 'edit');
     }
 
     /**

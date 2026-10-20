@@ -254,7 +254,7 @@ class EVotingController extends Controller
         $user = Auth::user();
 
         // Enforce student role and admitted status
-        if ($user->role !== 'student' || !$user->isAdmitted()) {
+        if (!$user->isAdmitted()) {
             return redirect()->route('dashboard')->with('error', 'Only fully admitted and active students are eligible to vote in student elections.');
         }
 
@@ -297,7 +297,7 @@ class EVotingController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'student' || !$user->isAdmitted()) {
+        if (!$user->isAdmitted()) {
             return response()->json(['success' => false, 'message' => 'Only fully admitted and active students are permitted to cast votes.'], 403);
         }
 
@@ -387,7 +387,7 @@ class EVotingController extends Controller
             'votes',
         ]);
 
-        $totalEligibleStudents = User::where('role', 'student')->where('is_active', true)->count();
+        $totalEligibleStudents = User::role('student')->where('is_active', true)->count();
         $totalVotersCount = $session->votes()->distinct('user_id')->count('user_id');
 
         return view('student.evoting.results', compact('session', 'totalEligibleStudents', 'totalVotersCount'));
