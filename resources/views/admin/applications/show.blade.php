@@ -62,6 +62,17 @@
         </div>
     @endif
 
+    <div class="alert alert-info">Process in order: verify payment → verify uploaded documents → assign programme → confirm admission. Each completed step unlocks the next.</div>
+    @php $revisions = \Illuminate\Support\Facades\DB::table('application_revisions')->where('application_id', $application->id)->latest('id')->get(); @endphp
+    @if($revisions->isNotEmpty())
+        <details class="card p-3 mb-3"><summary>Previous submissions and decisions ({{ $revisions->count() }})</summary>
+            @foreach($revisions as $revision)
+                @php $snapshot = json_decode($revision->snapshot, true); @endphp
+                <p class="mt-2 mb-1">Saved {{ $revision->created_at }} · Status: {{ ucfirst($snapshot['status'] ?? 'pending') }} · Review: {{ $snapshot['review_notes'] ?? 'No decision note' }} · Payment: {{ $snapshot['payment_status'] ?? 'pending' }}</p>
+            @endforeach
+        </details>
+    @endif
+
     <!-- SECTION 1: Personal Information & Application Details (TOP SECTION) -->
     <div class="row g-3 mb-4">
         <!-- Personal Information & Bio Data -->
@@ -431,7 +442,7 @@
                                                 <div class="d-flex gap-2 flex-wrap">
                                                     @if($application->payment_proof)
                                                         @php
-                                                            $proofUrl = asset('storage/' . $application->payment_proof);
+                                                            $proofUrl = route('applications.files.show', [$application, 'receipt']);
                                                             $proofExt = strtolower(pathinfo($application->payment_proof, PATHINFO_EXTENSION));
                                                         @endphp
                                                         <button type="button" class="btn btn-outline-success btn-sm preview-doc-btn fw-bold"
@@ -453,7 +464,7 @@
                                             <div class="card-body p-4">
                                                 @if($application->payment_proof)
                                                     @php
-                                                        $proofUrl = asset('storage/' . $application->payment_proof);
+                                                        $proofUrl = route('applications.files.show', [$application, 'receipt']);
                                                         $proofExt = strtolower(pathinfo($application->payment_proof, PATHINFO_EXTENSION));
                                                     @endphp
                                                     <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-3">
@@ -605,7 +616,7 @@
                                                         @foreach($application->documents as $docIndex => $docItem)
                                                             @php
                                                                 $docPath = is_array($docItem) ? ($docItem['path'] ?? null) : (is_string($docItem) ? $docItem : null);
-                                                                $fileUrl = $docPath ? asset('storage/' . $docPath) : null;
+                                                                $fileUrl = $docPath ? route('applications.files.show', [$application, $docIndex]) : null;
                                                                 $ext = $docPath ? strtolower(pathinfo($docPath, PATHINFO_EXTENSION)) : '';
                                                                 $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                                                                 $isPdf = $ext === 'pdf';
@@ -622,12 +633,12 @@
                                                                                 <i class="bi bi-file-earmark-word text-info"></i>
                                                                             @endif
                                                                         </div>
-                                                                        <strong class="text-truncate d-block small mb-1">Document #{{ $docIndex + 1 }}</strong>
+                                                                        <strong class="text-truncate d-block small mb-1">Document #{{ $loop->iteration }}</strong>
                                                                         <span class="badge bg-secondary-subtle text-dark text-uppercase small mb-2" style="font-size: 0.65rem;">{{ $ext ?: 'FILE' }}</span>
                                                                         <div class="d-flex justify-content-center gap-1.5 mt-auto">
                                                                             <button type="button" class="btn btn-sm btn-primary py-1 px-2.5 preview-doc-btn"
                                                                                     data-url="{{ $fileUrl }}"
-                                                                                    data-title="Document #{{ $docIndex + 1 }} Preview"
+                                                                                    data-title="Document #{{ $loop->iteration }} Preview"
                                                                                     data-ext="{{ $ext }}" style="border-radius: 5px;">
                                                                                 <i class="bi bi-eye me-1"></i>Preview
                                                                             </button>

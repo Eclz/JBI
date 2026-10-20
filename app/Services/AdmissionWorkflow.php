@@ -78,7 +78,7 @@ class AdmissionWorkflow
 
         $studentNumber = $profile->getRawOriginal('student_id') ?: self::generateStudentNumber($departmentCode);
 
-        if (!$profile->registration_fee_paid_at) {
+        if (!$profile->registration_fee_paid_at && filter_var(\App\Models\SystemSetting::getSetting('admission_covers_registration', true), FILTER_VALIDATE_BOOLEAN)) {
             $profile->registration_fee_paid_at = now();
         }
         if (!$profile->tuition_deadline_at && $profile->registration_fee_paid_at) {

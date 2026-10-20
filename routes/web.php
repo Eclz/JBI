@@ -117,11 +117,14 @@ Route::post('/receipts/verify', [ReceiptVerificationController::class, 'verify']
 Route::get('/apply', function () {
     return redirect()->route('register');
 })->name('applications.create');
-Route::post('/apply', [StudentsApplicationController::class, 'store'])->name('applications.store');
-Route::get('/application/success/{application}', [StudentsApplicationController::class, 'success'])->name('applications.success');
-Route::get('/application/payment/{token}', [StudentsApplicationController::class, 'uploadPayment'])->name('applications.upload-payment');
-Route::post('/application/payment/{token}', [StudentsApplicationController::class, 'storePayment'])->name('applications.store-payment');
-Route::get('/application/payment-success/{token}', [StudentsApplicationController::class, 'paymentSuccess'])->name('applications.payment-success');
+Route::post('/apply', [StudentsApplicationController::class, 'store'])->middleware('auth')->name('applications.store');
+Route::get('/application/success/{application}', [StudentsApplicationController::class, 'success'])->middleware('auth')->name('applications.success');
+Route::get('/application/payment/{token}', [StudentsApplicationController::class, 'uploadPayment'])->middleware('auth')->name('applications.upload-payment');
+Route::post('/application/payment/{token}', [StudentsApplicationController::class, 'storePayment'])->middleware('auth')->name('applications.store-payment');
+Route::get('/application/payment-success/{token}', [StudentsApplicationController::class, 'paymentSuccess'])->middleware('auth')->name('applications.payment-success');
+
+Route::get('/application/{application}/files/{file}', [\App\Http\Controllers\ApplicationFileController::class, 'show'])
+    ->middleware('auth')->name('applications.files.show');
 
 Route::get('/careers', [CareerPortalController::class, 'index'])->name('careers.index');
 Route::get('/careers/{vacancy}', [CareerPortalController::class, 'show'])->name('careers.show');
@@ -137,7 +140,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
 
     // Password Reset Routes
     Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -148,10 +151,13 @@ Route::middleware('guest')->group(function () {
 
 // Email Verification Routes
 Route::get('/email/verify/{id}/{hash}', [RegisterController::class, 'verifyEmail'])
-    ->middleware(['signed'])
-    ->name('verification.verify');
+    ->middleware('throttle:20,1')->name('verification.verify');
+Route::get('/email/verify', [RegisterController::class, 'verificationNotice'])
+    ->middleware('auth')->name('verification.notice');
+Route::post('/email/change', [RegisterController::class, 'updateVerificationEmail'])
+    ->middleware(['auth', 'throttle:3,1'])->name('verification.email.update');
 Route::post('/email/resend', [RegisterController::class, 'resendVerification'])
-    ->name('verification.resend');
+    ->middleware(['auth', 'throttle:3,1'])->name('verification.resend');
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
@@ -227,6 +233,10 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
     Route::put('/loans/{loan}/return', [\App\Http\Controllers\LibraryController::class, 'returnLoan'])->name('loans.return');
 });
 
+Route::get('/onboarding', [\App\Http\Controllers\OnboardingHubController::class, 'index'])->middleware('auth')->name('onboarding.index');
+Route::post('/onboarding/staff/{user}', [\App\Http\Controllers\OnboardingHubController::class, 'prepareStaff'])->middleware('auth')->name('onboarding.prepare-staff');
+Route::post('/notifications/{notification}/retry-email', [NotificationController::class, 'retryEmail'])->middleware(['auth', 'throttle:3,1'])->name('notifications.retry-email');
+
 // Human resources module routes
 Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')->group(function () {
     Route::get('/', [\App\Http\Controllers\HumanResourcesController::class, 'index'])->name('index');
@@ -249,6 +259,8 @@ Route::middleware(['auth'])->prefix('human-resources')->name('human-resources.')
     Route::get('/onboarding/{onboarding}', [\App\Http\Controllers\HrOnboardingController::class, 'show'])->name('onboarding.show')->middleware('permission:hr_onboarding,view');
     Route::post('/onboarding/tasks/{task}', [\App\Http\Controllers\HrOnboardingController::class, 'updateTask'])->name('onboarding.tasks.update')->middleware('permission:hr_onboarding,edit');
     
+    Route::get('/onboarding/tasks/{task}/attachment', [\App\Http\Controllers\HrOnboardingController::class, 'attachment'])->name('onboarding.tasks.attachment')->middleware('permission:hr_onboarding,view');
+
     // Succession
     Route::post('/succession', [\App\Http\Controllers\HrSuccessionController::class, 'store'])->name('succession.store')->middleware('permission:hr_talent,create');
     Route::get('/succession/{succession}', [\App\Http\Controllers\HrSuccessionController::class, 'show'])->name('succession.show')->middleware('permission:hr_talent,view');
@@ -903,6 +915,7 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
 
 // Student Routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+    Route::redirect('/', '/student/dashboard')->name('home');
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
     Route::get('/id-card', [StudentDashboardController::class, 'idCard'])->name('id-card');
     Route::get('/lms', [StudentLmsController::class, 'index'])->name('lms.index');

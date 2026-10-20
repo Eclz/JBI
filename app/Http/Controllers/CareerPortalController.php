@@ -99,6 +99,10 @@ class CareerPortalController extends Controller
             throw $exception;
         }
 
+        \App\Services\OnboardingNotificationService::notify('hr_recruiting', 'New staff application',
+            $applicant->full_name . ' applied for ' . $vacancy->position_title . '. Review the CV in Recruitment.',
+            route('human-resources.recruiting.show', $vacancy));
+
         return view('careers.submitted', [
             'applicant' => $applicant,
             'trackingUrl' => route('careers.track', ['token' => $trackingToken]),

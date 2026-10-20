@@ -23,6 +23,9 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $student = Auth::user();
+        if (!$student->hasVerifiedEmail()) {
+            return view('student.activate');
+        }
 
         // Get student profile with department
         $studentProfile = $student->studentProfile()->with('department')->first();
@@ -319,6 +322,10 @@ class DashboardController extends Controller
         if ($application && ($application->status === 'admitted' || ($application->status === 'approved' && $application->payment_status === 'verified'))) {
             \App\Services\AdmissionWorkflow::activateStudent($student, $application);
             $studentProfile = $student->studentProfile()->first();
+        }
+
+        if (!$studentProfile || $studentProfile->status !== 'active') {
+            return redirect()->route('student.dashboard')->with('warning', 'Admissions must confirm your admission before you can continue to student services.');
         }
 
         if ($studentProfile) {

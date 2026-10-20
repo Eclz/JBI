@@ -3,6 +3,9 @@
 @section('title', 'Student Applications')
 
 @section('content')
+@if(auth()->user()->hasPermission('applications', 'view') || auth()->user()->hasPermission('hr_onboarding', 'view'))
+<div class="mx-4 mt-3"><a class="btn btn-outline-primary" href="{{ route('onboarding.index') }}">Onboarding: next actions and setup</a></div>
+@endif
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -84,12 +87,9 @@
                                     <input class="form-check-input" type="checkbox" name="only_ready" id="bulkOnlyReady" value="1" checked>
                                     <label class="form-check-label" for="bulkOnlyReady">Only readiness-qualified</label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="force_approve" id="bulkForceApprove" value="1">
-                                    <label class="form-check-label" for="bulkForceApprove">Force incomplete</label>
-                                </div>
+
                                 <span class="small text-muted d-none d-lg-inline border-start ps-2" style="font-size: 0.75rem;">
-                                    <i class="fas fa-shield-alt text-primary me-1"></i>Course assignment & payment approval strictly required.
+                                    <i class="fas fa-shield-alt text-primary me-1"></i>Payment, documents and programme assignment are required.
                                 </span>
                                 <input type="text" class="form-control form-control-sm" name="notes" style="max-width: 260px;" placeholder="Optional bulk note">
                             </div>
@@ -274,13 +274,7 @@
                         <textarea name="notes" id="approval_notes" class="form-control form-control-sm" rows="3"
                                   placeholder="Add any notes about this admission approval..."></textarea>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="forceApproveCheckbox">
-                        <label class="form-check-label small text-muted" for="forceApproveCheckbox">
-                            Force approve general checklist
-                            <span class="d-block text-danger" style="font-size: 0.72rem;">* Note: Payment approval & Course assignment can NEVER be bypassed.</span>
-                        </label>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

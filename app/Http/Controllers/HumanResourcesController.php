@@ -31,7 +31,7 @@ class HumanResourcesController extends Controller
         return view('human-resources.dashboard', [
             'staffCount' => User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->where('is_active', true)->count(),
             'leaveRequests' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
-            'onboardingCount' => HrEmployee::where('status', 'Onboarding')->count(),
+            'onboardingCount' => \App\Models\HrOnboarding::where('status', '!=', 'Completed')->count(),
             'recentStaff' => User::with('hrProfile')->whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->latest()->take(5)->get(),
             'isManager' => $isManager,
         ]);
@@ -230,9 +230,9 @@ class HumanResourcesController extends Controller
             $stats = [
                 'total' => \App\Models\HrOnboarding::count(),
                 'not_started' => \App\Models\HrOnboarding::where('status', 'Not Started')->count(),
-                'in_progress' => \App\Models\HrOnboarding::where('status', 'In Progress')->count(),
+                'in_progress' => \App\Models\HrOnboarding::where('status', '!=', 'Completed')->whereDate('due_date', '>=', today())->count(),
                 'completed' => \App\Models\HrOnboarding::where('status', 'Completed')->count(),
-                'overdue' => \App\Models\HrOnboarding::where('status', 'Overdue')->count(),
+                'overdue' => \App\Models\HrOnboarding::where('status', '!=', 'Completed')->whereDate('due_date', '<', today())->count(),
             ];
             $onboardings = \App\Models\HrOnboarding::with(['user.hrProfile', 'hrOfficer'])->latest()->get();
             $users = User::whereNotIn('role', ['student', 'applicant', 'parent', ''])->whereNotNull('role')->orderBy('first_name')->get();
@@ -367,24 +367,29 @@ class HumanResourcesController extends Controller
 
     public function create()
     {
-        $users = User::where('is_active', true)->orderBy('first_name')->get();
+        $users = User::where('is_active', true)->whereNotIn('role', ['student', 'applicant', 'parent', ''])->orderBy('first_name')->get();
         return view('human-resources.create', compact('users'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id' => 'nullable|exists:users,id',
+            'user_id' => ['required', \Illuminate\Validation\Rule::exists('users', 'id')->whereNotIn('role', ['student', 'applicant', 'parent', '']), 'unique:hr_employees,user_id'],
             'employee_number' => 'required|string|max:50|unique:hr_employees,employee_number',
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150',
             'employment_type' => 'required|string|max:50',
+            'workspace' => 'nullable|string|max:150',
             'salary_band' => 'nullable|string|max:50',
             'emergency_contact' => 'nullable|string|max:255',
             'status' => 'required|in:Active,On Leave,Inactive',
             'notes' => 'nullable|string|max:2000',
         ]);
-        $employee = HrEmployee::create($data);
+        $employee = \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            $employee = HrEmployee::create($data);
+            \App\Services\StaffOnboardingService::ensure(User::findOrFail($data['user_id']), auth()->id());
+            return $employee;
+        });
         $this->notify($employee, 'Employee record created', "HR created employee record {$employee->employee_number}.", 'human-resources.staff.index');
 
         return redirect()->route('human-resources.staff.index')->with('success', 'Employee record created successfully.');
@@ -511,6 +516,7 @@ class HumanResourcesController extends Controller
             'job_title' => 'required|string|max:150',
             'department' => 'nullable|string|max:150',
             'employment_type' => 'required|string|max:50',
+            'workspace' => 'nullable|string|max:150',
             'salary_band' => 'nullable|string|max:50',
             'emergency_contact' => 'nullable|string|max:255',
             'status' => 'required|in:Active,On Leave,Inactive',

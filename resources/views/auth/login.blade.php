@@ -68,6 +68,9 @@
                         <p class="text-gray-600 mt-2">Welcome back! Please sign in to your account.</p>
                     </div>
 
+                    @if(session('status'))
+                        <div role="status" class="mb-6" style="padding:14px 16px;border:1px solid #bcd9c5;border-radius:8px;background:#eff8f1;color:#245e37;font-size:14px">{{ session('status') }} Sign in below to continue.</div>
+                    @endif
                     @if ($errors->any())
                         <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                             <div class="flex">
@@ -86,7 +89,38 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                    @if (app()->environment('local'))
+                        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                            <div class="mb-3 flex items-center gap-2">
+                                <i class="bi bi-lightning-charge-fill text-amber-600"></i>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Demo login</h3>
+                                    <p class="text-xs text-gray-600">Choose an account to sign in instantly.</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                @foreach ([
+                                    ['label' => 'Admin', 'icon' => 'bi-shield-lock', 'email' => 'admin@jbiuniversity.com'],
+                                    ['label' => 'Faculty', 'icon' => 'bi-person-workspace', 'email' => 'faculty@jbiuniversity.com'],
+                                    ['label' => 'Student', 'icon' => 'bi-mortarboard', 'email' => 'student@jbiuniversity.com'],
+                                    ['label' => 'Parent', 'icon' => 'bi-people', 'email' => 'parent@jbiuniversity.com'],
+                                ] as $demoAccount)
+                                    <button
+                                        type="button"
+                                        class="demo-login flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:border-amber-500 hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60"
+                                        data-email="{{ $demoAccount['email'] }}"
+                                        data-password="password123"
+                                    >
+                                        <i class="bi {{ $demoAccount['icon'] }}"></i>
+                                        {{ $demoAccount['label'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <form id="login-form" method="POST" action="{{ route('login') }}" class="space-y-6">
                         @csrf
 
                         <div>
@@ -181,6 +215,26 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.demo-login').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const form = document.getElementById('login-form');
+                    const email = document.getElementById('email');
+                    const password = document.getElementById('password');
+
+                    if (!form || !email || !password) {
+                        return;
+                    }
+
+                    document.querySelectorAll('.demo-login').forEach(function (demoButton) {
+                        demoButton.disabled = true;
+                    });
+
+                    email.value = this.dataset.email;
+                    password.value = this.dataset.password;
+                    form.requestSubmit();
+                });
+            });
+
             document.querySelectorAll('.toggle-password').forEach(function (btn) {
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();

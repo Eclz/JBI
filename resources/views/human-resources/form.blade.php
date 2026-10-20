@@ -54,3 +54,5 @@
         <textarea name="notes" class="form-control" rows="4">{{ old('notes', $hrProfile?->notes ?? '') }}</textarea>
     </div>
 </div>
+
+<div class="col-md-6 mb-3"><label class="form-label" for="workspace">Workspace / office</label><input id="workspace" name="workspace" class="form-control" maxlength="150" value="{{ old('workspace', $hrProfile?->workspace) }}"></div>

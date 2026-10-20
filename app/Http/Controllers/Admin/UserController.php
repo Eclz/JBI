@@ -88,7 +88,7 @@ class UserController extends Controller
                 'first_name' => $nameParts[0] ?? $request->name,
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $request->email,
-                'password' => Hash::make('ABCxyz,.?123'),
+                'password' => Hash::make(Str::random(64)),
                 'role' => $role->guard_role,
                 'role_id' => $role->id,
                 'phone' => $request->phone,
@@ -99,7 +99,7 @@ class UserController extends Controller
                 'emergency_phone' => $request->emergency_phone,
                 'is_active' => $request->input('status', 'active') === 'active',
                 'email_verified_at' => null,
-                'must_change_password' => false,
+                'must_change_password' => true,
             ];
 
             if ($request->hasFile('profile_picture')) {
@@ -146,18 +146,19 @@ class UserController extends Controller
                 ]);
             }
 
-            DB::commit();
-
-            // Send account creation invitation email with password setup token
-            try {
-                $token = Password::broker()->createToken($user);
-                Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
-            } catch (\Throwable $mailEx) {
-                \Illuminate\Support\Facades\Log::warning('Failed to send account setup email: ' . $mailEx->getMessage());
+            if (!in_array($user->role, ['student', 'parent', 'applicant'], true)) {
+                \App\Services\StaffOnboardingService::ensure($user, auth()->id(), [
+                    'department_id' => $request->department_id,
+                ]);
             }
 
+            DB::commit();
+
+            $sent = \App\Services\AccountInvitationService::send($user);
             return redirect()->route('admin.users.show', $user)
-                ->with('success', "User created successfully. An activation link has been sent to {$user->email} to set their password.");
+                ->with($sent ? 'success' : 'warning', $sent
+                    ? "User created. A password setup email was sent to {$user->email}."
+                    : 'User created, but the setup email could not be sent. Use Resend invitation on this page.');
 
         } catch (\Throwable $e) {
             DB::rollback();
@@ -250,28 +251,12 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        try {
-            $token = Password::broker()->createToken($user);
-            Mail::to($user->email)->send(new AccountCreatedSetupPassword($user, $token));
-
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "Password setup link sent to {$user->email} successfully.",
-                ]);
-            }
-
-            return back()->with('success', "Password setup & activation link sent to {$user->email} successfully.");
-        } catch (\Throwable $e) {
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Failed to send setup link: ' . $e->getMessage(),
-                ], 500);
-            }
-
-            return back()->withErrors(['error' => 'Failed to send setup link: ' . $e->getMessage()]);
+        $sent = \App\Services\AccountInvitationService::send($user);
+        $message = $sent ? 'Password setup email sent successfully.' : 'Email could not be sent. Check mail settings and try again.';
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => $sent, 'message' => $message, 'error' => $sent ? null : $message], $sent ? 200 : 503);
         }
+        return back()->with($sent ? 'success' : 'warning', $message);
     }
 
     public function destroy(User $user)

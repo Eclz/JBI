@@ -21,6 +21,11 @@ class HrOnboarding extends Model
         'completed_date' => 'date',
     ];
 
+    public function getStatusAttribute($value): string
+    {
+        return $value !== 'Completed' && $this->due_date?->lt(today()) ? 'Overdue' : $value;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

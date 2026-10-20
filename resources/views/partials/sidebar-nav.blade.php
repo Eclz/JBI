@@ -34,7 +34,17 @@
     @endguest
 
     @auth
+    @if(auth()->user()->isStudent() && !auth()->user()->isAdmitted())
+    <ul class="sidebar-menu" aria-label="Applicant navigation">
+        <li class="menu-item active"><a href="{{ route('student.dashboard') }}" class="menu-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+    </ul>
+    <p class="small text-light px-3 mt-3">Complete your admission on the dashboard. Your student menu will appear when your registration is activated.</p>
+    @else
     <ul class="sidebar-menu">
+        @if(auth()->user()->hasPermission('applications', 'view') || auth()->user()->hasPermission('hr_onboarding', 'view'))
+        <li class="menu-item {{ request()->routeIs('onboarding.*') ? 'active' : '' }}"><a class="menu-link" href="{{ route('onboarding.index') }}"><i class="bi bi-person-check"></i><span>Student &amp; Staff Onboarding</span></a></li>
+        @endif
+
         {{-- Dashboard (Anchor Point, pinned at top, no section label) --}}
         @if(auth()->user()->isFinanceOfficer() && !auth()->user()->isSuperAdmin())
         <li class="menu-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}">
@@ -1103,6 +1113,7 @@
             </a>
         </li>
     </ul>
+    @endif
     @endauth
 
     @guest

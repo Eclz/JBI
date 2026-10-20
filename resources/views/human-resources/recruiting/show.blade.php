@@ -104,6 +104,9 @@
                                     <details class="mt-3">
                                         <summary class="btn btn-sm btn-success w-100">Approve hire and start onboarding</summary>
                                         <form action="{{ route('human-resources.recruiting.applicants.approve-hire', $applicant) }}" method="POST" class="mt-3">
+                                            @php $existingAccount = $existingAccounts->get(strtolower($applicant->email)); @endphp
+                                            @if($existingAccount)<div class="alert alert-info small"><label><input type="checkbox" name="existing_user_id" value="{{ $existingAccount->id }}" required> Link the existing account for {{ $existingAccount->email }}. Its password will be preserved.</label></div>@endif
+
                                             @csrf
                                             <label class="form-label small">Staff role / portal</label>
                                             <select name="role_id" class="form-select form-select-sm mb-2" required>

@@ -164,7 +164,7 @@ class FacultyStaffController extends Controller
                 'last_name' => $request->last_name,
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make('ABCxyz,.?123'),
+                'password' => Hash::make(\Illuminate\Support\Str::random(64)),
                 'role' => 'faculty',
                 'phone' => $request->phone,
                 'date_of_birth' => $request->date_of_birth,
@@ -175,7 +175,7 @@ class FacultyStaffController extends Controller
                 'profile_picture' => $profilePicture,
                 'is_active' => true,
                 'email_verified_at' => null,
-                'must_change_password' => false,
+                'must_change_password' => true,
             ]);
 
             // Generate employee ID
@@ -213,15 +213,11 @@ class FacultyStaffController extends Controller
                 ],
             ]);
 
+            \App\Services\StaffOnboardingService::ensure($user, auth()->id());
+
             DB::commit();
 
-            // Send account activation and password setup email
-            try {
-                $token = \Illuminate\Support\Facades\Password::broker()->createToken($user);
-                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\AccountCreatedSetupPassword($user, $token));
-            } catch (\Throwable $mailEx) {
-                Log::warning('Failed to send faculty account setup email: ' . $mailEx->getMessage());
-            }
+            $invitationSent = \App\Services\AccountInvitationService::send($user);
 
             Log::info('Faculty staff member created successfully', [
                 'user_id' => $user->id,
@@ -230,7 +226,9 @@ class FacultyStaffController extends Controller
             ]);
 
             return redirect()->route('admin.faculty-staff.index')
-                           ->with('success', "Faculty staff member created successfully! Employee ID: {$employeeId}. An activation link has been sent to {$user->email} to set their password.");
+                           ->with($invitationSent ? 'success' : 'warning', $invitationSent
+                               ? "Staff created. Employee ID: {$employeeId}. Password setup email sent."
+                               : 'Staff created, but the setup email could not be sent. Open the user account to resend the invitation.');
 
         } catch (\Exception $e) {
             DB::rollBack();

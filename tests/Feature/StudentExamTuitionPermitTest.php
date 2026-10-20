@@ -50,7 +50,9 @@ class StudentExamTuitionPermitTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->post(route('applications.store'), [
+        $applicant = User::factory()->student()->create(['email' => 'jane.applicant@test.com']);
+        $response = $this->actingAs($applicant)->post(route('applications.store'), [
+            'documents' => [\Illuminate\Http\UploadedFile::fake()->create('certificate.pdf', 10, 'application/pdf')],
             'type' => 'student',
             'first_name' => 'Jane',
             'last_name' => 'Applicant',
@@ -97,6 +99,7 @@ class StudentExamTuitionPermitTest extends TestCase
             'gender' => 'male',
             'address' => '456 University Ave',
             'application_number' => 'APP-STU-2026-9999',
+            'documents_verified_at' => now(),
             'status' => 'pending',
             'program_choices' => [$program->id],
             'program_id' => null,

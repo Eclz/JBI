@@ -41,7 +41,6 @@
                                 <a href="{{ route('student.dashboard') }}?view=admission" class="btn btn-sm btn-outline-light" style="border-radius: 6px;">
                                     <i class="bi bi-mortarboard me-1"></i>Admission Status
                                 </a>
-                            </div>
                         </div>
                         @endif
                     </div>

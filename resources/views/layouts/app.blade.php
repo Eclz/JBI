@@ -549,8 +549,12 @@
             display: none !important;
         }
     </style>
+    @if(auth()->user()?->role === 'student')
+    <link rel="stylesheet" href="{{ asset('css/student-portal.css') }}?v=20261021">
+    <script src="{{ asset('js/student-portal.js') }}?v=20261021" defer></script>
+    @endif
 </head>
-<body class="{{ auth()->guest() ? 'guest-user' : 'authenticated-user' }}">
+<body class="{{ auth()->user()?->role === 'student' ? 'student-portal ' : '' }}{{ auth()->guest() ? 'guest-user' : 'authenticated-user' }}">
     <div id="app">
         <!-- Mobile Navigation for Guest Users -->
         @guest
@@ -578,7 +582,7 @@
         @endguest
 
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="student-navigation">
             @auth
             <div class="p-3 border-bottom border-secondary">
                 <div class="d-flex align-items-center">
@@ -631,7 +635,7 @@
             <nav class="navbar navbar-expand-lg navbar-light">
                 <div class="container-fluid px-0">
                     <!-- Enhanced mobile menu toggle -->
-                    <button id="mobile-menu-toggle" class="btn d-md-none">
+                    <button id="mobile-menu-toggle" class="btn d-md-none" type="button" aria-label="Open navigation" aria-controls="student-navigation" aria-expanded="false">
                         <i class="bi bi-list fs-4"></i>
                     </button>
 
@@ -645,8 +649,8 @@
                             <!-- Student Programme and Status Banner -->
                             <div class="d-none d-lg-flex align-items-center gap-2 bg-light px-3 py-1.5 rounded-pill border">
                                 <span class="badge bg-secondary text-uppercase px-2 py-1" style="font-size: 0.7rem;">PROGRAMME</span>
-                                <span class="fw-bold text-dark small text-uppercase me-1">{{ Auth::user()->studentProfile?->program ?? 'BACHELOR OF SCIENCE IN SOFTWARE ENGINEERING' }}</span>
-                                <span class="badge bg-primary px-2 py-1 text-uppercase" style="font-size: 0.7rem;">{{ strtoupper(Auth::user()->studentProfile?->status ?? 'ACTIVE') }}</span>
+                                <span class="fw-bold text-dark small text-uppercase me-1">{{ Auth::user()->studentProfile?->program ?? 'Choose your programme' }}</span>
+                                <span class="badge bg-primary px-2 py-1 text-uppercase" style="font-size: 0.7rem;">{{ strtoupper(Auth::user()->studentProfile?->status ?? 'APPLICANT') }}</span>
                             </div>
                         @else
                             <!-- Enhanced search with icon for staff/admin -->

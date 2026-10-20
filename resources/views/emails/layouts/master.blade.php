@@ -239,26 +239,28 @@
     @yield('styles')
 </head>
 <body>
+    <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">@yield('preheader', 'An update from JBI University')</div>
     <table role="presentation" class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
         <tr>
             <td align="center">
-                <div class="email-card">
+                <div class="email-card" style="max-width:600px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
                     <!-- Brand Header -->
-                    <div class="email-header">
-                        <div class="brand-title">{{ config('app.name', 'JBI University') }}</div>
+                    <div class="email-header" style="background:#001d48;padding:30px 24px;text-align:center;border-bottom:4px solid #c08a18;">
+                        <img src="{{ asset('images/jbi-email-logo.png') }}" alt="JBI University" width="160" style="display:block;width:160px;max-width:100%;height:auto;margin:0 auto 18px;">
+                        <div class="brand-title">JBI University</div>
                         <div class="brand-subtitle">Academic & Institutional Portal</div>
                         @yield('header_badge')
                     </div>
 
                     <!-- Email Main Content -->
-                    <div class="email-body">
+                    <div class="email-body" style="padding:32px 24px;text-align:left;">
                         @yield('content')
 
                         <!-- System Sign-off -->
                         @section('signoff')
                         <div class="signoff">
                             <p style="margin: 0 0 4px 0;">Best regards,</p>
-                            <p style="margin: 0;"><strong>{{ config('app.name', 'JBI University') }} Administration & Academic Services</strong></p>
+                            <p style="margin: 0;"><strong>JBI University Administration & Academic Services</strong></p>
                         </div>
                         @show
                     </div>
@@ -268,10 +270,10 @@
                         <div class="footer-links">
                             <a href="{{ config('app.url', url('/')) }}/login">Portal Login</a> &bull;
                             <a href="{{ config('app.url', url('/')) }}/dashboard">Dashboard</a> &bull;
-                            <a href="{{ config('app.url', url('/')) }}/support">Help Desk</a>
+                            <a href="mailto:admission@jbiuniversity.com">Help Desk</a>
                         </div>
-                        <p style="margin: 0 0 6px 0;">&copy; {{ date('Y') }} {{ config('app.name', 'JBI University') }}. All rights reserved.</p>
-                        <p style="margin: 0;">This is an automated notification from the {{ config('app.name', 'JBI University') }} Management System dispatched to active university accounts (Students, Faculty, and Staff).</p>
+                        <p style="margin: 0 0 6px 0;">&copy; {{ date('Y') }} JBI University. All rights reserved.</p>
+                        <p style="margin: 0;">JBI University · South Africa<br>This mailbox sends automated messages. For help, contact admission@jbiuniversity.com.</p>
                     </div>
                 </div>
             </td>

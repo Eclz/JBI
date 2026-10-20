@@ -30,6 +30,9 @@ class StudentsApplicationController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->hasVerifiedEmail()) {
+            return back()->withErrors(['application' => 'Verify your email address before submitting your application. Use Resend verification above if needed.'])->withInput();
+        }
         if (!SystemSetting::admissionWindow()['isOpen']) {
             return back()->withErrors(['application' => 'Applications are currently closed. Your information was not submitted.']);
         }
@@ -42,7 +45,7 @@ class StudentsApplicationController extends Controller
             $nameParts = explode(' ', trim($user->name ?? ''), 2);
             $firstName = $request->first_name ?: ($user->first_name ?: ($nameParts[0] ?? 'Applicant'));
             $lastName = $request->last_name ?: ($user->last_name ?: ($nameParts[1] ?? 'Student'));
-            $phone = $request->phone ?: ($user->phone ?: '+1 (555) 000-0000');
+            $phone = $request->phone ?: $user->phone;
 
             $request->merge([
                 'email' => $email,
@@ -52,22 +55,17 @@ class StudentsApplicationController extends Controller
             ]);
         }
 
-        $existingApp = null;
-        if ($email) {
-            $normalizedEmail = strtolower(trim($email));
-            Application::where(function($q) use ($email, $normalizedEmail) {
-                $q->where('email', $email)->orWhere('email', $normalizedEmail);
-            })->where('status', 'rejected')->delete();
-
-            $existingApp = Application::where(function($q) use ($email, $normalizedEmail) {
-                $q->where('email', $email)->orWhere('email', $normalizedEmail);
-            })->first();
+        $normalizedEmail = strtolower(trim($email ?? ''));
+        $request->merge(['email' => $normalizedEmail]);
+        $existingApp = Application::whereRaw('LOWER(email) = ?', [$normalizedEmail])->first();
+        if ($existingApp && !in_array($existingApp->status, ['pending', 'rejected'], true)) {
+            return back()->withErrors(['application' => 'This application has already been admitted. Contact admissions for changes.']);
         }
 
         $emailRule = $existingApp ? 'required|email|unique:applications,email,' . $existingApp->id : 'required|email|unique:applications,email';
 
         $validated = $request->validate([
-            'type' => 'required|in:student,faculty',
+            'type' => 'required|in:student',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => $emailRule,
@@ -89,7 +87,8 @@ class StudentsApplicationController extends Controller
             'highest_degree' => 'nullable|string|max:255',
             'specialization' => 'nullable|string|max:255',
             'years_of_experience' => 'nullable|integer|min:0',
-            'documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            'documents' => 'required|array|min:1|max:8',
+            'documents.*' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
             'emergency_contact_name' => 'required_if:type,student|string|max:255',
             'emergency_contact_phone' => 'required_if:type,student|string|max:20',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -98,6 +97,18 @@ class StudentsApplicationController extends Controller
 
         DB::beginTransaction();
         try {
+            if ($existingApp) {
+                $existingApp = Application::whereKey($existingApp->id)->lockForUpdate()->firstOrFail();
+                if (!in_array($existingApp->status, ['pending', 'rejected'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['application' => 'This application has already been processed.']);
+                }
+                DB::table('application_revisions')->insert([
+                    'application_id' => $existingApp->id,
+                    'submitted_by' => auth()->id(),
+                    'snapshot' => json_encode($existingApp->getAttributes()),
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
             if (auth()->check()) {
                 $user = auth()->user();
                 $userUpdateData = [
@@ -124,7 +135,7 @@ class StudentsApplicationController extends Controller
                 $documents = [];
                 $appNum = $existingApp ? $existingApp->application_number : $validated['application_number'];
                 foreach ($request->file('documents') as $key => $file) {
-                    $path = $file->store('applications/' . $appNum, 'public');
+                    $path = $file->store('applications/' . $appNum, 'local');
                     $documents[$key] = $path;
                 }
                 $validated['documents'] = $documents;
@@ -165,6 +176,12 @@ class StudentsApplicationController extends Controller
 
             if ($existingApp) {
                 $applicationData['status'] = 'pending';
+                $applicationData['documents_verified_at'] = null;
+                $applicationData['documents_verified_by'] = null;
+                $applicationData['documents_verified_notes'] = null;
+                $applicationData['reviewed_at'] = null;
+                $applicationData['reviewed_by'] = null;
+                $applicationData['review_notes'] = $validated['application_notes'] ?? null;
                 $existingApp->update($applicationData);
                 $application = $existingApp;
             } else {
@@ -173,25 +190,11 @@ class StudentsApplicationController extends Controller
                 $application = Application::create($applicationData);
             }
 
-            try {
-                $admins = User::where('role', 'admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
-                foreach ($admins as $admin) {
-                    Notification::create([
-                        'user_id' => $admin->id,
-                        'type' => 'application',
-                        'title' => 'New Application Received',
-                        'message' => "New {$application->type} application from {$application->full_name}",
-                        'priority' => 'high',
-                        'action_url' => route('admin.applications.show', $application),
-                    ]);
-
-                    @Mail::to($admin->email)->queue(new NewApplicationNotification($application));
-                }
-
-                @Mail::to($application->email)->queue(new ApplicationSubmitted($application));
-            } catch (\Throwable $mailEx) {
-                \Illuminate\Support\Facades\Log::warning('Application created, but notification mail dispatch failed: ' . $mailEx->getMessage());
-            }
+            \App\Services\OnboardingNotificationService::notify('applications',
+                $existingApp ? 'Application updated — review required' : 'New Application Received',
+                "{$application->full_name} submitted an application. Review payment, documents and programme in order.",
+                route('admin.applications.show', $application));
+            Mail::to($application->email)->queue((new ApplicationSubmitted($application))->onQueue('onboarding')->afterCommit());
 
             DB::commit();
 
@@ -207,6 +210,7 @@ class StudentsApplicationController extends Controller
 
     public function success(Application $application)
     {
+        abort_unless(strtolower(auth()->user()->email) === strtolower($application->email), 403);
         return view('applications.success', compact('application'));
     }
 
@@ -217,6 +221,7 @@ class StudentsApplicationController extends Controller
                                   ->firstOrFail();
 
         $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+        abort_unless(strtolower(auth()->user()->email) === strtolower($application->email), 403);
         $feeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
 
         return view('applications.upload-payment', compact('application', 'currencyCode', 'feeAmount'));
@@ -228,13 +233,18 @@ class StudentsApplicationController extends Controller
                                   ->whereIn('status', ['pending', 'approved'])
                                   ->firstOrFail();
 
+        abort_unless(strtolower(auth()->user()->email) === strtolower($application->email), 403);
+        if ($application->isPaymentApproved()) {
+            return back()->withErrors(['payment_proof' => 'This payment has already been verified. Contact admissions for corrections.']);
+        }
+
         $request->validate([
             'payment_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         DB::beginTransaction();
         try {
-            $path = $request->file('payment_proof')->store('payment-proofs/' . $application->application_number, 'public');
+            $path = $request->file('payment_proof')->store('payment-proofs/' . $application->application_number, 'local');
 
             $application->update([
                 'payment_proof' => $path,
@@ -242,17 +252,9 @@ class StudentsApplicationController extends Controller
                 'payment_uploaded_at' => now(),
             ]);
 
-            $admins = User::where('role', 'admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
-            foreach ($admins as $admin) {
-                Notification::create([
-                    'user_id' => $admin->id,
-                    'type' => 'payment',
-                    'title' => 'Payment Proof Uploaded',
-                    'message' => "{$application->full_name} has uploaded payment proof",
-                    'priority' => 'high',
-                    'action_url' => route('admin.applications.show', $application),
-                ]);
-            }
+            \App\Services\OnboardingNotificationService::notify('applications',
+                'Payment Proof Uploaded', "{$application->full_name} uploaded an admission receipt. Verify it before reviewing documents.",
+                route('admin.applications.show', $application));
 
             DB::commit();
 
@@ -268,6 +270,7 @@ class StudentsApplicationController extends Controller
     public function paymentSuccess($token)
     {
         $application = Application::where('application_number', $token)->firstOrFail();
+        abort_unless(strtolower(auth()->user()->email) === strtolower($application->email), 403);
         return view('applications.payment-success', compact('application'));
     }
 

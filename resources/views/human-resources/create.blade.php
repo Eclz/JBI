@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div><h2 class="mb-1 fw-bold text-dark">Add Employee</h2><p class="text-muted mb-0">Create a core HR employee record.</p></div>
+        <div><h2 class="mb-1 fw-bold text-dark">Add Employee</h2><p class="text-muted mb-0">Link an existing staff account. Its onboarding checklist is created automatically.</p></div>
         <a href="{{ route('human-resources.staff.index') }}" class="btn btn-outline-secondary">Back to staff</a>
     </div>
 
@@ -21,8 +21,8 @@
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <label class="form-label" for="user_id">Linked user</label>
-                    <select name="user_id" id="user_id" class="form-select">
-                        <option value="">— No linked user account —</option>
+                    <select name="user_id" id="user_id" class="form-select" required>
+                        <option value="">Choose the employee account</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}" @selected((string) old('user_id') === (string) $user->id)>
                                 {{ $user->full_name }} ({{ $user->email }})

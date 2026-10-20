@@ -172,6 +172,7 @@ class ApplicationStrictApprovalTest extends TestCase
     {
         $application = Application::create([
             'application_number' => 'APP-WIZ-0001',
+            'documents' => ['applications/test/transcript.pdf'],
             'type' => 'student',
             'first_name' => 'Order',
             'last_name' => 'Test',
