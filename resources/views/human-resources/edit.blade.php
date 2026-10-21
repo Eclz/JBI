@@ -237,6 +237,14 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const departmentSelect = document.getElementById('department_id');
+        window.selectStaffDepartment = function (name, id) {
+            if (departmentSelect && id) {
+                departmentSelect.value = id;
+                departmentSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        };
+
         // Real-time quick search filter for the departments list
         const searchInput = document.getElementById('quickDeptSearch');
         if (searchInput) {

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\HrEmployee;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class HumanResourcesController extends Controller
 {
@@ -485,7 +487,22 @@ class HumanResourcesController extends Controller
         }
         
         $jobRoles = \App\Models\HrJobRole::where('is_active', true)->orderBy('title')->get();
-        return view('human-resources.edit', compact('employee', 'hrProfile', 'jobRoles'));
+        $departments = Department::where('is_active', true)->with('faculty')->orderBy('name')->get();
+        $selectedDepartmentId = $hrProfile->department_id;
+
+        if (!$selectedDepartmentId && $hrProfile->department) {
+            $selectedDepartmentId = $departments
+                ->first(fn (Department $department) => strcasecmp($department->name, $hrProfile->department) === 0)
+                ?->id;
+        }
+
+        return view('human-resources.edit', compact(
+            'employee',
+            'hrProfile',
+            'jobRoles',
+            'departments',
+            'selectedDepartmentId'
+        ));
     }
 
     public function generateId(User $employee)
@@ -514,7 +531,10 @@ class HumanResourcesController extends Controller
         $data = $request->validate([
             'employee_number' => 'required|string|max:50',
             'job_title' => 'required|string|max:150',
-            'department' => 'nullable|string|max:150',
+            'department_id' => [
+                'nullable',
+                Rule::exists('departments', 'id')->where('is_active', true),
+            ],
             'employment_type' => 'required|string|max:50',
             'workspace' => 'nullable|string|max:150',
             'salary_band' => 'nullable|string|max:50',
@@ -523,6 +543,10 @@ class HumanResourcesController extends Controller
             'notes' => 'nullable|string|max:2000',
         ]);
         
+        $department = isset($data['department_id'])
+            ? Department::find($data['department_id'])
+            : null;
+        $data['department'] = $department?->name;
         $data['user_id'] = $employee->id;
         
         if ($employee->hrProfile) {
