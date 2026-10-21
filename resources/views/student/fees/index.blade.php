@@ -194,13 +194,13 @@
                                         <small style="color: #6c757d;">{{ $record->description ?? '' }}</small>
                                     </td>
                                     <td class="px-4 py-3" style="color: #212529; font-weight: 600;">
-                                        {{ $currencyCode }} {{ number_format($record->total_amount, 2) }}
+                                        {{ $record->currency ?? $currencyCode }} {{ number_format($record->total_amount, 2) }}
                                     </td>
                                     <td class="px-4 py-3" style="color: #198754; font-weight: 600;">
-                                        {{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}
+                                        {{ $record->currency ?? $currencyCode }} {{ number_format($record->paid_amount, 2) }}
                                     </td>
                                     <td class="px-4 py-3" style="color: #dc3545; font-weight: 600;">
-                                        {{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}
+                                        {{ $record->currency ?? $currencyCode }} {{ number_format($record->balance_amount, 2) }}
                                     </td>
                                     <td class="px-4 py-3" style="color: #212529;">
                                         {{ $record->due_date ? \Carbon\Carbon::parse($record->due_date)->format('M d, Y') : '-' }}

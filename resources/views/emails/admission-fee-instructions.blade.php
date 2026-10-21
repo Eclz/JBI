@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admission Fee Payment Instructions - JBI University</title>
+    <title>Registration Fee Payment Instructions - JBI University</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -79,14 +79,14 @@
         <div class="header">
             <div class="logo">JBI University</div>
             <div class="alert-badge">Payment Required</div>
-            <h2>Admission Fee Payment Instructions</h2>
+            <h2>Registration Fee Payment Instructions</h2>
         </div>
 
         <p>Dear {{ $application->first_name }} {{ $application->last_name }},</p>
 
-        <p>Congratulations again on your successful application! To complete your admission process, please pay the admission fee as detailed below:</p>
+        <p>Congratulations again on your successful application! To complete your registration, pay the non-refundable registration fee in either supported currency:</p>
 
-        <div class="amount">{{ number_format($admissionFee) }} {{ $currencyCode }}</div>
+        <div class="amount">ZAR 500.00 or USD 35.00</div>
 
         <div class="payment-info">
             <h3>💳 Payment Details:</h3>
@@ -96,7 +96,7 @@
                 <li><strong>Account Number:</strong> 9030012345678</li>
                 <li><strong>Branch:</strong> South Africa Main Branch</li>
                 <li><strong>Swift Code:</strong> SBICUGKX</li>
-                <li><strong>Currency:</strong> {{ $currencyCode }}</li>
+                <li><strong>Currency:</strong> Choose ZAR or USD and pay the exact amount shown</li>
                 <li><strong>Payment Reference:</strong> {{ $application->application_number }}</li>
             </ul>
             <p><strong>⚠️ IMPORTANT:</strong> Please use your application number ({{ $application->application_number }}) as the payment reference to ensure proper tracking.</p>

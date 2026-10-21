@@ -15,6 +15,7 @@ class FinanceRevenue extends Model
         'category',
         'title',
         'amount',
+        'currency',
         'transaction_date',
         'payment_method',
         'reference_number',

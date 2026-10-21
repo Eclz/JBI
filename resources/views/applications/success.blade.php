@@ -17,7 +17,7 @@
                         <ol class="mb-0 mt-2">
                             <li>Submit your application with all required documents</li>
                             <li>Wait for application review (typically 3-5 business days)</li>
-                            <li>If approved, pay the admission fee</li>
+                            <li>If approved, pay the registration fee (ZAR 500 or USD 35)</li>
                             <li>Receive your admission letter and student number</li>
                         </ol>
                     </div>

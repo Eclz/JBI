@@ -46,9 +46,9 @@
                                 <td class="ps-3 fw-bold text-dark">{{ $record->student->full_name ?? 'Student Account' }}</td>
                                 <td class="small">{{ $record->student->email ?? '-' }}</td>
                                 <td class="small text-muted">{{ $record->student->studentProfile->program ?? 'General Degree' }}</td>
-                                <td class="fw-semibold">{{ $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
-                                <td class="fw-semibold text-success">{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
-                                <td class="text-end pe-3 fw-bold text-danger">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
+                                <td class="fw-semibold">{{ $record->currency ?? $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
+                                <td class="fw-semibold text-success">{{ $record->currency ?? $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                                <td class="text-end pe-3 fw-bold text-danger">{{ $record->currency ?? $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                                 <td class="text-end pe-3">
                                     <a href="{{ route('admin.finance.receivables.show', $record->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i> View</a>
                                 </td>

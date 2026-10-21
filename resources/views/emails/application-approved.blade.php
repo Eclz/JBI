@@ -92,8 +92,8 @@
         <p><strong>Application Number:</strong> {{ $application->application_number }}</p>
 
         <div class="payment-details">
-            <h3>💳 Next Step: Admission Fee Payment</h3>
-            <p><strong>Amount:</strong> 50 usd</p>
+            <h3>💳 Next Step: Registration Fee Payment</h3>
+            <p><strong>Amount:</strong> ZAR 500 or USD 35</p>
             <p><strong>Bank Details:</strong></p>
             <ul>
                 <li>Bank Name: Stanbic Bank South Africa</li>

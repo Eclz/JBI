@@ -19,7 +19,7 @@
                 </tr>
                 <tr>
                     <th>Amount</th>
-                    <td>{{ $revenue->amount }}</td>
+                    <td>{{ $revenue->currency ?? $currencyCode }} {{ number_format($revenue->amount, 2) }}</td>
                 </tr>
                 <tr>
                     <th>Date</th>

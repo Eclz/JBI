@@ -68,7 +68,7 @@
                                     <small class="text-muted font-monospace">{{ $rev->reference_number ?? '-' }}</small>
                                 </td>
                                 <td class="small">{{ $rev->transaction_date->format('M d, Y') }}</td>
-                                <td class="text-end pe-3 fw-bold text-success">{{ $currencyCode }} {{ number_format($rev->amount, 2) }}</td>
+                                <td class="text-end pe-3 fw-bold text-success">{{ $rev->currency ?? $currencyCode }} {{ number_format($rev->amount, 2) }}</td>
                                 <td class="text-end pe-3">
                                     <div class="btn-group">
                                         <a href="{{ route('admin.finance.revenue.show', $rev->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>

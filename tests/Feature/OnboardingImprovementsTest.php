@@ -8,12 +8,14 @@ use App\Mail\NotificationMail;
 use App\Models\Application;
 use App\Models\Department;
 use App\Models\Notification;
+use App\Models\Payment;
 use App\Models\Program;
 use App\Models\Role;
 use App\Models\Semester;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\AccountInvitationService;
+use App\Services\AdmissionPaymentService;
 use App\Services\OnboardingNotificationService;
 use App\Services\StaffOnboardingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -108,6 +110,63 @@ class OnboardingImprovementsTest extends TestCase
         ])->assertForbidden();
         $this->actingAs($owner)->get(route('applications.files.show', [$application, 'receipt']))->assertOk();
         $this->actingAs($this->admin())->get(route('applications.files.show', [$application, 'receipt']))->assertOk();
+    }
+
+    public function test_applicant_can_choose_usd_registration_fee_and_finance_keeps_the_currency(): void
+    {
+        $student = User::factory()->student()->create();
+        $application = $this->application($student, [
+            'application_number' => 'REG-USD-'.$student->id,
+            'status' => 'approved',
+        ]);
+
+        $this->withoutMiddleware(\App\Http\Middleware\RoleMiddleware::class);
+        $this->actingAs($student)
+            ->get(route('student.dashboard'))
+            ->assertOk()
+            ->assertSee('Registration Fee')
+            ->assertSee('ZAR 500.00 / USD 35.00')
+            ->assertSee('USD 35.00');
+
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+        $this->actingAs($student)
+            ->post(route('applications.store-payment', $application->application_number), [
+                'payment_currency' => 'USD',
+                'payment_proof' => UploadedFile::fake()->create('receipt.pdf', 10, 'application/pdf'),
+            ])
+            ->assertRedirect(route('dashboard'));
+
+        $application->refresh();
+        $this->assertSame('USD', $application->payment_currency);
+        $this->assertSame('uploaded', $application->payment_status);
+
+        $admin = $this->admin();
+        $application->update([
+            'payment_status' => 'verified',
+            'payment_verified_at' => now(),
+            'payment_ref' => 'PAY-USD-'.$student->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.show', $application))
+            ->assertOk()
+            ->assertSee('USD 35.00');
+
+        $payment = AdmissionPaymentService::recordAdmissionPayment($application, $admin->id);
+
+        $this->assertInstanceOf(Payment::class, $payment);
+        $this->assertSame('USD', $payment->currency);
+        $this->assertSame('35.00', $payment->amount);
+        $this->assertDatabaseHas('fee_records', [
+            'invoice_number' => 'PAY-USD-'.$student->id,
+            'currency' => 'USD',
+            'amount' => 35,
+        ]);
+        $this->assertDatabaseHas('finance_revenues', [
+            'reference_number' => 'PAY-USD-'.$student->id,
+            'currency' => 'ZAR',
+            'amount' => 500,
+        ]);
     }
 
     public function test_force_approve_cannot_fabricate_document_verification(): void

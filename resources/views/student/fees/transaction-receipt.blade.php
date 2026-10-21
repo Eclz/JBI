@@ -32,7 +32,7 @@
                     <tr><th>Fee Type</th><td>{{ $fee->feeStructure?->name ?? 'N/A' }}</td></tr>
                     <tr><th>Payment Method</th><td>{{ $payment->payment_method_label ?? ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td></tr>
                     <tr><th>Status</th><td>{{ ucfirst($payment->status) }}</td></tr>
-                    <tr><th>Amount Paid</th><td><strong>{{ $currencyCode }} {{ number_format($payment->amount, 2) }}</strong></td></tr>
+                    <tr><th>Amount Paid</th><td><strong>{{ $payment->currency ?? $fee->currency ?? $currencyCode }} {{ number_format($payment->amount, 2) }}</strong></td></tr>
                 </tbody>
             </table>
 
@@ -45,9 +45,9 @@
                 </div>
                 <div class="col-5">
                     <table class="table table-sm table-borderless mb-0">
-                        <tr><td><strong>Invoice Total:</strong></td><td class="text-end">{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</td></tr>
-                        <tr><td><strong>Total Paid:</strong></td><td class="text-end">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td></tr>
-                        <tr><td><strong>Balance:</strong></td><td class="text-end">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</td></tr>
+                        <tr><td><strong>Invoice Total:</strong></td><td class="text-end">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->total_amount, 2) }}</td></tr>
+                        <tr><td><strong>Total Paid:</strong></td><td class="text-end">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td></tr>
+                        <tr><td><strong>Balance:</strong></td><td class="text-end">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</td></tr>
                     </table>
                 </div>
             </div>

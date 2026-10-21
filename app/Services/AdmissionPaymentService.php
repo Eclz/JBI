@@ -16,11 +16,11 @@ use Illuminate\Support\Facades\Log;
 class AdmissionPaymentService
 {
     /**
-     * Get or create the master Admission & Application Fee structure.
+     * Get or create the master student registration fee structure.
      */
     public static function getOrCreateAdmissionFeeStructure(): FeeStructure
     {
-        $structure = FeeStructure::where('name', 'Admission & Application Fee')
+        $structure = FeeStructure::whereIn('name', ['Registration Fee', 'Admission & Application Fee', 'Admission Fee'])
             ->first();
 
         if (!$structure) {
@@ -30,7 +30,7 @@ class AdmissionPaymentService
             if (!$academicYearId) {
                 $year = \App\Models\AcademicYear::create([
                     'name' => date('Y') . '/' . (date('Y') + 1),
-                    'code' => 'AY-' . date('Y'),
+                    'year' => (int) date('Y'),
                     'start_date' => now()->startOfYear(),
                     'end_date' => now()->endOfYear(),
                     'is_active' => true,
@@ -40,13 +40,21 @@ class AdmissionPaymentService
             }
 
             $structure = FeeStructure::create([
-                'name' => 'Admission & Application Fee',
+                'name' => 'Registration Fee',
                 'type' => 'other',
-                'amount' => 150.00,
+                'amount' => 500.00,
+                'currency' => 'ZAR',
                 'frequency' => 'one_time',
                 'academic_year_id' => $academicYearId,
                 'is_active' => true,
-                'description' => 'Official institutional application processing and admission registration fee',
+                'description' => 'Non-refundable student registration fee: ZAR 500 or USD 35.',
+            ]);
+        } else {
+            $structure->update([
+                'name' => 'Registration Fee',
+                'amount' => 500.00,
+                'currency' => 'ZAR',
+                'description' => 'Non-refundable student registration fee: ZAR 500 or USD 35.',
             ]);
         }
 
@@ -58,19 +66,20 @@ class AdmissionPaymentService
         return $structure;
     }
 
-    /**
-     * Compute admission fee amount according to degree level.
-     */
-    public static function getAdmissionFeeAmount(Application $application): float
+    public static function registrationFeeCurrency(Application $application): string
     {
-        $levelName = strtolower($application->programRecord?->level?->name ?? '');
-        if (str_contains($levelName, 'master') || str_contains($levelName, 'doctor') || str_contains($levelName, 'phd') || str_contains($levelName, 'postgraduate')) {
-            return 250.00;
-        } elseif (str_contains($levelName, 'bachelor') || str_contains($levelName, 'degree') || str_contains($levelName, 'undergraduate')) {
-            return 150.00;
-        }
+        return in_array($application->payment_currency, ['ZAR', 'USD'], true)
+            ? $application->payment_currency
+            : 'ZAR';
+    }
 
-        return 100.00;
+    public static function getAdmissionFeeAmount(Application $application, ?string $currency = null): float
+    {
+        return match ($currency ?? self::registrationFeeCurrency($application)) {
+            'ZAR' => 500.00,
+            'USD' => 35.00,
+            default => throw new \InvalidArgumentException('Unsupported registration fee currency.'),
+        };
     }
 
     /**
@@ -80,7 +89,8 @@ class AdmissionPaymentService
     {
         try {
             $feeStructure = self::getOrCreateAdmissionFeeStructure();
-            $amount = self::getAdmissionFeeAmount($application);
+            $currency = self::registrationFeeCurrency($application);
+            $amount = self::getAdmissionFeeAmount($application, $currency);
 
             // Find or provision User account for applicant
             $user = User::where('email', $application->email)->first();
@@ -124,6 +134,7 @@ class AdmissionPaymentService
                     'fee_structure_id' => $feeStructure->id,
                     'invoice_number' => $paymentRef,
                     'amount' => $amount,
+                    'currency' => $currency,
                     'discount_amount' => 0,
                     'late_fee' => 0,
                     'total_amount' => $amount,
@@ -134,10 +145,11 @@ class AdmissionPaymentService
                     'paid_date' => $paymentDate->toDateString(),
                     'payment_method' => 'Bank Transfer',
                     'transaction_id' => $paymentRef,
-                    'payment_notes' => "Admission Application Fee for Application #{$application->application_number} (" . ($application->programRecord?->name ?? $application->program) . ')',
+                    'payment_notes' => "Registration Fee for Application #{$application->application_number} (" . ($application->programRecord?->name ?? $application->program) . ')',
                     'payment_history' => [
                         [
                             'amount' => $amount,
+                            'currency' => $currency,
                             'date' => $paymentDate->toDateString(),
                             'method' => 'Bank Transfer',
                             'transaction_id' => $paymentRef,
@@ -151,8 +163,10 @@ class AdmissionPaymentService
             } else {
                 // Ensure record is marked as paid with full amount
                 $feeRecord->update([
+                    'amount' => $amount,
                     'paid_amount' => $amount,
                     'total_amount' => $amount,
+                    'currency' => $currency,
                     'balance_amount' => 0,
                     'status' => 'paid',
                     'paid_date' => $paymentDate->toDateString(),
@@ -174,10 +188,11 @@ class AdmissionPaymentService
                     'fee_record_id' => $feeRecord->id,
                     'student_id' => $user->id,
                     'amount' => $amount,
+                    'currency' => $currency,
                     'payment_method' => 'Bank Transfer',
                     'transaction_id' => $paymentRef,
                     'reference_number' => $paymentRef,
-                    'notes' => "Admission payment verified for Application #{$application->application_number}",
+                    'notes' => "Registration fee payment verified for Application #{$application->application_number}",
                     'payment_proof' => $application->payment_proof,
                     'status' => 'completed',
                     'processed_by' => $adminId,
@@ -186,6 +201,8 @@ class AdmissionPaymentService
             } else {
                 $payment->update([
                     'fee_record_id' => $feeRecord->id,
+                    'amount' => $amount,
+                    'currency' => $currency,
                     'status' => 'completed',
                     'payment_proof' => $application->payment_proof ?: $payment->payment_proof,
                     'payment_date' => $paymentDate,
@@ -193,19 +210,29 @@ class AdmissionPaymentService
             }
 
             // 3. Create or update FinanceRevenue record (Bursar Hub stream)
+            $bookedAmount = self::getAdmissionFeeAmount($application, 'ZAR');
+            $revenueNotes = "Application #{$application->application_number} (" . ($application->programRecord?->name ?? $application->program) . "). Received {$currency} " . number_format($amount, 2) . '; booked at fixed registration-fee parity.';
             $revenue = FinanceRevenue::where('reference_number', $paymentRef)->first();
             if (!$revenue) {
                 FinanceRevenue::create([
                     'revenue_code' => 'REV-' . date('Ymd') . '-' . rand(100, 999),
                     'category' => 'Admissions & Applications',
-                    'title' => 'Admission Application Fee - ' . trim($application->first_name . ' ' . $application->last_name),
-                    'amount' => $amount,
+                    'title' => 'Student Registration Fee - ' . trim($application->first_name . ' ' . $application->last_name),
+                    'amount' => $bookedAmount,
+                    'currency' => 'ZAR',
                     'transaction_date' => $paymentDate->toDateString(),
                     'payment_method' => 'Bank Transfer',
                     'reference_number' => $paymentRef,
                     'payer_name' => trim($application->first_name . ' ' . $application->last_name),
-                    'notes' => "Application #{$application->application_number} (" . ($application->programRecord?->name ?? $application->program) . ')',
+                    'notes' => $revenueNotes,
                     'received_by' => $adminId,
+                ]);
+            } else {
+                $revenue->update([
+                    'title' => 'Student Registration Fee - ' . trim($application->first_name . ' ' . $application->last_name),
+                    'amount' => $bookedAmount,
+                    'currency' => 'ZAR',
+                    'notes' => $revenueNotes,
                 ]);
             }
 

@@ -87,7 +87,7 @@
                             <!-- Line -->
                             <div class="d-none d-md-block align-self-center border-top flex-grow-1 mx-2" style="max-width: 60px; height: 2px;"></div>
 
-                            <!-- Step 3: Admission Fee -->
+                            <!-- Step 3: Registration Fee -->
                             @php
                                 $step3Success = isset($application) && in_array($application->payment_status, ['uploaded', 'verified']);
                                 $step3Active = isset($application) && in_array($application->payment_status, ['pending', 'rejected']);
@@ -96,7 +96,7 @@
                                 <div class="rounded-circle d-flex align-items-center justify-content-center {{ $step3Success ? 'bg-success text-white' : ($step3Active ? 'bg-primary text-white' : 'bg-light text-muted') }} mb-2" style="width: 40px; height: 40px;">
                                     <i class="bi bi-credit-card fs-5"></i>
                                 </div>
-                                <span class="small fw-semibold {{ $step3Success ? 'text-success' : ($step3Active ? 'text-primary' : 'text-muted') }}">3. Admission Fee</span>
+                                <span class="small fw-semibold {{ $step3Success ? 'text-success' : ($step3Active ? 'text-primary' : 'text-muted') }}">3. Registration Fee</span>
                             </div>
 
                             <!-- Line -->
@@ -397,22 +397,22 @@
                         </div>
                     @endif
 
-                    <!-- CASE 2: Admission Fee Payment Portal (APPEARS FIRST - NON-REFUNDABLE) -->
+                    <!-- CASE 2: Registration Fee Payment Portal (APPEARS FIRST - NON-REFUNDABLE) -->
                     @if(isset($application) && in_array($application->payment_status, ['pending', 'rejected']))
                         @php
                             $feeAmount = $feeAmount ?? \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
                         @endphp
                         <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-radius: 12px;">
                             <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);">
-                                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2"></i>Step 3: Admission Fee Payment (Non-Refundable)</h5>
+                                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2"></i>Step 3: Registration Fee Payment (Non-Refundable)</h5>
                             </div>
                             <div class="card-body p-4">
                                 <div class="alert alert-danger border-0 shadow-sm mb-4 py-3 px-3" style="border-radius: 10px;">
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-exclamation-octagon-fill fs-3 text-danger me-3"></i>
                                         <div>
-                                            <h6 class="fw-bold mb-1 text-danger">ADMISSION APPLICATION FEE IS NON-REFUNDABLE</h6>
-                                            <p class="mb-0 small text-dark">Please complete your admission application fee payment and upload payment proof below. Admissions will verify your receipt before reviewing your documents and assigning your programme.</p>
+                                            <h6 class="fw-bold mb-1 text-danger">REGISTRATION FEE IS NON-REFUNDABLE</h6>
+                                            <p class="mb-0 small text-dark">Please pay the registration fee in ZAR or USD and upload payment proof below. Admissions will verify your receipt before reviewing your documents and assigning your programme.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -442,8 +442,9 @@
                                                 @endif
                                             </div>
                                             <div class="col-md-5 text-md-end border-start-md">
-                                                <h6 class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Admission Fee Amount</h6>
-                                                <h2 class="fw-bold text-success mb-0">{{ $currencyCode }} {{ number_format($feeAmount, 2) }}</h2>
+                                                <h6 class="text-uppercase text-secondary fw-semibold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Registration Fee</h6>
+                                                <h2 class="fw-bold text-success mb-0">ZAR 500.00 / USD 35.00</h2>
+                                                <small class="text-muted">Choose the currency you paid in when uploading your receipt.</small>
                                             </div>
                                         </div>
                                     </div>
@@ -511,7 +512,17 @@
                                     <form action="{{ route('applications.store-payment', $application->application_number) }}" method="POST" enctype="multipart/form-data">
                                         @csrf
                                         <div class="row g-3">
-                                            <div class="col-md-9">
+                                            <div class="col-md-4">
+                                                <label for="payment_currency" class="form-label form-label-sm">Currency paid</label>
+                                                <select class="form-select form-select-sm @error('payment_currency') is-invalid @enderror" id="payment_currency" name="payment_currency" required>
+                                                    <option value="ZAR" {{ old('payment_currency', $application->payment_currency ?: 'ZAR') === 'ZAR' ? 'selected' : '' }}>ZAR 500.00</option>
+                                                    <option value="USD" {{ old('payment_currency', $application->payment_currency ?: 'ZAR') === 'USD' ? 'selected' : '' }}>USD 35.00</option>
+                                                </select>
+                                                @error('payment_currency')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-5">
                                                 <input type="file" class="form-control form-control-sm @error('payment_proof') is-invalid @enderror" id="payment_proof" name="payment_proof" required accept=".pdf,.jpg,.jpeg,.png">
                                                 @error('payment_proof')
                                                     <div class="invalid-feedback small">{{ $message }}</div>
@@ -541,7 +552,7 @@
                                 </div>
                                 <h4 class="fw-bold mb-2 text-dark">Step 4: Application & Document Review</h4>
                                 <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
-                                    Your non-refundable admission fee payment has been submitted. Admissions will verify your payment first, then your supporting documents, and finally assign your programme. You will be notified when your admission is confirmed.
+                                    Your non-refundable registration fee payment has been submitted. Admissions will verify your payment first, then your supporting documents, and finally assign your programme. You will be notified when your admission is confirmed.
                                 </p>
                                 <div class="d-inline-flex flex-column align-items-start bg-light p-3 text-start border" style="border-radius: 10px; width: 100%; max-width: 480px;">
                                     @if($application->program_id && ($application->programRecord || $application->program))
@@ -553,7 +564,7 @@
                                             <div class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-clock-history me-1"></i>Official programme will be manually assigned by admissions staff</div>
                                         </div>
                                     @endif
-                                    <div class="small mb-1.5 text-dark"><strong>Payment Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Admission Fee Paid (Non-Refundable)</span></div>
+                                    <div class="small mb-1.5 text-dark"><strong>Payment Status:</strong> <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Registration Fee Paid (Non-Refundable)</span></div>
                                     <div class="small text-dark"><strong>Academic Review:</strong> <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Under Admissions Board Verification</span></div>
                                 </div>
                             </div>

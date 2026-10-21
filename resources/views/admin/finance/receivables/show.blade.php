@@ -79,7 +79,7 @@
                                     <div class="fw-bold text-dark">Tuition & Academic Fees</div>
                                     <div class="small text-muted">Base fees for the semester based on fee structure.</div>
                                 </td>
-                                <td class="text-end fw-semibold py-3">{{ $currencyCode }} {{ number_format($record->amount, 2) }}</td>
+                                <td class="text-end fw-semibold py-3">{{ $record->currency ?? $currencyCode }} {{ number_format($record->amount, 2) }}</td>
                             </tr>
                             @if($record->late_fee > 0)
                             <tr>
@@ -87,7 +87,7 @@
                                     <div class="fw-bold text-dark">Late Payment Penalty</div>
                                     <div class="small text-muted">Applied penalty for missed deadlines.</div>
                                 </td>
-                                <td class="text-end fw-semibold py-3 text-danger">+ {{ $currencyCode }} {{ number_format($record->late_fee, 2) }}</td>
+                                <td class="text-end fw-semibold py-3 text-danger">+ {{ $record->currency ?? $currencyCode }} {{ number_format($record->late_fee, 2) }}</td>
                             </tr>
                             @endif
                             @if($record->discount_amount > 0)
@@ -96,7 +96,7 @@
                                     <div class="fw-bold text-dark">Scholarship / Discount</div>
                                     <div class="small text-muted">Applied reductions and bursaries.</div>
                                 </td>
-                                <td class="text-end fw-semibold py-3 text-success">- {{ $currencyCode }} {{ number_format($record->discount_amount, 2) }}</td>
+                                <td class="text-end fw-semibold py-3 text-success">- {{ $record->currency ?? $currencyCode }} {{ number_format($record->discount_amount, 2) }}</td>
                             </tr>
                             @endif
                         </tbody>
@@ -109,15 +109,15 @@
                         <table class="table table-borderless table-sm">
                             <tr>
                                 <td class="text-muted fw-bold">Total Amount</td>
-                                <td class="text-end fw-bold">{{ $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
+                                <td class="text-end fw-bold">{{ $record->currency ?? $currencyCode }} {{ number_format($record->total_amount, 2) }}</td>
                             </tr>
                             <tr class="border-bottom">
                                 <td class="text-muted fw-bold pb-2">Amount Paid</td>
-                                <td class="text-end fw-bold text-success pb-2">- {{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                                <td class="text-end fw-bold text-success pb-2">- {{ $record->currency ?? $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
                             </tr>
                             <tr>
                                 <td class="fw-bold text-uppercase pt-3 fs-5">Balance Due</td>
-                                <td class="text-end fw-bold text-danger pt-3 fs-5">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
+                                <td class="text-end fw-bold text-danger pt-3 fs-5">{{ $record->currency ?? $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                             </tr>
                         </table>
                     </div>
