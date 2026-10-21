@@ -19,7 +19,7 @@
                             <select class="form-select @error('course_id') is-invalid @enderror" id="course_id" name="course_id" required>
                                 <option value="">Select Course</option>
                                 @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>
+                                    <option value="{{ $course->id }}" {{ $selectedCourseId == $course->id ? 'selected' : '' }}>
                                         {{ $course->code }} - {{ $course->name }}
                                     </option>
                                 @endforeach

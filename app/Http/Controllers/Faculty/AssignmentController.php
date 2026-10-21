@@ -28,18 +28,28 @@ class AssignmentController extends Controller
         return view('faculty.assignments.index', compact('assignments', 'courses'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $faculty = Auth::user();
-        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
-        $courses = Course::where('instructor_id', $faculty->id)
-            ->when($currentSemester, function($query) use ($currentSemester) {
-                return $query->where('semester_id', $currentSemester->id);
-            })
+        $courses = $faculty->taughtCourses()
             ->orderBy('name')
             ->get();
 
-        return view('faculty.assignments.create', compact('courses'));
+        $query = $request->query();
+        $selectedCourseId = old('course_id', $request->query('course_id'));
+
+        // Support legacy links that passed the course ID positionally as ?42.
+        if ($selectedCourseId === null) {
+            $legacyCourseId = collect(array_keys($query))
+                ->first(fn ($key) => is_numeric($key));
+            $selectedCourseId = $legacyCourseId;
+        }
+
+        if ($selectedCourseId !== null && !$courses->contains('id', (int) $selectedCourseId)) {
+            $selectedCourseId = null;
+        }
+
+        return view('faculty.assignments.create', compact('courses', 'selectedCourseId'));
     }
 
     public function store(Request $request)

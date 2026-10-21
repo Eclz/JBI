@@ -64,7 +64,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-3 p-3 bg-primary bg-opacity-10 text-primary me-3">
+                        <div class="rounded-3 p-3 bg-primary bg-opacity-10 text-white me-3">
                             <i class="bi bi-people fs-4"></i>
                         </div>
                         <div>
@@ -112,7 +112,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-3 p-3 bg-warning bg-opacity-10 text-warning me-3">
+                        <div class="rounded-3 p-3 bg-warning bg-opacity-10 text-white me-3">
                             <i class="bi bi-trophy fs-4"></i>
                         </div>
                         <div>
