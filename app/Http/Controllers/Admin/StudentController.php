@@ -30,6 +30,9 @@ class StudentController extends Controller
     public function index()
     {
         $students = User::role('student')
+            ->whereHas('studentProfile', function ($query) {
+                $query->where('status', '!=', 'pending');
+            })
             ->with(['studentProfile.department'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {

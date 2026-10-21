@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Application;
 use App\Models\Department;
+use App\Models\Role;
 use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,6 +64,53 @@ class RegistrarDashboardDisplayTest extends TestCase
                 'Rejected',
             ])
             ->assertDontSee('Payment Pending');
+    }
+
+    public function test_student_management_excludes_applicants_and_pending_admissions(): void
+    {
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $admin = User::factory()->admin()->create(['role_id' => null]);
+        $department = Department::factory()->create();
+        $studentRoleId = Role::where('slug', 'student')->value('id');
+        $enrolledStudent = User::factory()->student()->create([
+            'name' => 'Enrolled Student',
+            'email' => 'enrolled@example.test',
+            'role_id' => $studentRoleId,
+        ]);
+        Application::create($this->applicationData('APP-ADM-0003', $enrolledStudent->email, 'admitted'));
+        StudentProfile::create([
+            'user_id' => $enrolledStudent->id,
+            'admission_number' => 'ADM-0003',
+            'admission_date' => now()->toDateString(),
+            'department_id' => $department->id,
+            'program' => 'Computer Science',
+            'status' => 'active',
+            'application_status' => 'approved',
+        ]);
+
+        $applicant = User::factory()->student()->create([
+            'name' => 'Unadmitted Applicant',
+            'role_id' => $studentRoleId,
+        ]);
+        Application::create($this->applicationData('APP-UNADMITTED', $applicant->email, 'pending'));
+
+        $pendingAdmission = User::factory()->student()->create([
+            'name' => 'Pending Admission',
+            'role_id' => $studentRoleId,
+        ]);
+        StudentProfile::factory()->create([
+            'user_id' => $pendingAdmission->id,
+            'department_id' => $department->id,
+            'status' => 'pending',
+            'application_status' => 'approved',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.students.index'))
+            ->assertOk()
+            ->assertSee('enrolled@example.test')
+            ->assertDontSee('Unadmitted Applicant')
+            ->assertDontSee('Pending Admission');
     }
 
     private function applicationData(string $number, string $email, string $status): array
