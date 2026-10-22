@@ -117,6 +117,7 @@ class ApplicationController extends Controller
         $step3Complete = !$isStudent || ($step1Complete && $step2Complete && $application->hasAssignedCourse());
         $step4Complete = $application->status === 'admitted';
         $canConfirmAdmission = $step1Complete && $step2Complete && $step3Complete;
+        $registrationFeeCurrency = \App\Services\AdmissionPaymentService::registrationFeeCurrency($application);
 
         $currentStep = 1;
         if ($step4Complete || $canConfirmAdmission) {
@@ -140,7 +141,8 @@ class ApplicationController extends Controller
             'step3Complete',
             'step4Complete',
             'canConfirmAdmission',
-            'currentStep'
+            'currentStep',
+            'registrationFeeCurrency'
         ));
     }
 
@@ -337,8 +339,8 @@ class ApplicationController extends Controller
                 Notification::create([
                     'user_id' => $user->id,
                     'type' => 'payment',
-                    'title' => 'Admission Fee Payment Verified',
-                    'message' => 'Your payment receipt (Ref: ' . $paymentRef . ') has been verified by the admissions office. You can now proceed to admission.',
+                    'title' => 'Registration Fee Payment Verified',
+                    'message' => 'Your registration fee receipt (Ref: ' . $paymentRef . ') has been verified by the admissions office. You can now proceed with your application.',
                     'priority' => 'high',
                 ]);
             }
@@ -489,12 +491,13 @@ class ApplicationController extends Controller
                         ],
                         [
                             'invoice_number' => $application->payment_ref ?: ('REG-' . strtoupper(Str::random(8))),
-                            'amount' => $feeStructure->amount,
+                            'amount' => \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application),
+                            'currency' => \App\Services\AdmissionPaymentService::registrationFeeCurrency($application),
                             'discount_amount' => 0,
                             'late_fee' => 0,
-                            'total_amount' => $feeStructure->amount,
+                            'total_amount' => \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application),
                             'paid_amount' => 0,
-                            'balance_amount' => $feeStructure->amount,
+                            'balance_amount' => \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application),
                             'status' => 'pending',
                             'due_date' => $dueDate,
                         ]

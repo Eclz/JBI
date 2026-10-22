@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class User extends Authenticatable
 {
@@ -456,9 +457,9 @@ class User extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'super_admin'
-            || $this->roleCatalog?->slug === 'super_administrator'
-            || ($this->role === self::ROLE_ADMIN && !$this->role_id);
+        return $this->assignedRoles()->contains(
+            fn (Role $role) => in_array($role->slug, ['super_administrator', 'super_admin'], true)
+        );
     }
 
     /**
@@ -466,10 +467,8 @@ class User extends Authenticatable
      */
     public function isDean(): bool
     {
-        return $this->role === 'dean'
-            || $this->roleCatalog?->slug === 'dean'
-            || $this->deanFaculties()->exists()
-            || $this->roles->contains(fn($r) => $r->slug === 'dean' || strtolower($r->name) === 'dean');
+        return $this->hasAssignedRole(['dean'])
+            || $this->deanFaculties()->exists();
     }
 
     /**
@@ -477,10 +476,8 @@ class User extends Authenticatable
      */
     public function isHeadOfDepartment(): bool
     {
-        return $this->role === 'head_of_department'
-            || $this->roleCatalog?->slug === 'head_of_department'
-            || $this->headedDepartments()->exists()
-            || $this->roles->contains(fn($r) => in_array($r->slug, ['head_of_department', 'hod']));
+        return $this->hasAssignedRole(['head_of_department', 'hod'])
+            || $this->headedDepartments()->exists();
     }
 
     /**
@@ -490,11 +487,24 @@ class User extends Authenticatable
     {
         $rolesToCheck = is_array($role) ? $role : [$role];
 
+        $assignedRoles = $this->assignedRoles();
+
         foreach ($rolesToCheck as $r) {
-            // 1. Direct legacy column or primary role match
-            if ($this->role === $r
-                || $this->roleCatalog?->guard_role === $r
-                || $this->roleCatalog?->slug === $r) {
+            if ($r === self::ROLE_ADMIN) {
+                if ($assignedRoles->contains(
+                    fn (Role $roleModel) => in_array($roleModel->slug, ['admin', 'super_administrator', 'super_admin'], true)
+                )) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if ($assignedRoles->contains(function (Role $roleModel) use ($r) {
+                return $roleModel->slug === $r
+                    || $roleModel->guard_role === $r
+                    || strtolower($roleModel->name) === strtolower($r);
+            })) {
                 return true;
             }
 
@@ -508,22 +518,26 @@ class User extends Authenticatable
                 return true;
             }
 
-            // 4. Teaching Faculty / Lecturer check
-            if (($r === 'faculty' || $r === 'lecturer') && ($this->facultyProfile()->exists() || $this->taughtCourses()->exists())) {
-                return true;
-            }
-
-            // 5. Check many-to-many assigned roles in role_user
-            if ($this->roles->contains(function ($roleModel) use ($r) {
-                return $roleModel->slug === $r
-                    || $roleModel->guard_role === $r
-                    || strtolower($roleModel->name) === strtolower($r);
-            })) {
-                return true;
-            }
         }
 
         return false;
+    }
+
+    public function hasGuardRole(string $guardRole): bool
+    {
+        return $this->assignedRoles()->contains(
+            fn (Role $roleModel) => $roleModel->guard_role === $guardRole
+        );
+    }
+
+    public function getAssignedRoleIdentifiers(): array
+    {
+        return $this->assignedRoles()
+            ->flatMap(fn (Role $role) => [$role->slug, $role->guard_role, strtolower($role->name)])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -535,13 +549,7 @@ class User extends Authenticatable
             return true;
         }
 
-        // Check primary role
-        if ($this->roleCatalog?->hasPermission($module, $action)) {
-            return true;
-        }
-
-        // Check all attached roles via many-to-many relationship
-        foreach ($this->roles as $roleModel) {
+        foreach ($this->assignedRoles() as $roleModel) {
             if ($roleModel->hasPermission($module, $action)) {
                 return true;
             }
@@ -549,7 +557,7 @@ class User extends Authenticatable
 
         // Appointed deans inherit Dean role permissions
         if ($this->isDean()) {
-            $deanRole = Role::where('slug', 'dean')->first();
+            $deanRole = Role::where('slug', 'dean')->where('is_active', true)->first();
             if ($deanRole?->hasPermission($module, $action)) {
                 return true;
             }
@@ -557,7 +565,7 @@ class User extends Authenticatable
 
         // Appointed department heads inherit Head of Department role permissions
         if ($this->isHeadOfDepartment()) {
-            $hodRole = Role::where('slug', 'head_of_department')->first();
+            $hodRole = Role::where('slug', 'head_of_department')->where('is_active', true)->first();
             if ($hodRole?->hasPermission($module, $action)) {
                 return true;
             }
@@ -572,20 +580,20 @@ class User extends Authenticatable
     public function assignRole(Role|string|int $role, bool $isPrimary = false): static
     {
         $roleModel = is_string($role)
-            ? Role::where('slug', $role)->orWhere('guard_role', $role)->first()
+            ? (Role::where('slug', $role)->where('is_active', true)->first()
+                ?? Role::where('guard_role', $role)->where('is_active', true)->first())
             : (is_int($role) ? Role::find($role) : $role);
 
-        if ($roleModel) {
-            $this->roles()->syncWithoutDetaching([
-                $roleModel->id => ['is_primary' => $isPrimary]
-            ]);
-
-            if ($isPrimary || empty($this->role_id)) {
-                $this->update([
-                    'role_id' => $roleModel->id,
-                    'role' => $roleModel->guard_role,
-                ]);
+        if ($roleModel?->is_active) {
+            $roleIds = $this->assignedRoles()->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (!in_array((int) $roleModel->id, $roleIds, true)) {
+                $roleIds[] = (int) $roleModel->id;
             }
+
+            $primaryRoleId = $isPrimary || !$this->role_id
+                ? (int) $roleModel->id
+                : (int) $this->role_id;
+            $this->syncRoles($roleIds, $primaryRoleId);
         }
 
         return $this;
@@ -597,24 +605,21 @@ class User extends Authenticatable
     public function removeRole(Role|string|int $role): static
     {
         $roleModel = is_string($role)
-            ? Role::where('slug', $role)->orWhere('guard_role', $role)->first()
+            ? (Role::where('slug', $role)->first()
+                ?? Role::where('guard_role', $role)->first())
             : (is_int($role) ? Role::find($role) : $role);
 
         if ($roleModel) {
             $this->roles()->detach($roleModel->id);
-            // Refresh the roles relationship to avoid stale in-memory data
-            $this->load('roles');
-            // Clear Spatie permission cache to ensure removed permissions are not cached
-            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-            // Refresh the model instance to clear any cached attributes/relations
-            $this->refresh();
-            if ($this->role_id === $roleModel->id) {
-                $nextRole = $this->roles()->first();
-                $this->update([
-                    'role_id' => $nextRole?->id,
-                    'role' => $nextRole?->guard_role ?? $this->role,
-                ]);
-            }
+            $remainingRoleIds = $this->roles()
+                ->where('roles.is_active', true)
+                ->pluck('roles.id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $primaryRoleId = in_array((int) $this->role_id, $remainingRoleIds, true)
+                ? (int) $this->role_id
+                : ($remainingRoleIds[0] ?? null);
+            $this->syncRoles($remainingRoleIds, $primaryRoleId);
         }
 
         return $this;
@@ -625,31 +630,59 @@ class User extends Authenticatable
      */
     public function syncRoles(array $roleIds, ?int $primaryRoleId = null): static
     {
+        $roleIds = array_values(array_unique(array_map('intval', $roleIds)));
+        $activeRoles = Role::whereIn('id', $roleIds)
+            ->where('is_active', true)
+            ->get()
+            ->keyBy('id');
+        $roleIds = array_values(array_filter($roleIds, fn ($id) => $activeRoles->has($id)));
+
+        if (!$primaryRoleId || !in_array((int) $primaryRoleId, $roleIds, true)) {
+            $primaryRoleId = $roleIds[0] ?? null;
+        }
+
         $syncData = [];
         foreach ($roleIds as $id) {
-            $syncData[$id] = ['is_primary' => ((int)$id === (int)$primaryRoleId)];
+            $syncData[$id] = ['is_primary' => (int) $id === (int) $primaryRoleId];
         }
-        $this->roles()->sync($syncData);
 
-        if ($primaryRoleId) {
-            $primary = Role::find($primaryRoleId);
-            if ($primary) {
-                $this->update([
-                    'role_id' => $primary->id,
-                    'role' => $primary->guard_role,
-                ]);
-            }
-        } elseif (!empty($roleIds)) {
-            $first = Role::find($roleIds[0]);
-            if ($first) {
-                $this->update([
-                    'role_id' => $first->id,
-                    'role' => $first->guard_role,
-                ]);
-            }
-        }
+        $this->roles()->sync($syncData);
+        $this->setPrimaryRole($primaryRoleId ? $activeRoles->get($primaryRoleId) : null);
+        $this->unsetRelation('roles')->unsetRelation('roleCatalog');
 
         return $this;
+    }
+
+    /**
+     * Return active roles that are explicitly attached to the user or set as primary.
+     */
+    private function assignedRoles(): EloquentCollection
+    {
+        $roles = $this->roles()->where('roles.is_active', true)->get();
+
+        if ($this->role_id && !$roles->contains('id', $this->role_id)) {
+            $primaryRole = Role::whereKey($this->role_id)->where('is_active', true)->first();
+            if ($primaryRole) {
+                $roles->push($primaryRole);
+            }
+        }
+
+        return $roles->unique('id')->values();
+    }
+
+    private function hasAssignedRole(array $slugs): bool
+    {
+        return $this->assignedRoles()->contains(
+            fn (Role $role) => in_array($role->slug, $slugs, true)
+        );
+    }
+
+    private function setPrimaryRole(?Role $role): void
+    {
+        $this->forceFill([
+            'role_id' => $role?->id,
+            'role' => $role?->guard_role ?? self::ROLE_STUDENT,
+        ])->save();
     }
 
     public function commissionMemberships(): HasMany
@@ -697,7 +730,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->hasRole(self::ROLE_ADMIN);
+        return $this->hasAssignedRole(['admin', 'super_administrator', 'super_admin']);
     }
 
     /**
@@ -832,7 +865,28 @@ class User extends Authenticatable
      */
     public function scopeRole($query, $role)
     {
-        return $query->where('role', $role);
+        $roles = is_array($role) ? $role : [$role];
+
+        return $query->where(function ($userQuery) use ($roles) {
+            foreach ($roles as $roleName) {
+                $matchesRole = function ($roleQuery) use ($roleName) {
+                    $roleQuery->where('is_active', true)
+                        ->where(function ($query) use ($roleName) {
+                            if ($roleName === self::ROLE_ADMIN) {
+                                $query->whereIn('slug', ['admin', 'super_administrator', 'super_admin'])
+                                    ->orWhereRaw('LOWER(name) = ?', [strtolower($roleName)]);
+                            } else {
+                                $query->where('slug', $roleName)
+                                    ->orWhere('guard_role', $roleName)
+                                    ->orWhereRaw('LOWER(name) = ?', [strtolower($roleName)]);
+                            }
+                        });
+                };
+
+                $userQuery->orWhereHas('roles', $matchesRole)
+                    ->orWhereHas('roleCatalog', $matchesRole);
+            }
+        });
     }
 
     /**
@@ -880,7 +934,7 @@ class User extends Authenticatable
      */
     public function isAdmitted(): bool
     {
-        return $this->role === self::ROLE_STUDENT && $this->studentProfile && $this->studentProfile->status === 'active';
+        return $this->isStudent() && $this->studentProfile && $this->studentProfile->status === 'active';
     }
 
     /**

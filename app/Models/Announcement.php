@@ -92,9 +92,14 @@ class Announcement extends Model
      */
     public function scopeForRole($query, $role)
     {
-        return $query->where(function($q) use ($role) {
-            $q->whereNull('target_roles')
-              ->orWhereJsonContains('target_roles', $role);
+        $roles = is_array($role) ? array_values(array_unique($role)) : [$role];
+
+        return $query->where(function ($query) use ($roles) {
+            $query->whereNull('target_roles');
+
+            foreach ($roles as $role) {
+                $query->orWhereJsonContains('target_roles', $role);
+            }
         });
     }
 }

@@ -70,7 +70,7 @@ class ApplicationController extends Controller
 
             $application = Application::create($validated);
 
-            $admins = User::where('role', 'admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
+            $admins = User::role('admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
             foreach ($admins as $admin) {
                 Notification::create([
                     'user_id' => $admin->id,
@@ -119,6 +119,7 @@ class ApplicationController extends Controller
 
         $request->validate([
             'payment_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'payment_currency' => 'nullable|in:ZAR,USD',
         ]);
 
         DB::beginTransaction();
@@ -126,12 +127,13 @@ class ApplicationController extends Controller
             $path = $request->file('payment_proof')->store('payment-proofs/' . $application->application_number, 'public');
 
             $application->update([
+                'payment_currency' => $request->input('payment_currency', $application->payment_currency ?: 'ZAR'),
                 'payment_proof' => $path,
                 'payment_status' => 'uploaded',
                 'payment_uploaded_at' => now(),
             ]);
 
-            $admins = User::where('role', 'admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
+            $admins = User::role('admin')->get()->filter(function($u) { return !$u->isFinanceOfficer(); });
             foreach ($admins as $admin) {
                 Notification::create([
                     'user_id' => $admin->id,

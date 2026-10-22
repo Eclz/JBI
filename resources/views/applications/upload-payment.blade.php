@@ -17,8 +17,8 @@
                     </div>
 
                     <div class="alert alert-info">
-                        <h6><i class="bi bi-info-circle me-2"></i>Admission Fee Payment Details</h6>
-                        <p><strong>Amount to Pay:</strong> {{ $currencyCode }} {{ number_format($feeAmount ?? 150, 2) }}</p>
+                        <h6><i class="bi bi-info-circle me-2"></i>Registration Fee Payment Details</h6>
+                        <p><strong>Amount to Pay:</strong> ZAR 500.00 or USD 35.00</p>
                         <p class="mb-0"><strong>Bank Details:</strong></p>
                         <ul class="mb-0">
                             <li>Bank Name: Stanbic Bank Uganda</li>
@@ -43,6 +43,17 @@
                         @csrf
 
                         <div class="mb-4">
+                            <label for="payment_currency" class="form-label">Currency paid</label>
+                            <select class="form-select @error('payment_currency') is-invalid @enderror" id="payment_currency" name="payment_currency" required>
+                                <option value="ZAR" {{ old('payment_currency', $application->payment_currency ?: 'ZAR') === 'ZAR' ? 'selected' : '' }}>ZAR 500.00</option>
+                                <option value="USD" {{ old('payment_currency', $application->payment_currency ?: 'ZAR') === 'USD' ? 'selected' : '' }}>USD 35.00</option>
+                            </select>
+                            @error('payment_currency')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
                             <label for="payment_proof" class="form-label">Upload Payment Receipt <span class="text-danger">*</span></label>
                             <input type="file" class="form-control" id="payment_proof" name="payment_proof" accept=".pdf,.jpg,.jpeg,.png" required>
                             <small class="text-muted">Accepted formats: PDF, JPG, PNG. Max size: 5MB</small>
@@ -53,7 +64,7 @@
                                 Please ensure your payment receipt clearly shows:
                                 <ul class="mb-0 mt-2">
                                     <li>Transaction date and time</li>
-                                    <li>Amount paid ({{ $currencyCode }} {{ number_format($feeAmount ?? 150, 2) }})</li>
+                                    <li>Amount paid in the selected currency (ZAR 500.00 or USD 35.00)</li>
                                     <li>Reference number: {{ $application->application_number }}</li>
                                     <li>Bank details</li>
                                 </ul>

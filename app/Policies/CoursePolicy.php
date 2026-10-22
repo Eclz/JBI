@@ -31,7 +31,7 @@ class CoursePolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('courses', 'create');
     }
 
     /**
@@ -40,7 +40,7 @@ class CoursePolicy
     public function update(User $user, Course $course): bool
     {
         // Admin can update any course
-        if ($user->isAdmin()) {
+        if ($user->hasPermission('courses', 'edit')) {
             return true;
         }
 
@@ -53,6 +53,6 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course): bool
     {
-        return $user->isAdmin();
+        return $user->hasPermission('courses', 'delete');
     }
 }

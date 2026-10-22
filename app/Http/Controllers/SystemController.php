@@ -25,6 +25,8 @@ class SystemController extends Controller
 
     public function adminSettings()
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
         $settings = SystemSetting::all()->keyBy('key');
         $departments = Department::where('is_active', true)->get();
         $academicYears = AcademicYear::with('semesters')->orderBy('start_date', 'desc')->get();
@@ -39,6 +41,8 @@ class SystemController extends Controller
 
     public function settings()
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
         $settings = SystemSetting::pluck('value', 'key')->toArray();
 
         return view('admin.system.settings', compact('settings'));
@@ -47,7 +51,7 @@ class SystemController extends Controller
     public function update(Request $request)
     {
         // Check if this is an admin updating system settings
-        if (auth()->user()->role === 'admin' && $request->has('app_name')) {
+        if (auth()->user()->isSuperAdmin() && $request->has('app_name')) {
             return $this->updateAdminSettings($request);
         }
 
@@ -77,6 +81,8 @@ class SystemController extends Controller
 
     public function updateAdminSettings(Request $request)
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
         $validated = $request->validate([
             'app_name' => 'required|string|max:255',
             'app_email' => 'required|email',

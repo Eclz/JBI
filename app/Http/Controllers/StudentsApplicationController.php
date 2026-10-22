@@ -220,9 +220,9 @@ class StudentsApplicationController extends Controller
                                   ->whereIn('status', ['pending', 'approved'])
                                   ->firstOrFail();
 
-        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
         abort_unless(strtolower(auth()->user()->email) === strtolower($application->email), 403);
-        $feeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
+        $currencyCode = \App\Services\AdmissionPaymentService::registrationFeeCurrency($application);
+        $feeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application, $currencyCode);
 
         return view('applications.upload-payment', compact('application', 'currencyCode', 'feeAmount'));
     }
@@ -240,20 +240,23 @@ class StudentsApplicationController extends Controller
 
         $request->validate([
             'payment_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'payment_currency' => 'nullable|in:ZAR,USD',
         ]);
 
         DB::beginTransaction();
         try {
             $path = $request->file('payment_proof')->store('payment-proofs/' . $application->application_number, 'local');
+            $paymentCurrency = $request->input('payment_currency', $application->payment_currency ?: 'ZAR');
 
             $application->update([
+                'payment_currency' => $paymentCurrency,
                 'payment_proof' => $path,
                 'payment_status' => 'uploaded',
                 'payment_uploaded_at' => now(),
             ]);
 
             \App\Services\OnboardingNotificationService::notify('applications',
-                'Payment Proof Uploaded', "{$application->full_name} uploaded an admission receipt. Verify it before reviewing documents.",
+                'Registration Fee Proof Uploaded', "{$application->full_name} uploaded a registration fee receipt in {$paymentCurrency}. Verify it before reviewing documents.",
                 route('admin.applications.show', $application));
 
             DB::commit();

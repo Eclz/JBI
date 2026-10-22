@@ -27,7 +27,11 @@ class StoreCourseEnrollmentRequest extends FormRequest
             'user_id' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where('role', 'student')->where('is_active', true),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (!User::role('student')->where('is_active', true)->whereKey($value)->exists()) {
+                        $fail('Selected user must be an active student.');
+                    }
+                },
             ],
             'course_id' => [
                 'required',

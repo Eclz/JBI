@@ -87,7 +87,7 @@ class FeeController extends Controller
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
-        $students = User::where('role', 'student')
+        $students = User::role('student')
             ->where('is_active', true)
             ->with('studentProfile')
             ->orderBy('first_name')
@@ -251,7 +251,7 @@ class FeeController extends Controller
 
     public function create()
     {
-        $students = User::where('role', 'student')
+        $students = User::role('student')
             ->where('is_active', true)
             ->with('studentProfile')
             ->orderBy('first_name')
@@ -291,7 +291,7 @@ class FeeController extends Controller
 
     public function edit(FeeRecord $fee)
     {
-        $students = User::where('role', 'student')
+        $students = User::role('student')
             ->where('is_active', true)
             ->with('studentProfile')
             ->orderBy('first_name')
@@ -643,9 +643,8 @@ class FeeController extends Controller
 
             $feeStructure = FeeStructure::findOrFail($request->fee_structure_id);
 
-            $studentsQuery = User::query()
-                ->where('role', 'student')
-                ->where('is_active', true);
+            $studentsQuery = User::role('student')
+                    ->where('is_active', true);
 
             if ($request->filled('student_ids')) {
                 $studentsQuery->whereIn('id', $request->student_ids);
@@ -922,7 +921,7 @@ class FeeController extends Controller
                 // 2. Portal Message
                 try {
                     \App\Models\Message::create([
-                        'sender_id' => auth()->id() ?: User::where('role', 'admin')->value('id'),
+                        'sender_id' => auth()->id() ?: User::role('admin')->value('id'),
                         'receiver_id' => $student->id,
                         'subject' => 'Payment Reminder: ' . ($feeRecord->feeStructure->name ?? 'Institutional Fees'),
                         'body' => $customMessage ?: "Dear {$student->name},\n\nThis is an official reminder that your fee account has an outstanding balance of {$currency} " . number_format($feeRecord->balance_amount, 2) . " due on " . $feeRecord->due_date->format('M d, Y') . ".\n\nPlease log in to your student portal under the Fees section to view your demand notice or submit payment.",

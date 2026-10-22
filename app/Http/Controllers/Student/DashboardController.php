@@ -71,8 +71,12 @@ class DashboardController extends Controller
                     });
             }
 
-            $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
-            $feeAmount = $application ? \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application) : 150.00;
+            $currencyCode = $application
+                ? \App\Services\AdmissionPaymentService::registrationFeeCurrency($application)
+                : 'ZAR';
+            $feeAmount = $application
+                ? \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application, $currencyCode)
+                : 500.00;
 
             return view('student.dashboard_unadmitted', compact('student', 'studentProfile', 'application', 'programs', 'programChoices', 'currencyCode', 'feeAmount'));
         }

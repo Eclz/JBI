@@ -55,7 +55,7 @@ class TimetableController extends Controller
         $programs = Program::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::all();
-        $facultyMembers = User::where('role', 'faculty')->orderBy('first_name')->get();
+        $facultyMembers = User::role('faculty')->orderBy('first_name')->get();
         $rooms = FacilityRoom::orderBy('name')->get();
 
         return view('admin.timetables.create', compact('courses', 'programs', 'academicYears', 'semesters', 'facultyMembers', 'rooms'));
@@ -90,7 +90,7 @@ class TimetableController extends Controller
         $programs = Program::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::all();
-        $facultyMembers = User::where('role', 'faculty')->orderBy('first_name')->get();
+        $facultyMembers = User::role('faculty')->orderBy('first_name')->get();
         $rooms = FacilityRoom::orderBy('name')->get();
 
         return view('admin.timetables.edit', compact('timetable', 'courses', 'programs', 'academicYears', 'semesters', 'facultyMembers', 'rooms'));

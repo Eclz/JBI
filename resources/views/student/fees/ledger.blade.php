@@ -76,9 +76,9 @@
                                 @endif
                                 <span class="fw-semibold text-dark">{{ $record->payment_notes ?? $record->feeStructure?->name ?? 'Semester Tuition Fee' }}</span>
                             </td>
-                            <td class="fw-bold">{{ $currencyCode }} {{ number_format($record->total_amount > 0 ? $record->total_amount : $record->amount, 2) }}</td>
-                            <td class="fw-bold text-success">{{ $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
-                            <td class="fw-bold text-danger">{{ $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
+                            <td class="fw-bold">{{ $record->currency ?? $currencyCode }} {{ number_format($record->total_amount > 0 ? $record->total_amount : $record->amount, 2) }}</td>
+                            <td class="fw-bold text-success">{{ $record->currency ?? $currencyCode }} {{ number_format($record->paid_amount, 2) }}</td>
+                            <td class="fw-bold text-danger">{{ $record->currency ?? $currencyCode }} {{ number_format($record->balance_amount, 2) }}</td>
                             <td>{{ $record->created_at->format('M d, Y') }}</td>
                             <td class="text-end">
                                 @if($record->status === 'paid' || $record->balance_amount <= 0)

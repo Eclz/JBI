@@ -15,8 +15,15 @@
         <input name="job_title" required class="form-control" value="{{ old('job_title', $hrProfile?->job_title ?? $employee->role_name) }}">
     </div>
     <div class="col-md-6">
-        <label class="form-label">Department</label>
-        <input name="department" class="form-control" value="{{ old('department', $hrProfile?->department ?? $employee->facultyProfile?->department?->name ?? '') }}">
+        <label class="form-label" for="department_id">Department</label>
+        <select name="department_id" id="department_id" class="form-select">
+            <option value="">Select a department</option>
+            @foreach($departments as $department)
+                <option value="{{ $department->id }}" @selected((string) old('department_id', $selectedDepartmentId ?? '') === (string) $department->id)>
+                    {{ $department->name }}
+                </option>
+            @endforeach
+        </select>
     </div>
     <div class="col-md-4">
         <label class="form-label">Employment type</label>

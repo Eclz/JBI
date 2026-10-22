@@ -75,7 +75,7 @@ class CourseController extends Controller
         
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::where('is_active', true)->get();
-        $instructors = User::where('role', 'faculty')
+        $instructors = User::role('faculty')
             ->where('is_active', true)
             ->get();
         
@@ -98,7 +98,7 @@ class CourseController extends Controller
         
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::where('is_active', true)->get();
-        $instructors = User::where('role', 'faculty')
+        $instructors = User::role('faculty')
             ->where('is_active', true)
             ->get();
         

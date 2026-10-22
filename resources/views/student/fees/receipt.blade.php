@@ -34,9 +34,9 @@
                 <div class="col-lg-5 mb-4 mb-lg-0">
                     <h6>Fee Summary</h6>
                     <table class="table table-sm table-borderless">
-                        <tr><td>Total Amount</td><td class="text-end">{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</td></tr>
-                        <tr><td>Paid</td><td class="text-end text-success">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td></tr>
-                        <tr><td>Balance</td><td class="text-end text-danger">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</td></tr>
+                        <tr><td>Total Amount</td><td class="text-end">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->total_amount, 2) }}</td></tr>
+                        <tr><td>Paid</td><td class="text-end text-success">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</td></tr>
+                        <tr><td>Balance</td><td class="text-end text-danger">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</td></tr>
                         <tr>
                             <td>Status</td>
                             <td class="text-end">
@@ -65,7 +65,7 @@
                                         <tr>
                                             <td>{{ $payment->payment_date?->format('M d, Y g:i A') ?? '-' }}</td>
                                             <td>{{ $payment->payment_method_label ?? ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td>
-                                            <td class="fw-semibold">{{ $currencyCode }} {{ number_format($payment->amount, 2) }}</td>
+                                            <td class="fw-semibold">{{ $payment->currency ?? $fee->currency ?? $currencyCode }} {{ number_format($payment->amount, 2) }}</td>
                                             <td>
                                                 <span class="badge {{ $payment->status_badge_class ?? 'bg-secondary' }}">{{ ucfirst($payment->status) }}</span>
                                             </td>

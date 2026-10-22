@@ -120,7 +120,7 @@ class StoreAnnouncementRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Validate course ownership for faculty
-            if ($this->course_id && $this->user()->role === 'faculty') {
+            if ($this->course_id && $this->user()->hasRole('faculty')) {
                 $course = \App\Models\Course::find($this->course_id);
                 if ($course && $course->instructor_id !== $this->user()->id) {
                     $validator->errors()->add(

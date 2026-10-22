@@ -32,7 +32,7 @@ class ProgramChangeController extends Controller
     public function create()
     {
         $programs = Program::with('department')->where('is_active', true)->get();
-        $students = \App\Models\User::where('role', 'student')->has('studentProfile')->with('studentProfile.program')->get();
+        $students = \App\Models\User::role('student')->has('studentProfile')->with('studentProfile.program')->get();
         return view('admin.program-changes.create', compact('programs', 'students'));
     }
 

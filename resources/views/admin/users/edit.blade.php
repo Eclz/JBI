@@ -47,7 +47,7 @@
                                     <select class="form-control @error('role_id') is-invalid @enderror" id="role_id" name="role_id">
                                         <option value="">Select Role (Leave unchanged)</option>
                                         @foreach($roles as $role)
-                                            <option value="{{ $role->id }}" {{ (int) old('role_id', $user->role_id ?? ($role->guard_role === $user->role ? $role->id : null)) === $role->id ? 'selected' : '' }}>
+                                            <option value="{{ $role->id }}" {{ (int) old('role_id', $user->role_id) === $role->id ? 'selected' : '' }}>
                                                 {{ $role->name }} ({{ ucfirst($role->guard_role) }})
                                             </option>
                                         @endforeach
@@ -75,6 +75,7 @@
                             <div class="col-12 mb-3">
                                 <label class="form-label fw-bold"><i class="bi bi-people-fill text-primary me-1"></i>Concurrent / Multiple Assigned Roles</label>
                                 <div class="p-3 border rounded bg-light">
+                                    <input type="hidden" name="role_ids_present" value="1">
                                     <small class="text-muted d-block mb-2">Check any additional roles this user holds concurrently (e.g., Lecturer who is also Dean or HOD, Finance Officer who is also Lecturer, Estates Manager who is also Dean):</small>
                                     <div class="row g-2">
                                         @foreach($roles as $r)

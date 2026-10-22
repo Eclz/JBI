@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\User;
 
 class StoreFeeRecordRequest extends FormRequest
 {
@@ -24,9 +25,11 @@ class StoreFeeRecordRequest extends FormRequest
             'user_id' => [
                 'required',
                 'exists:users,id',
-                Rule::exists('users', 'id')->where(function ($query) {
-                    $query->where('role', 'student')->where('is_active', true);
-                }),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (!User::role('student')->where('is_active', true)->whereKey($value)->exists()) {
+                        $fail('The selected student is invalid or inactive.');
+                    }
+                },
             ],
             'fee_structure_id' => [
                 'required',

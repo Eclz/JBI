@@ -88,7 +88,7 @@ class EnrollmentController extends Controller
             $selectedCourse = Course::with('department.faculty')->find($request->course_id);
         }
 
-        $studentsQuery = User::where('role', 'student')
+        $studentsQuery = User::role('student')
                         ->with([
                             'studentProfile.department.faculty',
                             'studentProfile.program.department.faculty',
@@ -119,7 +119,7 @@ class EnrollmentController extends Controller
         $course = Course::with('department.faculty')->findOrFail($request->course_id);
         $facultyId = $course->getFacultyId();
 
-        $query = User::where('role', 'student')
+        $query = User::role('student')
             ->with([
                 'studentProfile.department.faculty',
                 'studentProfile.program.department.faculty',
@@ -236,7 +236,7 @@ class EnrollmentController extends Controller
     {
         $enrollment->load(['student.studentProfile', 'student.application', 'course.semester', 'grades.assignment']);
 
-        $students = User::where('role', 'student')
+        $students = User::role('student')
                         ->with(['studentProfile', 'application'])
                         ->orderBy('name')
                         ->get();

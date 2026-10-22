@@ -385,9 +385,9 @@
                             <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4 flex-wrap gap-2">
                                 <div>
                                     <h4 class="fw-bold text-dark mb-1">
-                                        <i class="bi bi-credit-card-2-front text-primary me-2"></i>Step 1: Admission Fee Payment Verification
+                                        <i class="bi bi-credit-card-2-front text-primary me-2"></i>Step 1: Registration Fee Payment Verification
                                     </h4>
-                                    <p class="text-muted small mb-0">Admission fee must be received and verified before the application proceeds to document verification.</p>
+                                    <p class="text-muted small mb-0">Registration fee must be received and verified before the application proceeds to document verification.</p>
                                 </div>
                                 @if($step1Complete)
                                     <span class="badge bg-success py-2 px-3 fs-6">
@@ -397,7 +397,7 @@
                             </div>
 
                             @php
-                                $admissionFeeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application);
+                                $admissionFeeAmount = \App\Services\AdmissionPaymentService::getAdmissionFeeAmount($application, $registrationFeeCurrency);
                             @endphp
 
                             <!-- Payment Overview Card -->
@@ -405,9 +405,9 @@
                                 <div class="col-md-5">
                                     <div class="card border bg-light h-100" style="border-radius: 10px;">
                                         <div class="card-body p-4">
-                                            <h6 class="text-uppercase text-secondary fw-bold small mb-3">Admission Fee Required</h6>
-                                            <h2 class="fw-bold text-success mb-2">{{ $currencyCode }} {{ number_format($admissionFeeAmount, 2) }}</h2>
-                                            <div class="small text-muted mb-3">Non-refundable institutional admission processing fee.</div>
+                                            <h6 class="text-uppercase text-secondary fw-bold small mb-3">Registration Fee Required</h6>
+                                            <h2 class="fw-bold text-success mb-2">{{ $registrationFeeCurrency }} {{ number_format($admissionFeeAmount, 2) }}</h2>
+                                            <div class="small text-muted mb-3">Non-refundable student registration fee. Applicant selected {{ $registrationFeeCurrency }}.</div>
                                             <hr>
                                             <div class="mb-2"><strong>Payment Reference:</strong> <code class="bg-white border px-2 py-1 rounded text-primary">{{ $application->payment_ref ?: 'None' }}</code></div>
                                             <div class="mb-0"><strong>Applicant:</strong> {{ $application->first_name }} {{ $application->last_name }}</div>
@@ -436,7 +436,7 @@
                                                 </div>
 
                                                 <p class="small text-dark mb-4">
-                                                    The admission fee payment for reference <code>{{ $application->payment_ref }}</code> is locked in and synced to Finance. You are now authorized to proceed to <strong>Step 2: Document Preview</strong>.
+                                                    The registration fee payment for reference <code>{{ $application->payment_ref }}</code> is locked in and synced to Finance. You are now authorized to proceed to <strong>Step 2: Document Preview</strong>.
                                                 </p>
 
                                                 <div class="d-flex gap-2 flex-wrap">
@@ -1011,7 +1011,7 @@
                                             <div class="col-md-4">
                                                 <div class="card border-0 bg-white p-3 shadow-sm h-100" style="border-radius: 8px;">
                                                     <div class="text-success small fw-bold mb-1"><i class="bi bi-check-circle-fill me-1"></i>Step 1: Payment Approved</div>
-                                                    <div class="text-dark fw-bold fs-6">{{ $currencyCode }} {{ number_format($admissionFeeAmount, 2) }}</div>
+                                                    <div class="text-dark fw-bold fs-6">{{ $registrationFeeCurrency }} {{ number_format($admissionFeeAmount, 2) }}</div>
                                                     <small class="text-muted">Ref: {{ $application->payment_ref }}</small>
                                                 </div>
                                             </div>

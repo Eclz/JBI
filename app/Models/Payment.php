@@ -13,6 +13,7 @@ class Payment extends Model
         'fee_record_id',
         'student_id',
         'amount',
+        'currency',
         'payment_method',
         'transaction_id',
         'reference_number',

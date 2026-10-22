@@ -65,7 +65,7 @@ class CourseController extends Controller
     {
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::where('is_active', true)->get();
-        $instructors = User::where('role', 'faculty')->where('is_active', true)->get();
+        $instructors = User::role('faculty')->where('is_active', true)->get();
         $programs = Program::where('is_active', true)->with(['department', 'level'])->orderBy('name')->get();
 
         return view('admin.courses.create', compact('departments', 'semesters', 'instructors', 'programs'));
@@ -83,7 +83,7 @@ class CourseController extends Controller
     {
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::where('is_active', true)->get();
-        $instructors = User::where('role', 'faculty')->where('is_active', true)->get();
+        $instructors = User::role('faculty')->where('is_active', true)->get();
         $programs = Program::where('is_active', true)->with(['department', 'level'])->orderBy('name')->get();
 
         return view('admin.courses.edit', compact('course', 'departments', 'semesters', 'instructors', 'programs'));
@@ -117,7 +117,7 @@ class CourseController extends Controller
             ->paginate(20);
 
         // Get available students for enrollment (not already enrolled)
-        $availableStudents = User::where('role', 'student')
+        $availableStudents = User::role('student')
             ->where('is_active', true)
             ->whereNotIn('id', function($query) use ($course) {
                 $query->select('user_id')
@@ -132,7 +132,7 @@ class CourseController extends Controller
         // Add missing variables that the view expects
         $departments = Department::where('is_active', true)->get();
         $semesters = Semester::orderBy('start_date', 'desc')->get();
-        $instructors = User::where('role', 'faculty')->where('is_active', true)->get();
+        $instructors = User::role('faculty')->where('is_active', true)->get();
 
         return view('admin.courses.enrollments', compact('course', 'enrollments', 'availableStudents', 'departments', 'semesters', 'instructors'));
     }

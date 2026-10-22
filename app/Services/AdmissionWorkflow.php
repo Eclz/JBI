@@ -129,7 +129,7 @@ class AdmissionWorkflow
 
             // Deliver Admission Letter directly to Student's Mailbox
             \App\Models\Message::create([
-                'sender_id' => $processedBy ?: (\App\Models\User::where('role', 'admin')->first()?->id ?: $user->id),
+                'sender_id' => $processedBy ?: (\App\Models\User::role('admin')->first()?->id ?: $user->id),
                 'receiver_id' => $user->id,
                 'subject' => 'Official JBI University Letter of Admission - Student No: ' . $studentNumber,
                 'body' => "Dear {$user->first_name},\n\nCongratulations! We are pleased to inform you that you have been granted official admission to JBI University for the programme: " . ($application->programRecord->name ?? $application->program) . ".\n\nYour Official Student Number is: {$studentNumber}\nYour Admission Number is: {$profile->admission_number}\n\nYou can view and download your official Letter of Admission directly in your portal.",
@@ -140,7 +140,7 @@ class AdmissionWorkflow
         }
 
         try {
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::role('admin')->get();
             foreach ($admins as $admin) {
                 Mail::to($admin->email)->send(new \App\Mail\AdminAdmissionNotification($user, $application));
             }

@@ -29,7 +29,10 @@ class StudentController extends Controller
 {
     public function index()
     {
-        $students = User::where('role', 'student')
+        $students = User::role('student')
+            ->whereHas('studentProfile', function ($query) {
+                $query->where('status', '!=', 'pending');
+            })
             ->with(['studentProfile.department'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -81,7 +84,7 @@ class StudentController extends Controller
 
     public function show(User $student)
     {
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -192,7 +195,7 @@ class StudentController extends Controller
     public function edit(User $student)
     {
 
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -216,7 +219,7 @@ class StudentController extends Controller
 
     public function update(StoreStudentProfileRequest $request, User $student)
     {
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -280,7 +283,7 @@ class StudentController extends Controller
 
     public function destroy(User $student)
     {
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -314,7 +317,7 @@ class StudentController extends Controller
             abort(403, 'Finance staff are not authorized to enroll students in courses.');
         }
 
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -341,7 +344,7 @@ class StudentController extends Controller
             abort(403, 'Finance staff are not authorized to enroll students in courses.');
         }
 
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -379,7 +382,7 @@ class StudentController extends Controller
             abort(403, 'Finance staff are not authorized to view academic records.');
         }
 
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -438,7 +441,7 @@ class StudentController extends Controller
 
     public function attendance(User $student)
     {
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -466,7 +469,7 @@ class StudentController extends Controller
 
     public function fees(User $student)
     {
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 
@@ -605,7 +608,7 @@ class StudentController extends Controller
 
     public function addNote(Request $request, User $student)
     {
-        if ($student->role !== 'student') {
+        if (!$student->hasRole('student')) {
             abort(404);
         }
 

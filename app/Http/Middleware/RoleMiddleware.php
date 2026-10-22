@@ -23,7 +23,19 @@ class RoleMiddleware
         $user = Auth::user();
 
 
-        if (!$user->hasRole($role)) {
+        $hasRole = $user->hasRole($role);
+        if (!$hasRole && $role === 'admin' && $user->hasGuardRole('admin')) {
+            $hasExplicitPermission = collect($request->route()?->gatherMiddleware() ?? [])
+                ->contains(fn (string $middleware) => str_starts_with($middleware, 'permission:'));
+
+            if (!$hasExplicitPermission) {
+                abort(403, 'Access denied. You do not have permission to access this area.');
+            }
+
+            return $next($request);
+        }
+
+        if (!$hasRole) {
             abort(403, 'Access denied. You do not have permission to access this area.');
         }
 

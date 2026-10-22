@@ -2,9 +2,9 @@ Dear {{ $application->first_name }} {{ $application->last_name }},
 
 Congratulations again on your successful application!
 
-To complete your admission process, please pay the admission fee:
+To complete your registration, please pay the non-refundable registration fee:
 
-AMOUNT: {{ number_format($admissionFee) }} {{ $currencyCode }}
+AMOUNT: ZAR 500.00 or USD 35.00 (choose one currency and pay the exact amount)
 
 PAYMENT DETAILS:
 - Bank Name: Stanbic Bank Uganda

@@ -16,7 +16,7 @@ class AdmissionFeeInstructions extends Mailable
     public $application;
     public $admissionFee;
 
-    public function __construct(Application $application, $admissionFee = 50000)
+    public function __construct(Application $application, $admissionFee = 500)
     {
         $this->application = $application;
         $this->admissionFee = $admissionFee;
@@ -25,7 +25,7 @@ class AdmissionFeeInstructions extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Admission Fee Payment Instructions - JBI University',
+            subject: 'Registration Fee Payment Instructions - JBI University',
         );
     }
 

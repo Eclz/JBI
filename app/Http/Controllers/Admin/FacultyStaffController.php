@@ -20,8 +20,8 @@ class FacultyStaffController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['facultyProfile.department.faculty'])
-            ->where('role', 'faculty');
+        $query = User::role('faculty')
+            ->with(['facultyProfile.department.faculty']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -92,9 +92,9 @@ class FacultyStaffController extends Controller
 
         // Calculate statistics
         $stats = [
-            'total' => User::where('role', 'faculty')->count(),
-            'active' => User::where('role', 'faculty')->where('is_active', true)->count(),
-            'inactive' => User::where('role', 'faculty')->where('is_active', false)->count(),
+            'total' => User::role('faculty')->count(),
+            'active' => User::role('faculty')->where('is_active', true)->count(),
+            'inactive' => User::role('faculty')->where('is_active', false)->count(),
             'full_time' => FacultyProfile::where('employment_type', 'full_time')->count(),
             'part_time' => FacultyProfile::where('employment_type', 'part_time')->count(),
         ];
@@ -177,6 +177,7 @@ class FacultyStaffController extends Controller
                 'email_verified_at' => null,
                 'must_change_password' => true,
             ]);
+            $user->assignRole('lecturer', true);
 
             // Generate employee ID
             $employeeId = $this->generateEmployeeId();
@@ -252,14 +253,9 @@ class FacultyStaffController extends Controller
      */
     public function show(User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty' && !$facultyStaff->facultyProfile) {
+        if (!$facultyStaff->hasRole('faculty')) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
-        }
-
-        // If user has faculty profile but role is not set correctly, fix it
-        if ($facultyStaff->facultyProfile && $facultyStaff->role !== 'faculty') {
-            $facultyStaff->update(['role' => 'faculty']);
         }
 
         $facultyStaff->load([
@@ -295,14 +291,9 @@ class FacultyStaffController extends Controller
      */
     public function edit(User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty' && !$facultyStaff->facultyProfile) {
+        if (!$facultyStaff->hasRole('faculty')) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
-        }
-
-        // If user has faculty profile but role is not set correctly, fix it
-        if ($facultyStaff->facultyProfile && $facultyStaff->role !== 'faculty') {
-            $facultyStaff->update(['role' => 'faculty']);
         }
 
         $facultyStaff->load('facultyProfile.department.faculty');
@@ -326,14 +317,9 @@ class FacultyStaffController extends Controller
      */
     public function update(Request $request, User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty' && !$facultyStaff->facultyProfile) {
+        if (!$facultyStaff->hasRole('faculty')) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
-        }
-
-        // If user has faculty profile but role is not set correctly, fix it
-        if ($facultyStaff->facultyProfile && $facultyStaff->role !== 'faculty') {
-            $facultyStaff->update(['role' => 'faculty']);
         }
 
         // Validate the request
@@ -479,7 +465,7 @@ class FacultyStaffController extends Controller
      */
     public function destroy(User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty') {
+        if (!$facultyStaff->hasRole('faculty')) {
             return redirect()->route('admin.faculty-staff.index')
                            ->with('error', 'User is not a faculty member.');
         }
@@ -534,7 +520,7 @@ class FacultyStaffController extends Controller
      */
     public function toggleStatus(User $facultyStaff)
     {
-        if ($facultyStaff->role !== 'faculty') {
+        if (!$facultyStaff->hasRole('faculty')) {
             return response()->json(['error' => 'User is not a faculty member.'], 400);
         }
 

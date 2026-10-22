@@ -39,6 +39,7 @@ class Application extends Model
         'reviewed_by',
         'reviewed_at',
         'payment_status',
+        'payment_currency',
         'payment_proof',
         'payment_uploaded_at',
         'payment_verified_by',
@@ -305,4 +306,3 @@ class Application extends Model
         return $this->isPaymentApproved() && $this->areDocumentsVerified() && $this->hasAssignedCourse();
     }
 }
-

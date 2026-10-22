@@ -25,15 +25,15 @@
                     </div>
                     <div class="mb-3">
                         <div class="text-muted">Total Amount</div>
-                        <div class="fw-semibold">{{ $currencyCode }} {{ number_format($fee->total_amount, 2) }}</div>
+                        <div class="fw-semibold">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->total_amount, 2) }}</div>
                     </div>
                     <div class="mb-3">
                         <div class="text-muted">Paid</div>
-                        <div class="fw-semibold text-success">{{ $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</div>
+                        <div class="fw-semibold text-success">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->paid_amount, 2) }}</div>
                     </div>
                     <div class="mb-3">
                         <div class="text-muted">Balance</div>
-                        <div class="fw-semibold text-danger">{{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</div>
+                        <div class="fw-semibold text-danger">{{ $fee->currency ?? $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</div>
                     </div>
                     <div class="mb-0">
                         <div class="text-muted">Due Date</div>
@@ -61,7 +61,7 @@
                             @error('amount')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <div class="form-text">Maximum payable: {{ $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</div>
+                            <div class="form-text">Maximum payable: {{ $fee->currency ?? $currencyCode }} {{ number_format($fee->balance_amount, 2) }}</div>
                         </div>
 
                         <div class="mb-3">

@@ -56,7 +56,7 @@ class DepartmentController extends Controller
         $courses = Course::with('instructor')->where('department_id', $department->id)->paginate(15);
         
         // Get available lecturers for this department
-        $lecturers = \App\Models\User::where('role', 'faculty')
+        $lecturers = \App\Models\User::role('faculty')
             ->whereHas('facultyProfile', function($query) use ($department) {
                 $query->where('department_id', $department->id);
             })->get();

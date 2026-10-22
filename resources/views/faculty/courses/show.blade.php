@@ -183,7 +183,7 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Assignments</h5>
-                            <a href="{{ route('faculty.assignments.create', $course) }}" class="btn btn-primary btn-sm">
+                            <a href="{{ route('faculty.assignments.create', ['course_id' => $course->id]) }}" class="btn btn-primary btn-sm">
                                 <i class="bi bi-plus-circle me-1"></i> Create Assignment
                             </a>
                         </div>

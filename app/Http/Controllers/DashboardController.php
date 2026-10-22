@@ -67,12 +67,12 @@ class DashboardController extends Controller
                     return redirect()->route('library.index');
                 }
                 
-                $data['totalStudents'] = User::where('role', 'student')->count();
-                $data['totalFaculty'] = User::where('role', 'faculty')->count();
+                $data['totalStudents'] = User::role('student')->count();
+                $data['totalFaculty'] = User::role('faculty')->count();
                 $data['totalCourses'] = Course::count();
                 $data['totalDepartments'] = Department::count();
-                $data['activeStudents'] = User::where('role', 'student')->where('is_active', 1)->count();
-                $data['activeFaculty'] = User::where('role', 'faculty')->where('is_active', 1)->count();
+                $data['activeStudents'] = User::role('student')->where('is_active', 1)->count();
+                $data['activeFaculty'] = User::role('faculty')->where('is_active', 1)->count();
 
                 // Financial data
                 $data['totalRevenue'] = FeeRecord::sum('total_amount');
@@ -100,7 +100,7 @@ class DashboardController extends Controller
                 $currentMonth = now()->startOfMonth();
                 $data['monthlyEnrollments'] = CourseEnrollment::where('created_at', '>=', $currentMonth)->count();
                 $data['monthlyRevenue'] = Payment::where('status', 'completed')->where('created_at', '>=', $currentMonth)->sum('amount');
-                $data['monthlyNewStudents'] = User::where('role', 'student')
+                $data['monthlyNewStudents'] = User::role('student')
                     ->where('created_at', '>=', $currentMonth)
                     ->count();
 
