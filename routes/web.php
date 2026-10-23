@@ -838,6 +838,23 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         // HOD Procurement Requisitions
         Route::get('/requisitions', [\App\Http\Controllers\Faculty\HOD\RequisitionController::class, 'index'])->name('requisitions.index');
         Route::post('/requisitions', [\App\Http\Controllers\Faculty\HOD\RequisitionController::class, 'store'])->name('requisitions.store');
+
+        // HOD Department Expenses & Budget Alignment
+        Route::get('/expenses', [\App\Http\Controllers\Faculty\HOD\ExpenseController::class, 'index'])
+            ->name('expenses.index')
+            ->middleware('permission:expenses,view');
+        Route::post('/expenses', [\App\Http\Controllers\Faculty\HOD\ExpenseController::class, 'store'])
+            ->name('expenses.store')
+            ->middleware('permission:expenses,create');
+        Route::get('/expenses/{expense}', [\App\Http\Controllers\Faculty\HOD\ExpenseController::class, 'show'])
+            ->name('expenses.show')
+            ->middleware('permission:expenses,view');
+        Route::put('/expenses/{expense}', [\App\Http\Controllers\Faculty\HOD\ExpenseController::class, 'update'])
+            ->name('expenses.update')
+            ->middleware('permission:expenses,edit');
+        Route::delete('/expenses/{expense}', [\App\Http\Controllers\Faculty\HOD\ExpenseController::class, 'destroy'])
+            ->name('expenses.destroy')
+            ->middleware('permission:expenses,delete');
     });
     Route::get('/dashboard', [FacultyDashboardController::class, 'index'])->name('dashboard');
     Route::get('/lms', [FacultyLmsController::class, 'index'])->name('lms.index')->middleware('permission:lms,view');

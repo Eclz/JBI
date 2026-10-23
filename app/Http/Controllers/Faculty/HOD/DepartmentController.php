@@ -31,8 +31,18 @@ class DepartmentController extends Controller
         $totalPrograms = $department->programs->count();
         $totalCourses = $department->courses->count();
 
+        // Financial & Budget metrics
+        $budget = \App\Models\FinanceBudget::where('department_id', $department->id)->latest()->first();
+        $allocatedBudget = (float) ($budget?->allocated_amount ?? 0);
+        $totalExpenses = (float) \App\Models\FinanceExpense::where('department_id', $department->id)
+            ->where('status', 'approved')
+            ->sum('amount');
+        $remainingBudget = max(0, $allocatedBudget - $totalExpenses);
+        $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
+
         return view('faculty.hod.department.index', compact(
-            'department', 'totalStudents', 'totalLecturers', 'totalPrograms', 'totalCourses'
+            'department', 'totalStudents', 'totalLecturers', 'totalPrograms', 'totalCourses',
+            'budget', 'allocatedBudget', 'totalExpenses', 'remainingBudget', 'currencyCode'
         ));
     }
 
