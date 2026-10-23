@@ -8,6 +8,7 @@ use App\Models\FeeStructure;
 use App\Models\FinanceRevenue;
 use App\Models\FinanceBudget;
 use App\Models\FinanceExpense;
+use App\Models\FinanceAuditLog;
 use App\Models\Supplier;
 use App\Models\VendorInvoice;
 use App\Models\SponsorInvoice;
