@@ -938,6 +938,9 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Form Guard & Idempotency Protection -->
+    <script src="{{ asset('js/form-guard.js') }}"></script>
+
     <script>
         $(document).ready(function() {
             // Global Select2 initialization

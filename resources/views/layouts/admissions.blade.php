@@ -8,6 +8,7 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     <link rel="stylesheet" href="{{ asset('css/admissions.css') }}?v=20261021">
     <script src="{{ asset('js/admissions.js') }}?v=20261021" defer></script>
+    <script src="{{ asset('js/form-guard.js') }}?v=20261022" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to content</a>

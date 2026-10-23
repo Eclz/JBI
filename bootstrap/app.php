@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\RequireStudentActivation::class,
             \App\Http\Middleware\RequirePasswordChange::class,
             \App\Http\Middleware\RequireStaffOnboarding::class,
+            \App\Http\Middleware\EnsureIdempotentSubmission::class,
         ]);
 
         $middleware->api(append: [
