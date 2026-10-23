@@ -828,11 +828,15 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
         Route::get('/students', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'index'])->name('students.index');
         Route::get('/students/{id}', [\App\Http\Controllers\Faculty\HOD\StudentController::class, 'show'])->name('students.show');
 
-        // HOD Operations Hub
+        // HOD Operations Hub & Result Moderation
         Route::get('/operations', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'index'])->name('operations.index');
         Route::post('/operations/leave/{leave}/approve', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'approveLeave'])->name('operations.leave.approve');
         Route::post('/operations/leave/{leave}/reject', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'rejectLeave'])->name('operations.leave.reject');
         Route::post('/operations/program-change/{programChange}/endorse', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'endorseProgramChange'])->name('operations.program-change.endorse');
+        Route::get('/operations/results/{type}/{id}', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'showModeration'])->name('operations.results.show');
+        Route::post('/operations/results/{type}/{id}/approve', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'approveResults'])->name('operations.results.approve');
+        Route::post('/operations/results/{type}/{id}/adjust', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'adjustResults'])->name('operations.results.adjust');
+        Route::post('/operations/results/{type}/{id}/return', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'returnResults'])->name('operations.results.return');
         Route::post('/operations/moderate-grades/{assignment}', [\App\Http\Controllers\Faculty\HOD\OperationsController::class, 'moderateGrades'])->name('operations.moderate-grades');
 
         // HOD Procurement Requisitions

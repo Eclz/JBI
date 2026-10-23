@@ -182,6 +182,14 @@ class Course extends Model
     }
 
     /**
+     * Get course exams
+     */
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
+    }
+
+    /**
      * Get published materials
      */
     public function publishedMaterials()
