@@ -128,6 +128,73 @@ class QuizAssignmentExamWorkflowTest extends TestCase
         return compact('lecturer', 'studentUser', 'studentProfile', 'course', 'semester', 'academicYear');
     }
 
+    public function test_new_exam_form_lists_all_courses_assigned_to_the_lecturer(): void
+    {
+        $ctx = $this->createAcademicContext();
+        $otherLecturer = User::factory()->faculty()->create();
+        $previousSemester = Semester::factory()->create();
+
+        $additionalCourse = Course::create([
+            'code' => 'CS302',
+            'name' => 'Data Structures',
+            'department_id' => $ctx['course']->department_id,
+            'semester_id' => $previousSemester->id,
+            'instructor_id' => $ctx['lecturer']->id,
+            'credits' => 3,
+        ]);
+
+        $otherLecturerCourse = Course::create([
+            'code' => 'CS303',
+            'name' => 'Computer Networks',
+            'department_id' => $ctx['course']->department_id,
+            'semester_id' => $ctx['semester']->id,
+            'instructor_id' => $otherLecturer->id,
+            'credits' => 3,
+        ]);
+
+        $response = $this->actingAs($ctx['lecturer'])
+            ->get(route('faculty.exams.create'));
+
+        $response->assertOk()
+            ->assertSee('CS301 - Algorithms')
+            ->assertSee($additionalCourse->code . ' - ' . $additionalCourse->name)
+            ->assertDontSee($otherLecturerCourse->code . ' - ' . $otherLecturerCourse->name);
+    }
+
+    public function test_lecturer_can_create_an_exam_for_an_assigned_course_outside_the_current_semester(): void
+    {
+        $ctx = $this->createAcademicContext();
+        $previousSemester = Semester::factory()->create();
+        $course = Course::create([
+            'code' => 'CS302',
+            'name' => 'Data Structures',
+            'department_id' => $ctx['course']->department_id,
+            'semester_id' => $previousSemester->id,
+            'instructor_id' => $ctx['lecturer']->id,
+            'credits' => 3,
+        ]);
+
+        $this->actingAs($ctx['lecturer'])
+            ->post(route('faculty.exams.store'), [
+                'course_id' => $course->id,
+                'title' => 'Data Structures Midterm',
+                'exam_type' => 'midterm',
+                'exam_mode' => 'online',
+                'exam_date' => now()->addDays(7)->toDateString(),
+                'start_time' => '09:00',
+                'end_time' => '11:00',
+                'duration_minutes' => 120,
+                'total_marks' => 100,
+                'passing_marks' => 50,
+            ])
+            ->assertRedirect(route('faculty.exams.index'));
+
+        $this->assertDatabaseHas('exams', [
+            'course_id' => $course->id,
+            'title' => 'Data Structures Midterm',
+        ]);
+    }
+
     public function test_lecturer_can_close_reopen_and_change_status_of_quiz(): void
     {
         $ctx = $this->createAcademicContext();

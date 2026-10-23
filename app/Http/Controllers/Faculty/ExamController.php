@@ -3,17 +3,14 @@
 namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
-use App\Models\Course;
 use App\Models\Exam;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Traits\EnforcesSemesterPolicies;
 
 class ExamController extends Controller
 {
-    use EnforcesSemesterPolicies;
     public function index()
     {
         $exams = Exam::whereHas('course', function ($query) {
@@ -28,11 +25,7 @@ class ExamController extends Controller
 
     public function create()
     {
-        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
-        $courses = Course::where('instructor_id', Auth::id())
-            ->when($currentSemester, function($query) use ($currentSemester) {
-                return $query->where('semester_id', $currentSemester->id);
-            })
+        $courses = Auth::user()->taughtCourses()
             ->with('semester')
             ->orderBy('name')
             ->get();
@@ -69,15 +62,7 @@ class ExamController extends Controller
             'answer_booklet' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ]);
 
-        $course = Course::findOrFail($request->course_id);
-
-        // Prevent action if past semester
-        $this->abortIfPastSemester($course);
-
-        // Verify faculty teaches this course
-        if ($course->instructor_id !== Auth::id()) {
-            abort(403, 'Unauthorized');
-        }
+        $course = Auth::user()->taughtCourses()->findOrFail($request->course_id);
 
         $data = $request->except(['exam_paper', 'answer_booklet', 'exam_date']);
 
@@ -137,11 +122,7 @@ class ExamController extends Controller
     {
         $this->authorizeExam($exam);
 
-        $currentSemester = \App\Models\Semester::where('is_current', true)->first();
-        $courses = Course::where('instructor_id', Auth::id())
-            ->when($currentSemester, function($query) use ($currentSemester) {
-                return $query->where('semester_id', $currentSemester->id);
-            })
+        $courses = Auth::user()->taughtCourses()
             ->with('semester')
             ->orderBy('name')
             ->get();
