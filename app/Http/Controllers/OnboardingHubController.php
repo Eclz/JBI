@@ -34,4 +34,36 @@ class OnboardingHubController extends Controller
 
         return redirect()->route('human-resources.onboarding.show', $onboarding)->with('success', 'Employee record and onboarding checklist are ready.');
     }
+
+    public function staffStatus()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        if ($user->isFullyOnboarded()) {
+            if ($user->hasRole('registrar') || $user->hasRole('academic_registrar')) {
+                return redirect()->route('admin.registrar.dashboard');
+            }
+            if ($user->isFinanceOfficer()) {
+                return redirect()->route('admin.finance.dashboard');
+            }
+            if ($user->isHrStaff()) {
+                return redirect()->route('human-resources.index');
+            }
+            if ($user->hasRole('dean')) {
+                return redirect()->route('faculty.dean.quality.index');
+            }
+            if ($user->hasRole('head_of_department')) {
+                return redirect()->route('faculty.hod.department.index');
+            }
+            return redirect()->route('dashboard');
+        }
+
+        $onboarding = $user->hrOnboardings()->with('tasks', 'hrOfficer')->latest('id')->first();
+        $tasks = $onboarding ? $onboarding->tasks : collect();
+
+        return view('onboarding.staff-status', compact('user', 'onboarding', 'tasks'));
+    }
 }

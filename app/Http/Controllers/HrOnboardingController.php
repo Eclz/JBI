@@ -75,6 +75,9 @@ class HrOnboardingController extends Controller
                 'status' => $percentage === 100 ? 'Completed' : 'In Progress',
                 'completed_date' => $percentage === 100 ? now() : null,
             ]);
+            if ($percentage === 100 || str_contains(strtolower($task->task_name), 'id card')) {
+                StaffOnboardingService::ensureEmployeeIdGenerated($onboarding->user);
+            }
             if ($task->wasChanged('assigned_to') && $task->assigned_to && $task->assigned_to !== auth()->id()) {
                 \App\Models\Notification::create([
                     'user_id' => $task->assigned_to, 'type' => 'info', 'priority' => 'high',

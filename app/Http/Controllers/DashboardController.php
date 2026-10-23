@@ -40,6 +40,10 @@ class DashboardController extends Controller
         $user = Auth::user();
         $role = $user->role;
 
+        if ($user->hasPendingOnboarding()) {
+            return redirect()->route('onboarding.staff-status');
+        }
+
         // Common data for all dashboards
         $data = [
             'user' => $user,
@@ -62,6 +66,9 @@ class DashboardController extends Controller
                 }
                 if (!$user->isSuperAdmin() && $user->isHrStaff()) {
                     return redirect()->route('human-resources.index');
+                }
+                if ($user->hasRole('registrar') || $user->hasRole('academic_registrar') || $user->hasPermission('registrar_hub', 'view')) {
+                    return redirect()->route('admin.registrar.dashboard');
                 }
                 if ($user->hasRole('librarian') || $user->hasRole('assistant_librarian')) {
                     return redirect()->route('library.index');

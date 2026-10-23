@@ -15,6 +15,7 @@ class HrEmployee extends Model
         'workspace', 'employment_type',
         'salary_band', 'emergency_contact', 'status', 'notes',
         'manager_id', 'next_of_kin', 'next_of_kin_contact',
+        'bank_name', 'bank_account_name', 'bank_account_number', 'bank_branch',
     ];
 
     public function user(): BelongsTo

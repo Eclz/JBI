@@ -34,6 +34,12 @@ class PasswordChangeController extends Controller
             'password_changed_at' => now(),
         ]);
 
+        \App\Services\StaffOnboardingService::completeTask($user, 'Account password set', 'Password configured by employee.');
+
+        if ($user->hasPendingOnboarding()) {
+            return redirect()->route('onboarding.staff-status')->with('success', 'Password changed successfully! Your onboarding checklist has been updated.');
+        }
+
         return redirect()->route('dashboard')->with('success', 'Password changed successfully!');
     }
 }

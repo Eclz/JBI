@@ -20,7 +20,7 @@ class RolePermissionSeeder extends Seeder
 
         $rolePermissions = [
             'super_administrator' => $all,
-            'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports', 'registrar_hub'], $actions),
+            'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports', 'registrar_hub', 'exams', 'evoting'], $actions),
             'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports', 'academic_quality', 'faculty_evaluations', 'budget_requests', 'student_support', 'external_relations', 'dean_administration'], ['view', 'create', 'edit', 'approve', 'export']),
             'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
             'lecturer' => $this->matrix(['courses', 'attendance', 'grades', 'lms', 'exams'], ['view', 'create', 'edit']),

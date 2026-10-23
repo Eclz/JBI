@@ -97,6 +97,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the staff HR onboarding records associated with the user.
+     */
+    public function hrOnboardings(): HasMany
+    {
+        return $this->hasMany(HrOnboarding::class);
+    }
+
+    /**
+     * Get the latest staff HR onboarding record.
+     */
+    public function hrOnboarding(): HasOne
+    {
+        return $this->hasOne(HrOnboarding::class)->latestOfMany();
+    }
+
+    /**
      * Get the latest application associated with the user (by email).
      */
     public function application(): HasOne
@@ -463,6 +479,37 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if the staff user is fully onboarded.
+     */
+    public function isFullyOnboarded(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Students, parents, applicants are governed by student admission/activation
+        if (in_array($this->role, ['student', 'applicant', 'parent', null, ''], true)) {
+            return true;
+        }
+
+        // For staff: if they have any onboarding record, it must be Completed
+        $latestOnboarding = $this->hrOnboardings()->latest('id')->first();
+        if ($latestOnboarding && $latestOnboarding->getRawOriginal('status') !== 'Completed') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if the staff user has an incomplete/pending onboarding.
+     */
+    public function hasPendingOnboarding(): bool
+    {
+        return !$this->isFullyOnboarded();
+    }
+
+    /**
      * Check if user is an appointed Dean of any faculty or has Dean role.
      */
     public function isDean(): bool
@@ -518,6 +565,10 @@ class User extends Authenticatable
                 return true;
             }
 
+            // 4. Student or Parent role on user record
+            if (in_array($r, [self::ROLE_STUDENT, self::ROLE_PARENT], true) && $this->role === $r) {
+                return true;
+            }
         }
 
         return false;

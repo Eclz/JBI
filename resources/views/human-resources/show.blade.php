@@ -80,6 +80,23 @@
                             <div class="col-sm-4 text-muted fw-semibold">Emergency Contact</div>
                             <div class="col-sm-8">{{ $employee->hrProfile->emergency_contact ?? '—' }}</div>
                         </div>
+                        @if($employee->hrProfile->bank_name || $employee->hrProfile->bank_account_number)
+                        <div class="row mb-3">
+                            <div class="col-sm-4 text-muted fw-semibold">Bank & Remittance</div>
+                            <div class="col-sm-8">
+                                <span class="fw-medium text-dark">{{ $employee->hrProfile->bank_name ?? 'Bank' }}</span>
+                                @if($employee->hrProfile->bank_account_number)
+                                    <span class="text-muted"> &bull; A/C: {{ $employee->hrProfile->bank_account_number }}</span>
+                                @endif
+                                @if($employee->hrProfile->bank_account_name)
+                                    <div class="small text-muted">Beneficiary: {{ $employee->hrProfile->bank_account_name }}</div>
+                                @endif
+                                @if($employee->hrProfile->bank_branch)
+                                    <div class="small text-muted">Branch/SWIFT: {{ $employee->hrProfile->bank_branch }}</div>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
                         @if($employee->hrProfile->notes)
                         <div class="row mb-3">
                             <div class="col-sm-4 text-muted fw-semibold">Notes</div>

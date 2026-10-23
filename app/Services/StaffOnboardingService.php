@@ -24,7 +24,7 @@ class StaffOnboardingService
             $departmentId = $details['department_id'] ?? $faculty?->department_id;
             $department = $departmentId ? \App\Models\Department::find($departmentId) : null;
             HrEmployee::firstOrCreate(['user_id' => $user->id], [
-                'employee_number' => sprintf('EMP-%s-%06d', now()->format('Y'), $user->id),
+                'employee_number' => null, // Generated upon onboarding completion or ID card issuance
                 'job_title' => $details['job_title'] ?? $faculty?->position ?? $user->roleCatalog?->name ?? ucfirst($user->role),
                 'department_id' => $departmentId,
                 'department' => $department?->name,
@@ -69,5 +69,85 @@ class StaffOnboardingService
 
             return $onboarding;
         });
+    }
+
+    /**
+     * Automatically mark an onboarding task as completed for a user and refresh progress.
+     */
+    public static function completeTask(User $user, string $taskName, ?string $comments = null): bool
+    {
+        $onboarding = HrOnboarding::where('user_id', $user->id)
+            ->where('status', '!=', 'Completed')
+            ->latest('id')
+            ->first();
+
+        if (!$onboarding) {
+            return false;
+        }
+
+        $task = $onboarding->tasks()
+            ->where(function ($q) use ($taskName) {
+                $q->where('task_name', $taskName)
+                  ->orWhere('task_name', 'like', "%{$taskName}%");
+            })
+            ->where('status', '!=', 'Completed')
+            ->first();
+
+        if (!$task) {
+            return false;
+        }
+
+        $task->update([
+            'status' => 'Completed',
+            'completed_date' => now(),
+            'comments' => $comments ?: ($task->comments ?: 'Completed automatically by system action.'),
+        ]);
+
+        $total = $onboarding->tasks()->count();
+        $completed = $onboarding->tasks()->where('status', 'Completed')->count();
+        $percentage = $total ? (int) round(($completed / $total) * 100) : 0;
+        $isComplete = ($percentage === 100);
+
+        $onboarding->update([
+            'progress_percentage' => $percentage,
+            'status' => $isComplete ? 'Completed' : 'In Progress',
+            'completed_date' => $isComplete ? now() : null,
+        ]);
+
+        if ($isComplete || str_contains(strtolower($task->task_name), 'id card')) {
+            self::ensureEmployeeIdGenerated($user);
+        }
+
+        return true;
+    }
+
+    /**
+     * Ensure the employee number is generated when onboarding finishes.
+     */
+    public static function ensureEmployeeIdGenerated(User $user): ?string
+    {
+        $profile = $user->hrProfile ?? HrEmployee::where('user_id', $user->id)->first();
+        if (!$profile) {
+            $profile = HrEmployee::create([
+                'user_id' => $user->id,
+                'job_title' => $user->roleCatalog?->name ?? ucfirst($user->role),
+                'status' => 'Active',
+                'employment_type' => 'Full-time',
+            ]);
+        }
+
+        if (empty($profile->employee_number)) {
+            $empNumber = sprintf('EMP-%s-%06d', now()->format('Y'), $user->id);
+            if (HrEmployee::where('employee_number', $empNumber)->where('id', '!=', $profile->id)->exists()) {
+                $empNumber = 'EMP-' . now()->format('Y') . '-' . str_pad((string) rand(1, 99999), 5, '0', STR_PAD_LEFT);
+            }
+            $profile->update(['employee_number' => $empNumber]);
+        }
+
+        if (empty($user->employee_id)) {
+            $user->update(['employee_id' => $profile->employee_number]);
+        }
+
+        return $profile->employee_number;
     }
 }

@@ -149,6 +149,9 @@ class HumanResourcesController extends Controller
             ->whereNotIn('role', ['student', 'applicant', 'parent', ''])
             ->whereNotNull('role')
             ->where('is_active', true)
+            ->whereDoesntHave('hrOnboardings', function ($q) {
+                $q->where('status', '!=', 'Completed');
+            })
             ->orderBy('name')
             ->get();
             
@@ -189,6 +192,10 @@ class HumanResourcesController extends Controller
 
         if ($section === 'profiles') {
             return redirect()->route('human-resources.staff.index');
+        }
+
+        if ($section === 'employee-directory' || $section === 'directory') {
+            return redirect()->route('human-resources.directory');
         }
 
         if ($section === 'org-chart') {
@@ -529,7 +536,7 @@ class HumanResourcesController extends Controller
     public function update(Request $request, User $employee)
     {
         $data = $request->validate([
-            'employee_number' => 'required|string|max:50',
+            'employee_number' => 'nullable|string|max:50',
             'job_title' => 'required|string|max:150',
             'department_id' => [
                 'nullable',
@@ -538,6 +545,10 @@ class HumanResourcesController extends Controller
             'employment_type' => 'required|string|max:50',
             'workspace' => 'nullable|string|max:150',
             'salary_band' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|max:150',
+            'bank_account_name' => 'nullable|string|max:150',
+            'bank_account_number' => 'nullable|string|max:100',
+            'bank_branch' => 'nullable|string|max:150',
             'emergency_contact' => 'nullable|string|max:255',
             'status' => 'required|in:Active,On Leave,Inactive',
             'notes' => 'nullable|string|max:2000',
@@ -553,6 +564,14 @@ class HumanResourcesController extends Controller
             $employee->hrProfile->update($data);
         } else {
             HrEmployee::create($data);
+        }
+
+        // Auto-complete onboarding tasks when payroll salary band or bank details are provided
+        if ($request->filled('salary_band')) {
+            \App\Services\StaffOnboardingService::completeTask($employee, 'Payroll information collected', "Salary band assigned: {$request->salary_band}");
+        }
+        if ($request->filled('bank_name') && $request->filled('bank_account_number')) {
+            \App\Services\StaffOnboardingService::completeTask($employee, 'Bank details submitted', "Bank details recorded: {$request->bank_name} ({$request->bank_account_number})");
         }
         
         $this->notifyUser($employee->id, 'Employee record updated', "HR updated your employee record.", 'human-resources.staff.index');

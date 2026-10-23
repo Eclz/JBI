@@ -77,6 +77,8 @@ class ResetPasswordController extends Controller
                     'ip_address' => $request->ip(),
                 ]);
 
+                \App\Services\StaffOnboardingService::completeTask($user, 'Account password set', 'Password setup completed.');
+
                 event(new PasswordReset($user));
             }
         );

@@ -80,6 +80,8 @@ class ProfileController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        \App\Services\StaffOnboardingService::completeTask(Auth::user(), 'Account password set', 'Password updated in profile.');
+
         return back()->with('success', 'Password updated successfully.');
     }
 

@@ -23,7 +23,7 @@ return new class extends Migration
         Schema::create('hr_employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('employee_number')->unique();
+            $table->string('employee_number')->nullable()->unique();
             $table->string('job_title');
             $table->string('department')->nullable();
             $table->string('employment_type')->default('Full-time');

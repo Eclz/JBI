@@ -95,6 +95,10 @@ class LoginController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
+        if ($user->hasPendingOnboarding()) {
+            return $this->redirectToRoleHome($request, 'onboarding.staff-status');
+        }
+
         // Redirect based on user role
         switch ($user->role) {
             case 'admin':
@@ -106,6 +110,9 @@ class LoginController extends Controller
                 }
                 if ($user->isHrStaff()) {
                     return $this->redirectToRoleHome($request, 'human-resources.index');
+                }
+                if ($user->hasRole('registrar') || $user->hasRole('academic_registrar') || $user->hasPermission('registrar_hub', 'view')) {
+                    return $this->redirectToRoleHome($request, 'admin.registrar.dashboard');
                 }
                 if ($user->hasRole('librarian') || $user->hasRole('assistant_librarian')) {
                     return $this->redirectToRoleHome($request, 'library.index');

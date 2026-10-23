@@ -234,6 +234,7 @@ Route::middleware(['auth', 'permission:library,view'])->prefix('library')->name(
 });
 
 Route::get('/onboarding', [\App\Http\Controllers\OnboardingHubController::class, 'index'])->middleware('auth')->name('onboarding.index');
+Route::get('/onboarding/status', [\App\Http\Controllers\OnboardingHubController::class, 'staffStatus'])->middleware('auth')->name('onboarding.staff-status');
 Route::post('/onboarding/staff/{user}', [\App\Http\Controllers\OnboardingHubController::class, 'prepareStaff'])->middleware('auth')->name('onboarding.prepare-staff');
 Route::post('/notifications/{notification}/retry-email', [NotificationController::class, 'retryEmail'])->middleware(['auth', 'throttle:3,1'])->name('notifications.retry-email');
 

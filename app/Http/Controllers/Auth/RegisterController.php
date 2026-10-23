@@ -145,8 +145,12 @@ class RegisterController extends Controller
         if (!$user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
+        \App\Services\StaffOnboardingService::completeTask($user, 'Account password set', 'Email verified.');
         if ((int) Auth::id() === (int) $user->id) {
             Auth::setUser($user);
+            if ($user->hasPendingOnboarding()) {
+                return redirect()->route('onboarding.staff-status')->with('success', 'Email verified successfully! Your onboarding checklist has been updated.');
+            }
             return redirect()->route($user->role === 'student' ? 'student.dashboard' : 'dashboard')->with('success', 'Email verified. You can now complete your admission application.');
         }
         return view('auth.email-verified');

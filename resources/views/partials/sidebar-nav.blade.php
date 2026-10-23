@@ -39,6 +39,11 @@
         <li class="menu-item active"><a href="{{ route('student.dashboard') }}" class="menu-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
     </ul>
     <p class="small text-light px-3 mt-3">Complete your admission on the dashboard. Your student menu will appear when your registration is activated.</p>
+    @elseif(!auth()->user()->isSuperAdmin() && !auth()->user()->isStudent() && auth()->user()->hasPendingOnboarding())
+    <ul class="sidebar-menu" aria-label="Staff onboarding navigation">
+        <li class="menu-item active"><a href="{{ route('onboarding.staff-status') }}" class="menu-link"><i class="bi bi-hourglass-split"></i><span>Onboarding Status</span></a></li>
+    </ul>
+    <p class="small text-light px-3 mt-3">Your onboarding is currently in progress. Your dashboard and functional modules will unlock once onboarding is completed by HR.</p>
     @else
     <ul class="sidebar-menu">
         @if(auth()->user()->hasPermission('applications', 'view') || auth()->user()->hasPermission('hr_onboarding', 'view'))

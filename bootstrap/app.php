@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\RequireStudentActivation::class,
             \App\Http\Middleware\RequirePasswordChange::class,
+            \App\Http\Middleware\RequireStaffOnboarding::class,
         ]);
 
         $middleware->api(append: [
