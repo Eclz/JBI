@@ -17,10 +17,12 @@
                     <p class="text-muted mb-0">Manage student records and academic information</p>
                 </div>
                 <div class="d-flex gap-2">
-                    @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
+                    @if(auth()->user()->hasPermission('students', 'import'))
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="bi bi-upload"></i> Import Students
                     </button>
+                    @endif
+                    @if(auth()->user()->hasPermission('students', 'create') || auth()->user()->hasPermission('applications', 'view'))
                     <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i> Add New Student
                     </a>
@@ -452,7 +454,7 @@
 
 <!-- Import Modal -->
 <div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Import Students</h5>
@@ -461,17 +463,25 @@
             <form action="{{ route('admin.students.bulk-import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
+                    <div class="alert alert-info">
+                        <h6 class="fw-bold"><i class="bi bi-info-circle me-2"></i>Registrar guide: preparing your spreadsheet</h6>
+                        <ol class="mb-2">
+                            <li><a href="{{ route('admin.students.import-template') }}">Download the Excel template</a> and keep the first-row column headings unchanged.</li>
+                            <li>Enter one existing student per row. Required fields are <code>first_name</code>, <code>last_name</code>, <code>email</code>, <code>admission_number</code>, <code>admission_date</code>, <code>department</code>, and <code>program</code>.</li>
+                            <li>Use dates as <code>YYYY-MM-DD</code>. Keep admission numbers as text to preserve leading zeroes. Historical admission number formats are accepted.</li>
+                            <li>For <code>department</code>, use the exact active department name or code. Use the student’s program name; if it matches a current program, it will be linked automatically.</li>
+                            <li>Optional fields: <code>status</code> (active, inactive, graduated, dropped, suspended), <code>current_semester</code>, <code>year_of_study</code>, <code>phone</code>, <code>date_of_birth</code>, <code>gender</code> (male, female, other), and <code>address</code>.</li>
+                        </ol>
+                        <p class="mb-0"><strong>Attachments:</strong> Do not add file paths or attachments to the spreadsheet. Import the records first, then edit each student record to upload supporting files.</p>
+                    </div>
                     <div class="mb-3">
-                        <label for="importFile" class="form-label">Select CSV or Excel file</label>
+                        <label for="importFile" class="form-label">Select CSV or Excel file (maximum 5 MB)</label>
                         <input type="file" class="form-control" id="importFile" name="file"
                                accept=".csv,.xlsx,.xls" required>
-                        <div class="form-text">
-                            File should contain columns: first_name, last_name, email, phone, department_id, program
-                        </div>
                     </div>
-                    <div class="alert alert-info">
+                    <div class="alert alert-warning mb-0">
                         <i class="bi bi-info-circle me-2"></i>
-                        <strong>Note:</strong> Duplicate emails will be skipped. A detailed import report will be provided.
+                        Duplicate email addresses and admission numbers are skipped. Invalid rows are reported; valid rows are still imported.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -482,6 +492,42 @@
         </div>
     </div>
 </div>
+
+@if($errors->has('file'))
+    <div class="alert alert-danger alert-dismissible fade show mx-3" role="alert">
+        {{ $errors->first('file') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+@if(session('import_report'))
+    @php($importReport = session('import_report'))
+    <div class="alert alert-{{ $importReport['errors'] > 0 || $importReport['skipped'] > 0 ? 'warning' : 'success' }} alert-dismissible fade show mx-3" role="alert">
+        <strong>Student import finished.</strong>
+        Created: {{ $importReport['created'] }} · Skipped: {{ $importReport['skipped'] }} · Errors: {{ $importReport['errors'] }}.
+        @if(count($importReport['row_errors']))
+            <ul class="mt-2 mb-0">
+                @foreach($importReport['row_errors'] as $rowError)
+                    <li>Row {{ $rowError['row'] }}: {{ implode(' ', $rowError['messages']) }}</li>
+                @endforeach
+            </ul>
+            @if($importReport['errors'] > count($importReport['row_errors']))
+                <small>Only the first {{ count($importReport['row_errors']) }} row errors are shown.</small>
+            @endif
+        @endif
+        @if(count($importReport['skipped_rows']))
+            <ul class="mt-2 mb-0">
+                @foreach($importReport['skipped_rows'] as $skippedRow)
+                    <li>Row {{ $skippedRow['row'] }} skipped: {{ $skippedRow['reason'] }}</li>
+                @endforeach
+            </ul>
+            @if($importReport['skipped'] > count($importReport['skipped_rows']))
+                <small>Only the first {{ count($importReport['skipped_rows']) }} skipped rows are shown.</small>
+            @endif
+        @endif
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">

@@ -19,7 +19,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('admin.students.update', $student) }}" method="POST" class="card-body">
+                <form action="{{ route('admin.students.update', $student) }}" method="POST" enctype="multipart/form-data" class="card-body">
                     @csrf
                     @method('PUT')
 
@@ -113,7 +113,7 @@
                             @php
                                 $existingAdm = $student->studentProfile?->admission_number ?? '';
                                 $hasValidFormat = !empty($existingAdm) && preg_match('/^[A-Z]{2,5}\d{8}$/i', $existingAdm);
-                                $presetAdmissionNumber = $hasValidFormat ? $existingAdm : ($nextAdmissionNumber ?? $existingAdm);
+                                $presetAdmissionNumber = $existingAdm ?: ($nextAdmissionNumber ?? '');
                             @endphp
                             <div class="mb-3">
                                 <label for="admission_number" class="form-label">Admission Number *</label>
@@ -152,10 +152,13 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="program_id" class="form-label">Program *</label>
+                                <label for="program_id" class="form-label">Program</label>
                                 <select class="form-select @error('program_id') is-invalid @enderror"
-                                        id="program_id" name="program_id" required>
+                                        id="program_id" name="program_id">
                                     <option value="">Select Program</option>
+                                    @if(!$student->studentProfile?->program_id && $student->studentProfile?->program)
+                                        <option value="" selected disabled>Legacy program: {{ $student->studentProfile->program }}</option>
+                                    @endif
                                     @forelse($programs as $program)
                                         <option value="{{ $program->id }}"
                                                 data-department="{{ $program->department_id }}"
@@ -234,6 +237,33 @@
                     </div>
 
                     <div class="row mt-4">
+                        <div class="col-12 mb-3">
+                            <h5 class="mb-3">Student Attachments</h5>
+                            @if($student->studentProfile?->documents)
+                                <ul class="list-group mb-3">
+                                    @foreach($student->studentProfile->documents as $documentIndex => $document)
+                                        @php
+                                            $documentPath = is_array($document) ? ($document['path'] ?? '') : $document;
+                                            $documentName = is_array($document) ? ($document['name'] ?? basename($documentPath)) : basename($documentPath);
+                                        @endphp
+                                        @if($documentPath)
+                                            <li class="list-group-item">
+                                                <a href="{{ route('admin.students.documents.download', [$student, $documentIndex]) }}" target="_blank" rel="noopener">
+                                                    {{ $documentName }}
+                                                </a>
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                            @endif
+                            <label for="documents" class="form-label">Upload supporting documents</label>
+                            <input type="file" class="form-control @error('documents.*') is-invalid @enderror"
+                                   id="documents" name="documents[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple>
+                            <div class="form-text">Optional. Add up to 10 files per edit, 5 MB each (PDF, JPG, PNG, DOC, or DOCX).</div>
+                            @error('documents.*')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa fa-save"></i> Update Student

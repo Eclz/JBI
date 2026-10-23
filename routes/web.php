@@ -402,6 +402,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Student Management
+    Route::get('/students/import-template', [AdminStudentController::class, 'downloadImportTemplate'])
+        ->name('students.import-template')
+        ->middleware('permission:students,import');
+    Route::get('/students/{student}/documents/{document}', [AdminStudentController::class, 'downloadStudentDocument'])
+        ->whereNumber('document')
+        ->name('students.documents.download')
+        ->middleware('permission:students,view');
+
     Route::middleware('permission:students,view')->group(function () {
         Route::get('/students', [AdminStudentController::class, 'index'])->name('students.index');
         Route::get('/students/{student}', [AdminStudentController::class, 'show'])->name('students.show');
@@ -414,6 +422,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/students/create', [AdminStudentController::class, 'create'])->name('students.create');
         Route::post('/students', [AdminStudentController::class, 'store'])->name('students.store');
         Route::get('/students/next-admission-number', [AdminStudentController::class, 'getNextAdmissionNumber'])->name('students.next-admission-number');
+    });
+
+    Route::middleware('permission:students,import')->group(function () {
         Route::post('/students/bulk-import', [AdminStudentController::class, 'bulkImport'])->name('students.bulk-import');
     });
 

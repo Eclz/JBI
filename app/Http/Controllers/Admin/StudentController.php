@@ -17,10 +17,12 @@ use App\Models\Grade;
 use App\Models\Assignment;
 use App\Imports\StudentsImport;
 use App\Exports\StudentsExport;
+use App\Exports\StudentImportTemplateExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Application;
 use Maatwebsite\Excel\Facades\Excel;
@@ -250,14 +252,15 @@ class StudentController extends Controller
             // Update student profile
             $program = $request->program_id ? Program::find($request->program_id) : null;
             $resolvedDepartmentId = $program?->department_id ?? $request->department_id;
+            $existingProfile = $student->studentProfile;
 
-            $student->studentProfile()->updateOrCreate(
+            $studentProfile = $student->studentProfile()->updateOrCreate(
                 ['user_id' => $student->id],
                 [
                     'student_id' => $request->student_id,
                     'department_id' => $resolvedDepartmentId,
-                    'program_id' => $program?->id,
-                    'program' => $program?->name,
+                    'program_id' => $program?->id ?? $existingProfile?->program_id,
+                    'program' => $program?->name ?? $request->input('program', $existingProfile?->program),
                     'date_of_birth' => $request->date_of_birth,
                     'gender' => $request->gender,
                     'phone' => $request->phone,
@@ -269,6 +272,19 @@ class StudentController extends Controller
                 ]
             );
 
+            if ($request->hasFile('documents')) {
+                $documents = $studentProfile->documents ?? [];
+                foreach ($request->file('documents') as $file) {
+                    $documents[] = [
+                        'name' => $file->getClientOriginalName(),
+                        'path' => $file->store('student-documents/' . $student->id, 'local'),
+                        'disk' => 'local',
+                        'uploaded_at' => now()->toDateTimeString(),
+                    ];
+                }
+                $studentProfile->update(['documents' => $documents]);
+            }
+
             DB::commit();
 
             return redirect()->route('admin.students.show', $student)
@@ -279,6 +295,26 @@ class StudentController extends Controller
             Log::error('Student update error: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to update student. Please try again.'])->withInput();
         }
+    }
+
+    public function downloadStudentDocument(User $student, int $document)
+    {
+        if (!$student->hasRole('student')) {
+            abort(404);
+        }
+
+        $documents = array_values($student->studentProfile?->documents ?? []);
+        $entry = $documents[$document] ?? null;
+        $path = is_array($entry) ? ($entry['path'] ?? null) : $entry;
+        $disk = is_array($entry) ? ($entry['disk'] ?? 'public') : 'public';
+
+        if (!$path || !in_array($disk, ['local', 'public'], true) || !Storage::disk($disk)->exists($path)) {
+            abort(404);
+        }
+
+        $name = is_array($entry) ? ($entry['name'] ?? basename($path)) : basename($path);
+
+        return Storage::disk($disk)->download($path, $name);
     }
 
     public function destroy(User $student)
@@ -496,23 +532,18 @@ class StudentController extends Controller
     public function bulkImport(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
         ]);
 
-        try {
-            $import = new StudentsImport();
-            Excel::import($import, $request->file('file'));
+        $import = new StudentsImport();
+        Excel::import($import, $request->file('file'));
 
-            $results = $import->getResults();
+        return back()->with('import_report', $import->getResults());
+    }
 
-            return back()->with('success',
-                "Import completed! Created: {$results['created']}, Updated: {$results['updated']}, Errors: {$results['errors']}"
-            );
-
-        } catch (\Exception $e) {
-            Log::error('Bulk import error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Import failed: ' . $e->getMessage()]);
-        }
+    public function downloadImportTemplate()
+    {
+        return Excel::download(new StudentImportTemplateExport(), 'legacy-student-import-template.xlsx');
     }
 
     public function export(Request $request)

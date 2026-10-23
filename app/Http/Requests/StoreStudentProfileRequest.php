@@ -15,6 +15,14 @@ class StoreStudentProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $student = $this->route('student');
+
+        if ($student) {
+            return $student->studentProfile
+                ? $this->user()->can('update', $student->studentProfile)
+                : $this->user()->hasPermission('students', 'edit');
+        }
+
         return $this->user()->can('create', StudentProfile::class);
     }
 
@@ -25,6 +33,7 @@ class StoreStudentProfileRequest extends FormRequest
     {
         $student = $this->route('student');
         $studentProfileId = $student?->studentProfile?->id;
+        $existingProfile = $student?->studentProfile;
 
         return [
             'first_name' => [
@@ -51,14 +60,26 @@ class StoreStudentProfileRequest extends FormRequest
             'admission_number' => [
                 'required',
                 'string',
-                'regex:/^[A-Z]{2,5}\d{8}$/',
+                function (string $attribute, mixed $value, \Closure $fail) use ($existingProfile): void {
+                    if ($value !== $existingProfile?->admission_number && !preg_match('/^[A-Z]{2,5}\d{8}$/', (string) $value)) {
+                        $fail('The admission number format is invalid.');
+                    }
+                },
                 Rule::unique('student_profiles', 'admission_number')->ignore($studentProfileId),
             ],
             'admission_date' => [
                 'required',
                 'date',
                 'before_or_equal:today',
-                'after:' . now()->subYears(10)->toDateString(),
+                function (string $attribute, mixed $value, \Closure $fail) use ($existingProfile): void {
+                    $timestamp = strtotime((string) $value);
+
+                    if ($value !== $existingProfile?->admission_date?->toDateString()
+                        && $timestamp !== false
+                        && $timestamp <= now()->subYears(10)->startOfDay()->timestamp) {
+                        $fail('The admission date must be within the last 10 years.');
+                    }
+                },
             ],
             'department_id' => [
                 'required',
@@ -71,9 +92,11 @@ class StoreStudentProfileRequest extends FormRequest
                 'max:255',
             ],
             'program_id' => [
-                'required',
+                $student ? 'nullable' : 'required',
                 'integer',
-                Rule::exists('programs', 'id')->where('is_active', true),
+                $student
+                    ? Rule::exists('programs', 'id')
+                    : Rule::exists('programs', 'id')->where('is_active', true),
             ],
             'specialization' => [
                 'nullable',
@@ -210,6 +233,16 @@ class StoreStudentProfileRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:2000',
+            ],
+            'documents' => [
+                'sometimes',
+                'array',
+                'max:10',
+            ],
+            'documents.*' => [
+                'file',
+                'mimes:pdf,jpg,jpeg,png,doc,docx',
+                'max:5120',
             ],
         ];
     }
