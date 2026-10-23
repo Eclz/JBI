@@ -224,3 +224,27 @@
     </div>
 </div>
 @endsection
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Select all forms on the page
+        const forms = document.querySelectorAll('form');
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                // Find the submit button inside the submitted form
+                const submitButton = this.querySelector('button[type="submit"]');
+
+                if (submitButton) {
+                    // Disable the button to prevent double clicks
+                    submitButton.disabled = true;
+
+                    // Optional: Change the button text and add a Bootstrap spinner
+                    const originalText = submitButton.innerHTML;
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                }
+            });
+        });
+    });
+</script>
+@endpush

@@ -51,55 +51,96 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
-            <h5 class="fw-bold mb-3">Upcoming room requests</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Request</th>
-                            <th>Location</th>
-                            <th>Date / Time</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($upcomingBookings ?? [] as $booking)
-                        <tr>
-                            <td>{{ $booking->title }}</td>
-                            <td>{{ $booking->facilityRoom->name ?? 'N/A' }}</td>
-                            <td>{{ $booking->start_time->format('M d, Y h:i A') }}</td>
-                            <td>
-                                @php
-                                    $badge = 'secondary';
-                                    if($booking->status == 'Approved') $badge = 'primary';
-                                    if($booking->status == 'Assigned') $badge = 'info';
-                                    if($booking->status == 'In Progress') $badge = 'warning';
-                                    if($booking->status == 'Completed') $badge = 'success';
-                                    if($booking->status == 'Cancelled') $badge = 'danger';
-                                @endphp
-                                <span class="badge text-bg-{{ $badge }}">{{ $booking->status }}</span>
-                            </td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#showBookingModal{{ $booking->id }}">
-                                    <i class="bi bi-eye"></i> Show
-                                </button>
-                                @if($canManage)
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBookingModal{{ $booking->id }}">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </button>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">No upcoming requests.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Upcoming room requests</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Request</th>
+                                    <th>Location</th>
+                                    <th>Date / Time</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($upcomingBookings ?? [] as $booking)
+                                <tr>
+                                    <td>{{ $booking->title }}</td>
+                                    <td>{{ $booking->facilityRoom->name ?? 'N/A' }}</td>
+                                    <td>{{ $booking->start_time->format('M d, Y h:i A') }}</td>
+                                    <td>
+                                        @php
+                                            $badge = 'secondary';
+                                            if($booking->status == 'Approved') $badge = 'primary';
+                                            if($booking->status == 'Assigned') $badge = 'info';
+                                            if($booking->status == 'In Progress') $badge = 'warning';
+                                            if($booking->status == 'Completed') $badge = 'success';
+                                            if($booking->status == 'Cancelled') $badge = 'danger';
+                                        @endphp
+                                        <span class="badge text-bg-{{ $badge }}">{{ $booking->status }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#showBookingModal{{ $booking->id }}">
+                                            <i class="bi bi-eye"></i> Show
+                                        </button>
+                                        @if($canManage)
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBookingModal{{ $booking->id }}">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No upcoming requests.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Facilities</h5>
+                        <a href="{{ route('facilities.buildings.index') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Facility</th>
+                                    <th>Location</th>
+                                    <th class="text-end">Rooms</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($facilities ?? [] as $facility)
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ $facility->name }}</div>
+                                        <small class="text-muted">{{ $facility->type === 'hall' ? 'Hall of Residence' : 'Facility' }}</small>
+                                    </td>
+                                    <td>{{ $facility->location ?: '—' }}</td>
+                                    <td class="text-end">{{ $facility->rooms_count + $facility->hostel_rooms_count }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">No facilities have been added yet.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

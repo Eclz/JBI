@@ -77,6 +77,34 @@ class CampusFacilitiesTest extends TestCase
         $this->assertDatabaseMissing('campus_facilities', ['name' => 'Restricted Facility']);
     }
 
+    public function test_facilities_dashboard_shows_facility_table_and_view_all_link(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'role_id' => null]);
+        $facility = CampusFacility::create([
+            'type' => 'facility',
+            'name' => 'Science Building',
+            'location' => 'East Campus',
+            'is_active' => true,
+        ]);
+        FacilityRoom::create([
+            'name' => 'Science Lab 1',
+            'campus_facility_id' => $facility->id,
+            'room_type' => 'Laboratory',
+            'capacity' => 30,
+            'status' => 'Available',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('facilities.index'))
+            ->assertOk()
+            ->assertSee('Upcoming room requests')
+            ->assertSee('Facilities')
+            ->assertSee('Science Building')
+            ->assertSee('East Campus')
+            ->assertSee('href="' . route('facilities.buildings.index') . '"', false)
+            ->assertSee('View all');
+    }
+
     public function test_halls_are_facilities_of_hall_type_and_keep_their_accommodation_rooms(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'role_id' => null]);

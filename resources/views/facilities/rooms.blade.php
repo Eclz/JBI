@@ -66,3 +66,25 @@
     </div>
 </div>
 @endsection
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const forms = document.querySelectorAll('form');
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function () {
+                // Find the submit button (catches both explicit type="submit" and default form buttons)
+                const submitButton = this.querySelector('button[type="submit"], button:not([type="button"])');
+
+                if (submitButton) {
+                    // Disable the button to prevent double clicks
+                    submitButton.disabled = true;
+
+                    // Add a small spinner and change text to show it's processing
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Deleting...';
+                }
+            });
+        });
+    });
+</script>
+@endpush

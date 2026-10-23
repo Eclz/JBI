@@ -29,6 +29,10 @@ class FacilitiesController extends Controller
             ->orderBy('start_time', 'asc')
             ->take(5)
             ->get();
+        $facilities = CampusFacility::withCount(['rooms', 'hostelRooms'])
+            ->orderBy('name')
+            ->take(5)
+            ->get();
 
         return view('facilities.index', [
             'rooms' => FacilityRoom::where('status', '!=', 'Retired')->count(),
@@ -36,6 +40,7 @@ class FacilitiesController extends Controller
             'maintenance' => FacilityRoom::where('status', 'Maintenance')->count(),
             'canManage' => $user ? ($user->isFacilitiesStaff() || $user->isAdmin() || $user->hasPermission('facilities', 'view')) : false,
             'upcomingBookings' => $upcomingBookings,
+            'facilities' => $facilities,
         ]);
     }
 
