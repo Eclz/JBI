@@ -55,7 +55,7 @@ class OnboardingHubController extends Controller
             if ($user->hasRole('dean')) {
                 return redirect()->route('faculty.dean.quality.index');
             }
-            if ($user->hasRole('head_of_department')) {
+            if ($user->isHeadOfDepartment()) {
                 return redirect()->route('faculty.hod.department.index');
             }
             return redirect()->route('dashboard');

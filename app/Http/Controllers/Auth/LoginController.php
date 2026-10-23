@@ -122,7 +122,7 @@ class LoginController extends Controller
                 if ($user->hasRole('dean')) {
                     return $this->redirectToRoleHome($request, 'faculty.dean.quality.index');
                 }
-                if ($user->hasRole('head_of_department')) {
+                if ($user->isHeadOfDepartment()) {
                     return $this->redirectToRoleHome($request, 'faculty.hod.department.index');
                 }
                 return $this->redirectToRoleHome($request, 'faculty.dashboard');

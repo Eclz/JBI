@@ -565,8 +565,13 @@ class User extends Authenticatable
                 return true;
             }
 
-            // 4. Student or Parent role on user record
-            if (in_array($r, [self::ROLE_STUDENT, self::ROLE_PARENT], true) && $this->role === $r) {
+            // 4. Faculty role or appointed academic leadership
+            if ($r === 'faculty' && ($this->role === 'faculty' || $this->isHeadOfDepartment() || $this->isDean())) {
+                return true;
+            }
+
+            // 5. User record role fallback (student, parent, etc.)
+            if ($this->role === $r) {
                 return true;
             }
         }
