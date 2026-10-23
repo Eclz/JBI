@@ -201,6 +201,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-info d-flex align-items-center" role="status">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <span><strong>Invoice number is generated automatically</strong> when you save this invoice.</span>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Select Supplier <span class="text-danger">*</span></label>
                         <select name="supplier_id" class="form-select" required>
@@ -209,10 +213,6 @@
                                 <option value="{{ $sup->id }}">{{ $sup->company_name }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Invoice Number <span class="text-danger">*</span></label>
-                        <input type="text" name="invoice_number" class="form-control" placeholder="INV-2026-001" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Amount ({{ $currencyCode }}) <span class="text-danger">*</span></label>

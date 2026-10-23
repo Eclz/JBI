@@ -8,6 +8,7 @@ return [
         'delete' => 'Delete',
         'approve' => 'Approve',
         'export' => 'Export',
+        'import' => 'Import',
     ],
 
     'modules' => [

@@ -23,6 +23,8 @@ use App\Models\User;
 use App\Models\SystemSetting;
 use App\Models\HrJobRole;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BursarFinanceController extends Controller
 {
@@ -68,8 +70,20 @@ class BursarFinanceController extends Controller
         $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $revenues = FinanceRevenue::with('receiver')->latest()->paginate(15);
         $totalRevenue = FinanceRevenue::sum('amount');
+        $canCreateRevenue = auth()->user()->hasPermission('revenue', 'create');
+        $canViewRevenue = auth()->user()->hasPermission('revenue', 'view');
+        $canEditRevenue = auth()->user()->hasPermission('revenue', 'edit');
+        $canDeleteRevenue = auth()->user()->hasPermission('revenue', 'delete');
 
-        return view('admin.finance.revenue.index', compact('revenues', 'totalRevenue', 'currencyCode'));
+        return view('admin.finance.revenue.index', compact(
+            'revenues',
+            'totalRevenue',
+            'currencyCode',
+            'canCreateRevenue',
+            'canViewRevenue',
+            'canEditRevenue',
+            'canDeleteRevenue'
+        ));
     }
 
     public function storeRevenue(Request $request)
@@ -219,13 +233,80 @@ class BursarFinanceController extends Controller
     /**
      * 3. Expenditure Management
      */
-    public function expenses()
+    public function expenses(Request $request)
     {
         $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
-        $expenses = FinanceExpense::with(['department', 'requester', 'approver'])->latest()->paginate(15);
-        $departments = Department::orderBy('name')->get();
 
-        return view('admin.finance.expenses.index', compact('expenses', 'departments', 'currencyCode'));
+        $query = FinanceExpense::with(['department', 'requester', 'approver']);
+
+        if ($request->filled('classification') && $request->classification !== 'all') {
+            $query->where('classification', $request->classification);
+        }
+
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $term = trim($request->search);
+            $query->where(function ($q) use ($term) {
+                $q->where('title', 'like', "%{$term}%")
+                  ->orWhere('expense_number', 'like', "%{$term}%")
+                  ->orWhere('category', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%");
+            });
+        }
+
+        $expenses = $query->latest('expense_date')->latest('id')->paginate(15)->withQueryString();
+
+        // Institutional Allocation Metrics
+        $totalApproved = (float) FinanceExpense::where('status', 'approved')->sum('amount');
+        $academicTotal = (float) FinanceExpense::where('status', 'approved')->where('classification', FinanceExpense::FUNCTION_ACADEMIC)->sum('amount');
+        $adminTotal = (float) FinanceExpense::where('status', 'approved')->where('classification', FinanceExpense::FUNCTION_ADMINISTRATIVE)->sum('amount');
+        $operationalTotal = (float) FinanceExpense::where('status', 'approved')->where('classification', FinanceExpense::FUNCTION_OPERATIONAL)->sum('amount');
+
+        $grandTotal = $totalApproved > 0 ? $totalApproved : ($academicTotal + $adminTotal + $operationalTotal);
+
+        $academicPercent = $grandTotal > 0 ? round(($academicTotal / $grandTotal) * 100, 1) : 0;
+        $adminPercent = $grandTotal > 0 ? round(($adminTotal / $grandTotal) * 100, 1) : 0;
+        $operationalPercent = $grandTotal > 0 ? round(($operationalTotal / $grandTotal) * 100, 1) : 0;
+
+        $academicCount = FinanceExpense::where('classification', FinanceExpense::FUNCTION_ACADEMIC)->count();
+        $adminCount = FinanceExpense::where('classification', FinanceExpense::FUNCTION_ADMINISTRATIVE)->count();
+        $operationalCount = FinanceExpense::where('classification', FinanceExpense::FUNCTION_OPERATIONAL)->count();
+        $totalCount = FinanceExpense::count();
+
+        $departments = Department::orderBy('name')->get();
+        $academicDepartments = Department::where('type', Department::TYPE_ACADEMIC)->orderBy('name')->get();
+        $adminDepartments = Department::where('type', Department::TYPE_ADMINISTRATIVE)->orderBy('name')->get();
+        $operationalDepartments = Department::where('type', Department::TYPE_OPERATIONAL)->orderBy('name')->get();
+
+        $categoriesByFunction = FinanceExpense::getCategoriesByFunction();
+
+        return view('admin.finance.expenses.index', compact(
+            'expenses',
+            'departments',
+            'academicDepartments',
+            'adminDepartments',
+            'operationalDepartments',
+            'categoriesByFunction',
+            'currencyCode',
+            'academicTotal',
+            'adminTotal',
+            'operationalTotal',
+            'grandTotal',
+            'academicPercent',
+            'adminPercent',
+            'operationalPercent',
+            'academicCount',
+            'adminCount',
+            'operationalCount',
+            'totalCount'
+        ));
     }
 
     public function storeExpense(Request $request)
@@ -233,6 +314,7 @@ class BursarFinanceController extends Controller
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'category' => 'required|string',
+            'classification' => 'nullable|string|in:academic,administrative,operational',
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'expense_date' => 'required|date|before_or_equal:today',
@@ -248,6 +330,11 @@ class BursarFinanceController extends Controller
             $status = 'pending';
         }
 
+        // Auto-infer or confirm classification
+        if (empty($validated['classification'])) {
+            $validated['classification'] = FinanceExpense::getFunctionForCategory($validated['category'], (int) $validated['department_id']);
+        }
+
         $validated['expense_number'] = 'EXP-' . date('Ymd') . '-' . rand(100, 999);
         $validated['requested_by'] = auth()->id();
         $validated['status'] = $status;
@@ -261,8 +348,19 @@ class BursarFinanceController extends Controller
             $this->applyExpenseToBudget($validated['department_id'], (float) $validated['amount']);
         }
 
+        $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
+        $dept = Department::find($validated['department_id']);
+
+        FinanceAuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Create Expense Record',
+            'module' => 'Expenditure Management',
+            'details' => "Recorded " . ucfirst($expense->classification) . " expense {$expense->expense_number} ({$validated['title']}) of {$currencyCode} " . number_format($validated['amount'], 2) . " for " . ($dept?->name ?? 'Department'),
+            'ip_address' => $request->ip(),
+        ]);
+
         return redirect()->route('admin.finance.expenses.index')
-            ->with('success', 'Expense recorded and reconciled with department budget successfully.');
+            ->with('success', 'Expense recorded and allocated under ' . ucfirst($expense->classification) . ' institutional function successfully.');
     }
 
     public function showExpense($id)
@@ -277,7 +375,20 @@ class BursarFinanceController extends Controller
         $currencyCode = SystemSetting::getSetting('default_currency', 'USD');
         $expense = FinanceExpense::findOrFail($id);
         $departments = Department::orderBy('name')->get();
-        return view('admin.finance.expenses.edit', compact('expense', 'departments', 'currencyCode'));
+        $academicDepartments = Department::where('type', Department::TYPE_ACADEMIC)->orderBy('name')->get();
+        $adminDepartments = Department::where('type', Department::TYPE_ADMINISTRATIVE)->orderBy('name')->get();
+        $operationalDepartments = Department::where('type', Department::TYPE_OPERATIONAL)->orderBy('name')->get();
+        $categoriesByFunction = FinanceExpense::getCategoriesByFunction();
+
+        return view('admin.finance.expenses.edit', compact(
+            'expense',
+            'departments',
+            'academicDepartments',
+            'adminDepartments',
+            'operationalDepartments',
+            'categoriesByFunction',
+            'currencyCode'
+        ));
     }
 
     public function updateExpense(Request $request, $id)
@@ -286,6 +397,7 @@ class BursarFinanceController extends Controller
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'category' => 'required|string',
+            'classification' => 'nullable|string|in:academic,administrative,operational',
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'expense_date' => 'required|date|before_or_equal:today',
@@ -294,6 +406,10 @@ class BursarFinanceController extends Controller
         ], [
             'expense_date.before_or_equal' => 'Expense date cannot be past the current date.',
         ]);
+
+        if (empty($validated['classification'])) {
+            $validated['classification'] = FinanceExpense::getFunctionForCategory($validated['category'], (int) $validated['department_id']);
+        }
 
         $oldStatus = $expense->status;
         $newStatus = $validated['status'] ?? $oldStatus;
@@ -329,8 +445,16 @@ class BursarFinanceController extends Controller
 
         $expense->update($validated);
 
+        FinanceAuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Update Expense Record',
+            'module' => 'Expenditure Management',
+            'details' => "Updated expense {$expense->expense_number} ({$expense->title}) re-classified as " . ucfirst($expense->classification),
+            'ip_address' => $request->ip(),
+        ]);
+
         return redirect()->route('admin.finance.expenses.index')
-            ->with('success', 'Expense updated and department budget reconciled successfully.');
+            ->with('success', 'Expense updated and allocated under ' . ucfirst($expense->classification) . ' function successfully.');
     }
 
     public function approveExpense($id)
@@ -475,16 +599,25 @@ class BursarFinanceController extends Controller
     {
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'invoice_number' => 'required|string',
             'amount' => 'required|numeric|min:0',
             'invoice_date' => 'required|date',
             'due_date' => 'required|date',
         ]);
 
-        VendorInvoice::create($validated);
+        $invoice = DB::transaction(function () use ($validated) {
+            $invoice = VendorInvoice::create(array_merge($validated, [
+                'invoice_number' => 'PENDING-' . Str::uuid(),
+            ]));
+
+            $invoice->update([
+                'invoice_number' => 'VIN-' . $invoice->created_at->format('Ymd') . '-' . str_pad((string) $invoice->id, 6, '0', STR_PAD_LEFT),
+            ]);
+
+            return $invoice;
+        });
 
         return redirect()->route('admin.finance.payables.index')
-            ->with('success', 'Vendor Invoice recorded successfully.');
+            ->with('success', 'Vendor Invoice ' . $invoice->invoice_number . ' recorded successfully.');
     }
 
     public function showSupplier($id)

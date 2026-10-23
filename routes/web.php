@@ -553,8 +553,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
             Route::get('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'revenue'])->name('revenue.index');
             Route::post('/revenue', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'storeRevenue'])->name('revenue.store')->middleware('permission:revenue,create');
             Route::get('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'showRevenue'])->name('revenue.show');
-            Route::get('/revenue/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editRevenue'])->name('revenue.edit')->middleware('permission:revenue,update');
-            Route::put('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateRevenue'])->name('revenue.update')->middleware('permission:revenue,update');
+            Route::get('/revenue/{id}/edit', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'editRevenue'])->name('revenue.edit')->middleware('permission:revenue,edit');
+            Route::put('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'updateRevenue'])->name('revenue.update')->middleware('permission:revenue,edit');
             Route::delete('/revenue/{id}', [\App\Http\Controllers\Admin\BursarFinanceController::class, 'destroyRevenue'])->name('revenue.destroy')->middleware('permission:revenue,delete');
         });
 

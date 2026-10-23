@@ -12,9 +12,11 @@
             <p class="text-muted mb-0">Record and track non-tuition revenues, research grants, donations, facility rentals & consultancy income</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addRevenueModal">
-                <i class="bi bi-plus-lg me-1"></i>Record New Revenue
-            </button>
+            @if($canCreateRevenue)
+                <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addRevenueModal">
+                    <i class="bi bi-plus-lg me-1"></i>Record New Revenue
+                </button>
+            @endif
             <a href="{{ route('admin.finance.dashboard') }}" class="btn btn-outline-secondary">Back to Finance Hub</a>
         </div>
     </div>
@@ -50,7 +52,9 @@
                             <th>Method & Ref</th>
                             <th>Date</th>
                             <th class="text-end pe-3">Amount</th>
-                            <th class="text-end pe-3">Actions</th>
+                            @if($canViewRevenue || $canEditRevenue || $canDeleteRevenue)
+                                <th class="text-end pe-3">Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -69,21 +73,29 @@
                                 </td>
                                 <td class="small">{{ $rev->transaction_date->format('M d, Y') }}</td>
                                 <td class="text-end pe-3 fw-bold text-success">{{ $rev->currency ?? $currencyCode }} {{ number_format($rev->amount, 2) }}</td>
-                                <td class="text-end pe-3">
-                                    <div class="btn-group">
+                                @if($canViewRevenue || $canEditRevenue || $canDeleteRevenue)
+                                    <td class="text-end pe-3">
+                                      <div class="btn-group">
+                                        @if($canViewRevenue)
                                         <a href="{{ route('admin.finance.revenue.show', $rev->id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        @endif
+                                        @if($canEditRevenue)
                                         <a href="{{ route('admin.finance.revenue.edit', $rev->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        @endif
+                                        @if($canDeleteRevenue)
                                         <form action="{{ route('admin.finance.revenue.destroy', $rev->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this record?');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                                         </form>
-                                    </div>
-                                </td>
+                                        @endif
+                                      </div>
+                                    </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">No revenue records found.</td>
+                                <td colspan="{{ 7 + (($canViewRevenue || $canEditRevenue || $canDeleteRevenue) ? 1 : 0) }}" class="text-center py-5 text-muted">No revenue records found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -97,6 +109,7 @@
 </div>
 
 <!-- Add Revenue Modal -->
+@if($canCreateRevenue)
 <div class="modal fade" id="addRevenueModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -157,4 +170,5 @@
         </div>
     </div>
 </div>
+@endif
 @endsection

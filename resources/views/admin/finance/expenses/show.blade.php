@@ -56,8 +56,26 @@
                                 <td class="fw-bold text-dark pb-1">{{ $expense->expense_date ? \Carbon\Carbon::parse($expense->expense_date)->format('M d, Y') : 'N/A' }}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted small fw-semibold pt-0">Category:</td>
-                                <td class="fw-bold text-primary pt-0">{{ $expense->category ?? 'General' }}</td>
+                                <td class="text-muted small fw-semibold py-1">Institutional Function:</td>
+                                <td class="fw-bold py-1">
+                                    @if($expense->classification === 'operational')
+                                        <span class="badge rounded-pill fw-semibold px-2.5 py-1" style="background-color: #ccfbf1; color: #0f766e;">
+                                            <i class="bi bi-tools me-1"></i>Operational Function
+                                        </span>
+                                    @elseif($expense->classification === 'administrative')
+                                        <span class="badge rounded-pill fw-semibold px-2.5 py-1" style="background-color: #f3e8ff; color: #7c3aed;">
+                                            <i class="bi bi-briefcase me-1"></i>Administrative Function
+                                        </span>
+                                    @else
+                                        <span class="badge rounded-pill fw-semibold px-2.5 py-1 bg-primary bg-opacity-10 text-primary">
+                                            <i class="bi bi-mortarboard me-1"></i>Academic Function
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted small fw-semibold pt-1">Category:</td>
+                                <td class="fw-bold text-primary pt-1">{{ $expense->category ?? 'General' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -125,18 +143,43 @@
 
         <!-- Sidebar Details -->
         <div class="col-lg-4">
+            <!-- Institutional Cost Allocation Card -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="card-title fw-bold mb-0"><i class="bi bi-credit-card me-2 text-primary"></i>Disbursement Info</h5>
+                    <h5 class="card-title fw-bold mb-0"><i class="bi bi-diagram-3 me-2 text-primary"></i>Functional Cost Allocation</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="text-muted small fw-semibold text-uppercase">Payment Method</label>
-                        <div class="fw-bold">{{ $expense->payment_method ? ucfirst(str_replace('_', ' ', $expense->payment_method)) : 'Pending Disbursement' }}</div>
+                        <label class="text-muted small fw-semibold text-uppercase">Institutional Function</label>
+                        <div>
+                            @if($expense->classification === 'operational')
+                                <span class="badge rounded-pill fw-semibold px-2.5 py-1.5" style="background-color: #ccfbf1; color: #0f766e;">
+                                    <i class="bi bi-tools me-1"></i>Operational Function
+                                </span>
+                            @elseif($expense->classification === 'administrative')
+                                <span class="badge rounded-pill fw-semibold px-2.5 py-1.5" style="background-color: #f3e8ff; color: #7c3aed;">
+                                    <i class="bi bi-briefcase me-1"></i>Administrative Function
+                                </span>
+                            @else
+                                <span class="badge rounded-pill fw-semibold px-2.5 py-1.5 bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-mortarboard me-1"></i>Academic Function
+                                </span>
+                            @endif
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label class="text-muted small fw-semibold text-uppercase">Department / Cost Center</label>
-                        <div class="fw-bold text-primary">{{ $expense->department->name ?? 'General Administration' }}</div>
+                        <label class="text-muted small fw-semibold text-uppercase">Responsible Department</label>
+                        <div class="fw-bold text-dark">{{ $expense->department->name ?? 'General Department' }}</div>
+                        @if($expense->department)
+                            <div class="small text-muted">
+                                Code: {{ $expense->department->code ?? 'N/A' }} &bull; 
+                                Type: <span class="badge bg-secondary-subtle text-secondary py-0 px-1">{{ ucfirst($expense->department->type ?? 'academic') }}</span>
+                            </div>
+                        @endif
+                    </div>
+                    <div>
+                        <label class="text-muted small fw-semibold text-uppercase">Payment Method</label>
+                        <div class="fw-bold text-dark">{{ $expense->payment_method ? ucfirst(str_replace('_', ' ', $expense->payment_method)) : 'Institutional Account / Petty Cash' }}</div>
                     </div>
                 </div>
             </div>

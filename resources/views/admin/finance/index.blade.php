@@ -102,12 +102,14 @@
                         <span class="fw-bold small">Fee Structures</span>
                     </a>
                 </div>
-                <div class="col-md-2 col-6">
-                    <a href="{{ route('admin.finance.revenue.index') }}" class="btn btn-outline-primary w-100 p-3 rounded-3 h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center">
-                        <i class="bi bi-currency-exchange fs-2 mb-2"></i>
-                        <span class="fw-bold small">Revenue & Income</span>
-                    </a>
-                </div>
+                @if(auth()->user()->hasPermission('revenue', 'view'))
+                    <div class="col-md-2 col-6">
+                        <a href="{{ route('admin.finance.revenue.index') }}" class="btn btn-outline-primary w-100 p-3 rounded-3 h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center">
+                            <i class="bi bi-currency-exchange fs-2 mb-2"></i>
+                            <span class="fw-bold small">Revenue & Income</span>
+                        </a>
+                    </div>
+                @endif
                 <div class="col-md-2 col-6">
                     <a href="{{ route('admin.finance.budgets.index') }}" class="btn btn-outline-primary w-100 p-3 rounded-3 h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center">
                         <i class="bi bi-pie-chart fs-2 mb-2"></i>

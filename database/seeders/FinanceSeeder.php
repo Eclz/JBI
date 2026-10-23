@@ -95,12 +95,16 @@ class FinanceSeeder extends Seeder
             FinanceRevenue::updateOrCreate(['revenue_code' => $rev['revenue_code']], $rev);
         }
 
-        // 3. Seed Budgets
-        if ($deptId) {
+        // 3. Seed Departmental Budgets (Academic, Administrative & Operational)
+        $academicDept = Department::where('type', Department::TYPE_ACADEMIC)->first() ?? $dept;
+        $adminDept = Department::where('type', Department::TYPE_ADMINISTRATIVE)->first();
+        $opsDept = Department::where('type', Department::TYPE_OPERATIONAL)->first();
+
+        if ($academicDept) {
             FinanceBudget::updateOrCreate(
-                ['department_id' => $deptId, 'academic_year' => '2026/2027'],
+                ['department_id' => $academicDept->id, 'academic_year' => '2026/2027'],
                 [
-                    'budget_code' => 'BDG-2026-' . $deptId,
+                    'budget_code' => 'BDG-2026-ACA-' . $academicDept->id,
                     'allocated_amount' => 250000000.00,
                     'spent_amount' => 45000000.00,
                     'committed_amount' => 12000000.00,
@@ -110,21 +114,88 @@ class FinanceSeeder extends Seeder
             );
         }
 
-        // 4. Seed Expenses
-        if ($deptId) {
+        if ($adminDept) {
+            FinanceBudget::updateOrCreate(
+                ['department_id' => $adminDept->id, 'academic_year' => '2026/2027'],
+                [
+                    'budget_code' => 'BDG-2026-ADM-' . $adminDept->id,
+                    'allocated_amount' => 180000000.00,
+                    'spent_amount' => 28000000.00,
+                    'committed_amount' => 5000000.00,
+                    'status' => 'approved',
+                    'approved_by' => $admin?->id,
+                ]
+            );
+        }
+
+        if ($opsDept) {
+            FinanceBudget::updateOrCreate(
+                ['department_id' => $opsDept->id, 'academic_year' => '2026/2027'],
+                [
+                    'budget_code' => 'BDG-2026-OPS-' . $opsDept->id,
+                    'allocated_amount' => 320000000.00,
+                    'spent_amount' => 64000000.00,
+                    'committed_amount' => 15000000.00,
+                    'status' => 'approved',
+                    'approved_by' => $admin?->id,
+                ]
+            );
+        }
+
+        // 4. Seed Expenses Across Institutional Functional Areas
+        if ($academicDept) {
             FinanceExpense::updateOrCreate(
                 ['expense_number' => 'EXP-20260801-101'],
                 [
-                    'department_id' => $deptId,
-                    'category' => 'Supplies & Stationery',
-                    'title' => 'Examination Paper Rolls & Toner Supplies',
+                    'department_id' => $academicDept->id,
+                    'classification' => FinanceExpense::FUNCTION_ACADEMIC,
+                    'category' => 'Examinations & Assessment',
+                    'title' => 'Examination Answer Booklets & Moderation Stationery',
                     'amount' => 4500000.00,
                     'expense_date' => now()->subDays(7),
                     'status' => 'approved',
                     'payment_method' => 'Bank Transfer',
                     'requested_by' => $admin?->id,
                     'approved_by' => $admin?->id,
-                    'description' => 'Approved semester exam printing stationery.',
+                    'description' => 'Printing and delivery of standardized semester exam booklets and invigilation stationery.',
+                ]
+            );
+        }
+
+        if ($adminDept) {
+            FinanceExpense::updateOrCreate(
+                ['expense_number' => 'EXP-20260802-102'],
+                [
+                    'department_id' => $adminDept->id,
+                    'classification' => FinanceExpense::FUNCTION_ADMINISTRATIVE,
+                    'category' => 'Finance, Audit & Compliance',
+                    'title' => 'Statutory Annual External Audit Retainer Fee',
+                    'amount' => 8500000.00,
+                    'expense_date' => now()->subDays(4),
+                    'status' => 'approved',
+                    'payment_method' => 'Bank Transfer',
+                    'requested_by' => $admin?->id,
+                    'approved_by' => $admin?->id,
+                    'description' => 'First tranche payment for university annual statutory audit and compliance certification.',
+                ]
+            );
+        }
+
+        if ($opsDept) {
+            FinanceExpense::updateOrCreate(
+                ['expense_number' => 'EXP-20260803-103'],
+                [
+                    'department_id' => $opsDept->id,
+                    'classification' => FinanceExpense::FUNCTION_OPERATIONAL,
+                    'category' => 'Campus Utilities (Electricity & Water)',
+                    'title' => 'Main Campus Electricity Grid & Water Supply Utility Bill',
+                    'amount' => 12400000.00,
+                    'expense_date' => now()->subDays(2),
+                    'status' => 'approved',
+                    'payment_method' => 'Bank Transfer',
+                    'requested_by' => $admin?->id,
+                    'approved_by' => $admin?->id,
+                    'description' => 'Monthly settlement for national power utility grid connection and water supply.',
                 ]
             );
         }

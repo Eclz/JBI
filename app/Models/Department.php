@@ -6,16 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Department extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const TYPE_ACADEMIC = 'academic';
+    public const TYPE_ADMINISTRATIVE = 'administrative';
+    public const TYPE_OPERATIONAL = 'operational';
+
     protected $fillable = [
         'name',
         'code',
         'description',
+        'type',
         'faculty_id',
         'head_of_department_id',
         'location',
@@ -88,6 +94,30 @@ class Department extends Model
     }
 
     /**
+     * Get the finance budgets for this department.
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(FinanceBudget::class);
+    }
+
+    /**
+     * Get the latest finance budget for this department.
+     */
+    public function latestBudget(): HasOne
+    {
+        return $this->hasOne(FinanceBudget::class)->latestOfMany();
+    }
+
+    /**
+     * Get the recorded finance expenses for this department.
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(FinanceExpense::class);
+    }
+
+    /**
      * Scope to get only active departments.
      */
     public function scopeActive($query)
@@ -112,23 +142,62 @@ class Department extends Model
     }
 
     /**
-     * Check if department has a head.
+     * Check if this department is an academic department.
      */
-    public function hasHead(): bool
+    public function isAcademic(): bool
     {
-        return !is_null($this->head_of_department_id);
+        return ($this->type ?? self::TYPE_ACADEMIC) === self::TYPE_ACADEMIC;
     }
 
     /**
-     * Get department statistics.
+     * Check if this department is an administrative department.
      */
-    public function getStatsAttribute(): array
+    public function isAdministrative(): bool
     {
-        return [
-            'faculty_count' => $this->facultyMembers()->count(),
-            'student_count' => $this->students()->count(),
-            'course_count' => $this->courses()->count(),
-            'active_courses' => $this->courses()->where('is_active', true)->count(),
-        ];
+        return $this->type === self::TYPE_ADMINISTRATIVE;
+    }
+
+    /**
+     * Check if this department is an operational / facilities department.
+     */
+    public function isOperational(): bool
+    {
+        return $this->type === self::TYPE_OPERATIONAL;
+    }
+
+    /**
+     * Scope query to academic departments.
+     */
+    public function scopeAcademic($query)
+    {
+        return $query->where('type', self::TYPE_ACADEMIC);
+    }
+
+    /**
+     * Scope query to administrative departments.
+     */
+    public function scopeAdministrative($query)
+    {
+        return $query->where('type', self::TYPE_ADMINISTRATIVE);
+    }
+
+    /**
+     * Scope query to operational departments.
+     */
+    public function scopeOperational($query)
+    {
+        return $query->where('type', self::TYPE_OPERATIONAL);
+    }
+
+    /**
+     * Scope query by department functional type.
+     */
+    public function scopeByType($query, ?string $type)
+    {
+        if (!$type || $type === 'all') {
+            return $query;
+        }
+
+        return $query->where('type', $type);
     }
 }

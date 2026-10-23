@@ -20,9 +20,9 @@ class RolePermissionSeeder extends Seeder
 
         $rolePermissions = [
             'super_administrator' => $all,
-            'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports', 'registrar_hub', 'exams', 'evoting'], $actions),
+            'registrar' => $this->matrix(['students', 'enrollments', 'programs', 'courses', 'applications', 'reports', 'registrar_hub', 'exams', 'evoting'], array_diff($actions, ['import'])),
             'dean' => $this->matrix(['faculty', 'departments', 'programs', 'courses', 'attendance', 'grades', 'reports', 'academic_quality', 'faculty_evaluations', 'budget_requests', 'student_support', 'external_relations', 'dean_administration'], ['view', 'create', 'edit', 'approve', 'export']),
-            'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports'], ['view', 'create', 'edit', 'approve', 'export']),
+            'head_of_department' => $this->matrix(['faculty', 'courses', 'attendance', 'grades', 'lms', 'exams', 'reports', 'expenses', 'budgets'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
             'lecturer' => $this->matrix(['courses', 'attendance', 'grades', 'lms', 'exams'], ['view', 'create', 'edit']),
             'finance_officer' => array_merge_recursive(
                 $this->matrix(['fees', 'reports', 'finance_hub', 'revenue', 'budgets', 'expenses', 'payables', 'receivables', 'payroll', 'assets', 'banking', 'financial_statements'], ['view', 'create', 'edit', 'approve', 'export']),
@@ -41,6 +41,7 @@ class RolePermissionSeeder extends Seeder
             'estates_manager' => $this->matrix(['facilities', 'facilities_rooms', 'facilities_requests', 'halls_of_residence', 'departments', 'students', 'faculty', 'reports'], ['view', 'create', 'edit', 'delete', 'approve', 'export']),
             'facilities_officer' => $this->matrix(['facilities', 'facilities_rooms', 'facilities_requests', 'halls_of_residence'], ['view', 'create', 'edit']),
         ];
+        $rolePermissions['registrar']['students']['import'] = true;
 
         foreach (config('university_permissions.defaults', []) as $slug => $roleConfig) {
             Role::updateOrCreate(
