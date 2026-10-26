@@ -137,18 +137,11 @@
                                                     </small>
                                                 </div>
                                             @endif
-                                        @elseif($attempt->status === 'submitted')
-                                            @if(!empty($timeLeftByExam[$exam->id]) && !empty($remainingSubmissionsByExam[$exam->id]))
-                                                <a href="{{ route('student.exams.take', $exam) }}" class="btn btn-warning w-100">
-                                                    <i class="bi bi-pencil-square me-1"></i>
-                                                    Resubmit ({{ 2 - $remainingSubmissionsByExam[$exam->id] }}/2)
-                                                </a>
-                                            @else
-                                                <button class="btn btn-secondary w-100" disabled>
-                                                    <i class="bi bi-check-circle me-1"></i>
-                                                    Submitted ({{ $attempt->submission_count ?? 0 }}/2)
-                                                </button>
-                                            @endif
+                                        @elseif(in_array($attempt->status, ['submitted', 'graded'], true))
+                                            <button class="btn btn-secondary w-100" disabled>
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                Completed / Submitted
+                                            </button>
                                         @endif
                                     @else
                                         <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-success w-100">

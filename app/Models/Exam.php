@@ -119,7 +119,7 @@ class Exam extends Model
             return true;
         }
 
-        return in_array($attempt->status, ['not_started', 'in_progress'], true);
+        return $attempt->status === 'not_started';
     }
 
     public function studentAttempt($userId)

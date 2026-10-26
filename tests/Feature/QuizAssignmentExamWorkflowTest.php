@@ -289,7 +289,8 @@ class QuizAssignmentExamWorkflowTest extends TestCase
         $quiz->update(['status' => 'closed']);
 
         // Another student cannot attempt closed quiz
-        $anotherStudent = User::factory()->create(['role' => 'student']);
+        $anotherStudent = User::factory()->student()->create();
+        StudentProfile::factory()->active()->create(['user_id' => $anotherStudent->id]);
         CourseEnrollment::create([
             'user_id' => $anotherStudent->id,
             'course_id' => $ctx['course']->id,
@@ -554,5 +555,111 @@ class QuizAssignmentExamWorkflowTest extends TestCase
         $attempt->refresh();
         $this->assertEquals('submitted', $attempt->status);
         $this->assertNull($attempt->answers);
+    }
+
+    public function test_student_cannot_start_exam_again_once_completed_or_submitted(): void
+    {
+        $ctx = $this->createAcademicContext();
+
+        $exam = Exam::create([
+            'course_id' => $ctx['course']->id,
+            'title' => 'Software Architecture Exam',
+            'duration_minutes' => 60,
+            'total_marks' => 100,
+            'passing_marks' => 50,
+            'start_time' => Carbon::now()->subMinutes(10),
+            'end_time' => Carbon::now()->addHours(2),
+            'is_published' => true,
+            'exam_mode' => 'online',
+        ]);
+
+        // Student starts exam
+        $this->actingAs($ctx['studentUser'])
+            ->post(route('student.exams.start', $exam))
+            ->assertRedirect(route('student.exams.take', $exam));
+
+        $attempt = ExamAttempt::where('exam_id', $exam->id)->where('user_id', $ctx['studentUser']->id)->first();
+        $this->assertNotNull($attempt);
+        $this->assertEquals('in_progress', $attempt->status);
+
+        // Student submits the exam
+        $this->actingAs($ctx['studentUser'])
+            ->post(route('student.exams.submit', $exam), [
+                'answers' => 'My finalized exam answers',
+            ])
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('success');
+
+        $attempt->refresh();
+        $this->assertEquals('submitted', $attempt->status);
+
+        // Attempting to start the exam again must be completely BLOCKED
+        $this->actingAs($ctx['studentUser'])
+            ->post(route('student.exams.start', $exam), ['_idempotency_key' => 'attempt-retry-1'])
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('error', 'You have already completed and submitted this examination. You cannot start or retake it.');
+
+        // Attempting to access the take screen directly must be BLOCKED
+        $this->actingAs($ctx['studentUser'])
+            ->get(route('student.exams.take', $exam))
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('error', 'You have already submitted this examination and cannot restart or retake it.');
+
+        // Attempting to submit again must be BLOCKED
+        $this->actingAs($ctx['studentUser'])
+            ->post(route('student.exams.submit', $exam), [
+                '_idempotency_key' => 'attempt-retry-2',
+                'answers' => 'Trying to submit again',
+            ])
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('error', 'You have already submitted this examination and cannot submit again.');
+
+        // Show page must display "Exam Completed" and not have the start exam form
+        $response = $this->actingAs($ctx['studentUser'])
+            ->get(route('student.exams.show', $exam));
+
+        $response->assertOk();
+        $response->assertSee('Exam Completed');
+        $response->assertSee('Exam Completed (Cannot Re-attempt)');
+        $response->assertDontSee('Start Exam');
+        $response->assertDontSee('Resume Exam Attempt');
+    }
+
+    public function test_student_cannot_restart_exam_when_attempt_time_has_expired(): void
+    {
+        $ctx = $this->createAcademicContext();
+
+        $exam = Exam::create([
+            'course_id' => $ctx['course']->id,
+            'title' => 'Operating Systems Exam',
+            'duration_minutes' => 30,
+            'total_marks' => 100,
+            'passing_marks' => 50,
+            'start_time' => Carbon::now()->subHour(),
+            'end_time' => Carbon::now()->addHour(),
+            'is_published' => true,
+            'exam_mode' => 'online',
+        ]);
+
+        // Attempt was started 40 minutes ago (30 min duration expired 10 mins ago)
+        ExamAttempt::create([
+            'exam_id' => $exam->id,
+            'user_id' => $ctx['studentUser']->id,
+            'status' => 'in_progress',
+            'started_at' => Carbon::now()->subMinutes(40),
+            'time_remaining_seconds' => 0,
+        ]);
+
+        // Attempting to start/resume must be blocked and marks attempt as submitted
+        $this->actingAs($ctx['studentUser'])
+            ->post(route('student.exams.start', $exam), ['_idempotency_key' => 'expired-start-1'])
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('error', 'The examination time has expired. You cannot start or attempt this exam again.');
+
+        // Take screen access must now be blocked because attempt was marked submitted
+        $this->actingAs($ctx['studentUser'])
+            ->get(route('student.exams.take', $exam))
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('error', 'You have already submitted this examination and cannot restart or retake it.');
     }
 }

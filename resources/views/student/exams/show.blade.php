@@ -192,15 +192,38 @@
                         @endif
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted">Submissions Used</span>
-                                <span class="fw-semibold">{{ $attemptsCount }} / {{ $maxAttempts }}</span>
+                                <span class="text-muted">Attempt Status</span>
+                                <span class="fw-semibold">
+                                    @if($attempt && in_array($attempt->status, ['submitted', 'graded'], true))
+                                        Completed (1 / 1)
+                                    @elseif($attempt && $attempt->status === 'in_progress')
+                                        In Progress
+                                    @else
+                                        Not Started (0 / 1)
+                                    @endif
+                                </span>
                             </div>
                             <div class="progress">
-                                <div class="progress-bar" style="width: {{ $maxAttempts > 0 ? ($attemptsCount / $maxAttempts) * 100 : 0 }}%"></div>
+                                <div class="progress-bar {{ $attempt && in_array($attempt->status, ['submitted', 'graded'], true) ? 'bg-success' : ($attempt && $attempt->status === 'in_progress' ? 'bg-warning' : '') }}" style="width: {{ $attempt && in_array($attempt->status, ['submitted', 'graded'], true) ? 100 : ($attempt && $attempt->status === 'in_progress' ? 50 : 0) }}%"></div>
                             </div>
                         </div>
 
-                        @if($attempt && $attempt->status === 'in_progress')
+                        @if($attempt && in_array($attempt->status, ['submitted', 'graded'], true))
+                            <div class="alert alert-success border-0 shadow-sm mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-check-circle-fill text-success fs-3 me-2"></i>
+                                    <div>
+                                        <strong class="d-block text-success">Exam Completed</strong>
+                                        <small class="text-muted">
+                                            Submitted {{ optional($attempt->submitted_at)->format('M d, Y h:i A') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary w-100 fw-bold" disabled>
+                                <i class="bi bi-lock-fill me-1"></i> Exam Completed (Cannot Re-attempt)
+                            </button>
+                        @elseif($attempt && $attempt->status === 'in_progress')
                             <a href="{{ route('student.exams.take', $exam) }}" class="btn btn-warning w-100 fw-bold">
                                 <i class="bi bi-play-circle me-2"></i>Resume Exam Attempt
                             </a>
@@ -225,20 +248,9 @@
                                     Exam not currently available
                                 </div>
                             @endif
-                        @elseif($attempt && $attempt->status === 'submitted' && $status === 'active')
-                            @if($canResubmit)
-                                <a href="{{ route('student.exams.take', $exam) }}" class="btn btn-warning w-100">
-                                    <i class="bi bi-pencil-square me-2"></i>
-                                    Resubmit ({{ $attemptsCount }}/{{ $maxAttempts }})
-                                </a>
-                            @else
-                                <div class="alert alert-secondary text-center mb-0">
-                                    Submitted ({{ $attemptsCount }}/{{ $maxAttempts }})
-                                </div>
-                            @endif
                         @else
                             <div class="alert alert-warning text-center mb-0">
-                                Maximum attempts reached
+                                Exam not available
                             </div>
                         @endif
                     @endif

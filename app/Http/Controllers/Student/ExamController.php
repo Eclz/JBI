@@ -59,9 +59,8 @@ class ExamController extends Controller
             });
 
         $timeLeftByExam = [];
-        $remainingSubmissionsByExam = [];
         $now = Carbon::now();
-        $activeExams = $activeExams->filter(function ($exam) use ($now, &$timeLeftByExam, &$remainingSubmissionsByExam) {
+        $activeExams = $activeExams->filter(function ($exam) use ($now, &$timeLeftByExam) {
             $attempt = $exam->attempts->first();
             if (!$attempt) {
                 return true;
@@ -84,14 +83,6 @@ class ExamController extends Controller
             }
 
             $timeLeftByExam[$exam->id] = $effectiveEnd->diffInSeconds($now);
-            $currentCount = $attempt->submission_count ?? 0;
-            if ($currentCount === 0 && $attempt->submitted_at) {
-                $currentCount = 1;
-            }
-            $remaining = 2 - $currentCount;
-            if ($remaining > 0) {
-                $remainingSubmissionsByExam[$exam->id] = $remaining;
-            }
 
             return true;
         })->values();
@@ -120,7 +111,6 @@ class ExamController extends Controller
             'closedExams',
             'completedAttempts',
             'timeLeftByExam',
-            'remainingSubmissionsByExam',
             'expiredAttempts',
             'isTuitionCleared',
             'tuitionBalance',
@@ -149,20 +139,35 @@ class ExamController extends Controller
             ->where('user_id', $student->id)
             ->orderBy('started_at', 'desc')
             ->get();
-        $attemptsCount = $attempt ? ($attempt->submission_count ?? 0) : 0;
-        if ($attemptsCount === 0 && $attempt && $attempt->submitted_at) {
-            $attemptsCount = 1;
-        }
-        $maxAttempts = 2;
-        $canAttempt = $attemptsCount < $maxAttempts || ($attempt && $attempt->status === 'not_started');
-        $hasPaid = $exam->required_payment <= 0 || ($attempt && $attempt->payment_verified);
 
         $now = Carbon::now();
         $status = $exam->effective_status;
-
         $mode = strtolower($exam->exam_mode ?? 'online');
-        $isAttempted = $attempt && in_array($attempt->status, ['submitted', 'graded']);
+
+        // Check if existing in-progress attempt has expired
+        if ($attempt && $attempt->status === 'in_progress') {
+            $byDuration = $attempt->started_at ? $attempt->started_at->copy()->addMinutes($exam->duration_minutes) : null;
+            $deadline = $exam->end_time;
+            $effectiveEnd = ($byDuration && $deadline) ? ($deadline->lt($byDuration) ? $deadline : $byDuration) : ($byDuration ?: $deadline);
+            if ($effectiveEnd && $effectiveEnd->lte($now)) {
+                $attempt->update([
+                    'status' => 'submitted',
+                    'submitted_at' => $effectiveEnd,
+                    'submission_count' => max($attempt->submission_count ?? 0, 1),
+                ]);
+                $attempt->refresh();
+            }
+        }
+
+        $isAttempted = $attempt && in_array($attempt->status, ['submitted', 'graded'], true);
         $isClosed = $exam->isPast();
+
+        $maxAttempts = 1;
+        $attemptsCount = $isAttempted ? 1 : 0;
+
+        // Candidate can only start if they have not yet made/submitted an attempt and exam is active
+        $canAttempt = (!$attempt || $attempt->status === 'not_started') && $exam->isActive();
+        $hasPaid = $exam->required_payment <= 0 || ($attempt && $attempt->payment_verified);
 
         // Download permissions
         // Rule: Question papers cannot be downloaded for online exams or physical exams. For hybrid exams, only after timer starts.
@@ -178,28 +183,13 @@ class ExamController extends Controller
         }
 
         $canResubmit = false;
-        if ($attempt && $attempt->started_at) {
-            $byDuration = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
-            $deadline = $exam->end_time;
-            $effectiveEnd = $deadline && $deadline->lt($byDuration) ? $deadline : $byDuration;
-            $currentCount = $attempt->submission_count ?? 0;
-            if ($currentCount === 0 && $attempt->submitted_at) {
-                $currentCount = 1;
-            }
-            $canResubmit = $effectiveEnd->gt($now) && $currentCount < $maxAttempts;
-        }
 
         $isTuitionCleared = $student->hasZeroTuitionBalance();
         $tuitionBalance = $student->getTuitionBalance();
         $currencyCode = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
 
         if (!$isTuitionCleared || in_array($mode, ['offline', 'physical'], true)) {
-            if (in_array($mode, ['offline', 'physical'], true)) {
-                $canAttempt = false;
-            }
-            if (!$isTuitionCleared) {
-                $canAttempt = false;
-            }
+            $canAttempt = false;
         }
 
         return view('student.exams.show', compact(
@@ -239,31 +229,54 @@ class ExamController extends Controller
                 ->with('error', "You do not qualify to sit for examinations because you have an outstanding tuition balance of {$currency} " . number_format($tuitionBalance, 2) . ". Please clear your tuition fees in the Fee Portal to sit for exams and obtain your Examination Permit.");
         }
 
-        // Validations
-        if (!$exam->isActive()) {
-            return back()->with('error', 'This exam is not currently available.');
+        // If the candidate has already completed or attempted the exam, block starting again
+        $attempt = $exam->studentAttempt($student->id);
+        if ($attempt && in_array($attempt->status, ['submitted', 'graded'], true)) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'You have already completed and submitted this examination. You cannot start or retake it.');
         }
 
-        $attempt = ExamAttempt::firstOrCreate(
-            [
+        // If the student already has an in-progress attempt, check whether time has expired
+        if ($attempt && $attempt->status === 'in_progress') {
+            $now = Carbon::now();
+            $byDuration = $attempt->started_at ? $attempt->started_at->copy()->addMinutes($exam->duration_minutes) : null;
+            $deadline = $exam->end_time;
+            $effectiveEnd = ($byDuration && $deadline) ? ($deadline->lt($byDuration) ? $deadline : $byDuration) : ($byDuration ?: $deadline);
+
+            if ($effectiveEnd && $effectiveEnd->lte($now)) {
+                $attempt->update([
+                    'status' => 'submitted',
+                    'submitted_at' => $effectiveEnd,
+                    'submission_count' => max($attempt->submission_count ?? 0, 1),
+                ]);
+                return redirect()->route('student.exams.show', $exam)
+                    ->with('error', 'The examination time has expired. You cannot start or attempt this exam again.');
+            }
+
+            return redirect()->route('student.exams.take', $exam)
+                ->with('info', 'Resuming your exam attempt...');
+        }
+
+        // Validations: exam must be active
+        if (!$exam->isActive()) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'This exam is not currently available.');
+        }
+
+        if (!$attempt) {
+            $attempt = ExamAttempt::create([
                 'exam_id' => $exam->id,
                 'user_id' => $student->id,
-            ],
-            [
                 'status' => 'not_started',
                 'payment_verified' => false,
-            ]
-        );
+            ]);
+        }
 
         // Check payment requirement
         if ($exam->required_payment > 0 && !$attempt->payment_verified) {
             $currency = \App\Models\SystemSetting::getSetting('default_currency', 'USD');
-            return back()->with('error', 'You must complete the payment of ' . $currency . ' ' . number_format($exam->required_payment, 2) . ' before attempting this exam.');
-        }
-
-        if ($attempt->status !== 'not_started') {
-            return redirect()->route('student.exams.take', $exam)
-                ->with('info', 'Resuming your exam attempt...');
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'You must complete the payment of ' . $currency . ' ' . number_format($exam->required_payment, 2) . ' before attempting this exam.');
         }
 
         // Start the exam
@@ -303,25 +316,27 @@ class ExamController extends Controller
                 ->with('error', 'Please start the exam first.');
         }
 
+        // If the candidate has already submitted or completed the exam, deny access to take it again
+        if (in_array($attempt->status, ['submitted', 'graded'], true)) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'You have already submitted this examination and cannot restart or retake it.');
+        }
+
         $now = Carbon::now();
         $byDuration = $attempt->started_at ? $attempt->started_at->copy()->addMinutes($exam->duration_minutes) : null;
         $deadline = $exam->end_time;
         $effectiveEnd = ($byDuration && $deadline) ? ($deadline->lt($byDuration) ? $deadline : $byDuration) : ($byDuration ?: $deadline);
 
-        if ($effectiveEnd && $effectiveEnd->lt($now)) {
+        if ($effectiveEnd && $effectiveEnd->lte($now)) {
+            if ($attempt->status === 'in_progress') {
+                $attempt->update([
+                    'status' => 'submitted',
+                    'submitted_at' => $effectiveEnd,
+                    'submission_count' => max($attempt->submission_count ?? 0, 1),
+                ]);
+            }
             return redirect()->route('student.exams.show', $exam)
-                ->with('info', 'The examination time has ended.');
-        }
-
-        if ($attempt->isSubmitted()) {
-            $currentCount = $attempt->submission_count ?? 0;
-            if ($currentCount === 0 && $attempt->submitted_at) {
-                $currentCount = 1;
-            }
-            if ($currentCount >= 2) {
-                return redirect()->route('student.exams.show', $exam)
-                    ->with('info', 'You have reached the maximum number of submissions.');
-            }
+                ->with('error', 'The examination time has ended.');
         }
 
         return view('student.exams.take', compact('exam', 'attempt'));
@@ -346,8 +361,19 @@ class ExamController extends Controller
 
         $attempt = $exam->studentAttempt($student->id);
 
-        if (!$attempt || !in_array($attempt->status, ['in_progress', 'submitted'], true)) {
-            return back()->with('error', 'Invalid exam attempt.');
+        if (!$attempt) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'Invalid exam attempt.');
+        }
+
+        if (in_array($attempt->status, ['submitted', 'graded'], true)) {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'You have already submitted this examination and cannot submit again.');
+        }
+
+        if ($attempt->status !== 'in_progress') {
+            return redirect()->route('student.exams.show', $exam)
+                ->with('error', 'Invalid exam attempt.');
         }
 
         $now = Carbon::now();
@@ -364,17 +390,10 @@ class ExamController extends Controller
             $attempt->update([
                 'status' => 'submitted',
                 'submitted_at' => $effectiveEnd,
+                'submission_count' => max($attempt->submission_count ?? 0, 1),
             ]);
             return redirect()->route('student.exams.show', $exam)
                 ->with('error', 'The examination time has expired. Submissions beyond the exam time limit are not accepted.');
-        }
-
-        $currentCount = $attempt->submission_count ?? 0;
-        if ($currentCount === 0 && $attempt->submitted_at) {
-            $currentCount = 1;
-        }
-        if ($currentCount >= 2) {
-            return back()->with('error', 'You have reached the maximum number of submissions.');
         }
 
         $validated = $request->validate([
@@ -392,7 +411,7 @@ class ExamController extends Controller
             'submission_file_url' => $submissionFileUrl ?? $attempt->submission_file_url,
             'submitted_at' => Carbon::now(),
             'status' => 'submitted',
-            'submission_count' => $currentCount + 1,
+            'submission_count' => max($attempt->submission_count ?? 0, 1),
         ]);
 
         return redirect()->route('student.exams.show', $exam)
@@ -405,8 +424,21 @@ class ExamController extends Controller
 
         $attempt = $exam->studentAttempt($student->id);
 
-        if (!$attempt || !in_array($attempt->status, ['in_progress', 'submitted'], true)) {
+        if (!$attempt || $attempt->status !== 'in_progress') {
             return response()->json(['message' => 'Invalid exam attempt.'], 422);
+        }
+
+        $now = Carbon::now();
+        $byDuration = $attempt->started_at ? $attempt->started_at->copy()->addMinutes($exam->duration_minutes) : null;
+        $deadline = $exam->end_time;
+        $effectiveEnd = ($byDuration && $deadline) ? ($deadline->lt($byDuration) ? $deadline : $byDuration) : ($byDuration ?: $deadline);
+        if ($effectiveEnd && $effectiveEnd->lt($now)) {
+            $attempt->update([
+                'status' => 'submitted',
+                'submitted_at' => $effectiveEnd,
+                'submission_count' => max($attempt->submission_count ?? 0, 1),
+            ]);
+            return response()->json(['message' => 'The examination time has ended.'], 422);
         }
 
         $validated = $request->validate([
